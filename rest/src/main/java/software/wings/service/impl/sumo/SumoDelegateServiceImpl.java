@@ -28,7 +28,10 @@ public class SumoDelegateServiceImpl implements SumoDelegateService {
         throw new WingsException(sumoConfig.getSumoUrl() + " is not a valid url. ", t);
       }
       if (t instanceof SumoServerException) {
-        throw new WingsException("Error from Sumo server: " + ((SumoServerException) t).getErrorMessage(), t);
+        SumoServerException sumoServerException = (SumoServerException) t;
+        throw new WingsException(
+            "Error from Sumo server: " + sumoServerException.getHTTPStatus() + " - " + sumoServerException.getMessage(),
+            sumoServerException);
       }
       throw new WingsException("An error occurred connecting to Sumo server: " + t.getMessage(), t);
     }
