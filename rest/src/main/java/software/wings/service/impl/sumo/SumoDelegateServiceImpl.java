@@ -13,6 +13,7 @@ import software.wings.exception.WingsException;
 import software.wings.security.encryption.EncryptedDataDetail;
 import software.wings.service.intfc.security.EncryptionService;
 import software.wings.service.intfc.sumo.SumoDelegateService;
+import software.wings.utils.Misc;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -36,9 +37,9 @@ public class SumoDelegateServiceImpl implements SumoDelegateService {
       throw new WingsException(sumoConfig.getSumoUrl() + " is not a valid url. ", exception);
     } catch (SumoServerException exception) {
       throw new WingsException(
-          "Error from Sumo server: " + exception.getHTTPStatus() + " - " + exception.getMessage(), exception);
+          "Error from Sumo server: " + exception.getHTTPStatus() + " - " + Misc.getMessage(exception), exception);
     } catch (Exception exception) {
-      throw new WingsException("An error occurred connecting to Sumo server: " + exception.getMessage(), exception);
+      throw new WingsException("An error occurred connecting to Sumo server: " + Misc.getMessage(exception), exception);
     }
   }
 
