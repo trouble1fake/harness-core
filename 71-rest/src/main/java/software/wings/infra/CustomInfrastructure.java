@@ -28,6 +28,7 @@ public class CustomInfrastructure implements InfraMappingInfrastructureProvider,
   @IncludeFieldMap private String deploymentTypeTemplateVersion;
 
   private transient String customDeploymentName;
+  private String cloudProviderId = DUMMY_CLOUD_PROVIDER;
 
   @Override
   public InfrastructureMapping getInfraMapping() {
