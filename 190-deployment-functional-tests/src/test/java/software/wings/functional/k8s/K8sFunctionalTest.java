@@ -23,6 +23,7 @@ import io.harness.generator.ServiceGenerator.Services;
 import io.harness.rule.Owner;
 import io.harness.testframework.restutils.ArtifactStreamRestUtils;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import software.wings.beans.Application;
@@ -36,6 +37,7 @@ import software.wings.infra.InfrastructureDefinition;
 
 import java.util.Collections;
 
+@Ignore
 public class K8sFunctionalTest extends AbstractFunctionalTest {
   @Inject private OwnerManager ownerManager;
   @Inject private ApplicationGenerator applicationGenerator;

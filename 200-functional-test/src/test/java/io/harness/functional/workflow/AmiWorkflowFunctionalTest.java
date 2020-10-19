@@ -24,6 +24,7 @@ import io.harness.testframework.restutils.ArtifactRestUtils;
 import io.harness.testframework.restutils.InfrastructureDefinitionRestUtils;
 import io.harness.testframework.restutils.WorkflowRestUtils;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import software.wings.beans.Application;
@@ -72,6 +73,7 @@ public class AmiWorkflowFunctionalTest extends AbstractFunctionalTest {
   @Test
   @Owner(developers = YOGESH)
   @Category(CDFunctionalTests.class)
+  @Ignore
   public void shouldRunAwsAmiWorkflow() {
     service = serviceGenerator.ensureAmiGenericTest(seed, owners, "aws-ami");
     final String accountId = service.getAccountId();

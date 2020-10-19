@@ -110,6 +110,7 @@ public class AccountLevelGitConnectorFunctionalTest extends AbstractFunctionalTe
   @Test(timeout = TIMEOUT)
   @Owner(developers = ABOSII)
   @Category(CDFunctionalTests.class)
+  @Ignore
   public void testPcfUsingAccountLevelGitConnector() {
     Service service = createPCFService(getName("pcf", "service"));
     updateApplicationManifest(createServiceManifest(service, "pcf-app1", StoreType.Remote));
@@ -132,6 +133,7 @@ public class AccountLevelGitConnectorFunctionalTest extends AbstractFunctionalTe
   @Test(timeout = TIMEOUT)
   @Owner(developers = ABOSII)
   @Category(CDFunctionalTests.class)
+  @Ignore
   public void testK8sUsingAccountLevelGitConnector() {
     Service service = createK8sService(getName("k8s", "service"));
     updateApplicationManifest(createServiceManifest(service, "manifests/basic", StoreType.Remote));
@@ -153,7 +155,6 @@ public class AccountLevelGitConnectorFunctionalTest extends AbstractFunctionalTe
   @Test(timeout = TIMEOUT)
   @Owner(developers = ABOSII)
   @Category(CDFunctionalTests.class)
-  @Ignore("There is no clear reason why this test is failing on jenkins. Will investigate it later")
   public void testHelmUsingAccountLevelGitConnector() {
     Service service = createHelmService("helm-account-level-git");
     updateApplicationManifest(createServiceManifest(service, "charts/basic", StoreType.HelmSourceRepo));
@@ -169,6 +170,7 @@ public class AccountLevelGitConnectorFunctionalTest extends AbstractFunctionalTe
 
     WorkflowExecution workflowExecution = runWorkflow(
         bearerToken, application.getUuid(), environment.getUuid(), getExecutionArgs(workflow, environment, service));
+    logStateExecutionInstanceErrors(workflowExecution);
     assertThat(workflowExecution.getStatus()).isEqualTo(ExecutionStatus.SUCCESS);
   }
 

@@ -47,6 +47,7 @@ import io.harness.testframework.restutils.WorkflowRestUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import software.wings.api.DeploymentType;
@@ -85,6 +86,7 @@ import java.util.List;
 import java.util.Map;
 
 @Slf4j
+@Ignore
 public class CustomDeploymentFunctionalTest extends AbstractFunctionalTest {
   @Inject private OwnerManager ownerManager;
   @Inject private ApplicationGenerator applicationGenerator;
