@@ -297,7 +297,7 @@ public class AccountLevelGitConnectorFunctionalTest extends AbstractFunctionalTe
             .type("SHELL_SCRIPT")
             .properties(ImmutableMap.of("scriptType", "BASH", "scriptString",
                 "export KUBECONFIG=${HARNESS_KUBE_CONFIG_PATH}\nkubectl get namespace ${infra.kubernetes.namespace} || kubectl create namespace ${infra.kubernetes.namespace}",
-                "executeOnDelegate", true, "timeoutMillis", 60000))
+                "executeOnDelegate", true, "timeoutMillis", 600000))
             .build();
     if (workflowPhase.getPhaseSteps().get(0).getSteps().size() > 1) {
       workflowPhase.getPhaseSteps().get(0).getSteps().set(0, createNamespaceStep);
