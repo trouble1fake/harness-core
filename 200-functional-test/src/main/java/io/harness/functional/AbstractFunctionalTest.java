@@ -29,6 +29,7 @@ import io.harness.multiline.MultilineStringMixin;
 import io.harness.rest.RestResponse;
 import io.harness.rule.FunctionalTestRule;
 import io.harness.rule.LifecycleRule;
+import io.harness.selection.log.DelegateSelectionLog;
 import io.harness.testframework.framework.CommandLibraryServiceExecutor;
 import io.harness.testframework.framework.DelegateExecutor;
 import io.harness.testframework.framework.Setup;
@@ -236,7 +237,21 @@ public abstract class AbstractFunctionalTest extends CategoryTest implements Gra
     }
 
     stateExecutionInstances.stream()
-        .map(stateExecutionInstance -> stateExecutionInstance.getStateExecutionMap().values())
+        .map(stateExecutionInstance -> {
+          stateExecutionInstance.getDelegateTasksDetails().forEach(details -> {
+            List<DelegateSelectionLog> selectionLogs = wingsPersistence.createQuery(DelegateSelectionLog.class)
+                    .filter(DelegateSelectionLog.DelegateSelectionLogKeys.accountId, workflowExecution.getAccountId())
+                    .filter(DelegateSelectionLog.DelegateSelectionLogKeys.taskId, details.getDelegateTaskId())
+                    .asList();
+            selectionLogs.forEach(logs -> {
+              logger.info("Delegates {} selected status {}. Message: {}",
+                      logs.getDelegateIds(), logs.getConclusion(), logs.getMessage());
+            });
+          });
+
+
+          return stateExecutionInstance.getStateExecutionMap().values();
+        })
         .flatMap(Collection::stream)
         .filter(stateExecutionData
             -> stateExecutionData.getStatus() == ExecutionStatus.FAILED
