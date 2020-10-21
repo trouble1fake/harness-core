@@ -39,6 +39,7 @@ import io.harness.testframework.restutils.WorkflowRestUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import software.wings.api.DeploymentType;
@@ -61,6 +62,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
+@Ignore
 public class EcsGitOpsWorkflowFunctionalTest extends AbstractFunctionalTest {
   @Inject private OwnerManager ownerManager;
   @Inject private ApplicationGenerator applicationGenerator;

@@ -110,6 +110,7 @@ public class AccountLevelGitConnectorFunctionalTest extends AbstractFunctionalTe
   @Test(timeout = TIMEOUT)
   @Owner(developers = ABOSII)
   @Category(CDFunctionalTests.class)
+  @Ignore
   public void testPcfUsingAccountLevelGitConnector() {
     Service service = createPCFService(getName("pcf", "service"));
     updateApplicationManifest(createServiceManifest(service, "pcf-app1", StoreType.Remote));
@@ -133,6 +134,7 @@ public class AccountLevelGitConnectorFunctionalTest extends AbstractFunctionalTe
   @Test(timeout = TIMEOUT)
   @Owner(developers = ABOSII)
   @Category(CDFunctionalTests.class)
+  @Ignore
   public void testK8sUsingAccountLevelGitConnector() {
     Service service = createK8sService(getName("k8s", "service"));
     updateApplicationManifest(createServiceManifest(service, "manifests/basic", StoreType.Remote));

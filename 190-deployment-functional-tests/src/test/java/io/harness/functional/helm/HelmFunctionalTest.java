@@ -1,9 +1,7 @@
 package io.harness.functional.helm;
 
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
-import static io.harness.rule.OwnerRule.ANSHUL;
-import static io.harness.rule.OwnerRule.VAIBHAV_SI;
-import static io.harness.rule.OwnerRule.YOGESH;
+import static io.harness.rule.OwnerRule.ABOSII;
 import static org.assertj.core.api.Assertions.assertThat;
 import static software.wings.beans.BasicOrchestrationWorkflow.BasicOrchestrationWorkflowBuilder;
 import static software.wings.beans.Workflow.WorkflowBuilder.aWorkflow;
@@ -84,7 +82,7 @@ public class HelmFunctionalTest extends AbstractFunctionalTest {
   }
 
   @Test
-  @Owner(developers = {VAIBHAV_SI, YOGESH, ANSHUL})
+  @Owner(developers = ABOSII)
   @Category(CDFunctionalTests.class)
   public void testHelmS3WorkflowExecution() {
     Service helmS3Service = createHelm3S3Service();

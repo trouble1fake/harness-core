@@ -24,6 +24,7 @@ import io.harness.testframework.restutils.ArtifactRestUtils;
 import io.harness.testframework.restutils.InfrastructureDefinitionRestUtils;
 import io.harness.testframework.restutils.WorkflowRestUtils;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import software.wings.beans.Application;
@@ -42,7 +43,7 @@ import software.wings.service.impl.aws.model.AwsAsgGetRunningCountData;
 import software.wings.service.intfc.InfrastructureMappingService;
 
 import java.util.List;
-
+@Ignore
 public class AmiWorkflowFunctionalTest extends AbstractFunctionalTest {
   @Inject private OwnerManager ownerManager;
   @Inject private ServiceGenerator serviceGenerator;
