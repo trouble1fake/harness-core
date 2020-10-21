@@ -126,6 +126,7 @@ public class AccountLevelGitConnectorFunctionalTest extends AbstractFunctionalTe
     resetCache(getAccount().getUuid());
     WorkflowExecution workflowExecution = runWorkflow(
         bearerToken, application.getUuid(), environment.getUuid(), getExecutionArgs(workflow, environment, service));
+    logStateExecutionInstanceErrors(workflowExecution);
     assertThat(workflowExecution.getStatus()).isEqualTo(ExecutionStatus.SUCCESS);
   }
 
@@ -147,13 +148,13 @@ public class AccountLevelGitConnectorFunctionalTest extends AbstractFunctionalTe
 
     WorkflowExecution workflowExecution = runWorkflow(
         bearerToken, application.getUuid(), environment.getUuid(), getExecutionArgs(workflow, environment, service));
+    logStateExecutionInstanceErrors(workflowExecution);
     assertThat(workflowExecution.getStatus()).isEqualTo(ExecutionStatus.SUCCESS);
   }
 
   @Test(timeout = TIMEOUT)
   @Owner(developers = ABOSII)
   @Category(CDFunctionalTests.class)
-  @Ignore("There is no clear reason why this test is failing on jenkins. Will investigate it later")
   public void testHelmUsingAccountLevelGitConnector() {
     Service service = createHelmService("helm-account-level-git");
     updateApplicationManifest(createServiceManifest(service, "charts/basic", StoreType.HelmSourceRepo));
@@ -169,6 +170,7 @@ public class AccountLevelGitConnectorFunctionalTest extends AbstractFunctionalTe
 
     WorkflowExecution workflowExecution = runWorkflow(
         bearerToken, application.getUuid(), environment.getUuid(), getExecutionArgs(workflow, environment, service));
+    logStateExecutionInstanceErrors(workflowExecution);
     assertThat(workflowExecution.getStatus()).isEqualTo(ExecutionStatus.SUCCESS);
   }
 
