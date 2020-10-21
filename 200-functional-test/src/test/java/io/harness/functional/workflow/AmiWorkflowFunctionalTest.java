@@ -132,6 +132,7 @@ public class AmiWorkflowFunctionalTest extends AbstractFunctionalTest {
   @Test
   @Owner(developers = ROHIT_KUMAR)
   @Category(CDFunctionalTests.class)
+  @Ignore
   public void shouldRunAwsAmiWorkflow_Launchtemplate() {
     service = serviceGenerator.ensureAmiGenericTest(seed, owners, "aws-ami-lt");
     final String accountId = service.getAccountId();

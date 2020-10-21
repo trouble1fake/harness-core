@@ -253,9 +253,9 @@ public abstract class AbstractFunctionalTest extends CategoryTest implements Gra
           return stateExecutionInstance.getStateExecutionMap().values();
         })
         .flatMap(Collection::stream)
-        .filter(stateExecutionData
-            -> stateExecutionData.getStatus() == ExecutionStatus.FAILED
-                || stateExecutionData.getStatus() == ExecutionStatus.ERROR)
+//        .filter(stateExecutionData
+//            -> stateExecutionData.getStatus() == ExecutionStatus.FAILED
+//                || stateExecutionData.getStatus() == ExecutionStatus.ERROR)
         .forEach(stateExecutionData -> {
           logger.info("Analyzing failed state: {}", stateExecutionData.getStateName());
           if (isNotEmpty(stateExecutionData.getErrorMsg())) {
@@ -271,9 +271,9 @@ public abstract class AbstractFunctionalTest extends CategoryTest implements Gra
             if (phaseStepExecutionSummary != null) {
               phaseStepExecutionSummary.getStepExecutionSummaryList()
                   .stream()
-                  .filter(stepExecutionSummary
-                      -> stepExecutionSummary.getStatus() == ExecutionStatus.ERROR
-                          || stepExecutionSummary.getStatus() == ExecutionStatus.FAILED)
+//                  .filter(stepExecutionSummary
+//                      -> stepExecutionSummary.getStatus() == ExecutionStatus.ERROR
+//                          || stepExecutionSummary.getStatus() == ExecutionStatus.FAILED)
                   .forEach(stepExecutionSummary
                       -> logger.info("Phase step execution failed at state: {} and step name: {} with message: {}",
                           stateExecutionData.getStateName(), stepExecutionSummary.getStepName(),
