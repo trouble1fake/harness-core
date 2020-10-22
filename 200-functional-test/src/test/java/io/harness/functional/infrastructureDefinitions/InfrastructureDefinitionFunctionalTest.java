@@ -320,7 +320,8 @@ public class InfrastructureDefinitionFunctionalTest extends AbstractFunctionalTe
     ExecutionArgs executionArgs = prepareExecutionArgs(workflow, artifacts, workflowVariables);
     WorkflowExecution workflowExecution = WorkflowRestUtils.startWorkflow(bearerToken, appId, envId, executionArgs);
     WorkflowExecution finalWorkflowExecution = workflowUtils.checkForWorkflowSuccess(workflowExecution);
-    assertInstanceCount(finalWorkflowExecution.getStatus(), appId, finalWorkflowExecution.getInfraMappingIds().get(0));
+    assertInstanceCount(finalWorkflowExecution.getStatus(), appId, finalWorkflowExecution.getInfraMappingIds().get(0),
+        finalWorkflowExecution.getInfraDefinitionIds().get(0));
   }
 
   private Artifact getArtifact(Service service, String appId) {

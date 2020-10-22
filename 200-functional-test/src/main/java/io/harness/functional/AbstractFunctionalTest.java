@@ -70,6 +70,7 @@ import software.wings.service.impl.analysis.AnalysisContext;
 import software.wings.service.impl.analysis.AnalysisContext.AnalysisContextKeys;
 import software.wings.service.impl.security.auth.AuthHandler;
 import software.wings.service.intfc.FeatureFlagService;
+import software.wings.service.intfc.InfrastructureDefinitionService;
 import software.wings.service.intfc.InfrastructureMappingService;
 import software.wings.service.intfc.UserService;
 import software.wings.service.intfc.WorkflowExecutionService;
@@ -105,6 +106,7 @@ public abstract class AbstractFunctionalTest extends CategoryTest implements Gra
   @Inject private InstanceService instanceService;
   @Inject InfrastructureMappingService infrastructureMappingService;
   @Inject ServerlessInstanceService serverlessInstanceService;
+  @Inject InfrastructureDefinitionService infrastructureDefinitionService;
 
   @Override
   public DataLoaderRegistry getDataLoaderRegistry() {
@@ -388,30 +390,31 @@ public abstract class AbstractFunctionalTest extends CategoryTest implements Gra
     logStateExecutionInstanceErrors(workflowExecution);
     assertThat(workflowExecution).isNotNull();
     logger.info("Waiting for execution to finish");
-    assertInstanceCount(workflowExecution.getStatus(), appId, workflowExecution.getInfraMappingIds().get(0));
+    assertInstanceCount(workflowExecution.getStatus(), appId, workflowExecution.getInfraMappingIds().get(0),
+        workflowExecution.getInfraDefinitionIds().get(0));
 
     logger.info("ECs Execution status: " + workflowExecution.getStatus());
     assertThat(workflowExecution.getStatus()).isEqualTo(ExecutionStatus.SUCCESS);
   }
 
-  protected void assertInstanceCount(ExecutionStatus workflowExecutionStatus, String appId, String infraMappingId) {
+  protected void assertInstanceCount(
+      ExecutionStatus workflowExecutionStatus, String appId, String infraMappingId, String infraDefinitionId) {
     if (workflowExecutionStatus != ExecutionStatus.SUCCESS) {
       return;
     }
-
-    String deploymentType = infrastructureMappingService.get(appId, infraMappingId).getDeploymentType();
+    DeploymentType deploymentType = infrastructureDefinitionService.get(appId, infraDefinitionId).getDeploymentType();
     assertThat(getActiveInstancesConditional(appId, infraMappingId, deploymentType)).isGreaterThanOrEqualTo(1);
   }
 
-  private long getActiveInstancesConditional(String appId, String infraMappingId, String deploymentType) {
+  private long getActiveInstancesConditional(String appId, String infraMappingId, DeploymentType deploymentType) {
     Awaitility.await().atMost(5, TimeUnit.MINUTES).pollInterval(5, TimeUnit.SECONDS).until(() -> {
-      if (deploymentType == DeploymentType.AWS_LAMBDA.getDisplayName()) {
+      if (deploymentType == DeploymentType.AWS_LAMBDA) {
         return serverlessInstanceService.list(infraMappingId, appId).size() >= 1;
       } else {
         return instanceService.getInstanceCount(appId, infraMappingId) >= 1;
       }
     });
-    if (deploymentType == DeploymentType.AWS_LAMBDA.getDisplayName()) {
+    if (deploymentType == DeploymentType.AWS_LAMBDA) {
       return serverlessInstanceService.list(infraMappingId, appId).size();
     } else {
       return instanceService.getInstanceCount(appId, infraMappingId);
