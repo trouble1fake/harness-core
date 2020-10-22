@@ -1,23 +1,23 @@
 package io.harness.functional.helm;
 
-import static io.harness.data.structure.EmptyPredicate.isEmpty;
+import static io.harness.k8s.model.HelmVersion.V2;
+import static io.harness.k8s.model.HelmVersion.V3;
 import static io.harness.rule.OwnerRule.ABOSII;
+import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
-import static software.wings.beans.BasicOrchestrationWorkflow.BasicOrchestrationWorkflowBuilder;
-import static software.wings.beans.Workflow.WorkflowBuilder.aWorkflow;
 
 import com.google.inject.Inject;
 
 import io.harness.beans.ExecutionStatus;
-import io.harness.beans.WorkflowType;
 import io.harness.category.element.CDFunctionalTests;
 import io.harness.functional.AbstractFunctionalTest;
+import io.harness.functional.utils.HelmHelper;
+import io.harness.generator.ApplicationGenerator;
 import io.harness.generator.InfrastructureDefinitionGenerator;
 import io.harness.generator.InfrastructureDefinitionGenerator.InfrastructureDefinitions;
 import io.harness.generator.OwnerManager;
 import io.harness.generator.OwnerManager.Owners;
 import io.harness.generator.Randomizer.Seed;
-import io.harness.generator.ServiceGenerator;
 import io.harness.generator.SettingGenerator;
 import io.harness.k8s.model.HelmVersion;
 import io.harness.rule.Owner;
@@ -26,45 +26,33 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import software.wings.api.DeploymentType;
-import software.wings.beans.BasicOrchestrationWorkflow;
 import software.wings.beans.ExecutionArgs;
-import software.wings.beans.GraphNode;
 import software.wings.beans.HelmChartConfig;
 import software.wings.beans.Service;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.Workflow;
 import software.wings.beans.WorkflowExecution;
-import software.wings.beans.WorkflowPhase;
 import software.wings.beans.appmanifest.AppManifestKind;
 import software.wings.beans.appmanifest.ApplicationManifest;
 import software.wings.beans.appmanifest.ManifestFile;
 import software.wings.beans.appmanifest.StoreType;
 import software.wings.infra.InfrastructureDefinition;
 import software.wings.service.intfc.ApplicationManifestService;
-import software.wings.service.intfc.ServiceResourceService;
-import software.wings.service.intfc.WorkflowService;
-import software.wings.utils.ArtifactType;
-
-import java.util.List;
-import java.util.Map;
 
 @Slf4j
 public class HelmFunctionalTest extends AbstractFunctionalTest {
-  private static final String WORKFLOW_NAME = "Helm S3 Functional Test";
-  private static final String RELEASE_NAME = "functional-test";
-  private static final String HELM_RELEASE_NAME_PREFIX = "helmReleaseNamePrefix";
-  private static final String HELM_S3_SERVICE_NAME = "Helm S3 Functional Test";
-  private static final String CHART_NAME = "aks-helloworld";
-  private static final String BASE_PATH = "helm/charts";
+  private static final String WORKFLOW_NAME = "Helm%s S3 Deployment";
+  private static final String HELM_S3_SERVICE_NAME = "Helm%s S3 Service";
+  private static final String CHART_NAME = "harness-todolist";
+  private static final String HELM_V2_BASE_PATH = "helmv2/charts";
+  private static final String HELM_V3_BASE_PATH = "helmv3/charts";
 
   @Inject private OwnerManager ownerManager;
-  @Inject private ServiceGenerator serviceGenerator;
   @Inject private SettingGenerator settingGenerator;
   @Inject private InfrastructureDefinitionGenerator infrastructureDefinitionGenerator;
-  @Inject private WorkflowService workflowService;
-  @Inject private ServiceResourceService serviceResourceService;
   @Inject private ApplicationManifestService applicationManifestService;
+  @Inject private ApplicationGenerator applicationGenerator;
+  @Inject private HelmHelper helmHelper;
 
   private Owners owners;
   private InfrastructureDefinition infrastructureDefinition;
@@ -75,6 +63,8 @@ public class HelmFunctionalTest extends AbstractFunctionalTest {
   @Before
   public void setUp() throws Exception {
     owners = ownerManager.create();
+    owners.obtainApplication(
+        () -> applicationGenerator.ensurePredefined(seed, owners, ApplicationGenerator.Applications.GENERIC_TEST));
     infrastructureDefinition =
         infrastructureDefinitionGenerator.ensurePredefined(seed, owners, InfrastructureDefinitions.GCP_HELM);
     logger.info("Ensured Infra def");
@@ -84,85 +74,59 @@ public class HelmFunctionalTest extends AbstractFunctionalTest {
   @Test
   @Owner(developers = ABOSII)
   @Category(CDFunctionalTests.class)
-  public void testHelmS3WorkflowExecution() {
-    Service helmS3Service = createHelm3S3Service();
+  public void testHelmV2S3WorkflowExecution() {
+    Service helmS3Service = createHelmS3Service(V2);
     logger.info("Created Service");
     addValuesYamlToService(helmS3Service);
     logger.info("Added values.yaml to service");
-    workflow = ensureWorkflow(helmS3Service, infrastructureDefinition);
-    logger.info("Ensured workflow");
-    workflow = updateReleaseNameInWorkflow(workflow);
-    logger.info("Updated release name in workflow");
+    workflow = helmHelper.createHelmWorkflow(
+        owners, seed, format(WORKFLOW_NAME, V2.name()), helmS3Service, infrastructureDefinition);
+    logger.info("Workflow created");
 
     resetCache(owners.obtainAccount().getUuid());
     ExecutionArgs executionArgs = getExecutionArgs();
 
     WorkflowExecution workflowExecution =
         runWorkflow(bearerToken, helmS3Service.getAppId(), infrastructureDefinition.getEnvId(), executionArgs);
-    logger.info("Started workflow execution");
-    resetCache(owners.obtainAccount().getUuid());
+
     logStateExecutionInstanceErrors(workflowExecution);
     assertThat(workflowExecution.getStatus()).isEqualTo(ExecutionStatus.SUCCESS);
   }
 
-  private Service createHelm3S3Service() {
-    Service service = Service.builder()
-                          .name(HELM_S3_SERVICE_NAME)
-                          .deploymentType(DeploymentType.HELM)
-                          .appId(infrastructureDefinition.getAppId())
-                          .artifactType(ArtifactType.DOCKER)
-                          .helmVersion(HelmVersion.V3)
-                          .build();
+  @Test
+  @Owner(developers = ABOSII)
+  @Category(CDFunctionalTests.class)
+  public void testHelmV3S3WorkflowExecution() {
+    Service helmS3Service = createHelmS3Service(V3);
+    logger.info("Created Service");
+    addValuesYamlToService(helmS3Service);
+    logger.info("Added values.yaml to service");
+    workflow = helmHelper.createHelmWorkflow(
+        owners, seed, format(WORKFLOW_NAME, V3.name()), helmS3Service, infrastructureDefinition);
+    logger.info("Workflow created");
 
-    Service savedService = serviceResourceService.getServiceByName(service.getAppId(), service.getName());
-    if (savedService == null) {
-      savedService = serviceResourceService.save(service);
-    } else {
-      service.setUuid(savedService.getUuid());
-      savedService = serviceResourceService.update(service);
-    }
-    owners.add(savedService);
+    resetCache(owners.obtainAccount().getUuid());
+    ExecutionArgs executionArgs = getExecutionArgs();
 
-    addApplicationManifestToService(seed, owners, savedService);
-    return service;
+    WorkflowExecution workflowExecution =
+        runWorkflow(bearerToken, helmS3Service.getAppId(), infrastructureDefinition.getEnvId(), executionArgs);
+
+    logStateExecutionInstanceErrors(workflowExecution);
+    assertThat(workflowExecution.getStatus()).isEqualTo(ExecutionStatus.SUCCESS);
   }
 
-  private void addApplicationManifestToService(Seed seed, Owners owners, Service service) {
+  private Service createHelmS3Service(HelmVersion helmVersion) {
     SettingAttribute helmS3Connector =
         settingGenerator.ensurePredefined(seed, owners, SettingGenerator.Settings.HELM_S3_CONNECTOR);
 
-    ApplicationManifest applicationManifest = ApplicationManifest.builder()
-                                                  .serviceId(service.getUuid())
-                                                  .storeType(StoreType.HelmChartRepo)
-                                                  .helmChartConfig(HelmChartConfig.builder()
-                                                                       .connectorId(helmS3Connector.getUuid())
-                                                                       .chartName(CHART_NAME)
-                                                                       .basePath(BASE_PATH)
-                                                                       .build())
-                                                  .kind(AppManifestKind.K8S_MANIFEST)
-                                                  .build();
-    applicationManifest.setAppId(service.getAppId());
+    HelmChartConfig helmChartConfig = HelmChartConfig.builder()
+                                          .connectorId(helmS3Connector.getUuid())
+                                          .chartName(CHART_NAME)
+                                          .basePath(V3 == helmVersion ? HELM_V3_BASE_PATH : HELM_V2_BASE_PATH)
+                                          .build();
 
-    List<ApplicationManifest> applicationManifests =
-        applicationManifestService.listAppManifests(service.getAppId(), service.getUuid());
-
-    if (isEmpty(applicationManifests)) {
-      applicationManifestService.create(applicationManifest);
-    } else {
-      boolean found = false;
-      for (ApplicationManifest savedApplicationManifest : applicationManifests) {
-        if (savedApplicationManifest.getKind() == AppManifestKind.K8S_MANIFEST
-            && savedApplicationManifest.getStoreType() == StoreType.HelmChartRepo) {
-          applicationManifest.setUuid(savedApplicationManifest.getUuid());
-          applicationManifestService.update(applicationManifest);
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
-        applicationManifestService.create(applicationManifest);
-      }
-    }
+    return helmHelper.createHelmService(
+        owners, seed, format(HELM_S3_SERVICE_NAME, helmVersion.name()), helmVersion, helmChartConfig);
   }
 
   private void addValuesYamlToService(Service helmS3Service) {
@@ -191,42 +155,11 @@ public class HelmFunctionalTest extends AbstractFunctionalTest {
     applicationManifestService.upsertApplicationManifestFile(manifestFile, applicationManifest, true);
   }
 
-  private Workflow ensureWorkflow(Service helmS3Service, InfrastructureDefinition infrastructureDefinition) {
-    Workflow workflow =
-        aWorkflow()
-            .name(WORKFLOW_NAME)
-            .appId(helmS3Service.getAppId())
-            .envId(infrastructureDefinition.getEnvId())
-            .serviceId(helmS3Service.getUuid())
-            .infraDefinitionId(infrastructureDefinition.getUuid())
-            .workflowType(WorkflowType.ORCHESTRATION)
-            .orchestrationWorkflow(BasicOrchestrationWorkflowBuilder.aBasicOrchestrationWorkflow().build())
-            .build();
-
-    Workflow savedWorkflow = workflowService.readWorkflowByName(workflow.getAppId(), workflow.getName());
-    if (savedWorkflow != null) {
-      workflowService.deleteWorkflow(savedWorkflow.getAppId(), savedWorkflow.getUuid());
-    }
-    savedWorkflow = workflowService.createWorkflow(workflow);
-    return savedWorkflow;
-  }
-
   @NotNull
   private ExecutionArgs getExecutionArgs() {
     ExecutionArgs executionArgs = new ExecutionArgs();
     executionArgs.setOrchestrationId(workflow.getUuid());
     executionArgs.setWorkflowType(workflow.getWorkflowType());
     return executionArgs;
-  }
-
-  private Workflow updateReleaseNameInWorkflow(Workflow workflow) {
-    BasicOrchestrationWorkflow orchestrationWorkflow = (BasicOrchestrationWorkflow) workflow.getOrchestrationWorkflow();
-    WorkflowPhase workflowPhase = orchestrationWorkflow.getWorkflowPhases().get(0);
-    GraphNode helmDeployStep = workflowPhase.getPhaseSteps().get(0).getSteps().get(0);
-    Map<String, Object> properties = helmDeployStep.getProperties();
-    properties.put(HELM_RELEASE_NAME_PREFIX, RELEASE_NAME);
-    helmDeployStep.setProperties(properties);
-
-    return workflowService.updateWorkflow(workflow, false);
   }
 }

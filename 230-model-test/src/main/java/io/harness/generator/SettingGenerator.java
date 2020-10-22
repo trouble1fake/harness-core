@@ -94,9 +94,9 @@ public class SettingGenerator {
   private static final String HELM_CHART_REPO = "Helm Chart Repo";
   private static final String HELM_SOURCE_REPO_URL = "https://github.com/helm/charts.git";
   private static final String HELM_SOURCE_REPO = "Helm Source Repo";
-  private static final String HELM_S3_BUCKET = "anshul-test-123";
+  private static final String HELM_S3_BUCKET = "deployment-functional-tests-charts";
   private static final String HELM_S3 = "HELM S3";
-  private static final String REGION_AP_SOUTH_1 = "ap-south-1";
+  private static final String REGION_US_EAST_1 = "us-east-1";
   private static final String HARNESS_ADMIN = "harnessadmin";
 
   @Inject AccountGenerator accountGenerator;
@@ -228,7 +228,7 @@ public class SettingGenerator {
 
   private SettingAttribute ensureHelmS3Connector(Seed seed, Owners owners) {
     final Account account = accountGenerator.ensurePredefined(seed, owners, Accounts.GENERIC_TEST);
-    SettingAttribute awsCloudProvider = ensurePredefined(seed, owners, Settings.AWS_TEST_CLOUD_PROVIDER);
+    SettingAttribute awsCloudProvider = ensurePredefined(seed, owners, AWS_DEPLOYMENT_FUNCTIONAL_TESTS_CLOUD_PROVIDER);
 
     SettingAttribute settingAttribute = aSettingAttribute()
                                             .withName(HELM_S3)
@@ -239,7 +239,7 @@ public class SettingGenerator {
                                                            .accountId(account.getUuid())
                                                            .connectorId(awsCloudProvider.getUuid())
                                                            .bucketName(HELM_S3_BUCKET)
-                                                           .region(REGION_AP_SOUTH_1)
+                                                           .region(REGION_US_EAST_1)
                                                            .build())
                                             .withUsageRestrictions(getAllAppAllEnvUsageRestrictions())
                                             .build();
