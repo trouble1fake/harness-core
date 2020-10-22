@@ -122,8 +122,7 @@ public class AmiWorkflowFunctionalTest extends AbstractFunctionalTest {
     assertThat(amiInfraMapping.getSpotinstElastiGroupJson()).isEqualTo(amiInfrastructure.getSpotinstElastiGroupJson());
 
     assertThat(workflowExecution.getStatus()).isEqualTo(ExecutionStatus.SUCCESS);
-    assertInstanceCount(
-        workflowExecution.getStatus(), appId, bgWorkflow.getServiceId(), workflowExecution.getInfraMappingIds().get(0));
+    assertInstanceCount(workflowExecution.getStatus(), appId, infrastructureMappings.get(0).getUuid());
     // TODO: delete ASG
   }
 
