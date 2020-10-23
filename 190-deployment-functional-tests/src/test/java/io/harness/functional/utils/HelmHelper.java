@@ -3,6 +3,7 @@ package io.harness.functional.utils;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static java.lang.String.format;
 import static software.wings.beans.BasicOrchestrationWorkflow.BasicOrchestrationWorkflowBuilder.aBasicOrchestrationWorkflow;
+import static software.wings.beans.Variable.VariableBuilder.aVariable;
 import static software.wings.beans.Workflow.WorkflowBuilder.aWorkflow;
 
 import com.google.common.collect.ImmutableMap;
@@ -20,6 +21,7 @@ import software.wings.beans.BasicOrchestrationWorkflow;
 import software.wings.beans.GraphNode;
 import software.wings.beans.HelmChartConfig;
 import software.wings.beans.Service;
+import software.wings.beans.Variable;
 import software.wings.beans.Workflow;
 import software.wings.beans.WorkflowPhase;
 import software.wings.beans.appmanifest.AppManifestKind;
@@ -30,6 +32,7 @@ import software.wings.service.intfc.ApplicationManifestService;
 import software.wings.service.intfc.WorkflowService;
 import software.wings.utils.ArtifactType;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -48,7 +51,7 @@ public class HelmHelper {
   @Inject private ApplicationManifestService applicationManifestService;
 
   public Workflow createHelmWorkflow(
-      Owners owners, Seed seed, String name, Service service, InfrastructureDefinition infraDefinition) {
+      Seed seed, Owners owners, String name, Service service, InfrastructureDefinition infraDefinition) {
     Workflow workflow = workflowGenerator.ensureWorkflow(seed, owners,
         aWorkflow()
             .name(name)
@@ -57,7 +60,12 @@ public class HelmHelper {
             .infraDefinitionId(infraDefinition.getUuid())
             .serviceId(service.getUuid())
             .workflowType(WorkflowType.ORCHESTRATION)
-            .orchestrationWorkflow(aBasicOrchestrationWorkflow().build())
+            .orchestrationWorkflow(
+                aBasicOrchestrationWorkflow()
+                    // these variables can be used for validation of expression rendering and can be provided
+                    // with ExecutionArgs and shouldn't be mandatory
+                    .withUserVariables(Arrays.asList(aVariable().name("serviceName").mandatory(false).build()))
+                    .build())
             .build());
 
     return setupWorkflow(workflow, name, service.getHelmVersion());
@@ -91,8 +99,8 @@ public class HelmHelper {
     return workflowService.updateWorkflow(workflow, false);
   }
 
-  public Service createHelmService(
-      Owners owners, Seed seed, String serviceName, HelmVersion version, HelmChartConfig helmChartConfig) {
+  public Service createHelmService(Seed seed, Owners owners, String serviceName, HelmVersion version,
+      HelmChartConfig helmChartConfig, Boolean pollForChanges) {
     Service service = Service.builder()
                           .name(serviceName)
                           .deploymentType(DeploymentType.HELM)
@@ -102,16 +110,17 @@ public class HelmHelper {
                           .build();
 
     service = serviceGenerator.ensureService(seed, owners, service);
-    applyHelmChartConfigToService(service, helmChartConfig);
+    applyHelmChartConfigToService(service, helmChartConfig, pollForChanges);
     return service;
   }
 
-  private void applyHelmChartConfigToService(Service service, HelmChartConfig helmChartConfig) {
+  public void applyHelmChartConfigToService(Service service, HelmChartConfig helmChartConfig, Boolean pollForChanges) {
     ApplicationManifest applicationManifest = ApplicationManifest.builder()
                                                   .serviceId(service.getUuid())
                                                   .storeType(StoreType.HelmChartRepo)
                                                   .helmChartConfig(helmChartConfig)
                                                   .kind(AppManifestKind.K8S_MANIFEST)
+                                                  .pollForChanges(pollForChanges)
                                                   .build();
     applicationManifest.setAppId(service.getAppId());
 
@@ -124,7 +133,8 @@ public class HelmHelper {
       boolean found = false;
       for (ApplicationManifest savedApplicationManifest : applicationManifests) {
         if (savedApplicationManifest.getKind() == AppManifestKind.K8S_MANIFEST
-            && savedApplicationManifest.getStoreType() == StoreType.HelmChartRepo) {
+            && (savedApplicationManifest.getStoreType() == StoreType.HelmChartRepo
+                   || savedApplicationManifest.getStoreType() == StoreType.Local)) {
           applicationManifest.setUuid(savedApplicationManifest.getUuid());
           applicationManifestService.update(applicationManifest);
           found = true;

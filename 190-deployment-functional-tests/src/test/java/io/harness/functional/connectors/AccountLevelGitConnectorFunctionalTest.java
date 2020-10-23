@@ -168,7 +168,7 @@ public class AccountLevelGitConnectorFunctionalTest extends AbstractFunctionalTe
     InfrastructureDefinition infraDefinition =
         infrastructureDefinitionGenerator.ensurePredefined(seed, owners, GCP_HELM);
 
-    Workflow workflow = helmHelper.createHelmWorkflow(owners, seed, getName("helm", "wf"), service, infraDefinition);
+    Workflow workflow = helmHelper.createHelmWorkflow(seed, owners, getName("helm", "wf"), service, infraDefinition);
 
     WorkflowExecution workflowExecution = runWorkflow(
         bearerToken, application.getUuid(), environment.getUuid(), getExecutionArgs(workflow, environment, service));

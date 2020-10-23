@@ -399,7 +399,7 @@ public abstract class AbstractFunctionalTest extends CategoryTest implements Gra
     assertThat(instances.size()).isGreaterThanOrEqualTo(1);
   }
 
-  private List<Instance> getActiveInstancesConditional(String appId, String serviceId, String infraMappingId) {
+  protected List<Instance> getActiveInstancesConditional(String appId, String serviceId, String infraMappingId) {
     Awaitility.await().atMost(5, TimeUnit.MINUTES).pollInterval(5, TimeUnit.SECONDS).until(() -> {
       List<Instance> instances = getActiveInstances(appId, serviceId, infraMappingId);
       return instances != null && instances.size() >= 1;

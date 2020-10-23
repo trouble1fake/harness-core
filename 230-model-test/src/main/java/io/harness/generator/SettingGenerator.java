@@ -5,6 +5,7 @@ import static io.harness.generator.SettingGenerator.Settings.AWS_SPOTINST_TEST_C
 import static io.harness.generator.SettingGenerator.Settings.AWS_TEST_CLOUD_PROVIDER;
 import static io.harness.generator.SettingGenerator.Settings.DEV_TEST_CONNECTOR;
 import static io.harness.generator.SettingGenerator.Settings.GITHUB_TEST_CONNECTOR;
+import static io.harness.generator.SettingGenerator.Settings.HELM_GCS_CONNECTOR;
 import static io.harness.generator.SettingGenerator.Settings.PHYSICAL_DATA_CENTER;
 import static io.harness.generator.constants.SettingsGeneratorConstants.PCF_END_POINT;
 import static io.harness.generator.constants.SettingsGeneratorConstants.PCF_KEY;
@@ -61,6 +62,7 @@ import software.wings.beans.config.ArtifactoryConfig;
 import software.wings.beans.config.NexusConfig;
 import software.wings.beans.settings.azureartifacts.AzureArtifactsPATConfig;
 import software.wings.beans.settings.helm.AmazonS3HelmRepoConfig;
+import software.wings.beans.settings.helm.GCSHelmRepoConfig;
 import software.wings.beans.settings.helm.HttpHelmRepoConfig;
 import software.wings.dl.WingsPersistence;
 import software.wings.helpers.ext.mail.SmtpConfig;
@@ -95,6 +97,7 @@ public class SettingGenerator {
   private static final String HELM_SOURCE_REPO_URL = "https://github.com/helm/charts.git";
   private static final String HELM_SOURCE_REPO = "Helm Source Repo";
   private static final String HELM_S3_BUCKET = "deployment-functional-tests-charts";
+  private static final String HELM_GCS_BUCKET = "deployment-functional-tests-charts";
   private static final String HELM_S3 = "HELM S3";
   private static final String REGION_US_EAST_1 = "us-east-1";
   private static final String HARNESS_ADMIN = "harnessadmin";
@@ -140,6 +143,7 @@ public class SettingGenerator {
     ECS_FUNCTIONAL_TEST_GIT_REPO,
     ECS_FUNCTIONAL_TEST_GIT_ACCOUNT,
     HELM_S3_CONNECTOR,
+    HELM_GCS_CONNECTOR,
     ELK,
     ACCOUNT_LEVEL_GIT_CONNECTOR,
   }
@@ -216,6 +220,8 @@ public class SettingGenerator {
         return ensureEcsGitAccount(seed, owners);
       case HELM_S3_CONNECTOR:
         return ensureHelmS3Connector(seed, owners);
+      case HELM_GCS_CONNECTOR:
+        return ensureHelmGCSConnector(seed, owners);
       case ELK:
         return ensureElkConnector(seed, owners);
       case ACCOUNT_LEVEL_GIT_CONNECTOR:
@@ -240,6 +246,26 @@ public class SettingGenerator {
                                                            .connectorId(awsCloudProvider.getUuid())
                                                            .bucketName(HELM_S3_BUCKET)
                                                            .region(REGION_US_EAST_1)
+                                                           .build())
+                                            .withUsageRestrictions(getAllAppAllEnvUsageRestrictions())
+                                            .build();
+
+    return ensureSettingAttribute(seed, settingAttribute, owners);
+  }
+
+  private SettingAttribute ensureHelmGCSConnector(Seed seed, Owners owners) {
+    final Account account = accountGenerator.ensurePredefined(seed, owners, Accounts.GENERIC_TEST);
+    SettingAttribute gcpCloudProvider = ensurePredefined(seed, owners, Settings.GCP_PLAYGROUND);
+
+    SettingAttribute settingAttribute = aSettingAttribute()
+                                            .withName(HELM_GCS_CONNECTOR.name())
+                                            .withAccountId(account.getUuid())
+                                            .withCategory(HELM_REPO)
+                                            .withAccountId(account.getUuid())
+                                            .withValue(GCSHelmRepoConfig.builder()
+                                                           .accountId(account.getUuid())
+                                                           .connectorId(gcpCloudProvider.getUuid())
+                                                           .bucketName(HELM_GCS_BUCKET)
                                                            .build())
                                             .withUsageRestrictions(getAllAppAllEnvUsageRestrictions())
                                             .build();

@@ -6,6 +6,7 @@ import static io.harness.rule.OwnerRule.ABOSII;
 import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 
 import io.harness.beans.ExecutionStatus;
@@ -19,6 +20,7 @@ import io.harness.generator.OwnerManager;
 import io.harness.generator.OwnerManager.Owners;
 import io.harness.generator.Randomizer.Seed;
 import io.harness.generator.SettingGenerator;
+import io.harness.generator.SettingGenerator.Settings;
 import io.harness.k8s.model.HelmVersion;
 import io.harness.rule.Owner;
 import lombok.extern.slf4j.Slf4j;
@@ -41,8 +43,8 @@ import software.wings.service.intfc.ApplicationManifestService;
 
 @Slf4j
 public class HelmFunctionalTest extends AbstractFunctionalTest {
-  private static final String WORKFLOW_NAME = "Helm%s S3 Deployment";
-  private static final String HELM_S3_SERVICE_NAME = "Helm%s S3 Service";
+  private static final String WORKFLOW_CLOUD_STORAGE_NAME = "Helm%s %s Deployment";
+  private static final String SERVICE_CLOUD_STORAGE_NAME = "Helm%s %s Service";
   private static final String CHART_NAME = "harness-todolist";
   private static final String HELM_V2_BASE_PATH = "helmv2/charts";
   private static final String HELM_V3_BASE_PATH = "helmv3/charts";
@@ -75,58 +77,68 @@ public class HelmFunctionalTest extends AbstractFunctionalTest {
   @Owner(developers = ABOSII)
   @Category(CDFunctionalTests.class)
   public void testHelmV2S3WorkflowExecution() {
-    Service helmS3Service = createHelmS3Service(V2);
-    logger.info("Created Service");
-    addValuesYamlToService(helmS3Service);
-    logger.info("Added values.yaml to service");
-    workflow = helmHelper.createHelmWorkflow(
-        owners, seed, format(WORKFLOW_NAME, V2.name()), helmS3Service, infrastructureDefinition);
-    logger.info("Workflow created");
-
-    resetCache(owners.obtainAccount().getUuid());
-    ExecutionArgs executionArgs = getExecutionArgs();
-
-    WorkflowExecution workflowExecution =
-        runWorkflow(bearerToken, helmS3Service.getAppId(), infrastructureDefinition.getEnvId(), executionArgs);
-
-    logStateExecutionInstanceErrors(workflowExecution);
-    assertThat(workflowExecution.getStatus()).isEqualTo(ExecutionStatus.SUCCESS);
+    String serviceName = format(SERVICE_CLOUD_STORAGE_NAME, V2, "S3");
+    String workflowName = format(WORKFLOW_CLOUD_STORAGE_NAME, V2, "S3");
+    Service service = createHelmCloudStorageService(serviceName, V2, Settings.HELM_S3_CONNECTOR);
+    testHelmWorkflowExecution(service, workflowName);
   }
 
   @Test
   @Owner(developers = ABOSII)
   @Category(CDFunctionalTests.class)
   public void testHelmV3S3WorkflowExecution() {
-    Service helmS3Service = createHelmS3Service(V3);
-    logger.info("Created Service");
-    addValuesYamlToService(helmS3Service);
+    String serviceName = format(SERVICE_CLOUD_STORAGE_NAME, V3, "S3");
+    String workflowName = format(WORKFLOW_CLOUD_STORAGE_NAME, V3, "S3");
+    Service service = createHelmCloudStorageService(serviceName, V3, Settings.HELM_S3_CONNECTOR);
+    testHelmWorkflowExecution(service, workflowName);
+  }
+
+  @Test
+  @Owner(developers = ABOSII)
+  @Category(CDFunctionalTests.class)
+  public void testHelmV2GCSWorkflowExecution() {
+    String serviceName = format(SERVICE_CLOUD_STORAGE_NAME, V2, "GCS");
+    String workflowName = format(WORKFLOW_CLOUD_STORAGE_NAME, V2, "GCS");
+    Service service = createHelmCloudStorageService(serviceName, V2, Settings.HELM_GCS_CONNECTOR);
+    testHelmWorkflowExecution(service, workflowName);
+  }
+
+  @Test
+  @Owner(developers = ABOSII)
+  @Category(CDFunctionalTests.class)
+  public void testHelmV3GCSWorkflowExecution() {
+    String serviceName = format(SERVICE_CLOUD_STORAGE_NAME, V3, "GCS");
+    String workflowName = format(WORKFLOW_CLOUD_STORAGE_NAME, V3, "GCS");
+    Service service = createHelmCloudStorageService(serviceName, V3, Settings.HELM_GCS_CONNECTOR);
+    testHelmWorkflowExecution(service, workflowName);
+  }
+
+  private void testHelmWorkflowExecution(Service service, String workflowName) {
+    addValuesYamlToService(service);
     logger.info("Added values.yaml to service");
-    workflow = helmHelper.createHelmWorkflow(
-        owners, seed, format(WORKFLOW_NAME, V3.name()), helmS3Service, infrastructureDefinition);
+    workflow = helmHelper.createHelmWorkflow(seed, owners, workflowName, service, infrastructureDefinition);
     logger.info("Workflow created");
 
     resetCache(owners.obtainAccount().getUuid());
-    ExecutionArgs executionArgs = getExecutionArgs();
+    ExecutionArgs executionArgs = getExecutionArgs("functional-tests");
 
     WorkflowExecution workflowExecution =
-        runWorkflow(bearerToken, helmS3Service.getAppId(), infrastructureDefinition.getEnvId(), executionArgs);
+        runWorkflow(bearerToken, service.getAppId(), infrastructureDefinition.getEnvId(), executionArgs);
 
     logStateExecutionInstanceErrors(workflowExecution);
     assertThat(workflowExecution.getStatus()).isEqualTo(ExecutionStatus.SUCCESS);
   }
 
-  private Service createHelmS3Service(HelmVersion helmVersion) {
-    SettingAttribute helmS3Connector =
-        settingGenerator.ensurePredefined(seed, owners, SettingGenerator.Settings.HELM_S3_CONNECTOR);
+  private Service createHelmCloudStorageService(String serviceName, HelmVersion helmVersion, Settings connector) {
+    SettingAttribute helmGCSConnector = settingGenerator.ensurePredefined(seed, owners, connector);
 
     HelmChartConfig helmChartConfig = HelmChartConfig.builder()
-                                          .connectorId(helmS3Connector.getUuid())
+                                          .connectorId(helmGCSConnector.getUuid())
                                           .chartName(CHART_NAME)
                                           .basePath(V3 == helmVersion ? HELM_V3_BASE_PATH : HELM_V2_BASE_PATH)
                                           .build();
 
-    return helmHelper.createHelmService(
-        owners, seed, format(HELM_S3_SERVICE_NAME, helmVersion.name()), helmVersion, helmChartConfig);
+    return helmHelper.createHelmService(seed, owners, serviceName, helmVersion, helmChartConfig, null);
   }
 
   private void addValuesYamlToService(Service helmS3Service) {
@@ -145,7 +157,7 @@ public class HelmFunctionalTest extends AbstractFunctionalTest {
       applicationManifest = applicationManifestService.update(applicationManifest);
     }
     ManifestFile manifestFile = ManifestFile.builder()
-                                    .fileContent("serviceName: functional-test")
+                                    .fileContent("serviceName: ${workflow.variables.serviceName}")
                                     .applicationManifestId(applicationManifest.getUuid())
                                     .fileName("values.yaml")
                                     .build();
@@ -156,10 +168,11 @@ public class HelmFunctionalTest extends AbstractFunctionalTest {
   }
 
   @NotNull
-  private ExecutionArgs getExecutionArgs() {
+  private ExecutionArgs getExecutionArgs(String serviceName) {
     ExecutionArgs executionArgs = new ExecutionArgs();
     executionArgs.setOrchestrationId(workflow.getUuid());
     executionArgs.setWorkflowType(workflow.getWorkflowType());
+    executionArgs.setWorkflowVariables(ImmutableMap.of("serviceName", serviceName));
     return executionArgs;
   }
 }
