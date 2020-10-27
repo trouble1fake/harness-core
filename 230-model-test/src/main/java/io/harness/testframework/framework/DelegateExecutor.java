@@ -62,7 +62,7 @@ public class DelegateExecutor {
           return;
         }
         logger.info("Execute the delegate from {}", directory);
-        final Path jar = Paths.get(System.getProperty("user.home"),".bazel-dirs", "bin", "260-delegate", "module_deploy.jar");
+        final Path jar = Paths.get("/home/jenkins",".bazel-dirs", "bin", "260-delegate", "module_deploy.jar");
         final Path config = Paths.get(directory.getPath(), "260-delegate", "config-delegate.yml");
 
         List<String> command = new ArrayList<>();

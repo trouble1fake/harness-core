@@ -77,7 +77,7 @@ public class ManagerExecutor {
 
     logger.info("Execute the manager from {}", directory);
 
-    final Path jar = Paths.get(System.getProperty("user.home"),".bazel-dirs", "bin", "71-rest", "module_deploy.jar");
+    final Path jar = Paths.get("/home/jenkins",".bazel-dirs", "bin", "71-rest", "module_deploy.jar");
     final Path config = Paths.get(directory.getPath(), "71-rest", "modified_config.yml");
     String alpn = System.getProperty("user.home") + "/.m2/repository/" + alpnJarPath;
 
