@@ -147,3 +147,6 @@ build_java_proto_module 50-delegate-task-grpc-service proto
 build_proto_module 16-expression-service 16-expression-service/src/main/proto/io/harness/expression/service
 build_proto_module ciscm product/ci/scm/proto
 build_proto_module ciengine product/ci/engine/proto
+
+bazel ${bazelrc} build //71-rest:module_deploy.jar ${GCP} ${BAZEL_ARGUMENTS}
+bazel ${bazelrc} build //260-delegate:module_deploy.jar ${GCP} ${BAZEL_ARGUMENTS}
