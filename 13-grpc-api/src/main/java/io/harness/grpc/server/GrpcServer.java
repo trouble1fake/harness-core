@@ -43,19 +43,19 @@ public class GrpcServer extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    logger.info("Starting server: {}", server);
+    log.info("Starting server: {}", server);
     server.start();
     healthStatusManager.setStatus(HealthStatusManager.SERVICE_NAME_ALL_SERVICES, ServingStatus.SERVING);
-    logger.info("Server started successfully");
+    log.info("Server started successfully");
   }
 
   @Override
   protected void shutDown() throws Exception {
-    logger.info("Stopping server: {}", server);
+    log.info("Stopping server: {}", server);
     healthStatusManager.setStatus(HealthStatusManager.SERVICE_NAME_ALL_SERVICES, ServingStatus.NOT_SERVING);
     server.shutdown();
     server.awaitTermination();
-    logger.info("Server stopped");
+    log.info("Server stopped");
   }
 
   private Stream<ServerInterceptor> sortedInterceptors(Set<ServerInterceptor> interceptorSet) {
