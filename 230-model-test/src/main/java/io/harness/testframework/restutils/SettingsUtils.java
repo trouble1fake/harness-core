@@ -111,7 +111,7 @@ public class SettingsUtils {
         .queryParam(ACCOUNT_ID, accountId)
         .body(setAttr, ObjectMapperType.GSON)
         .contentType(ContentType.JSON)
-        .post("/validate-connectivity")
+        .post("settings/validate-connectivity")
         .jsonPath();
   }
 
