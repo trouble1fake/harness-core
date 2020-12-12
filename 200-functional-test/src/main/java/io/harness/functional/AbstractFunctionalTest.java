@@ -436,4 +436,10 @@ public abstract class AbstractFunctionalTest extends CategoryTest implements Gra
       logPageResponse.forEach(response -> log.info(response.getLogLine()));
     }
   }
+
+  protected void enableFeatureFlag(FeatureName featureName, String accountId) {
+    if (!featureFlagService.isEnabled(featureName, accountId)) {
+      featureFlagService.enableAccount(featureName, accountId);
+    }
+  }
 }
