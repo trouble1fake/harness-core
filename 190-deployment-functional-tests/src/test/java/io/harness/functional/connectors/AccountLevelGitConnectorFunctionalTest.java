@@ -14,11 +14,9 @@ import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.harness.beans.ExecutionStatus;
-import io.harness.beans.FeatureName;
 import io.harness.beans.OrchestrationWorkflowType;
 import io.harness.beans.WorkflowType;
 import io.harness.category.element.CDFunctionalTests;
-import io.harness.ff.FeatureFlagService;
 import io.harness.functional.AbstractFunctionalTest;
 import io.harness.functional.utils.HelmHelper;
 import io.harness.functional.utils.K8SUtils;
@@ -88,7 +86,6 @@ public class AccountLevelGitConnectorFunctionalTest extends AbstractFunctionalTe
   @Inject private ApplicationManifestService applicationManifestService;
   @Inject private WorkflowGenerator workflowGenerator;
   @Inject private WorkflowService workflowService;
-  @Inject private FeatureFlagService featureFlagService;
   @Inject private ArtifactStreamManager artifactStreamManager;
   @Inject private HelmHelper helmHelper;
 
