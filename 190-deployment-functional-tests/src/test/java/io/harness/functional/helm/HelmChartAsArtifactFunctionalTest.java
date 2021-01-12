@@ -81,10 +81,8 @@ public class HelmChartAsArtifactFunctionalTest extends AbstractFunctionalTest {
     application = owners.obtainApplication(
         () -> applicationGenerator.ensurePredefined(seed, owners, ApplicationGenerator.Applications.GENERIC_TEST));
 
-    enableFeatureFlag(FeatureName.HELM_CHART_AS_ARTIFACT, application.getAccountId());
-    enableFeatureFlag(FeatureName.HELM_STEADY_STATE_CHECK_1_16, application.getAccountId());
-
     resetCache(owners.obtainAccount().getUuid());
+    logManagerFeatureFlags(application.getAccountId());
   }
 
   @Test

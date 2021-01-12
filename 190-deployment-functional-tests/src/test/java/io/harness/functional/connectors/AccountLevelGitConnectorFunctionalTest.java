@@ -103,11 +103,8 @@ public class AccountLevelGitConnectorFunctionalTest extends AbstractFunctionalTe
     application = owners.obtainApplication(
         () -> applicationGenerator.ensurePredefined(seed, owners, ApplicationGenerator.Applications.GENERIC_TEST));
     assertThat(application).isNotNull();
-    if (!featureFlagService.isEnabled(FeatureName.GIT_ACCOUNT_SUPPORT, application.getAccountId())) {
-      featureFlagService.enableAccount(FeatureName.GIT_ACCOUNT_SUPPORT, application.getAccountId());
-    }
-
     accountGitConnector = settingGenerator.ensurePredefined(seed, owners, ACCOUNT_LEVEL_GIT_CONNECTOR);
+    logManagerFeatureFlags(application.getAccountId());
   }
 
   @Test(timeout = TIMEOUT)

@@ -102,8 +102,7 @@ public class TerraformFunctionalTest extends AbstractFunctionalTest {
     environment = owners.obtainEnvironment(
         () -> environmentGenerator.ensurePredefined(seed, owners, EnvironmentGenerator.Environments.GENERIC_TEST));
     assertThat(environment).isNotNull();
-
-    enableFeatureFlag(FeatureName.EXPORT_TF_PLAN, application.getAccountId());
+    logManagerFeatureFlags(application.getAccountId());
   }
 
   @Test
