@@ -246,4 +246,9 @@ public class PerpetualTaskServiceImpl implements PerpetualTaskService, DelegateO
     perpetualTaskRecordDao.markAllTasksOnDelegateForReassignment(accountId, delegateId);
     perpetualTaskCrudSubject.fireInform(PerpetualTaskCrudObserver::onRebalanceRequired);
   }
+
+  @Override
+  public void onReconnected(String accountId, String delegateId) {
+    // do nothing
+  }
 }
