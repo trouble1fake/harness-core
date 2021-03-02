@@ -1,4 +1,4 @@
-package software.wings.functional.terraform;
+package io.harness.functional.terraform;
 
 import static io.harness.beans.WorkflowType.ORCHESTRATION;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;

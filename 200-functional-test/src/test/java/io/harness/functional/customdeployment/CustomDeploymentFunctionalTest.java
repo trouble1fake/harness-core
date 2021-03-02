@@ -1,4 +1,4 @@
-package software.wings.functional.customDeployment;
+package io.harness.functional.customdeployment;
 
 import static io.harness.beans.WorkflowType.ORCHESTRATION;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
