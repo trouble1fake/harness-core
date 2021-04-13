@@ -29,7 +29,7 @@ if [ "${STEP}" == "dockerization" ]; then
   GCP=""
 fi
 if [ "${RUN_BAZEL_FUNCTIONAL_TESTS}" == "true" ]; then
-  java -Xmx4096m -XX:+HeapDumpOnOutOfMemoryError -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:mygclogfilename.gc -XX:+UseParallelGC -XX:MaxGCPauseMillis=500 -jar /home/jenkins/workspace/cd-funtional-tests/260-delegate/target/delegate-capsule.jar /home/jenkins/workspace/cd-funtional-tests/260-delegate/config-delegate.yml &
+  java -Xmx4096m -XX:+HeapDumpOnOutOfMemoryError -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:mygclogfilename.gc -XX:+UseParallelGC -XX:MaxGCPauseMillis=500 -jar /home/jenkins/workspace/pr-portal-funtional-tests/260-delegate/target/delegate-capsule.jar /home/jenkins/workspace/pr-portal-funtional-tests/260-delegate/config-delegate.yml &
   bazel ${bazelrc} test --keep_going ${GCP} ${BAZEL_ARGUMENTS} --jobs=2 -- //190-deployment-functional-tests/... || true
 fi
 
