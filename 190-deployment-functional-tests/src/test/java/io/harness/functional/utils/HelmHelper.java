@@ -10,6 +10,7 @@ import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 
 import io.harness.beans.WorkflowType;
+import io.harness.delegate.configuration.InstallUtils;
 import io.harness.generator.OwnerManager.Owners;
 import io.harness.generator.Randomizer.Seed;
 import io.harness.generator.ServiceGenerator;
@@ -208,7 +209,7 @@ public class HelmHelper {
   }
 
   private String getHelm3ClientToolsPath() {
-    File relativeToCurrentLocation = new File("../" + HELM3_CLIENT_TOOLS_PATH);
+    File relativeToCurrentLocation = new File("./" + HELM3_CLIENT_TOOLS_PATH);
     // Checks for path on jenkins
     if (relativeToCurrentLocation.exists()) {
       return relativeToCurrentLocation.getAbsolutePath();
