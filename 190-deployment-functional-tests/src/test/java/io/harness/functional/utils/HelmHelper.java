@@ -209,7 +209,7 @@ public class HelmHelper {
   }
 
   private String getHelm3ClientToolsPath() {
-    File relativeToCurrentLocation = new File("/home/jenkins/workspace/cdp-deployment-functional-tests/260-delegate/target/" + HELM3_CLIENT_TOOLS_PATH);
+    File relativeToCurrentLocation = new File("/home/jenkins/workspace/cdp-deployment-functional-tests/" + HELM3_CLIENT_TOOLS_PATH);
     // Checks for path on jenkins
     if (relativeToCurrentLocation.exists()) {
       return relativeToCurrentLocation.getAbsolutePath();
