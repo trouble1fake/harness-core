@@ -565,6 +565,7 @@ public class InstallUtils {
 
       if (result.getExitValue() == 0) {
         String helmPath = Paths.get(helmDirectory + "/helm").toAbsolutePath().normalize().toString();
+        System.out.println("HelmPath [JENKINS]: " + Paths.get(helmDirectory).toAbsolutePath().toString());
         helmPaths.put(helmVersion, helmPath);
         log.info(result.outputUTF8());
 
