@@ -8,7 +8,7 @@ import lombok.Getter;
 
 @OwnedBy(HarnessTeam.PIPELINE)
 public abstract class QueueListenerWithObservers<T extends Queuable> extends QueueListener<T> {
-  @Getter private final Subject<QueueListenerObserver> queueListenerObserverSubject = new Subject<>();
+  @Getter private final Subject<EventListenerObserver> eventListenerObserverSubject = new Subject<>();
 
   public QueueListenerWithObservers(QueueConsumer<T> queueConsumer, boolean primaryOnly) {
     super(queueConsumer, primaryOnly);
@@ -16,11 +16,11 @@ public abstract class QueueListenerWithObservers<T extends Queuable> extends Que
 
   @Override
   public void onMessage(T message) {
-    queueListenerObserverSubject.fireInform(QueueListenerObserver::onListenerStart, message);
+    eventListenerObserverSubject.fireInform(EventListenerObserver::onListenerStart, message);
     try {
       onMessageInternal(message);
     } finally {
-      queueListenerObserverSubject.fireInform(QueueListenerObserver::onListenerEnd, message);
+      eventListenerObserverSubject.fireInform(EventListenerObserver::onListenerEnd, message);
     }
   }
 
