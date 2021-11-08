@@ -58,6 +58,7 @@ public class DelegateSelectionLogsServiceImpl implements DelegateSelectionLogsSe
   private static final String NON_SELECTED = "Non Selected";
   private static final String ASSIGNED = "Assigned";
   private static final String REJECTED = "Rejected";
+  private static final String BROADCAST = "Broadcast";
   private static final String INFO = "Info";
 
   private static final String TASK_ASSIGNED = "Delegate assigned for task execution";
@@ -65,15 +66,15 @@ public class DelegateSelectionLogsServiceImpl implements DelegateSelectionLogsSe
   public static final String ELIGIBLE_DELEGATES = "Delegate(s) eligible to execute task";
   public static final String BROADCASTING_DELEGATES = "Broadcasting to delegate(s)";
   public static final String CAN_NOT_ASSIGN_TASK_GROUP =
-      "Cannot assign task due to unsupported task type for delegate(s) ";
+      "Cannot assign task due to unsupported task type for delegate(s)";
   public static final String CAN_NOT_ASSIGN_CG_NG_TASK_GROUP =
-      "Cannot assign - CG task to CG Delegate only and NG task to NG delegate(s) ";
+      "Cannot assign - CG task to CG Delegate only and NG task to NG delegate(s)";
   public static final String CAN_NOT_ASSIGN_DELEGATE_SCOPE_GROUP =
-      "Cannot assign due to task abstraction value mismatch with delegate scope for delegate(s) ";
+      "Cannot assign due to task abstraction value mismatch with delegate scope for delegate(s)";
   public static final String CAN_NOT_ASSIGN_PROFILE_SCOPE_GROUP =
-      "Cannot assign due to profile scope mismatch with task for delegate(s) ";
+      "Cannot assign due to profile scope mismatch with task for delegate(s)";
   public static final String CAN_NOT_ASSIGN_SELECTOR_TASK_GROUP =
-      "Cannot assign due to mismatch in task selector(s) with selector(s) in delegate(s) ";
+      "Cannot assign due to mismatch in task selector(s) with selector(s) in delegate(s)";
   public static final String CAN_NOT_ASSIGN_OWNER = "Cannot match task owner with delegate owner";
 
   @Override
@@ -144,7 +145,7 @@ public class DelegateSelectionLogsServiceImpl implements DelegateSelectionLogsSe
              .accountId(accountId)
              .taskId(taskId)
              .delegateIds(delegateIds)
-             .conclusion(INFO)
+             .conclusion(BROADCAST)
              .message(message)
              .eventTimestamp(System.currentTimeMillis())
              .build());
@@ -167,7 +168,6 @@ public class DelegateSelectionLogsServiceImpl implements DelegateSelectionLogsSe
     List<DelegateSelectionLog> delegateSelectionLogsList = persistence.createQuery(DelegateSelectionLog.class)
                                                                .filter(DelegateSelectionLogKeys.accountId, accountId)
                                                                .filter(DelegateSelectionLogKeys.taskId, taskId)
-
                                                                .asList();
     return delegateSelectionLogsList.stream().map(this::buildSelectionLogParams).collect(Collectors.toList());
   }
