@@ -22,6 +22,7 @@ public class DelegateTaskResponse {
   private String accountId;
   private DelegateResponseData response;
   private ResponseCode responseCode;
+  private boolean expired;
 
   public enum ResponseCode {
     OK,
