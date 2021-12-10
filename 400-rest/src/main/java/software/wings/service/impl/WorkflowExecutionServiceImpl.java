@@ -7,6 +7,7 @@
 
 package software.wings.service.impl;
 
+import static io.fabric8.utils.Lists.isNullOrEmpty;
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 import static io.harness.beans.ApiKeyInfo.getEmbeddedUserFromApiKey;
 import static io.harness.beans.ExecutionInterruptType.ABORT_ALL;
@@ -54,7 +55,20 @@ import static io.harness.logging.AutoLogContext.OverrideBehavior.OVERRIDE_NESTS;
 import static io.harness.persistence.HQuery.excludeAuthority;
 import static io.harness.threading.Morpheus.quietSleep;
 import static io.harness.validation.Validator.notNullCheck;
-
+import static java.lang.String.format;
+import static java.lang.System.currentTimeMillis;
+import static java.time.Duration.ofDays;
+import static java.time.Duration.ofMillis;
+import static java.time.Duration.ofMinutes;
+import static java.util.Arrays.asList;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toSet;
+import static org.apache.commons.collections4.ListUtils.emptyIfNull;
+import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.mongodb.morphia.mapping.Mapper.ID_KEY;
 import static software.wings.beans.ApprovalDetails.Action.APPROVE;
 import static software.wings.beans.ApprovalDetails.Action.REJECT;
 import static software.wings.beans.CGConstants.GLOBAL_APP_ID;
@@ -81,22 +95,16 @@ import static software.wings.sm.StateType.PCF_RESIZE;
 import static software.wings.sm.StateType.PHASE;
 import static software.wings.sm.StateType.PHASE_STEP;
 
-import static io.fabric8.utils.Lists.isNullOrEmpty;
-import static java.lang.String.format;
-import static java.lang.System.currentTimeMillis;
-import static java.time.Duration.ofDays;
-import static java.time.Duration.ofMillis;
-import static java.time.Duration.ofMinutes;
-import static java.util.Arrays.asList;
-import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
-import static java.util.stream.Collectors.toSet;
-import static org.apache.commons.collections4.ListUtils.emptyIfNull;
-import static org.apache.commons.lang3.StringUtils.isBlank;
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static org.mongodb.morphia.mapping.Mapper.ID_KEY;
-
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
+import com.google.inject.Singleton;
+import com.mongodb.ReadPreference;
+import com.sun.istack.internal.NotNull;
 import io.harness.alert.AlertData;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
@@ -120,6 +128,7 @@ import io.harness.beans.SortOrder.OrderType;
 import io.harness.beans.SweepingOutputInstance.Scope;
 import io.harness.beans.WorkflowType;
 import io.harness.beans.event.cg.CgPipelineStartPayload;
+import io.harness.beans.event.cg.CgWorkflowStartPayload;
 import io.harness.beans.event.cg.application.ApplicationEventData;
 import io.harness.beans.event.cg.entities.EnvironmentEntity;
 import io.harness.beans.event.cg.entities.InfraDefinitionEntity;
@@ -127,6 +136,7 @@ import io.harness.beans.event.cg.entities.ServiceEntity;
 import io.harness.beans.event.cg.pipeline.ExecutionArgsEventData;
 import io.harness.beans.event.cg.pipeline.PipelineEventData;
 import io.harness.beans.event.cg.pipeline.PipelineExecData;
+import io.harness.beans.event.cg.workflow.WorkflowEventData;
 import io.harness.cache.MongoStore;
 import io.harness.context.ContextElementType;
 import io.harness.data.structure.CollectionUtils;
@@ -154,7 +164,43 @@ import io.harness.service.EventService;
 import io.harness.state.inspection.StateInspectionService;
 import io.harness.tasks.ResponseData;
 import io.harness.waiter.WaitNotifyEngine;
-
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.ConcurrentModificationException;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.LongSummaryStatistics;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import javax.validation.executable.ValidateOnExecution;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.mongodb.morphia.query.CriteriaContainerImpl;
+import org.mongodb.morphia.query.FindOptions;
+import org.mongodb.morphia.query.Query;
+import org.mongodb.morphia.query.Sort;
+import org.mongodb.morphia.query.UpdateOperations;
+import org.mongodb.morphia.query.UpdateResults;
 import software.wings.api.ApprovalStateExecutionData;
 import software.wings.api.ArtifactCollectionExecutionData;
 import software.wings.api.AwsAmiDeployStateExecutionData;
@@ -329,54 +375,6 @@ import software.wings.sm.states.spotinst.SpotInstDeployStateExecutionData;
 import software.wings.sm.status.StateStatusUpdateInfo;
 import software.wings.sm.status.WorkflowStatusPropagator;
 import software.wings.sm.status.WorkflowStatusPropagatorFactory;
-
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.inject.Inject;
-import com.google.inject.Injector;
-import com.google.inject.Singleton;
-import com.mongodb.ReadPreference;
-import com.sun.istack.internal.NotNull;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.ConcurrentModificationException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.LongSummaryStatistics;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Queue;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import javax.validation.executable.ValidateOnExecution;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.mongodb.morphia.query.CriteriaContainerImpl;
-import org.mongodb.morphia.query.FindOptions;
-import org.mongodb.morphia.query.Query;
-import org.mongodb.morphia.query.Sort;
-import org.mongodb.morphia.query.UpdateOperations;
-import org.mongodb.morphia.query.UpdateResults;
 
 /**
  * The Class WorkflowExecutionServiceImpl.
@@ -1793,6 +1791,46 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
     return workflowExecution;
   }
 
+  private PipelineEventData getPipelineEventData(PipelineSummary summary) {
+    if (summary == null) {
+      return null;
+    }
+    return PipelineEventData.builder().id(summary.getPipelineId()).name(summary.getPipelineName()).build();
+  }
+
+  private CgWorkflowStartPayload getEventPayloadData(
+      Application app, ExecutionArgs executionArgs, WorkflowExecution execution, PipelineSummary summary) {
+    return CgWorkflowStartPayload.builder()
+        .application(ApplicationEventData.builder().id(app.getAppId()).name(app.getName()).build())
+        .executionId(execution.getUuid())
+        .services(isEmpty(execution.getServiceIds()) ? Collections.emptyList()
+                                                     : execution.getServiceIds()
+                                                           .stream()
+                                                           .map(id -> ServiceEntity.builder().id(id).build())
+                                                           .collect(toList()))
+        .infraDefinitions(isEmpty(execution.getInfraDefinitionIds())
+                ? Collections.emptyList()
+                : execution.getInfraDefinitionIds()
+                      .stream()
+                      .map(id -> InfraDefinitionEntity.builder().id(id).build())
+                      .collect(toList()))
+        .environments(isEmpty(execution.getEnvIds()) ? Collections.emptyList()
+                                                     : execution.getEnvIds()
+                                                           .stream()
+                                                           .map(id -> EnvironmentEntity.builder().id(id).build())
+                                                           .collect(toList()))
+        .pipeline(getPipelineEventData(summary))
+        .workflow(WorkflowEventData.builder()
+                      .id(execution.getWorkflowId())
+                      .name(workflowService.fetchWorkflowName(app.getUuid(), execution.getWorkflowId()))
+                      .build())
+        .startedAt(execution.getCreatedAt())
+        .triggeredByType(execution.getCreatedByType())
+        .triggeredBy(execution.getCreatedBy())
+        .executionArgs(ExecutionArgsEventData.builder().notes(executionArgs.getNotes()).build())
+        .build();
+  }
+
   private void sendEvent(Application app, ExecutionArgs executionArgs, WorkflowExecution execution) {
     if (!featureFlagService.isEnabled(FeatureName.APP_TELEMETRY, app.getAccountId())) {
       return;
@@ -1836,6 +1874,13 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
                           .build())
                 .build());
       }
+    } else {
+      PipelineSummary summary = execution.getPipelineSummary();
+      eventService.deliverEvent(app.getAccountId(), app.getUuid(),
+          EventPayload.builder()
+              .eventType(EventType.WORKFLOW_START.getEventValue())
+              .data(getEventPayloadData(app, executionArgs, execution, summary))
+              .build());
     }
   }
 
