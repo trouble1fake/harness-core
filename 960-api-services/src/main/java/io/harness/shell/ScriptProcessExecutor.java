@@ -43,6 +43,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -172,12 +173,12 @@ public class ScriptProcessExecutor extends AbstractScriptExecutor {
 
   @Override
   public ExecuteCommandResponse executeCommandString(String command, List<String> envVariablesToCollect) {
-    return executeCommandString(command, envVariablesToCollect, Collections.emptyList());
+    return executeCommandString(command, envVariablesToCollect, Collections.emptyList(), null);
   }
 
   @Override
-  public ExecuteCommandResponse executeCommandString(
-      String command, List<String> envVariablesToCollect, List<String> secretEnvVariablesToCollect) {
+  public ExecuteCommandResponse executeCommandString(String command, List<String> envVariablesToCollect,
+      List<String> secretEnvVariablesToCollect, Long timeoutInMillis) {
     ExecuteCommandResponse executeCommandResponse = null;
 
     saveExecutionLog("Executing command ...", INFO);
@@ -186,7 +187,8 @@ public class ScriptProcessExecutor extends AbstractScriptExecutor {
       case POWERSHELL:
       case BASH:
         try {
-          executeCommandResponse = executeBashScript(command, envVariablesToCollect, secretEnvVariablesToCollect);
+          executeCommandResponse =
+              executeBashScript(command, envVariablesToCollect, secretEnvVariablesToCollect, timeoutInMillis);
         } catch (Exception e) {
           saveExecutionLog(format("Exception: %s", e), ERROR, FAILURE);
         }
@@ -199,8 +201,8 @@ public class ScriptProcessExecutor extends AbstractScriptExecutor {
     return executeCommandResponse;
   }
 
-  private ExecuteCommandResponse executeBashScript(
-      String command, List<String> envVariablesToCollect, List<String> secretVariablesToCollect) throws IOException {
+  private ExecuteCommandResponse executeBashScript(String command, List<String> envVariablesToCollect,
+      List<String> secretVariablesToCollect, Long timeoutInMillis) throws IOException {
     ShellExecutionDataBuilder executionDataBuilder = ShellExecutionData.builder();
     ExecuteCommandResponseBuilder executeCommandResponseBuilder = ExecuteCommandResponse.builder();
     CommandExecutionStatus commandExecutionStatus = FAILURE;
@@ -274,6 +276,10 @@ public class ScriptProcessExecutor extends AbstractScriptExecutor {
                                               }
                                             });
 
+      if (timeoutInMillis != null) {
+        processExecutor.timeout(timeoutInMillis, TimeUnit.MILLISECONDS);
+      }
+
       ProcessResult processResult = processExecutor.execute();
       commandExecutionStatus = processResult.getExitValue() == 0 ? SUCCESS : FAILURE;
       if (commandExecutionStatus == SUCCESS && envVariablesOutputFile != null) {
@@ -291,6 +297,7 @@ public class ScriptProcessExecutor extends AbstractScriptExecutor {
       Thread.currentThread().interrupt();
       handleException(executionDataBuilder, envVariablesMap, commandExecutionStatus, e, "Script execution interrupted");
     } catch (TimeoutException e) {
+      executionDataBuilder.expired(true);
       handleException(executionDataBuilder, envVariablesMap, commandExecutionStatus, e, "Script execution timed out");
     } catch (RuntimeException e) {
       handleException(executionDataBuilder, envVariablesMap, commandExecutionStatus, e,

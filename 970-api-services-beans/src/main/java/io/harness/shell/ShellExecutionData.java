@@ -15,4 +15,5 @@ import lombok.Data;
 @Builder
 public class ShellExecutionData implements CommandExecutionData {
   private Map<String, String> sweepingOutputEnvVariables;
+  private boolean expired;
 }

@@ -58,6 +58,7 @@ public class ShellScriptTaskHandler {
     // Define output variables and secret output variables together
     List<String> items = new ArrayList<>();
     List<String> secretItems = new ArrayList<>();
+    Long timeoutInMillis = parameters.getSshTimeOut() != null ? (long) parameters.getSshTimeOut() : null;
     if (parameters.getOutputVars() != null && StringUtils.isNotEmpty(parameters.getOutputVars().trim())) {
       items = Arrays.asList(parameters.getOutputVars().split("\\s*,\\s*"));
       items.replaceAll(String::trim);
@@ -73,7 +74,7 @@ public class ShellScriptTaskHandler {
         parameters.setScript(delegateLocalConfigService.replacePlaceholdersWithLocalConfig(parameters.getScript()));
       }
       return CommandExecutionResultMapper.from(
-          executor.executeCommandString(parameters.getScript(), items, secretItems));
+          executor.executeCommandString(parameters.getScript(), items, secretItems, timeoutInMillis));
     }
 
     switch (parameters.getConnectionType()) {
@@ -85,7 +86,7 @@ public class ShellScriptTaskHandler {
               sshExecutorFactory.getExecutor(expectedSshConfig, parameters.isSaveExecutionLogs());
           enableJSchLogsPerSSHTaskExecution(parameters.isEnableJSchLogs());
           return CommandExecutionResultMapper.from(
-              executor.executeCommandString(parameters.getScript(), items, secretItems));
+              executor.executeCommandString(parameters.getScript(), items, secretItems, timeoutInMillis));
         } catch (Exception e) {
           throw new CommandExecutionException("Bash Script Failed to execute", e);
         } finally {
@@ -99,7 +100,7 @@ public class ShellScriptTaskHandler {
           WinRmExecutor executor = winrmExecutorFactory.getExecutor(
               winRmSessionConfig, parameters.isDisableWinRMCommandEncodingFFSet(), parameters.isSaveExecutionLogs());
           return CommandExecutionResultMapper.from(
-              executor.executeCommandString(parameters.getScript(), items, secretItems));
+              executor.executeCommandString(parameters.getScript(), items, secretItems, timeoutInMillis));
         } catch (Exception e) {
           throw new CommandExecutionException("Powershell script Failed to execute", e);
         }

@@ -68,8 +68,8 @@ public abstract class AbstractScriptExecutor implements BaseScriptExecutor {
   public abstract ExecuteCommandResponse executeCommandString(String command, List<String> envVariablesToCollect);
 
   @Override
-  public abstract ExecuteCommandResponse executeCommandString(
-      String command, List<String> envVariablesToCollect, List<String> secretEnvVariablesToCollect);
+  public abstract ExecuteCommandResponse executeCommandString(String command, List<String> envVariablesToCollect,
+      List<String> secretEnvVariablesToCollect, Long timeoutInMillis);
 
   public abstract String getAccountId();
 
