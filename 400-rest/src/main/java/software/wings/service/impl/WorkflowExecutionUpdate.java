@@ -130,7 +130,6 @@ public class WorkflowExecutionUpdate implements StateMachineExecutionCallback {
   @Inject private EventPublishHelper eventPublishHelper;
   @Inject private UsageMetricsEventPublisher usageMetricsEventPublisher;
   @Inject private AccountService accountService;
-  @Inject private WorkflowService workflowService;
   @Inject private UsageMetricsHelper usageMetricsHelper;
   @Inject private SegmentHandler segmentHandler;
   @Inject private HarnessTagService harnessTagService;
@@ -367,10 +366,7 @@ public class WorkflowExecutionUpdate implements StateMachineExecutionCallback {
                                 .stream()
                                 .map(id -> EnvironmentEntity.builder().id(id).build())
                                 .collect(Collectors.toList()))
-                  .workflow(WorkflowEventData.builder()
-                                .id(execution.getWorkflowId())
-                                .name(workflowService.fetchWorkflowName(appId, execution.getWorkflowId()))
-                                .build())
+                  .workflow(WorkflowEventData.builder().id(execution.getWorkflowId()).name(execution.getName()).build())
                   .pipeline(getPipelineEventData(summary))
                   .startedAt(execution.getCreatedAt())
                   .completedAt(endTs)
