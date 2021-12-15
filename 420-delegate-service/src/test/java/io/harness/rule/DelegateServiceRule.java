@@ -7,10 +7,14 @@
 
 package io.harness.rule;
 
-import static io.harness.lock.DistributedLockImplementation.NOOP;
-
-import static org.mockito.Mockito.mock;
-
+import com.google.common.collect.ImmutableSet;
+import com.google.common.util.concurrent.TimeLimiter;
+import com.google.inject.AbstractModule;
+import com.google.inject.Injector;
+import com.google.inject.Module;
+import com.google.inject.Provides;
+import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import io.harness.cf.AbstractCfModule;
 import io.harness.cf.CfClientConfig;
 import io.harness.cf.CfMigrationConfig;
@@ -41,6 +45,7 @@ import io.harness.serializer.KryoModule;
 import io.harness.serializer.KryoRegistrar;
 import io.harness.serializer.PersistenceRegistrars;
 import io.harness.service.DelegateServiceModule;
+import io.harness.springdata.HTransactionTemplate;
 import io.harness.testlib.module.MongoRuleMixin;
 import io.harness.testlib.module.TestMongoModule;
 import io.harness.threading.CurrentThreadExecutor;
@@ -49,26 +54,24 @@ import io.harness.utils.NGObjectMapperHelper;
 import io.harness.waiter.AbstractWaiterModule;
 import io.harness.waiter.WaiterConfiguration;
 import io.harness.waiter.WaiterConfiguration.PersistenceLayer;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.rules.MethodRule;
+import org.junit.runners.model.FrameworkMethod;
+import org.junit.runners.model.Statement;
+import org.mongodb.morphia.converters.TypeConverter;
+import org.springframework.data.mongodb.MongoTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
-import com.google.common.collect.ImmutableSet;
-import com.google.common.util.concurrent.TimeLimiter;
-import com.google.inject.AbstractModule;
-import com.google.inject.Injector;
-import com.google.inject.Module;
-import com.google.inject.Provides;
-import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 import java.io.Closeable;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import lombok.extern.slf4j.Slf4j;
-import org.junit.rules.MethodRule;
-import org.junit.runners.model.FrameworkMethod;
-import org.junit.runners.model.Statement;
-import org.mongodb.morphia.converters.TypeConverter;
+
+import static io.harness.lock.DistributedLockImplementation.NOOP;
+import static io.harness.outbox.TransactionOutboxModule.OUTBOX_TRANSACTION_TEMPLATE;
+import static org.mockito.Mockito.mock;
 
 @Slf4j
 public class DelegateServiceRule implements MethodRule, InjectorRuleMixin, MongoRuleMixin {
@@ -116,6 +119,7 @@ public class DelegateServiceRule implements MethodRule, InjectorRuleMixin, Mongo
             .build();
       }
     });
+
     modules.add(new ProviderModule() {
       @Provides
       @Named("lock")
@@ -128,6 +132,13 @@ public class DelegateServiceRule implements MethodRule, InjectorRuleMixin, Mongo
       @Singleton
       DistributedLockImplementation distributedLockImplementation() {
         return NOOP;
+      }
+
+      @Provides
+      @Named(OUTBOX_TRANSACTION_TEMPLATE)
+      @Singleton
+      TransactionTemplate getTransactionTemplate(MongoTransactionManager mongoTransactionManager) {
+         return new HTransactionTemplate(mongoTransactionManager, false);
       }
     });
 

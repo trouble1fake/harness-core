@@ -7,76 +7,12 @@
 
 package software.wings.service.delegate;
 
-import static io.harness.beans.DelegateTask.Status.QUEUED;
-import static io.harness.beans.FeatureName.USE_IMMUTABLE_DELEGATE;
-import static io.harness.beans.PageRequest.PageRequestBuilder.aPageRequest;
-import static io.harness.data.structure.UUIDGenerator.generateTimeBasedUuid;
-import static io.harness.data.structure.UUIDGenerator.generateUuid;
-import static io.harness.delegate.beans.DelegateProfile.DelegateProfileBuilder;
-import static io.harness.delegate.beans.DelegateProfile.builder;
-import static io.harness.delegate.beans.DelegateRegisterResponse.Action;
-import static io.harness.delegate.beans.DelegateType.DOCKER;
-import static io.harness.delegate.beans.DelegateType.ECS;
-import static io.harness.delegate.beans.DelegateType.KUBERNETES;
-import static io.harness.delegate.beans.DelegateType.SHELL_SCRIPT;
-import static io.harness.delegate.beans.K8sPermissionType.CLUSTER_ADMIN;
-import static io.harness.delegate.beans.TaskData.DEFAULT_ASYNC_CALL_TIMEOUT;
-import static io.harness.delegate.message.ManagerMessageConstants.SELF_DESTRUCT;
-import static io.harness.persistence.HQuery.excludeAuthority;
-import static io.harness.rule.OwnerRule.ALEKSANDAR;
-import static io.harness.rule.OwnerRule.ANKIT;
-import static io.harness.rule.OwnerRule.ANSHUL;
-import static io.harness.rule.OwnerRule.ARPIT;
-import static io.harness.rule.OwnerRule.BOJAN;
-import static io.harness.rule.OwnerRule.BRETT;
-import static io.harness.rule.OwnerRule.DESCRIPTION;
-import static io.harness.rule.OwnerRule.GEORGE;
-import static io.harness.rule.OwnerRule.LUCAS;
-import static io.harness.rule.OwnerRule.MARKO;
-import static io.harness.rule.OwnerRule.MARKOM;
-import static io.harness.rule.OwnerRule.MEHUL;
-import static io.harness.rule.OwnerRule.NIKOLA;
-import static io.harness.rule.OwnerRule.PUNEET;
-import static io.harness.rule.OwnerRule.RAGHU;
-import static io.harness.rule.OwnerRule.SANJA;
-import static io.harness.rule.OwnerRule.VUK;
-import static io.harness.rule.OwnerRule.XIN;
-
-import static software.wings.beans.Account.Builder.anAccount;
-import static software.wings.beans.Event.Builder.anEvent;
-import static software.wings.beans.ServiceVariable.Type.ENCRYPTED_TEXT;
-import static software.wings.service.impl.DelegateServiceImpl.DELEGATE_DIR;
-import static software.wings.service.impl.DelegateServiceImpl.DOCKER_DELEGATE;
-import static software.wings.service.impl.DelegateServiceImpl.ECS_DELEGATE;
-import static software.wings.service.impl.DelegateServiceImpl.KUBERNETES_DELEGATE;
-import static software.wings.utils.WingsTestConstants.ACCOUNT_ID;
-import static software.wings.utils.WingsTestConstants.APP_ID;
-import static software.wings.utils.WingsTestConstants.DELEGATE_GROUP_NAME;
-import static software.wings.utils.WingsTestConstants.DELEGATE_ID;
-import static software.wings.utils.WingsTestConstants.HOST_NAME;
-
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.get;
-import static com.github.tomakehurst.wiremock.client.WireMock.head;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
-import static com.google.common.base.Charsets.UTF_8;
-import static java.util.Arrays.asList;
-import static java.util.Collections.emptySet;
-import static java.util.Collections.singletonList;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.fail;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
+import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.io.CharStreams;
+import com.google.inject.Inject;
+import freemarker.template.TemplateException;
 import io.harness.annotations.dev.BreakDependencyOn;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.HarnessTeam;
@@ -119,6 +55,8 @@ import io.harness.delegate.beans.DelegateSize;
 import io.harness.delegate.beans.DelegateSizeDetails;
 import io.harness.delegate.beans.DelegateTaskNotifyResponseData;
 import io.harness.delegate.beans.DelegateTaskResponse;
+import io.harness.delegate.beans.DelegateTokenDetails;
+import io.harness.delegate.beans.DelegateTokenStatus;
 import io.harness.delegate.beans.DelegateType;
 import io.harness.delegate.beans.DuplicateDelegateException;
 import io.harness.delegate.beans.FileBucket;
@@ -145,6 +83,7 @@ import io.harness.persistence.HPersistence;
 import io.harness.rule.Owner;
 import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.service.intfc.DelegateCache;
+import io.harness.service.intfc.DelegateNgTokenService;
 import io.harness.service.intfc.DelegateProfileObserver;
 import io.harness.service.intfc.DelegateTaskRetryObserver;
 import io.harness.service.intfc.DelegateTaskService;
@@ -152,6 +91,25 @@ import io.harness.service.intfc.DelegateTokenService;
 import io.harness.version.VersionInfo;
 import io.harness.version.VersionInfoManager;
 
+import org.apache.commons.compress.archivers.ArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.reflect.FieldUtils;
+import org.atmosphere.cpr.Broadcaster;
+import org.atmosphere.cpr.BroadcasterFactory;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.experimental.categories.Category;
+import org.junit.rules.ExpectedException;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import software.wings.FeatureTestHelper;
 import software.wings.WingsBaseTest;
 import software.wings.app.DelegateGrpcConfig;
@@ -189,12 +147,7 @@ import software.wings.service.intfc.security.ManagerDecryptionService;
 import software.wings.service.intfc.security.SecretManager;
 import software.wings.sm.states.JenkinsExecutionResponse;
 
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.io.CharStreams;
-import com.google.inject.Inject;
-import freemarker.template.TemplateException;
+import javax.ws.rs.core.MediaType;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -215,26 +168,74 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.IntStream;
 import java.util.zip.GZIPInputStream;
-import javax.ws.rs.core.MediaType;
-import org.apache.commons.compress.archivers.ArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.reflect.FieldUtils;
-import org.atmosphere.cpr.Broadcaster;
-import org.atmosphere.cpr.BroadcasterFactory;
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.junit.rules.ExpectedException;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.head;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.google.common.base.Charsets.UTF_8;
+import static io.harness.beans.DelegateTask.Status.QUEUED;
+import static io.harness.beans.FeatureName.USE_IMMUTABLE_DELEGATE;
+import static io.harness.beans.PageRequest.PageRequestBuilder.aPageRequest;
+import static io.harness.data.structure.UUIDGenerator.generateTimeBasedUuid;
+import static io.harness.data.structure.UUIDGenerator.generateUuid;
+import static io.harness.delegate.beans.DelegateProfile.DelegateProfileBuilder;
+import static io.harness.delegate.beans.DelegateProfile.builder;
+import static io.harness.delegate.beans.DelegateRegisterResponse.Action;
+import static io.harness.delegate.beans.DelegateType.DOCKER;
+import static io.harness.delegate.beans.DelegateType.ECS;
+import static io.harness.delegate.beans.DelegateType.KUBERNETES;
+import static io.harness.delegate.beans.DelegateType.SHELL_SCRIPT;
+import static io.harness.delegate.beans.K8sPermissionType.CLUSTER_ADMIN;
+import static io.harness.delegate.beans.TaskData.DEFAULT_ASYNC_CALL_TIMEOUT;
+import static io.harness.delegate.message.ManagerMessageConstants.SELF_DESTRUCT;
+import static io.harness.persistence.HQuery.excludeAuthority;
+import static io.harness.rule.OwnerRule.ALEKSANDAR;
+import static io.harness.rule.OwnerRule.ANKIT;
+import static io.harness.rule.OwnerRule.ANSHUL;
+import static io.harness.rule.OwnerRule.ARPIT;
+import static io.harness.rule.OwnerRule.BOJAN;
+import static io.harness.rule.OwnerRule.BRETT;
+import static io.harness.rule.OwnerRule.DESCRIPTION;
+import static io.harness.rule.OwnerRule.GEORGE;
+import static io.harness.rule.OwnerRule.LUCAS;
+import static io.harness.rule.OwnerRule.MARKO;
+import static io.harness.rule.OwnerRule.MARKOM;
+import static io.harness.rule.OwnerRule.MEHUL;
+import static io.harness.rule.OwnerRule.NIKOLA;
+import static io.harness.rule.OwnerRule.PUNEET;
+import static io.harness.rule.OwnerRule.RAGHU;
+import static io.harness.rule.OwnerRule.SANJA;
+import static io.harness.rule.OwnerRule.VUK;
+import static io.harness.rule.OwnerRule.XIN;
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptySet;
+import static java.util.Collections.singletonList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static software.wings.beans.Account.Builder.anAccount;
+import static software.wings.beans.Event.Builder.anEvent;
+import static software.wings.beans.ServiceVariable.Type.ENCRYPTED_TEXT;
+import static software.wings.service.impl.DelegateServiceImpl.DELEGATE_DIR;
+import static software.wings.service.impl.DelegateServiceImpl.DOCKER_DELEGATE;
+import static software.wings.service.impl.DelegateServiceImpl.ECS_DELEGATE;
+import static software.wings.service.impl.DelegateServiceImpl.KUBERNETES_DELEGATE;
+import static software.wings.utils.WingsTestConstants.ACCOUNT_ID;
+import static software.wings.utils.WingsTestConstants.APP_ID;
+import static software.wings.utils.WingsTestConstants.DELEGATE_GROUP_NAME;
+import static software.wings.utils.WingsTestConstants.DELEGATE_ID;
+import static software.wings.utils.WingsTestConstants.HOST_NAME;
 
 @OwnedBy(HarnessTeam.DEL)
 @TargetModule(HarnessModule._420_DELEGATE_SERVICE)
@@ -281,6 +282,7 @@ public class DelegateServiceTest extends WingsBaseTest {
   @Mock private DelegateRingService delegateRingService;
   @Mock private DelegateTokenService delegateTokenService;
   @Mock private Producer eventProducer;
+  @Mock private DelegateNgTokenService delegateNgTokenService;
 
   @Inject private FeatureTestHelper featureTestHelper;
   @Inject private DelegateConnectionDao delegateConnectionDao;
@@ -1378,7 +1380,6 @@ public class DelegateServiceTest extends WingsBaseTest {
                                 .pollingModeEnabled(true)
                                 .sampleDelegate(false)
                                 .build();
-
     delegateService.register(params);
 
     Delegate delegateFromDb = delegateCache.get(accountId, delegate.getUuid(), true);
@@ -3578,6 +3579,21 @@ public class DelegateServiceTest extends WingsBaseTest {
         .thenReturn(anAccount().withAccountKey(TOKEN_VALUE).withUuid(ACCOUNT_ID).build());
 
     when(mainConfiguration.getDeployMode()).thenReturn(DeployMode.KUBERNETES);
+    DelegateTokenDetails defaultToken = DelegateTokenDetails.builder()
+            .name("default")
+            .status(DelegateTokenStatus.ACTIVE)
+            .value("TOKEN_VALUE")
+            .build();
+    when(delegateNgTokenService.getDelegateToken(
+            ACCOUNT_ID,
+            DelegateEntityOwner.builder().identifier("9S5HMP0xROugl3_QgO62rQO/9S5HMP0xROugl3_QgO62rQP").build(),
+            "default"))
+            .thenReturn(defaultToken);
+    when(delegateNgTokenService.getDelegateTokenValue(
+            ACCOUNT_ID,
+            DelegateEntityOwner.builder().identifier("9S5HMP0xROugl3_QgO62rQO/9S5HMP0xROugl3_QgO62rQP").build(),
+            "default"))
+            .thenReturn("TOKEN_VALUE");
 
     DelegateSetupDetails setupDetails = DelegateSetupDetails.builder()
                                             .orgIdentifier("9S5HMP0xROugl3_QgO62rQO")
@@ -3586,6 +3602,7 @@ public class DelegateServiceTest extends WingsBaseTest {
                                             .identifier("_delegateGroupId1")
                                             .description("desc")
                                             .delegateType(DelegateType.DOCKER)
+                                            .tokenName("default")
                                             .build();
 
     File file =

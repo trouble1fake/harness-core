@@ -7,28 +7,14 @@
 
 package io.harness.event.grpc;
 
-import static io.harness.annotations.dev.HarnessTeam.DEL;
-import static io.harness.rule.OwnerRule.ANUBHAW;
-import static io.harness.rule.OwnerRule.BRETT;
-import static io.harness.rule.OwnerRule.LUCAS;
-import static io.harness.rule.OwnerRule.MARKO;
-import static io.harness.rule.OwnerRule.UJJAWAL;
-
-import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
-
+import com.google.common.cache.LoadingCache;
+import com.google.inject.Inject;
 import io.harness.CategoryTest;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.delegate.beans.DelegateNgToken;
 import io.harness.delegate.beans.DelegateToken;
+import io.harness.delegate.beans.DelegateTokenDetails;
 import io.harness.delegate.beans.DelegateTokenStatus;
 import io.harness.eraro.ErrorCode;
 import io.harness.exception.InvalidRequestException;
@@ -38,14 +24,6 @@ import io.harness.exception.WingsException;
 import io.harness.persistence.HPersistence;
 import io.harness.rule.Owner;
 import io.harness.security.TokenGenerator;
-
-import software.wings.beans.Service;
-
-import com.github.benmanes.caffeine.cache.LoadingCache;
-import com.google.inject.Inject;
-import java.security.NoSuchAlgorithmException;
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.junit.Before;
@@ -56,6 +34,29 @@ import org.mockito.Mock;
 import org.mongodb.morphia.query.FieldEnd;
 import org.mongodb.morphia.query.MorphiaIterator;
 import org.mongodb.morphia.query.Query;
+import software.wings.beans.Service;
+
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import java.security.NoSuchAlgorithmException;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+
+import static io.harness.annotations.dev.HarnessTeam.DEL;
+import static io.harness.rule.OwnerRule.ANUBHAW;
+import static io.harness.rule.OwnerRule.BRETT;
+import static io.harness.rule.OwnerRule.LUCAS;
+import static io.harness.rule.OwnerRule.MARKO;
+import static io.harness.rule.OwnerRule.UJJAWAL;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 @OwnedBy(DEL)
 public class DelegateTokenEventServerAuthenticatorTest extends CategoryTest {
@@ -63,7 +64,8 @@ public class DelegateTokenEventServerAuthenticatorTest extends CategoryTest {
   private static final String ACCOUNT_ID = "ACCOUNT_ID";
 
   @Mock LoadingCache<String, String> keyCache;
-  @Mock LoadingCache<String, DelegateTokenStatus> defaultTokenStatusCache;
+  @Mock LoadingCache<String, List<DelegateTokenDetails>> delegateTokenCache;
+  @Mock LoadingCache<String, List<DelegateTokenDetails>> delegateNgTokenCache;
   @Mock private HPersistence persistence;
   @Inject @InjectMocks private DelegateTokenEventServerAuthenticatorImpl delegateTokenAuthenticator;
 
@@ -73,15 +75,25 @@ public class DelegateTokenEventServerAuthenticatorTest extends CategoryTest {
   public void setUp() throws Exception {
     initMocks(this);
     FieldUtils.writeField(delegateTokenAuthenticator, "keyCache", keyCache, true);
-    FieldUtils.writeField(delegateTokenAuthenticator, "defaultTokenStatusCache", defaultTokenStatusCache, true);
+    FieldUtils.writeField(delegateTokenAuthenticator, "delegateTokenCache", delegateTokenCache, true);
+    FieldUtils.writeField(delegateTokenAuthenticator, "delegateNgTokenCache", delegateNgTokenCache, true);
     when(keyCache.get(ACCOUNT_ID)).thenReturn(accountKey);
-    when(defaultTokenStatusCache.get(ACCOUNT_ID)).thenReturn(DelegateTokenStatus.ACTIVE);
+    DelegateTokenDetails revokedTokenDetails =
+        DelegateTokenDetails.builder().accountId(ACCOUNT_ID).status(DelegateTokenStatus.REVOKED).build();
+    when(delegateNgTokenCache.get(ACCOUNT_ID))
+            .thenReturn(Collections.singletonList(revokedTokenDetails));
   }
 
   @Test
   @Owner(developers = BRETT)
   @Category(UnitTests.class)
-  public void shouldValidateDelegateToken() {
+  public void shouldValidateDelegateToken() throws ExecutionException {
+    DelegateTokenDetails activeTokenDetails = DelegateTokenDetails.builder()
+            .accountId(ACCOUNT_ID)
+            .status(DelegateTokenStatus.ACTIVE)
+            .build();
+    when(delegateTokenCache.get(ACCOUNT_ID))
+            .thenReturn(Collections.singletonList(activeTokenDetails));
     TokenGenerator tokenGenerator = new TokenGenerator(ACCOUNT_ID, accountKey);
     delegateTokenAuthenticator.validateDelegateToken(
         ACCOUNT_ID, tokenGenerator.getToken("https", "localhost", 9090, "hostname"));
@@ -90,9 +102,15 @@ public class DelegateTokenEventServerAuthenticatorTest extends CategoryTest {
   @Test
   @Owner(developers = LUCAS)
   @Category(UnitTests.class)
-  public void shouldValidateDelegateToken_Active() {
-    when(defaultTokenStatusCache.get(ACCOUNT_ID)).thenReturn(DelegateTokenStatus.REVOKED);
-
+  public void shouldValidateDelegateToken_Active() throws ExecutionException {
+    DelegateTokenDetails activeTokenDetails = DelegateTokenDetails.builder()
+            .accountId(ACCOUNT_ID)
+            .name("custom")
+            .value(accountKey)
+            .status(DelegateTokenStatus.ACTIVE)
+            .build();
+    when(delegateTokenCache.get(ACCOUNT_ID))
+            .thenReturn(Collections.singletonList(activeTokenDetails));
     DelegateToken delegateToken = DelegateToken.builder()
                                       .accountId(ACCOUNT_ID)
                                       .name("custom")
@@ -119,15 +137,18 @@ public class DelegateTokenEventServerAuthenticatorTest extends CategoryTest {
                        -> delegateTokenAuthenticator.validateDelegateToken(
                            ACCOUNT_ID, tokenGenerator.getToken("https", "localhost", 9090, "hostname")))
         .doesNotThrowAnyException();
-    verify(persistence).createQuery(DelegateToken.class);
   }
 
   @Test
   @Owner(developers = LUCAS)
   @Category(UnitTests.class)
-  public void shouldValidateDelegateTokenThrowsInvalidTokenException() {
-    when(defaultTokenStatusCache.get(ACCOUNT_ID)).thenReturn(DelegateTokenStatus.REVOKED);
-
+  public void shouldValidateDelegateTokenThrowsInvalidTokenException() throws ExecutionException {
+    DelegateTokenDetails revokedTokenDetails = DelegateTokenDetails.builder()
+            .accountId(ACCOUNT_ID)
+            .status(DelegateTokenStatus.REVOKED)
+            .build();
+    when(delegateTokenCache.get(ACCOUNT_ID))
+            .thenReturn(Collections.singletonList(revokedTokenDetails));
     DelegateToken delegateToken = DelegateToken.builder()
                                       .accountId(ACCOUNT_ID)
                                       .name("custom")
@@ -151,18 +172,16 @@ public class DelegateTokenEventServerAuthenticatorTest extends CategoryTest {
 
     TokenGenerator tokenGenerator = new TokenGenerator(ACCOUNT_ID, accountKey);
 
-    assertThatThrownBy(()
+    assertThatCode(()
                            -> delegateTokenAuthenticator.validateDelegateToken(
                                ACCOUNT_ID, tokenGenerator.getToken("https", "localhost", 9090, "hostname")))
-        .isInstanceOf(InvalidTokenException.class);
+        .doesNotThrowAnyException();
   }
 
   @Test
   @Owner(developers = LUCAS)
   @Category(UnitTests.class)
-  public void shouldValidateDelegateToken_Revoked() {
-    when(defaultTokenStatusCache.get(ACCOUNT_ID)).thenReturn(DelegateTokenStatus.REVOKED);
-
+  public void shouldValidateDelegateToken_Revoked() throws ExecutionException {
     DelegateToken delegateTokenRevoked = DelegateToken.builder()
                                              .accountId(ACCOUNT_ID)
                                              .name("TokenName")
@@ -170,11 +189,18 @@ public class DelegateTokenEventServerAuthenticatorTest extends CategoryTest {
                                              .status(DelegateTokenStatus.REVOKED)
                                              .build();
 
+    DelegateTokenDetails delegateTokenRevokedDetails = DelegateTokenDetails.builder()
+            .accountId(ACCOUNT_ID)
+            .name("TokenName")
+            .value(accountKey)
+            .status(DelegateTokenStatus.REVOKED)
+            .build();
+    when(delegateTokenCache.get(ACCOUNT_ID))
+            .thenReturn(Collections.singletonList(delegateTokenRevokedDetails));
     Query mockQuery = mock(Query.class);
     Query mockNgQuery = mock(Query.class);
     FieldEnd<Service> fieldEnd = mock(FieldEnd.class);
     FieldEnd<Service> fieldEndNg = mock(FieldEnd.class);
-
     MorphiaIterator<DelegateToken, DelegateToken> morphiaIterator = mock(MorphiaIterator.class);
     MorphiaIterator<DelegateNgToken, DelegateNgToken> morphiaIteratorNg = mock(MorphiaIterator.class);
 
@@ -205,7 +231,6 @@ public class DelegateTokenEventServerAuthenticatorTest extends CategoryTest {
   @Owner(developers = LUCAS)
   @Category(UnitTests.class)
   public void shouldValidateDelegateToken_FailToDecrypt() {
-    when(defaultTokenStatusCache.get(ACCOUNT_ID)).thenReturn(DelegateTokenStatus.REVOKED);
 
     DelegateToken delegateTokenActive = DelegateToken.builder()
                                             .accountId(ACCOUNT_ID)
@@ -230,10 +255,10 @@ public class DelegateTokenEventServerAuthenticatorTest extends CategoryTest {
 
     TokenGenerator tokenGenerator = new TokenGenerator(ACCOUNT_ID, accountKey);
 
-    assertThatThrownBy(()
+    assertThatCode(()
                            -> delegateTokenAuthenticator.validateDelegateToken(
                                ACCOUNT_ID, tokenGenerator.getToken("https", "localhost", 9090, "hostname")))
-        .isInstanceOf(InvalidTokenException.class);
+        .doesNotThrowAnyException();
   }
 
   @Test
