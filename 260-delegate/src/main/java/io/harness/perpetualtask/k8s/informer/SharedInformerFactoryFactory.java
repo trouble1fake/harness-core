@@ -8,6 +8,8 @@
 package io.harness.perpetualtask.k8s.informer;
 
 import io.harness.annotations.dev.HarnessModule;
+import io.harness.annotations.dev.HarnessTeam;
+import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.event.client.EventPublisher;
 import io.harness.perpetualtask.k8s.informer.handlers.V1DaemonSetHandler;
@@ -39,6 +41,7 @@ import io.kubernetes.client.openapi.models.V1beta1CronJobList;
 import io.kubernetes.client.util.CallGeneratorParams;
 import lombok.extern.slf4j.Slf4j;
 
+@OwnedBy(HarnessTeam.CE)
 @Slf4j
 @Singleton
 @TargetModule(HarnessModule._420_DELEGATE_AGENT)

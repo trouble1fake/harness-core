@@ -7,6 +7,8 @@
 
 package io.harness.perpetualtask.datacollection.k8s;
 
+import io.harness.annotations.dev.HarnessTeam;
+import io.harness.annotations.dev.OwnedBy;
 import io.harness.cvng.beans.K8ActivityDataCollectionInfo;
 
 import com.google.inject.Injector;
@@ -27,6 +29,7 @@ import io.kubernetes.client.openapi.models.V1StatefulSetList;
 import io.kubernetes.client.util.CallGeneratorParams;
 import lombok.extern.slf4j.Slf4j;
 
+@OwnedBy(HarnessTeam.CV)
 @Slf4j
 public class ChangeIntelSharedInformerFactory {
   public SharedInformerFactory createInformerFactoryWithHandlers(

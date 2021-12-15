@@ -16,6 +16,8 @@ import static com.google.common.base.MoreObjects.firstNonNull;
 import static java.util.Optional.ofNullable;
 
 import io.harness.annotations.dev.HarnessModule;
+import io.harness.annotations.dev.HarnessTeam;
+import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.event.client.EventPublisher;
 import io.harness.grpc.utils.HTimestamps;
@@ -45,6 +47,7 @@ import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
+@OwnedBy(HarnessTeam.CE)
 @Slf4j
 @TargetModule(HarnessModule._420_DELEGATE_AGENT)
 public class PVWatcher implements ResourceEventHandler<V1PersistentVolume> {
