@@ -557,6 +557,10 @@ public class CDStepHelper {
     return cdFeatureFlagHelper.isEnabled(accountId, FeatureName.NEW_KUBECTL_VERSION);
   }
 
+  public boolean isPruningEnabled(String accountId) {
+    return cdFeatureFlagHelper.isEnabled(accountId, FeatureName.PRUNE_KUBERNETES_RESOURCES);
+  }
+
   public List<String> getValuesFileContents(Ambiance ambiance, List<String> valuesFileContents) {
     return valuesFileContents.stream()
         .map(valuesFileContent -> engineExpressionService.renderExpression(ambiance, valuesFileContent))

@@ -7,22 +7,6 @@
 
 package io.harness.delegate.k8s;
 
-import static io.harness.annotations.dev.HarnessTeam.CDP;
-import static io.harness.rule.OwnerRule.ABOSII;
-
-import static java.util.Collections.emptySet;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-
 import io.harness.CategoryTest;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
@@ -35,8 +19,10 @@ import io.harness.delegate.task.k8s.K8sInfraDelegateConfig;
 import io.harness.delegate.task.k8s.K8sRollingRollbackDeployRequest;
 import io.harness.delegate.task.k8s.K8sTaskHelperBase;
 import io.harness.exception.InvalidArgumentsException;
+import io.harness.exception.KubernetesTaskException;
 import io.harness.k8s.model.K8sDelegateTaskParams;
 import io.harness.k8s.model.KubernetesConfig;
+import io.harness.k8s.model.KubernetesResourceId;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
 import io.harness.rule.Owner;
@@ -47,6 +33,30 @@ import org.junit.experimental.categories.Category;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+
+import java.util.HashSet;
+import java.util.List;
+
+import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.delegate.k8s.K8sRollingRollbackBaseHandler.ResourceRecreationStatus.RESOURCE_CREATION_FAILED;
+import static io.harness.delegate.k8s.K8sRollingRollbackBaseHandler.ResourceRecreationStatus.RESOURCE_CREATION_SUCCESSFUL;
+import static io.harness.rule.OwnerRule.ABHINAV2;
+import static io.harness.rule.OwnerRule.ABOSII;
+import static java.util.Collections.emptySet;
+import static java.util.Collections.singletonList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyListOf;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 @OwnedBy(CDP)
 public class K8sRollingRollbackRequestHandlerTest extends CategoryTest {
@@ -163,5 +173,47 @@ public class K8sRollingRollbackRequestHandlerTest extends CategoryTest {
                            -> k8sRollingRollbackRequestHandler.executeTaskInternal(
                                k8sDeployRequest, k8sDelegateTaskParams, logStreamingTaskClient, null))
         .isInstanceOf(InvalidArgumentsException.class);
+  }
+
+  @Test
+  @Owner(developers = ABHINAV2)
+  @Category(UnitTests.class)
+  public void testPruningWithRecreationFailed() throws Exception {
+    K8sRollingRollbackDeployRequest deployRequest = K8sRollingRollbackDeployRequest.builder()
+                                                        .timeoutIntervalInMin(timeoutIntervalInMin)
+                                                        .pruningEnabled(true)
+                                                        .build();
+    doThrow(new KubernetesTaskException("error"))
+        .when(k8sRollingRollbackBaseHandler)
+        .recreatePrunedResources(any(K8sRollingRollbackHandlerConfig.class), anyInt(),
+            anyListOf(KubernetesResourceId.class), any(LogCallback.class), any(K8sDelegateTaskParams.class));
+
+    k8sRollingRollbackRequestHandler.executeTaskInternal(
+        deployRequest, k8sDelegateTaskParams, logStreamingTaskClient, null);
+    verify(k8sRollingRollbackBaseHandler)
+        .getResourcesRecreated(anyListOf(KubernetesResourceId.class), eq(RESOURCE_CREATION_FAILED));
+  }
+
+  @Test
+  @Owner(developers = ABHINAV2)
+  @Category(UnitTests.class)
+  public void testPrunedResourceIdsRecreated() throws Exception {
+    List<KubernetesResourceId> prunedResourceIds =
+        singletonList(KubernetesResourceId.builder().name("dummy_name").build());
+    K8sRollingRollbackDeployRequest deployRequest = K8sRollingRollbackDeployRequest.builder()
+                                                        .timeoutIntervalInMin(timeoutIntervalInMin)
+                                                        .pruningEnabled(true)
+                                                        .prunedResourceIds(prunedResourceIds)
+                                                        .build();
+    doReturn(RESOURCE_CREATION_SUCCESSFUL)
+        .when(k8sRollingRollbackBaseHandler)
+        .recreatePrunedResources(any(K8sRollingRollbackHandlerConfig.class), anyInt(),
+            anyListOf(KubernetesResourceId.class), any(LogCallback.class), any(K8sDelegateTaskParams.class));
+
+    k8sRollingRollbackRequestHandler.executeTaskInternal(
+        deployRequest, k8sDelegateTaskParams, logStreamingTaskClient, null);
+    verify(k8sRollingRollbackBaseHandler)
+        .rollback(any(K8sRollingRollbackHandlerConfig.class), any(K8sDelegateTaskParams.class), anyInt(),
+            any(LogCallback.class), eq(new HashSet<>(prunedResourceIds)), anyBoolean());
   }
 }

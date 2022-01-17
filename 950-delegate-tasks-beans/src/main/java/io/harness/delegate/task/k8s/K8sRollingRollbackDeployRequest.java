@@ -13,6 +13,8 @@ import io.harness.delegate.beans.logstreaming.CommandUnitsProgress;
 
 import java.util.Collections;
 import java.util.List;
+
+import io.harness.k8s.model.KubernetesResourceId;
 import lombok.Builder;
 import lombok.Value;
 
@@ -30,6 +32,8 @@ public class K8sRollingRollbackDeployRequest implements K8sDeployRequest {
   CommandUnitsProgress commandUnitsProgress;
   boolean useVarSupportForKustomize;
   boolean useNewKubectlVersion;
+  boolean pruningEnabled;
+  List<KubernetesResourceId> prunedResourceIds;
 
   @Override
   public List<String> getValuesYamlList() {

@@ -43,6 +43,7 @@ import io.harness.cdng.k8s.K8sDeleteStepInfo;
 import io.harness.cdng.k8s.K8sDeleteStepParameters;
 import io.harness.cdng.k8s.K8sInstanceUnitType;
 import io.harness.cdng.k8s.K8sRollingOutcome;
+import io.harness.cdng.k8s.K8sRollingRollbackOutcome;
 import io.harness.cdng.k8s.K8sRollingRollbackStepInfo;
 import io.harness.cdng.k8s.K8sRollingRollbackStepParameters;
 import io.harness.cdng.k8s.K8sRollingStepInfo;
@@ -123,6 +124,7 @@ public class NGKryoRegistrar implements KryoRegistrar {
     kryo.register(EnvironmentYaml.class, 8029);
     kryo.register(ManifestsOutcome.class, 8031);
     kryo.register(K8sRollingOutcome.class, 8034);
+    kryo.register(K8sRollingRollbackOutcome.class, 8054);
     kryo.register(ServiceUseFromStage.class, 8036);
     kryo.register(ValuesManifest.class, 8037);
     kryo.register(Overrides.class, 8038);

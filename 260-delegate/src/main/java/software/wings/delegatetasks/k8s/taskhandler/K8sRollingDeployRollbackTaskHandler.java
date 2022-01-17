@@ -87,7 +87,7 @@ public class K8sRollingDeployRollbackTaskHandler extends K8sTaskHandler {
       try {
         resourceRecreationStatus = k8sRollingRollbackBaseHandler.recreatePrunedResources(rollbackHandlerConfig,
             request.getReleaseNumber(), request.getPrunedResourcesIds(), pruneLogCallback, k8sDelegateTaskParams);
-        logResourceRecreationStatus(resourceRecreationStatus, pruneLogCallback);
+        k8sRollingRollbackBaseHandler.logResourceRecreationStatus(resourceRecreationStatus, pruneLogCallback);
       } catch (Exception ex) {
         resourceRecreationStatus = ResourceRecreationStatus.RESOURCE_CREATION_FAILED;
         pruneLogCallback.saveExecutionLog("Failed to recreate pruned resources.", WARN, RUNNING);
@@ -104,7 +104,7 @@ public class K8sRollingDeployRollbackTaskHandler extends K8sTaskHandler {
 
     boolean success = k8sRollingRollbackBaseHandler.rollback(rollbackHandlerConfig, k8sDelegateTaskParams,
         request.getReleaseNumber(), k8sTaskHelper.getExecutionLogCallback(request, Rollback),
-        getResourcesRecreated(request, resourceRecreationStatus), false);
+            k8sRollingRollbackBaseHandler.getResourcesRecreated(request.getPrunedResourcesIds(), resourceRecreationStatus), false);
     if (!success) {
       return K8sTaskExecutionResponse.builder().commandExecutionStatus(CommandExecutionStatus.FAILURE).build();
     }
@@ -121,23 +121,6 @@ public class K8sRollingDeployRollbackTaskHandler extends K8sTaskHandler {
       waitForSteadyStateLogCallback.saveExecutionLog(getMessage(e), ERROR, FAILURE);
       throw e;
     }
-  }
-
-  private void logResourceRecreationStatus(
-      ResourceRecreationStatus resourceRecreationStatus, ExecutionLogCallback pruneLogCallback) {
-    if (resourceRecreationStatus == ResourceRecreationStatus.RESOURCE_CREATION_SUCCESSFUL) {
-      pruneLogCallback.saveExecutionLog("Successfully recreated pruned resources.", INFO, SUCCESS);
-    } else if (resourceRecreationStatus == ResourceRecreationStatus.NO_RESOURCE_CREATED) {
-      pruneLogCallback.saveExecutionLog("No resource recreated.", INFO, SUCCESS);
-    }
-  }
-
-  @NotNull
-  private Set<KubernetesResourceId> getResourcesRecreated(
-      K8sRollingDeployRollbackTaskParameters request, ResourceRecreationStatus resourceRecreationStatus) {
-    return resourceRecreationStatus.equals(ResourceRecreationStatus.RESOURCE_CREATION_SUCCESSFUL)
-        ? new HashSet<>(request.getPrunedResourcesIds())
-        : Collections.emptySet();
   }
 
   private void init(K8sRollingDeployRollbackTaskParameters k8sRollingDeployRollbackTaskParameters,

@@ -13,6 +13,9 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.k8s.model.K8sPod;
 
 import java.util.List;
+import java.util.Set;
+
+import io.harness.k8s.model.KubernetesResourceId;
 import lombok.Builder;
 import lombok.Value;
 
@@ -21,4 +24,5 @@ import lombok.Value;
 @OwnedBy(CDP)
 public class K8sRollingDeployRollbackResponse implements K8sNGTaskResponse {
   List<K8sPod> k8sPodList;
+  Set<KubernetesResourceId> recreatedResourceIds;
 }
