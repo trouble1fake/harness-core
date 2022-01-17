@@ -23,7 +23,8 @@ public enum DataSourceType {
   PROMETHEUS("Prometheus", VerificationType.TIME_SERIES, "prometheus"),
   DATADOG_METRICS("DatadogMetrics", VerificationType.TIME_SERIES, "prometheus"),
   DATADOG_LOG("DatadogLog", VerificationType.LOG, "splunk"),
-  CUSTOM_HEALTH("CustomHealth", VerificationType.TIME_SERIES, "prometheus");
+  CUSTOM_HEALTH("CustomHealth", VerificationType.TIME_SERIES, "prometheus"),
+  DYNATRACE("Dynatrace", VerificationType.TIME_SERIES, "prometheus");
 
   private String displayName;
   private VerificationType verificationType;
@@ -45,7 +46,7 @@ public enum DataSourceType {
   }
 
   public static List<DataSourceType> getTimeSeriesTypes() {
-    return new ArrayList<>(EnumSet.of(APP_DYNAMICS, STACKDRIVER, NEW_RELIC, PROMETHEUS, DATADOG_METRICS));
+    return new ArrayList<>(EnumSet.of(APP_DYNAMICS, STACKDRIVER, NEW_RELIC, PROMETHEUS, DATADOG_METRICS, DYNATRACE));
   }
 
   public String getDemoTemplatePrefix() {
