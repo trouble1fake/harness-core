@@ -27,7 +27,7 @@ public class CVConnectorParamsProvider implements ConnectorValidationParamsProvi
 
   @Override
   public ConnectorValidationParams getConnectorValidationParams(ConnectorInfoDTO connectorInfoDTO, String connectorName,
-      String accountIdentifier, String orgIdentifier, String projectIdentifier) {
+                                                                String accountIdentifier, String orgIdentifier, String projectIdentifier) {
     final List<DecryptableEntity> decryptableEntityList =
         connectorInfoDTO.getConnectorConfig().getDecryptableEntities();
     final List<List<EncryptedDataDetail>> encryptionDetails = new ArrayList<>();
