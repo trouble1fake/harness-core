@@ -13,6 +13,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.harness.CategoryTest;
 import io.harness.category.element.UnitTests;
+import io.harness.cvng.core.beans.CustomHealthMetricDefinition;
 import io.harness.cvng.core.beans.HealthSourceMetricDefinition;
 import io.harness.cvng.core.beans.HealthSourceQueryType;
 import io.harness.cvng.core.beans.RiskProfile;
@@ -28,7 +29,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 public class CustomHealthCVConfigTest extends CategoryTest {
-  List<CustomHealthCVConfig.MetricDefinition> metricDefinitions;
+  List<CustomHealthMetricDefinition> metricDefinitions;
   CustomHealthCVConfig customHealthCVConfig;
   MetricResponseMapping responseMapping;
 
@@ -40,8 +41,8 @@ public class CustomHealthCVConfigTest extends CategoryTest {
                           .timestampJsonPath("timeStringPath")
                           .build();
 
-    CustomHealthCVConfig.MetricDefinition metricDefinition =
-        CustomHealthCVConfig.MetricDefinition.builder()
+    CustomHealthMetricDefinition metricDefinition =
+        CustomHealthMetricDefinition.builder()
             .method(CustomHealthMethod.GET)
             .queryType(HealthSourceQueryType.HOST_BASED)
             .metricResponseMapping(responseMapping)

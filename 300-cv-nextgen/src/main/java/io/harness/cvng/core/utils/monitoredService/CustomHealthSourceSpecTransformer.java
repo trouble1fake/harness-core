@@ -7,6 +7,7 @@
 
 package io.harness.cvng.core.utils.monitoredService;
 
+import io.harness.cvng.core.beans.CustomHealthDefinition;
 import io.harness.cvng.core.beans.CustomHealthMetricDefinition;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.CustomHealthSourceSpec;
 import io.harness.cvng.core.entities.CustomHealthCVConfig;
@@ -27,21 +28,22 @@ public class CustomHealthSourceSpecTransformer
 
     cvConfigGroup.forEach(customHealthCVConfig -> {
       customHealthCVConfig.getMetricDefinitions().forEach(definition -> {
+        CustomHealthDefinition baseDefinition = definition.getHealthDefinition();
         CustomHealthMetricDefinition customHealthMetricDefinition =
             CustomHealthMetricDefinition.builder()
-                .method(definition.getMethod())
-                .urlPath(definition.getUrlPath())
-                .queryType(definition.getQueryType())
+                .method(baseDefinition.getMethod())
+                .urlPath(baseDefinition.getUrlPath())
+                .queryType(baseDefinition.getQueryType())
                 .groupName(customHealthCVConfig.getGroupName())
                 .metricName(definition.getMetricName())
                 .metricResponseMapping(definition.getMetricResponseMapping())
                 .metricName(definition.getMetricName())
                 .analysis(definition.getAnalysis())
-                .endTime(definition.getEndTime())
-                .startTime(definition.getStartTime())
+                .endTime(baseDefinition.getEndTimeInfo())
+                .startTime(baseDefinition.getStartTimeInfo())
                 .identifier(definition.getIdentifier())
                 .riskProfile(definition.getRiskProfile())
-                .requestBody(definition.getRequestBody())
+                .requestBody(baseDefinition.getRequestBody())
                 .build();
         customHealthSourceSpec.getMetricDefinitions().add(customHealthMetricDefinition);
       });

@@ -11,6 +11,8 @@ import static io.harness.data.structure.EmptyPredicate.isEmpty;
 
 import io.harness.cvng.beans.CustomHealthDataCollectionInfo;
 import io.harness.cvng.beans.MetricResponseMappingDTO;
+import io.harness.cvng.core.beans.CustomHealthDefinition;
+import io.harness.cvng.core.beans.CustomHealthMetricDefinition;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.MetricResponseMapping;
 import io.harness.cvng.core.entities.CustomHealthCVConfig;
 import io.harness.cvng.core.entities.VerificationTask.TaskType;
@@ -63,21 +65,22 @@ public class CustomHealthDataCollectionInfoMapper
   }
 
   private CustomHealthDataCollectionInfo.CustomHealthMetricInfo mapMetricDefinitionToMetricInfo(
-      CustomHealthCVConfig.MetricDefinition metricDefinition) {
+      CustomHealthMetricDefinition metricDefinition) {
     MetricResponseMapping metricResponseMapping = metricDefinition.getMetricResponseMapping();
+    CustomHealthDefinition healthDefinition = metricDefinition.getHealthDefinition();
     return CustomHealthDataCollectionInfo.CustomHealthMetricInfo.builder()
         .metricName(metricDefinition.getMetricName())
-        .endTime(metricDefinition.getEndTime())
+        .endTime(healthDefinition.getEndTimeInfo())
         .responseMapping(MetricResponseMappingDTO.builder()
                              .metricValueJsonPath(metricResponseMapping.getMetricValueJsonPath())
                              .serviceInstanceJsonPath(metricResponseMapping.getServiceInstanceJsonPath())
                              .timestampFormat(metricResponseMapping.getTimestampFormat())
                              .timestampJsonPath(metricResponseMapping.getTimestampJsonPath())
                              .build())
-        .body(metricDefinition.getRequestBody())
-        .method(metricDefinition.getMethod())
-        .startTime(metricDefinition.getStartTime())
-        .urlPath(metricDefinition.getUrlPath())
+        .body(healthDefinition.getRequestBody())
+        .method(healthDefinition.getMethod())
+        .startTime(healthDefinition.getStartTimeInfo())
+        .urlPath(healthDefinition.getUrlPath())
         .build();
   }
 }

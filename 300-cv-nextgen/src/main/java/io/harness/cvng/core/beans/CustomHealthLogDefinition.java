@@ -7,19 +7,18 @@
 
 package io.harness.cvng.core.beans;
 
-import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.MetricResponseMapping;
-
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
-import lombok.experimental.FieldNameConstants;
-import lombok.experimental.SuperBuilder;
 
 @Data
+@Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@SuperBuilder
-@FieldNameConstants(innerTypeName = "CustomHealthMetricDefinitionKeys")
-public class CustomHealthMetricDefinition extends HealthSourceMetricDefinition {
-  CustomHealthDefinition healthDefinition;
-  MetricResponseMapping metricResponseMapping;
+public class CustomHealthLogDefinition {
+  CustomHealthDefinition customHealthDefinition;
+  String queryValueJsonPath;
+  String timestampJsonPath;
+  String serviceInstanceJsonPath;
+  String timestampFormat;
 }

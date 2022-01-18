@@ -16,7 +16,6 @@ import io.harness.CvNextGenTestBase;
 import io.harness.category.element.UnitTests;
 import io.harness.cvng.beans.CVMonitoringCategory;
 import io.harness.cvng.beans.DataSourceType;
-import io.harness.cvng.core.beans.CustomHealthMetricDefinition;
 import io.harness.cvng.core.beans.HealthSourceMetricDefinition;
 import io.harness.cvng.core.beans.HealthSourceQueryType;
 import io.harness.cvng.core.beans.RiskProfile;
@@ -40,7 +39,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 public class CustomHealthSourceSpecTest extends CvNextGenTestBase {
-  List<CustomHealthMetricDefinition> customHealthSourceSpecs;
+  List<CustomHealthDefinition> customHealthSourceSpecs;
   CustomHealthSourceSpec customHealthSourceSpec;
   String groupName = "group_1";
   String metricName = "metric_1";
@@ -60,8 +59,8 @@ public class CustomHealthSourceSpecTest extends CvNextGenTestBase {
   public void setup() {
     responseMapping = MetricResponseMapping.builder().metricValueJsonPath(metricValueJSONPath).build();
 
-    CustomHealthMetricDefinition customHealthMetricDefinition =
-        CustomHealthMetricDefinition.builder()
+    CustomHealthDefinition customHealthMetricDefinition =
+        CustomHealthDefinition.builder()
             .metricName(metricName)
             .groupName(groupName)
             .metricResponseMapping(responseMapping)
@@ -219,7 +218,7 @@ public class CustomHealthSourceSpecTest extends CvNextGenTestBase {
             .riskProfile(RiskProfile.builder().category(CVMonitoringCategory.PERFORMANCE).build())
             .build();
 
-    CustomHealthMetricDefinition customHealthMetricDefinition = customHealthSourceSpec.getMetricDefinitions().get(0);
+    CustomHealthDefinition customHealthMetricDefinition = customHealthSourceSpec.getMetricDefinitions().get(0);
     customHealthMetricDefinition.setQueryType(HealthSourceQueryType.SERVICE_BASED);
     customHealthMetricDefinition.setRequestBody("post body");
     customHealthMetricDefinition.setMethod(CustomHealthMethod.POST);
@@ -257,8 +256,8 @@ public class CustomHealthSourceSpecTest extends CvNextGenTestBase {
   @Owner(developers = ANJAN)
   @Category(UnitTests.class)
   public void testGetCVConfigs() {
-    CustomHealthMetricDefinition customHealthMetricDefinition =
-        CustomHealthMetricDefinition.builder()
+    CustomHealthDefinition customHealthMetricDefinition =
+        CustomHealthDefinition.builder()
             .metricName("metric_2")
             .groupName(groupName)
             .metricResponseMapping(responseMapping)
@@ -270,8 +269,8 @@ public class CustomHealthSourceSpecTest extends CvNextGenTestBase {
             .riskProfile(RiskProfile.builder().category(CVMonitoringCategory.INFRASTRUCTURE).build())
             .build();
 
-    CustomHealthMetricDefinition customHealthMetricDefinition2 =
-        CustomHealthMetricDefinition.builder()
+    CustomHealthDefinition customHealthMetricDefinition2 =
+        CustomHealthDefinition.builder()
             .metricName("metric_3")
             .groupName(groupName)
             .metricResponseMapping(responseMapping)

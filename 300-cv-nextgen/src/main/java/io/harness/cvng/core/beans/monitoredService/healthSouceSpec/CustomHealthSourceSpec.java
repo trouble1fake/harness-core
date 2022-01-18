@@ -11,12 +11,12 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import io.harness.cvng.beans.CVMonitoringCategory;
 import io.harness.cvng.beans.DataSourceType;
+import io.harness.cvng.core.beans.CustomHealthDefinition;
 import io.harness.cvng.core.beans.CustomHealthMetricDefinition;
 import io.harness.cvng.core.beans.RiskProfile;
 import io.harness.cvng.core.beans.monitoredService.HealthSource;
 import io.harness.cvng.core.entities.CVConfig;
 import io.harness.cvng.core.entities.CustomHealthCVConfig;
-import io.harness.cvng.core.entities.CustomHealthCVConfig.MetricDefinition;
 import io.harness.cvng.core.services.api.MetricPackService;
 import io.harness.cvng.core.validators.UniqueIdentifierCheck;
 
@@ -89,7 +89,8 @@ public class CustomHealthSourceSpec extends MetricHealthSourceSpec {
       String identifier, String name) {
     Map<String, CustomHealthCVConfig> cvConfigMap = new HashMap<>();
     metricDefinitions.forEach(metricDefinition -> {
-      String groupName = metricDefinition.getGroupName();
+      CustomHealthDefinition customHealthDefinition = metricDefinition.getHealthDefinition();
+      String groupName = customHealthDefinition.getGroupName();
       RiskProfile riskProfile = metricDefinition.getRiskProfile();
 
       if (riskProfile == null || riskProfile.getCategory() == null) {
@@ -98,21 +99,21 @@ public class CustomHealthSourceSpec extends MetricHealthSourceSpec {
 
       String cvConfigKey = getKey(groupName, riskProfile.getCategory());
       CustomHealthCVConfig existingCvConfig = cvConfigMap.get(cvConfigKey);
-      List<MetricDefinition> cvConfigMetricDefinitions =
+      List<CustomHealthMetricDefinition> cvConfigMetricDefinitions =
           existingCvConfig != null && isNotEmpty(existingCvConfig.getMetricDefinitions())
           ? existingCvConfig.getMetricDefinitions()
           : new ArrayList<>();
 
       MetricResponseMapping metricResponseMapping = metricDefinition.getMetricResponseMapping();
-      cvConfigMetricDefinitions.add(MetricDefinition.builder()
+      cvConfigMetricDefinitions.add(CustomHealthMetricDefinition.builder()
                                         .metricName(metricDefinition.getMetricName())
-                                        .method(metricDefinition.getMethod())
-                                        .queryType(metricDefinition.getQueryType())
+                                        .method(customHealthDefinition.getMethod())
+                                        .queryType(customHealthDefinition.getQueryType())
                                         .metricResponseMapping(metricResponseMapping)
-                                        .requestBody(metricDefinition.getRequestBody())
-                                        .startTime(metricDefinition.getStartTime())
-                                        .endTime(metricDefinition.getEndTime())
-                                        .urlPath(metricDefinition.getUrlPath())
+                                        .requestBody(customHealthDefinition.getRequestBody())
+                                        .startTime(customHealthDefinition.getStartTimeInfo())
+                                        .endTime(customHealthDefinition.getEndTimeInfo())
+                                        .urlPath(customHealthDefinition.getUrlPath())
                                         .riskProfile(metricDefinition.getRiskProfile())
                                         .analysis(metricDefinition.getAnalysis())
                                         .sli(metricDefinition.getSli())

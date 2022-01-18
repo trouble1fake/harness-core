@@ -12,27 +12,22 @@ import static io.harness.cvng.core.utils.ErrorMessageUtils.generateErrorMessageF
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import io.harness.cvng.beans.DataSourceType;
-import io.harness.cvng.beans.customhealth.TimestampInfo;
-import io.harness.cvng.core.beans.HealthSourceMetricDefinition;
+import io.harness.cvng.core.beans.CustomHealthDefinition;
+import io.harness.cvng.core.beans.CustomHealthMetricDefinition;
 import io.harness.cvng.core.beans.HealthSourceMetricDefinition.AnalysisDTO;
 import io.harness.cvng.core.beans.HealthSourceMetricDefinition.SLIDTO;
-import io.harness.cvng.core.beans.HealthSourceQueryType;
 import io.harness.cvng.core.beans.RiskProfile;
-import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.MetricResponseMapping;
 import io.harness.cvng.core.services.CVNextGenConstants;
-import io.harness.delegate.beans.connector.customhealthconnector.CustomHealthMethod;
 import io.harness.exception.InvalidRequestException;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.experimental.FieldDefaults;
 import lombok.experimental.FieldNameConstants;
 import lombok.experimental.SuperBuilder;
 import org.mongodb.morphia.query.UpdateOperations;
@@ -45,21 +40,7 @@ import org.mongodb.morphia.query.UpdateOperations;
 @EqualsAndHashCode(callSuper = true)
 public class CustomHealthCVConfig extends MetricCVConfig {
   String groupName;
-  List<MetricDefinition> metricDefinitions;
-
-  @Data
-  @SuperBuilder
-  @FieldDefaults(level = AccessLevel.PRIVATE)
-  @FieldNameConstants(innerTypeName = "CustomHealthMetricDefinitionKeys")
-  public static class MetricDefinition extends HealthSourceMetricDefinition {
-    HealthSourceQueryType queryType;
-    String urlPath;
-    String requestBody;
-    CustomHealthMethod method;
-    TimestampInfo startTime;
-    TimestampInfo endTime;
-    MetricResponseMapping metricResponseMapping;
-  }
+  List<CustomHealthMetricDefinition> metricDefinitions;
 
   @Override
   public String getDataCollectionDsl() {
@@ -78,26 +59,28 @@ public class CustomHealthCVConfig extends MetricCVConfig {
     Set<String> uniqueMetricDefinitionsNames = new HashSet<>();
 
     for (int metricDefinitionIndex = 0; metricDefinitionIndex < metricDefinitions.size(); metricDefinitionIndex++) {
-      MetricDefinition metricDefinition = metricDefinitions.get(metricDefinitionIndex);
+      CustomHealthMetricDefinition metricDefinition = metricDefinitions.get(metricDefinitionIndex);
+      CustomHealthDefinition customHealthDefinition = metricDefinition.getHealthDefinition();
+
       checkNotNull(metricDefinition.getMetricName(),
           generateErrorMessageFromParam("metricName") + " for index " + metricDefinitionIndex);
-      checkNotNull(metricDefinition.method,
-          generateErrorMessageFromParam(MetricDefinition.CustomHealthMetricDefinitionKeys.method) + " for index "
+      checkNotNull(customHealthDefinition.getMethod(),
+          generateErrorMessageFromParam(CustomHealthDefinition.CustomHealthDefinitionKeys.method) + " for index "
               + metricDefinitionIndex);
-      checkNotNull(metricDefinition.urlPath,
-          generateErrorMessageFromParam(MetricDefinition.CustomHealthMetricDefinitionKeys.urlPath) + " for index "
+      checkNotNull(customHealthDefinition.getUrlPath(),
+          generateErrorMessageFromParam(CustomHealthDefinition.CustomHealthDefinitionKeys.urlPath) + " for index "
               + metricDefinitionIndex);
 
       AnalysisDTO analysisDTO = metricDefinition.getAnalysis();
       SLIDTO sliDTO = metricDefinition.getSli();
 
-      switch (metricDefinition.getQueryType()) {
+      switch (customHealthDefinition.getQueryType()) {
         case HOST_BASED:
           if ((analysisDTO != null && analysisDTO.getLiveMonitoring() != null
                   && analysisDTO.getLiveMonitoring().getEnabled() != null
                   && analysisDTO.getLiveMonitoring().getEnabled() == true)
               || (sliDTO != null && sliDTO.getEnabled() != null && sliDTO.getEnabled())) {
-            throw new InvalidRequestException("Host based queries can only be used for deployment verification.");
+            throw new InvalidRequestException("Host based queries can only be used for continuous verification.");
           }
           break;
         case SERVICE_BASED:
@@ -109,8 +92,9 @@ public class CustomHealthCVConfig extends MetricCVConfig {
           }
           break;
         default:
-          throw new InvalidRequestException(String.format(
-              "Invalid query type %s provided, must be SERVICE_BASED or HOST_BASED", metricDefinition.queryType));
+          throw new InvalidRequestException(
+              String.format("Invalid query type %s provided, must be SERVICE_BASED or HOST_BASED",
+                  customHealthDefinition.getQueryType()));
       }
 
       String uniqueKey = getMetricAndGroupNameKey(groupName, metricDefinition.getMetricName());
