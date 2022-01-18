@@ -617,11 +617,11 @@ import lombok.RequiredArgsConstructor;
 public class DelegateModule extends AbstractModule {
   private final DelegateConfiguration configuration;
 
-    /*
-     * Creates and return ScheduledExecutorService object, which can be used for health monitoring purpose
-     * Currently this executor has been used for sending heartbeat to manager and watcher. This is also being
-     * used to send KeepAlive packet to manager.
-     */
+  /*
+   * Creates and return ScheduledExecutorService object, which can be used for health monitoring purpose
+   * Currently this executor has been used for sending heartbeat to manager and watcher. This is also being
+   * used to send KeepAlive packet to manager.
+   */
   @Provides
   @Singleton
   @Named("healthMonitorExecutor")
@@ -630,11 +630,11 @@ public class DelegateModule extends AbstractModule {
         1, new ThreadFactoryBuilder().setNameFormat("healthMonitor-%d").setPriority(Thread.MAX_PRIORITY).build());
   }
 
-    /*
-     * Creates and return ScheduledExecutorService object, which can be used for monitoring watcher.
-     * Note that, this will only be used for monitoring, any action taken will be than executed by some
-     * another threadpool.
-     */
+  /*
+   * Creates and return ScheduledExecutorService object, which can be used for monitoring watcher.
+   * Note that, this will only be used for monitoring, any action taken will be than executed by some
+   * another threadpool.
+   */
   @Provides
   @Singleton
   @Named("watcherUpgradeExecutor")
@@ -643,9 +643,9 @@ public class DelegateModule extends AbstractModule {
         1, new ThreadFactoryBuilder().setNameFormat("watcherUpgrade-%d").setPriority(Thread.MAX_PRIORITY).build());
   }
 
-    /*
-     * Creates and return ScheduledExecutorService object, which can be used for scheduling self upgrade check.
-     */
+  /*
+   * Creates and return ScheduledExecutorService object, which can be used for scheduling self upgrade check.
+   */
   @Provides
   @Singleton
   @Named("upgradeExecutor")
@@ -654,10 +654,10 @@ public class DelegateModule extends AbstractModule {
         1, new ThreadFactoryBuilder().setNameFormat("upgrade-%d").setPriority(Thread.MAX_PRIORITY).build());
   }
 
-    /*
-     * Creates and return ScheduledExecutorService object, which can be used for reading message from
-     * watcher and take appropriate action.
-     */
+  /*
+   * Creates and return ScheduledExecutorService object, which can be used for reading message from
+   * watcher and take appropriate action.
+   */
   @Provides
   @Singleton
   @Named("inputExecutor")
@@ -666,10 +666,10 @@ public class DelegateModule extends AbstractModule {
         1, new ThreadFactoryBuilder().setNameFormat("input-%d").setPriority(Thread.NORM_PRIORITY).build());
   }
 
-    /*
-     * Creates and return ScheduledExecutorService object, which can be used for tracking delegate profile
-     * and execute it in case of any changes.
-     */
+  /*
+   * Creates and return ScheduledExecutorService object, which can be used for tracking delegate profile
+   * and execute it in case of any changes.
+   */
   @Provides
   @Singleton
   @Named("profileExecutor")
@@ -678,9 +678,9 @@ public class DelegateModule extends AbstractModule {
         1, new ThreadFactoryBuilder().setNameFormat("profile-%d").setPriority(Thread.NORM_PRIORITY).build());
   }
 
-    /*
-     * Creates and return ScheduledExecutorService object, which can be used for fetching task in case of polling.
-     */
+  /*
+   * Creates and return ScheduledExecutorService object, which can be used for fetching task in case of polling.
+   */
   @Provides
   @Singleton
   @Named("rescheduleExecutor")
@@ -689,10 +689,20 @@ public class DelegateModule extends AbstractModule {
         1, new ThreadFactoryBuilder().setNameFormat("reschedule-%d").setPriority(Thread.MAX_PRIORITY).build());
   }
 
-    /*
-     * Creates and return ExecutorService object, which can be used for performing low priority activities.
-     * Currently, this is being used for performing graceful stop.
-     */
+  @Provides
+  @Singleton
+  @Named("verificationExecutor")
+  public ScheduledExecutorService verificationExecutor() {
+    ScheduledExecutorService verificationExecutor = new ScheduledThreadPoolExecutor(
+        2, new ThreadFactoryBuilder().setNameFormat("verification-%d").setPriority(Thread.NORM_PRIORITY).build());
+    Runtime.getRuntime().addShutdownHook(new Thread(verificationExecutor::shutdownNow));
+    return verificationExecutor;
+  }
+
+  /*
+   * Creates and return ExecutorService object, which can be used for performing low priority activities.
+   * Currently, this is being used for performing graceful stop.
+   */
   @Provides
   @Singleton
   @Named("backgroundExecutor")
@@ -701,9 +711,9 @@ public class DelegateModule extends AbstractModule {
         new ThreadFactoryBuilder().setNameFormat("background-%d").setPriority(Thread.MIN_PRIORITY).build());
   }
 
-    /*
-     * Creates and return ExecutorService object, which can be used for performing watcher upgrade.
-     */
+  /*
+   * Creates and return ExecutorService object, which can be used for performing watcher upgrade.
+   */
   @Provides
   @Singleton
   @Named("watcherUpgradeExecutor")
