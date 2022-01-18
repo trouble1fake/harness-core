@@ -783,6 +783,14 @@ public class DelegateModule extends AbstractModule {
 
   @Provides
   @Singleton
+  @Named("taskExecutor")
+  public ExecutorService taskExecutor() {
+    return ThreadPool.create(10, 400, 1, TimeUnit.SECONDS,
+        new ThreadFactoryBuilder().setNameFormat("task-exec-%d").setPriority(Thread.MIN_PRIORITY).build());
+  }
+
+  @Provides
+  @Singleton
   @Named("asyncExecutor")
   public ExecutorService asyncExecutor() {
     return ThreadPool.create(10, 400, 1, TimeUnit.SECONDS,
