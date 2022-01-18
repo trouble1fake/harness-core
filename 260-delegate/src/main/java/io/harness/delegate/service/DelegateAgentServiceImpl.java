@@ -340,12 +340,9 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   @Inject @Named("rescheduleExecutor") private ScheduledExecutorService rescheduleExecutor;
   @Inject @Named("profileExecutor") private ScheduledExecutorService profileExecutor;
   @Inject @Named("watcherUpgradeExecutor") private ExecutorService watcherUpgradeExecutor;
-  @Inject @Named("systemExecutor") private ExecutorService systemExecutor;
   @Inject @Named("backgroundExecutor") private ExecutorService backgroundExecutor;
   @Inject @Named("taskPollExecutor") private ExecutorService taskPollExecutor;
-  @Inject @Named("asyncExecutor") private ExecutorService asyncExecutor;
-  @Inject @Named("syncExecutor") private ExecutorService syncExecutor;
-  @Inject @Named("artifactExecutor") private ExecutorService artifactExecutor;
+  @Inject @Named("taskExecutor") private ExecutorService taskExecutor;
   @Inject @Named("timeoutExecutor") private ExecutorService timeoutEnforcement;
   @Inject @Named("grpcServiceExecutor") private ExecutorService grpcServiceExecutor;
   @Inject @Named("taskProgressExecutor") private ExecutorService taskProgressExecutor;
@@ -374,12 +371,10 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   private final Set<String> currentlyAcquiringTasks = ConcurrentHashMap.newKeySet();
   private final Map<String, DelegateTaskPackage> currentlyValidatingTasks = new ConcurrentHashMap<>();
   private final Map<String, DelegateTaskPackage> currentlyExecutingTasks = new ConcurrentHashMap<>();
-  private final Map<String, Future<?>> currentlyValidatingFutures = new ConcurrentHashMap<>();
-  private final Map<String, Future<?>> currentlyExecutingFutures = new ConcurrentHashMap<>();
+  private final Map<String, DelegateTaskExecutionData> currentlyExecutingFutures = new ConcurrentHashMap<>();
 
   private final AtomicInteger maxValidatingTasksCount = new AtomicInteger();
   private final AtomicInteger maxExecutingTasksCount = new AtomicInteger();
-  private final AtomicInteger maxValidatingFuturesCount = new AtomicInteger();
   private final AtomicInteger maxExecutingFuturesCount = new AtomicInteger();
 
   private final AtomicLong lastHeartbeatSentAt = new AtomicLong(System.currentTimeMillis());
@@ -1805,9 +1800,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   @Getter(lazy = true)
   private final Map<String, ThreadPoolExecutor> logExecutors =
       NullSafeImmutableMap.<String, ThreadPoolExecutor>builder()
-          .putIfNotNull("systemExecutor", systemExecutor)
-          .putIfNotNull("asyncExecutor", asyncExecutor)
-          .putIfNotNull("artifactExecutor", artifactExecutor)
+          .putIfNotNull("taskExecutor", taskExecutor)
           .putIfNotNull("timeoutEnforcement", timeoutEnforcement)
           .putIfNotNull("taskPollExecutor", taskPollExecutor)
           .build();
@@ -1815,7 +1808,6 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   public Map<String, String> obtainPerformance() {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
     builder.put("maxValidatingTasksCount", Integer.toString(maxValidatingTasksCount.getAndSet(0)));
-    builder.put("maxValidatingFuturesCount", Integer.toString(maxValidatingFuturesCount.getAndSet(0)));
     builder.put("maxExecutingTasksCount", Integer.toString(maxExecutingTasksCount.getAndSet(0)));
     builder.put("maxExecutingFuturesCount", Integer.toString(maxExecutingFuturesCount.getAndSet(0)));
 
@@ -1843,13 +1835,10 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
 
   private void abortDelegateTask(DelegateTaskAbortEvent delegateTaskEvent) {
     log.info("Aborting task {}", delegateTaskEvent);
-    Optional.ofNullable(currentlyValidatingFutures.get(delegateTaskEvent.getDelegateTaskId()))
-        .ifPresent(future -> future.cancel(true));
     currentlyValidatingTasks.remove(delegateTaskEvent.getDelegateTaskId());
-    currentlyValidatingFutures.remove(delegateTaskEvent.getDelegateTaskId());
     log.info("Removed from validating futures on abort");
 
-    Optional.ofNullable(currentlyExecutingFutures.get(delegateTaskEvent.getDelegateTaskId()))
+    Optional.ofNullable(currentlyExecutingFutures.get(delegateTaskEvent.getDelegateTaskId()).getTaskFuture())
         .ifPresent(future -> future.cancel(true));
     currentlyExecutingTasks.remove(delegateTaskEvent.getDelegateTaskId());
     if (currentlyExecutingFutures.remove(delegateTaskEvent.getDelegateTaskId()) != null) {
@@ -1857,23 +1846,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     }
   }
 
-  private void dispatchDelegateTaskAsync(String message) {
-    log.debug("Executing: Event:{}, message:[{}]", Event.MESSAGE.name(), message);
-    try {
-      DelegateTaskEvent delegateTaskEvent = JsonUtils.asObject(message, DelegateTaskEvent.class);
-      try (TaskLogContext ignore = new TaskLogContext(delegateTaskEvent.getDelegateTaskId(), OVERRIDE_ERROR)) {
-        if (!(delegateTaskEvent instanceof DelegateTaskAbortEvent)) {
-          dispatchDelegateTask(delegateTaskEvent);
-        } else {
-          abortDelegateTask((DelegateTaskAbortEvent) delegateTaskEvent);
-        }
-      }
-    } catch (Throwable e) {
-      log.error("Exception while decoding task", e);
-    }
-  }
-
-  private void dispatchDelegateTask(DelegateTaskEvent delegateTaskEvent) {
+  private void dispatchDelegateTaskAsync(DelegateTaskEvent delegateTaskEvent) {
     String delegateTaskId = delegateTaskEvent.getDelegateTaskId();
     if (delegateTaskId == null) {
       log.warn("Delegate task id cannot be null");
@@ -1881,39 +1854,57 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     }
 
     if (!shouldContactManager()) {
-      log.info("Dropping task, self destruct in progress: " + delegateTaskEvent.getDelegateTaskId());
+      log.info("Dropping task, self destruct in progress: " + delegateTaskId);
       return;
     }
 
+    if (currentlyExecutingFutures.containsKey(delegateTaskEvent.getDelegateTaskId())) {
+      log.info("Task [DelegateTaskEvent: {}] already queued, dropping this request ", delegateTaskEvent);
+      return;
+    }
+
+    Future taskFuture = taskExecutor.submit(() -> dispatchDelegateTask(delegateTaskEvent));
+    log.info("Task submitted for execution");
+    if (taskFuture.isCancelled()) {
+      log.warn("Task future is cancelled for taskID: {}", delegateTaskId);
+    }
+    DelegateTaskExecutionData taskExecutionData = DelegateTaskExecutionData.builder().taskFuture(taskFuture).build();
+    currentlyExecutingFutures.put(delegateTaskId, taskExecutionData);
+    updateCounterIfLessThanCurrent(maxExecutingFuturesCount, currentlyExecutingFutures.size());
+  }
+
+  private void dispatchDelegateTask(DelegateTaskEvent delegateTaskEvent) {
     log.info("DelegateTaskEvent received - {}", delegateTaskEvent);
+    String delegateTaskId = delegateTaskEvent.getDelegateTaskId();
+
     if (frozen.get()) {
       log.info(
           "Delegate process with detected time out of sync or with revoked token is running. Won't acquire tasks.");
+      currentlyExecutingFutures.remove(delegateTaskId);
       return;
     }
 
     if (!acquireTasks.get()) {
       log.info("[Old] Upgraded process is running. Won't acquire task while completing other tasks");
+      currentlyExecutingFutures.remove(delegateTaskId);
       return;
     }
 
     if (upgradePending.get() && !delegateTaskEvent.isSync()) {
       log.info("[Old] Upgrade pending, won't acquire async task");
+      currentlyExecutingFutures.remove(delegateTaskId);
       return;
     }
 
     if (currentlyAcquiringTasks.contains(delegateTaskId)) {
       log.info("Task [DelegateTaskEvent: {}] currently acquiring. Don't acquire again", delegateTaskEvent);
+      currentlyExecutingFutures.remove(delegateTaskId);
       return;
     }
 
     if (currentlyValidatingTasks.containsKey(delegateTaskId)) {
       log.info("Task [DelegateTaskEvent: {}] already validating. Don't validate again", delegateTaskEvent);
-      return;
-    }
-
-    if (currentlyExecutingTasks.containsKey(delegateTaskId)) {
-      log.info("Task [DelegateTaskEvent: {}] already acquired. Don't acquire again", delegateTaskEvent);
+      currentlyExecutingFutures.remove(delegateTaskId);
       return;
     }
 
@@ -1923,10 +1914,9 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         perpetualTaskCount = perpetualTaskWorker.getCurrentlyExecutingPerpetualTasksCount().intValue();
       }
 
-      if (delegateTaskLimit > 0
-          && (currentlyExecutingTasks.size() + currentlyValidatingTasks.size() + perpetualTaskCount)
-              >= delegateTaskLimit) {
+      if (delegateTaskLimit > 0 && (currentlyExecutingFutures.size() + perpetualTaskCount) >= delegateTaskLimit) {
         log.info("Delegate reached Delegate Size Task Limit of {}. It will not acquire this time.", delegateTaskLimit);
+        currentlyExecutingFutures.remove(delegateTaskId);
         return;
       }
 
@@ -1937,7 +1927,8 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       DelegateTaskPackage delegateTaskPackage = executeRestCall(
           delegateAgentManagerClient.acquireTask(delegateId, delegateTaskId, accountId, delegateInstanceId));
       if (delegateTaskPackage == null || delegateTaskPackage.getData() == null) {
-        log.debug("Delegate task data not available - accountId: {}", delegateTaskEvent.getAccountId());
+        log.warn("Delegate task data not available - accountId: {}", delegateTaskEvent.getAccountId());
+        currentlyExecutingFutures.remove(delegateTaskId);
         return;
       }
 
@@ -1951,13 +1942,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         injector.injectMembers(delegateValidateTask);
         currentlyValidatingTasks.put(delegateTaskPackage.getDelegateTaskId(), delegateTaskPackage);
         updateCounterIfLessThanCurrent(maxValidatingTasksCount, currentlyValidatingTasks.size());
-        ExecutorService executorService = selectExecutorService(taskData);
-
-        Future<List<DelegateConnectionResult>> future = executorService.submit(delegateValidateTask::validationResults);
-        currentlyValidatingFutures.put(delegateTaskPackage.getDelegateTaskId(), future);
-
-        updateCounterIfLessThanCurrent(maxValidatingFuturesCount, currentlyValidatingFutures.size());
-
+        delegateValidateTask.validationResults();
       } else if (delegateId.equals(delegateTaskPackage.getDelegateId())) {
         applyDelegateSecretFunctor(delegateTaskPackage);
         // Whitelisted. Proceed immediately.
@@ -1968,18 +1953,8 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       log.error("Unable to get task for validation", e);
     } finally {
       currentlyAcquiringTasks.remove(delegateTaskId);
+      currentlyExecutingFutures.remove(delegateTaskId);
     }
-  }
-
-  private ExecutorService selectExecutorService(TaskData taskData) {
-    if (taskData.isAsync()) {
-      return asyncExecutor;
-    }
-    if (taskData.getTaskType().contains("BUILD")) {
-      return artifactExecutor;
-    }
-
-    return syncExecutor;
   }
 
   @NotNull
@@ -2020,7 +1995,6 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         // Tools might be installed asynchronously, so get the flag early on
         final boolean areAllClientToolsInstalled = isClientToolsInstallationFinished();
         currentlyValidatingTasks.remove(taskId);
-        currentlyValidatingFutures.remove(taskId);
         log.info("Removed from validating futures on post validation");
         List<DelegateConnectionResult> results = Optional.ofNullable(delegateConnectionResults).orElse(emptyList());
         boolean validated = results.stream().allMatch(DelegateConnectionResult::isValidated);
@@ -2099,16 +2073,13 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       ((AbstractDelegateRunnableTask) delegateRunnableTask).setDelegateHostname(HOST_NAME);
     }
     injector.injectMembers(delegateRunnableTask);
-    ExecutorService executorService = selectExecutorService(taskData);
-    Future taskFuture = executorService.submit(delegateRunnableTask);
-    if (taskFuture.isCancelled()) {
-      log.warn("Task future in executeTask, cancelled");
-    }
-    currentlyExecutingFutures.put(delegateTaskPackage.getDelegateTaskId(), taskFuture);
-    updateCounterIfLessThanCurrent(maxExecutingFuturesCount, currentlyExecutingFutures.size());
+    currentlyExecutingFutures.get(delegateTaskPackage.getDelegateTaskId()).setExecutionStartTime(clock.millis());
 
+    // Submit execution for watching this task execution.
     timeoutEnforcement.submit(() -> enforceDelegateTaskTimeout(delegateTaskPackage.getDelegateTaskId(), taskData));
-    log.info("Task submitted for execution");
+
+    // Start task execution in same thread.
+    delegateRunnableTask.run();
   }
 
   private ILogStreamingTaskClient getLogStreamingTaskClient(
@@ -2364,14 +2335,14 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   }
 
   private void enforceDelegateTaskTimeout(String taskId, TaskData taskData) {
-    long startingTime = clock.millis();
+    final long startingTime = currentlyExecutingFutures.get(taskId).getExecutionStartTime();
     boolean stillRunning = true;
     long timeout = taskData.getTimeout() + TimeUnit.SECONDS.toMillis(30L);
     Future taskFuture = null;
     while (stillRunning && clock.millis() - startingTime < timeout) {
       log.info("Task time remaining for {}: {} ms", taskId, startingTime + timeout - clock.millis());
       sleep(ofSeconds(5));
-      taskFuture = currentlyExecutingFutures.get(taskId);
+      taskFuture = currentlyExecutingFutures.get(taskId).getTaskFuture();
       if (taskFuture != null) {
         log.info("Task future: {} - done:{}, cancelled:{}", taskId, taskFuture.isDone(), taskFuture.isCancelled());
       }
@@ -2379,7 +2350,8 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     }
     if (stillRunning) {
       log.error("Task {} timed out after {} milliseconds", taskId, timeout);
-      Optional.ofNullable(currentlyExecutingFutures.get(taskId)).ifPresent(future -> future.cancel(true));
+      Optional.ofNullable(currentlyExecutingFutures.get(taskId).getTaskFuture())
+          .ifPresent(future -> future.cancel(true));
     }
     if (taskFuture != null) {
       try {
