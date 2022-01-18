@@ -900,13 +900,25 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
 
   private void handleMessageSubmit(String message) {
     if (message.contains(TASK_EVENT_MARKER)) {
+      // For task events, continue in same thread. We will decode the task and assign it for execution.
       log.info("New Task event received: " + message);
-      systemExecutor.submit(() -> dispatchDelegateTaskAsync(message));
+      try {
+        DelegateTaskEvent delegateTaskEvent = JsonUtils.asObject(message, DelegateTaskEvent.class);
+        try (TaskLogContext ignore = new TaskLogContext(delegateTaskEvent.getDelegateTaskId(), OVERRIDE_ERROR)) {
+          if (!(delegateTaskEvent instanceof DelegateTaskAbortEvent)) {
+            dispatchDelegateTaskAsync(delegateTaskEvent);
+          } else {
+            taskExecutor.submit(() -> abortDelegateTask((DelegateTaskAbortEvent) delegateTaskEvent));
+          }
+        }
+      } catch (Throwable e) {
+        log.error("Exception while decoding task", e);
+      }
       return;
     }
 
     log.debug("^^MSG: " + message);
-    systemExecutor.submit(() -> handleMessage(message));
+    taskExecutor.submit(() -> handleMessage(message));
   }
 
   @SuppressWarnings("PMD")
@@ -1299,19 +1311,14 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
 
     final long shutdownStart = clock.millis();
     log.info("Stopping executors");
-    artifactExecutor.shutdown();
-    asyncExecutor.shutdown();
-    syncExecutor.shutdown();
+    taskExecutor.shutdown();
     taskPollExecutor.shutdown();
 
-    final boolean terminatedArtifact = artifactExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
-    final boolean terminatedAsync = asyncExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
-    final boolean terminatedSync = syncExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+    final boolean terminatedTask = taskExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
     final boolean terminatedPoll = taskPollExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
 
-    log.info("Executors terminated after {}s. All tasks completed? Artifact [{}], Async [{}], Sync [{}], Polling [{}]",
-        Duration.ofMillis(clock.millis() - shutdownStart).toMillis() * 1000, terminatedArtifact, terminatedAsync,
-        terminatedSync, terminatedPoll);
+    log.info("Executors terminated after {}s. All tasks completed? TaskExec [{}], Polling [{}]",
+        Duration.ofMillis(clock.millis() - shutdownStart).toMillis() * 1000, terminatedTask, terminatedPoll);
 
     if (perpetualTaskWorker != null) {
       log.info("Stopping perpetual task workers");
@@ -1879,7 +1886,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
 
     if (frozen.get()) {
       log.info(
-          "Delegate process with detected time out of sync or with revoked token is running. Won't acquire tasks.");
+              "Delegate process with detected time out of sync or with revoked token is running. Won't acquire tasks.");
       currentlyExecutingFutures.remove(delegateTaskId);
       return;
     }
