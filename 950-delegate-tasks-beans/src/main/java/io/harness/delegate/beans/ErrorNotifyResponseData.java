@@ -25,4 +25,5 @@ public class ErrorNotifyResponseData implements DelegateTaskNotifyResponseData, 
   private String errorMessage;
   private WingsException exception;
   private DelegateMetaInfo delegateMetaInfo;
+  private boolean expired;
 }

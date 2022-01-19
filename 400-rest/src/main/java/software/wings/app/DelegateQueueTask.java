@@ -11,8 +11,8 @@ import static io.harness.beans.DelegateTask.Status.ABORTED;
 import static io.harness.beans.DelegateTask.Status.PARKED;
 import static io.harness.beans.DelegateTask.Status.QUEUED;
 import static io.harness.beans.DelegateTask.Status.STARTED;
-import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.beans.FeatureName.TIMEOUT_FAILURE_SUPPORT;
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.delegate.task.TaskFailureReason.EXPIRED;
 import static io.harness.exception.WingsException.ExecutionContext.MANAGER;
@@ -237,6 +237,7 @@ public class DelegateQueueTask implements Runnable {
                       .responseCode(DelegateTaskResponse.ResponseCode.FAILED)
                       .expired(true)
                       .response(ErrorNotifyResponseData.builder()
+                                    .expired(true)
                                     .errorMessage(errorMessage)
                                     .failureTypes(EnumSet.of(FailureType.EXPIRED, FailureType.TIMEOUT_ERROR))
                                     .build())

@@ -14,6 +14,7 @@ import static io.harness.beans.DelegateTask.Status.QUEUED;
 import static io.harness.beans.DelegateTask.Status.STARTED;
 import static io.harness.beans.DelegateTask.Status.runningStatuses;
 import static io.harness.beans.FeatureName.GIT_HOST_CONNECTIVITY;
+import static io.harness.beans.FeatureName.TIMEOUT_FAILURE_SUPPORT;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.data.structure.SizeFunction.size;
@@ -1290,8 +1291,13 @@ public class DelegateTaskServiceClassicImpl implements DelegateTaskServiceClassi
           log.info("Marking task as expired: {}", errorMessage);
 
           if (isNotBlank(delegateTask.getWaitId())) {
-            waitNotifyEngine.doneWith(
-                delegateTask.getWaitId(), ErrorNotifyResponseData.builder().errorMessage(errorMessage).build());
+            ErrorNotifyResponseData errorNotifyResponseData =
+                ErrorNotifyResponseData.builder().errorMessage(errorMessage).build();
+            if (featureFlagService.isEnabled(TIMEOUT_FAILURE_SUPPORT, accountId)) {
+              errorNotifyResponseData.setExpired(true);
+              errorNotifyResponseData.setFailureTypes(EnumSet.of(FailureType.EXPIRED, FailureType.TIMEOUT_ERROR));
+            }
+            waitNotifyEngine.doneWith(delegateTask.getWaitId(), errorNotifyResponseData);
           }
         }
       }
