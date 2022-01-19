@@ -21,11 +21,10 @@ import org.redisson.api.RLock;
 @Builder
 public class RedisAcquiredLock implements AcquiredLock<RLock> {
   RLock lock;
-  boolean isLeaseInfinite;
 
   @Override
   public void release() {
-    if (lock != null && (lock.isLocked() || isLeaseInfinite)) {
+    if (lock != null && lock.isLocked()) {
       lock.unlock();
     }
   }

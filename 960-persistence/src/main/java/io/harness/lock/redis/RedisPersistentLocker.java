@@ -42,8 +42,8 @@ import org.redisson.config.ReadMode;
 @Singleton
 @Slf4j
 public class RedisPersistentLocker implements PersistentLocker, HealthMonitor, Managed {
-  private RedissonClient client;
-  private String lockNamespace;
+  private final RedissonClient client;
+  private final String lockNamespace;
   private static final String LOCK_PREFIX = "locks";
   private static final String ERROR_MESSAGE = "Failed to acquire distributed lock for %s";
 
@@ -129,7 +129,7 @@ public class RedisPersistentLocker implements PersistentLocker, HealthMonitor, M
       RLock lock = client.getLock(name);
       boolean locked = lock.tryLock(waitTime.toMillis(), -1, TimeUnit.MILLISECONDS);
       if (locked) {
-        return RedisAcquiredLock.builder().lock(lock).isLeaseInfinite(true).build();
+        return RedisAcquiredLock.builder().lock(lock).build();
       }
     } catch (Exception ex) {
       throw new UnexpectedException(format(ERROR_MESSAGE, name), ex);
