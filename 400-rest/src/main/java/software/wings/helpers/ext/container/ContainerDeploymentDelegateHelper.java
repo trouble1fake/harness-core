@@ -117,7 +117,17 @@ public class ContainerDeploymentDelegateHelper {
     String namespace = containerServiceParam.getNamespace();
 
     KubernetesConfig kubernetesConfig;
-    if (settingAttribute.getValue() instanceof KubernetesClusterConfig) {
+
+    if (settingAttribute.getValue() instanceof RancherConfig) {
+      try {
+        SettingValue cloudProvider = settingAttribute.getValue();
+        kubernetesConfig = rancherTaskHelper.createKubeconfig(
+            (RancherConfig) cloudProvider, encryptedDataDetails, containerServiceParam.getClusterName(), namespace);
+      } catch (Exception e) {
+        throw new InvalidRequestException(
+            "Unable to fetch KubeConfig from Rancher for cluster: " + containerServiceParam.getClusterName(), e);
+      }
+    } else if (settingAttribute.getValue() instanceof KubernetesClusterConfig) {
       KubernetesClusterConfig kubernetesClusterConfig = (KubernetesClusterConfig) settingAttribute.getValue();
       encryptionService.decrypt(kubernetesClusterConfig, encryptedDataDetails, false);
       kubernetesConfig = kubernetesClusterConfig.createKubernetesConfig(namespace);

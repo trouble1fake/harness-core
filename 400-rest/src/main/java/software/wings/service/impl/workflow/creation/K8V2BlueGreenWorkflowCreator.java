@@ -11,6 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.CDC;
 import static io.harness.validation.Validator.notNullCheck;
 
 import static software.wings.beans.Workflow.WorkflowBuilder.aWorkflow;
+import static software.wings.service.impl.workflow.creation.K8V2CanaryWorkflowCreator.RANCHER_INFRA_TYPE;
 
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
@@ -25,6 +26,8 @@ import software.wings.service.impl.workflow.creation.helpers.K8BlueGreenWorkflow
 
 import com.google.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
+import software.wings.service.impl.workflow.creation.helpers.RancherK8BlueGreenWorkflowPhaseHelper;
+import software.wings.service.intfc.InfrastructureDefinitionService;
 
 @OwnedBy(CDC)
 @Slf4j
@@ -33,6 +36,8 @@ public class K8V2BlueGreenWorkflowCreator extends WorkflowCreator {
   private static final String PHASE_NAME = "Blue/Green";
 
   @Inject private K8BlueGreenWorkflowPhaseHelper k8BlueGreenWorkflowPhaseHelper;
+  @Inject private RancherK8BlueGreenWorkflowPhaseHelper rancherK8BlueGreenWorkflowPhaseHelper;
+  @Inject private InfrastructureDefinitionService infrastructureDefinitionService;
 
   @Override
   public Workflow createWorkflow(Workflow clientWorkflow) {
@@ -41,6 +46,7 @@ public class K8V2BlueGreenWorkflowCreator extends WorkflowCreator {
     OrchestrationWorkflow orchestrationWorkflow = workflow.getOrchestrationWorkflow();
     CanaryOrchestrationWorkflow canaryOrchestrationWorkflow = (CanaryOrchestrationWorkflow) orchestrationWorkflow;
     notNullCheck("orchestrationWorkflow", canaryOrchestrationWorkflow);
+    updateWorkflowHelper(clientWorkflow.getAccountId(), clientWorkflow.getInfraDefinitionId());
     if (k8BlueGreenWorkflowPhaseHelper.isCreationRequired(canaryOrchestrationWorkflow)) {
       addLinkedPreOrPostDeploymentSteps(canaryOrchestrationWorkflow);
       addWorkflowPhases(workflow);
@@ -63,5 +69,14 @@ public class K8V2BlueGreenWorkflowCreator extends WorkflowCreator {
   @Override
   public void attachWorkflowPhase(Workflow workflow, WorkflowPhase workflowPhase) {
     // No action needed in attaching Phase
+  }
+
+  private void updateWorkflowHelper(String accountId, String infraDefinitionId) {
+    if (infrastructureDefinitionService.getInfraDefById(accountId, infraDefinitionId)
+        .getInfrastructure()
+        .getInfrastructureType()
+        .equals(RANCHER_INFRA_TYPE)) {
+      this.k8BlueGreenWorkflowPhaseHelper = this.rancherK8BlueGreenWorkflowPhaseHelper;
+    }
   }
 }

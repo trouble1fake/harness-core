@@ -26,7 +26,9 @@ import software.wings.beans.AwsConfig;
 import software.wings.beans.AzureConfig;
 import software.wings.beans.GcpConfig;
 import software.wings.beans.KubernetesClusterConfig;
+import software.wings.beans.RancherConfig;
 import software.wings.beans.SettingAttribute;
+import software.wings.delegatetasks.delegatecapability.CapabilityHelper;
 import software.wings.delegatetasks.validation.capabilities.ClusterMasterUrlValidationCapability;
 import software.wings.settings.SettingValue;
 
@@ -77,7 +79,9 @@ public class ContainerServiceParams implements ExecutionCapabilityDemander {
     SettingValue value = settingAttribute.getValue();
 
     List<ExecutionCapability> executionCapabilities = new ArrayList<>();
-    if (value instanceof AwsConfig) {
+    if (value instanceof RancherConfig) {
+      return CapabilityHelper.generateDelegateCapabilities(value, encryptionDetails, maskingEvaluator);
+    } else if (value instanceof AwsConfig) {
       return value.fetchRequiredExecutionCapabilities(maskingEvaluator);
     } else if (value instanceof KubernetesClusterConfig
         && ((KubernetesClusterConfig) value).isUseKubernetesDelegate()) {

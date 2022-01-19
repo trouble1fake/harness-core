@@ -13,6 +13,7 @@ import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.delegate.beans.TaskData.DEFAULT_ASYNC_CALL_TIMEOUT;
 import static io.harness.exception.ExceptionUtils.getMessage;
 
+import static software.wings.sm.StateExecutionData.StateExecutionDataBuilder.aStateExecutionData;
 import static software.wings.sm.StateType.RANCHER_RESOLVE;
 
 import io.harness.annotations.dev.BreakDependencyOn;
@@ -104,8 +105,20 @@ public class RancherResolveState extends State {
                                                        .name(RancherClusterElementList.getSweepingOutputID(context))
                                                        .build());
       if (Objects.nonNull(clusterElementList)) {
-        log.warn("Possible duplicate execution of Rancher Resolve within a workflow. Skipping this.");
-        return ExecutionResponse.builder().executionStatus(ExecutionStatus.SUCCESS).build();
+        List<String> clusters = clusterElementList.getRancherClusterElements()
+                                    .stream()
+                                    .map(RancherClusterElement::getClusterName)
+                                    .collect(Collectors.toList());
+        log.info(
+            "Possible duplicate execution of Rancher Resolve within a workflow. Resolved clusters list from Sweeping output: [{}]. Skipping this.",
+            clusters);
+        return ExecutionResponse.builder()
+            .executionStatus(ExecutionStatus.SKIPPED)
+            .stateExecutionData(aStateExecutionData()
+                                    .withErrorMsg("Cluster Resolution is already done. Filtered clusters list: "
+                                        + clusters + ". Skipping.")
+                                    .build())
+            .build();
       }
 
       return executeInternal(context, activity.getUuid());

@@ -151,7 +151,15 @@ public class ContainerDeploymentManagerHelper {
     String subscriptionId = null;
     String masterUrl = null;
     settingAttribute = settingsService.get(containerInfraMapping.getComputeProviderSettingId());
-    if (containerInfraMapping instanceof DirectKubernetesInfrastructureMapping) {
+
+    if (containerInfraMapping instanceof RancherKubernetesInfrastructureMapping) {
+      RancherKubernetesInfrastructureMapping rancherInfra =
+          (RancherKubernetesInfrastructureMapping) containerInfraMapping;
+      namespace = rancherInfra.getNamespace();
+
+      RancherClusterElement element = context.getContextElement();
+      clusterName = element.getClusterName();
+    } else if (containerInfraMapping instanceof DirectKubernetesInfrastructureMapping) {
       namespace = containerInfraMapping.getNamespace();
     } else if (containerInfraMapping instanceof GcpKubernetesInfrastructureMapping) {
       namespace = containerInfraMapping.getNamespace();

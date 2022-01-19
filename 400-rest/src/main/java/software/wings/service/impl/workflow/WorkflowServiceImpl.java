@@ -81,7 +81,9 @@ import static software.wings.sm.StateType.KUBERNETES_DEPLOY;
 import static software.wings.sm.StateType.KUBERNETES_SETUP;
 import static software.wings.sm.StateType.PCF_RESIZE;
 import static software.wings.sm.StateType.PCF_SETUP;
+import static software.wings.sm.StateType.RANCHER_K8S_BLUE_GREEN_DEPLOY;
 import static software.wings.sm.StateType.RANCHER_K8S_CANARY_DEPLOY;
+import static software.wings.sm.StateType.RANCHER_K8S_DELETE;
 import static software.wings.sm.StateType.RANCHER_K8S_DEPLOYMENT_ROLLING;
 import static software.wings.sm.StateType.SHELL_SCRIPT;
 import static software.wings.sm.StateType.TERRAFORM_ROLLBACK;
@@ -335,9 +337,9 @@ public class WorkflowServiceImpl implements WorkflowService, DataProvider {
   private static final List<String> kubernetesArtifactNeededStateTypes =
       Arrays.asList(KUBERNETES_SETUP.name(), KUBERNETES_DEPLOY.name());
 
-  private static final List<String> k8sV2ArtifactNeededStateTypes =
-      Arrays.asList(K8S_DEPLOYMENT_ROLLING.name(), K8S_CANARY_DEPLOY.name(), K8S_BLUE_GREEN_DEPLOY.name(),
-          K8S_APPLY.name(), RANCHER_K8S_DEPLOYMENT_ROLLING.name(), RANCHER_K8S_CANARY_DEPLOY.name());
+  private static final List<String> k8sV2ArtifactNeededStateTypes = Arrays.asList(K8S_DEPLOYMENT_ROLLING.name(),
+      K8S_CANARY_DEPLOY.name(), K8S_BLUE_GREEN_DEPLOY.name(), K8S_APPLY.name(), RANCHER_K8S_DEPLOYMENT_ROLLING.name(),
+      RANCHER_K8S_CANARY_DEPLOY.name(), RANCHER_K8S_BLUE_GREEN_DEPLOY.name());
 
   private static final List<String> ecsArtifactNeededStateTypes =
       Arrays.asList(ECS_SERVICE_DEPLOY.name(), ECS_SERVICE_SETUP.name(), ECS_DAEMON_SERVICE_SETUP.name());
@@ -367,7 +369,8 @@ public class WorkflowServiceImpl implements WorkflowService, DataProvider {
 
   private static final List<String> k8sManifestNeededStateTypes =
       Arrays.asList(K8S_DEPLOYMENT_ROLLING.name(), K8S_CANARY_DEPLOY.name(), K8S_BLUE_GREEN_DEPLOY.name(),
-          K8S_APPLY.name(), K8S_DELETE.name(), RANCHER_K8S_DEPLOYMENT_ROLLING.name(), RANCHER_K8S_CANARY_DEPLOY.name());
+          K8S_APPLY.name(), K8S_DELETE.name(), RANCHER_K8S_DEPLOYMENT_ROLLING.name(), RANCHER_K8S_CANARY_DEPLOY.name(),
+          RANCHER_K8S_BLUE_GREEN_DEPLOY.name(), RANCHER_K8S_DELETE.name());
 
   private static final Comparator<Stencil> stencilDefaultSorter =
       Comparator.comparingInt((Stencil o) -> o.getStencilCategory().getDisplayOrder())
@@ -3912,6 +3915,7 @@ public class WorkflowServiceImpl implements WorkflowService, DataProvider {
       }
     } else if (orchestrationWorkflow.getOrchestrationWorkflowType() == BLUE_GREEN) {
       if (!(InfrastructureMappingType.DIRECT_KUBERNETES.name().equals(infrastructureMapping.getInfraMappingType())
+              || InfrastructureMappingType.RANCHER_KUBERNETES.name().equals(infrastructureMapping.getInfraMappingType())
               || InfrastructureMappingType.GCP_KUBERNETES.name().equals(infrastructureMapping.getInfraMappingType())
               || InfrastructureMappingType.AZURE_KUBERNETES.name().equals(infrastructureMapping.getInfraMappingType())
               || InfrastructureMappingType.PCF_PCF.name().equals(infrastructureMapping.getInfraMappingType())

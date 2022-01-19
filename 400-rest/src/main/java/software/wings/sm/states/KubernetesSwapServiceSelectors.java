@@ -38,6 +38,7 @@ import software.wings.api.ContainerServiceElement;
 import software.wings.api.InstanceElement;
 import software.wings.api.KubernetesSwapServiceSelectorsExecutionData;
 import software.wings.api.PhaseElement;
+import software.wings.api.RancherClusterElement;
 import software.wings.api.k8s.K8sSwapServiceElement;
 import software.wings.beans.Activity;
 import software.wings.beans.Activity.ActivityBuilder;
@@ -72,6 +73,7 @@ import com.google.inject.Inject;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -337,7 +339,7 @@ public class KubernetesSwapServiceSelectors extends State {
 
   private K8sSwapServiceElement getK8sSwapServiceElement(ExecutionContext context) {
     SweepingOutputInquiry sweepingOutputInquiry =
-        context.prepareSweepingOutputInquiryBuilder().name(K8S_SWAP_SERVICE_ELEMENT).build();
+        context.prepareSweepingOutputInquiryBuilder().name(getSweepingOutputName(context)).build();
     SweepingOutputInstance result = sweepingOutputService.find(sweepingOutputInquiry);
     if (result == null) {
       return null;
@@ -347,9 +349,15 @@ public class KubernetesSwapServiceSelectors extends State {
 
   private void saveK8sSwapServiceElement(ExecutionContext context, K8sSwapServiceElement k8sSwapServiceElement) {
     sweepingOutputService.save(context.prepareSweepingOutputBuilder(Scope.WORKFLOW)
-                                   .name(K8S_SWAP_SERVICE_ELEMENT)
+                                   .name(getSweepingOutputName(context))
                                    .output(kryoSerializer.asDeflatedBytes(k8sSwapServiceElement))
                                    .build());
+  }
+
+  private String getSweepingOutputName(ExecutionContext context) {
+    return Objects.nonNull(context.getContextElement()) && context.getContextElement() instanceof RancherClusterElement
+        ? K8S_SWAP_SERVICE_ELEMENT + "-" + ((RancherClusterElement) context.getContextElement()).getUuid()
+        : K8S_SWAP_SERVICE_ELEMENT;
   }
 
   @Override
