@@ -347,7 +347,7 @@ shouldUseInstanceCache: ${SHOULD_USE_INSTANCE_CACHE:-true}
 
 secretsConfiguration:
   secretResolutionEnabled: true
-  gcpSecretManagerProject: harness-playground
+  gcpSecretManagerProject: qa-setup
 
 
 pmsPlanCreatorServicePoolConfig:
