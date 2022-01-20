@@ -3973,9 +3973,10 @@ public class DelegateServiceImpl implements DelegateService {
   }
   private String getDelegateXmx(String delegateType) {
     // TODO: ARPIT remove this community and null check once new delegate and watcher goes in prod.
+    // remove 25% of ram for pod_base
     return (DeployVariant.isCommunity(deployVersion) || (delegateType != null && (delegateType.equals(DOCKER))))
         ? "-Xmx512m"
-        : "-Xmx1536m";
+        : "-Xmx1344m";
   }
 
   private void sendTelemetryEvents(String accountId, String delegateType, boolean isNg, String eventName) {
