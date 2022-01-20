@@ -109,6 +109,7 @@ java_library(
         "@maven//:org_assertj_assertj_core",
         "@maven//:org_mockito_mockito_core",
         "@maven//:org_powermock_powermock_api_mockito",
+        "@maven//:au_com_dius_pact_jvm_consumer_junit"
     ],
 )
 

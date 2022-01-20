@@ -762,6 +762,7 @@ java_library(
         "@maven//:org_zeroturnaround_zt_exec",
         "@maven//:ru_vyarus_guice_validator",
         "@maven//:software_amazon_ion_ion_java",
+        "@maven//:au_com_dius_pact_jvm_consumer_junit",
     ],
 )
 

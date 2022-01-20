@@ -5154,6 +5154,8 @@ maven_install(
         maven_test_artifact("org.mockito:mockito-core:1.10.19"),
         maven_test_artifact("org.springframework.boot:spring-boot-starter-test:2.1.6.RELEASE"),
         maven_test_artifact("pl.pragmatists:JUnitParams:1.0.4"),
+        maven_test_artifact("au.com.dius:pact-jvm-consumer-junit:4.0.10"),
+#        maven_test_artifact("")
     ],
     excluded_artifacts = [],
     maven_install_json = "//project:main_maven_install.json",

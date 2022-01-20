@@ -40,6 +40,7 @@ test_dependencies = shared_dependencies + [
     "@maven//:org_assertj_assertj_core",
     "@maven//:org_glassfish_javax_el",
     "@maven//:org_powermock_powermock_module_junit4",
+    "@maven//:au_com_dius_pact_jvm_consumer_junit",
 ]
 
 java_library(
