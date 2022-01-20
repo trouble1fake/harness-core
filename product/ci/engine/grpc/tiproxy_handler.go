@@ -230,9 +230,9 @@ func (h *tiProxyHandler) UploadCg(ctx context.Context, req *pb.UploadCgRequest) 
 	}
 	err = client.UploadCg(org, project, pipeline, build, stage, step, repo, sha, source, target, timeMs, encCg)
 	if err != nil {
-		err =  errors.Wrap(err, "failed to upload cg to ti server")
+		return res, errors.Wrap(err, "failed to upload cg to ti server")
 	}
-	return res, err
+	return res, nil
 }
 
 // getCgFiles return list of cg files in given directory
