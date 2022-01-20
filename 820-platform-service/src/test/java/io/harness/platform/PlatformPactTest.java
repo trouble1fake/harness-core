@@ -15,7 +15,6 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 
 public class PlatformPactTest {
-
     @Rule
     public PactProviderRule mockProvider = new PactProviderRule("Gateway", this);
 
@@ -57,6 +56,7 @@ public class PlatformPactTest {
 //
     @Pact(consumer = "Admin-Portal")
     public RequestResponsePact createPactVersion(PactDslWithProvider builder) {
+        System.setProperty("pact.rootDir", "target/Pact");
         Map<String, String> headers = new HashMap<>();
         headers.put("Content-Type", "application/json");
 
@@ -76,7 +76,7 @@ public class PlatformPactTest {
     //
     @Pact(consumer = "Admin-Portal")
     public RequestResponsePact createPactInvalid(PactDslWithProvider builder) {
-
+        System.setProperty("pact.rootDir", "target/Pact");
         return builder
                 .given("invalid property")
                 .uponReceiving("a request with an invalid property")
@@ -107,6 +107,7 @@ public class PlatformPactTest {
     @Test
     @PactVerification(value = "Gateway", fragment = "createPactVersion")
     public void runVersionTest() {
+        System.setProperty("pact.rootDir", "target/Pact");
         String version = new PlatformPactURL(mockProvider.getUrl()).getVersion();
         assertEquals("Expected version does not match",
                 "{\"metaData\":null,\"resource\":{\"system.properties.version\":{\"string\":\"1.1\",\"chars\":\"1.1\",\"valueType\":\"STRING\"}},\"responseMessages\":null}", version);
@@ -115,6 +116,7 @@ public class PlatformPactTest {
     @Test
     @PactVerification(value = "Gateway", fragment = "createPactInvalid")
     public void runInvalidTest() {
+        System.setProperty("pact.rootDir", "target/Pact");
         String invalid = new PlatformPactURL(mockProvider.getUrl()).getInvalidProperty();
         assertEquals("Expected invalid property response does not match",
                 "", invalid);

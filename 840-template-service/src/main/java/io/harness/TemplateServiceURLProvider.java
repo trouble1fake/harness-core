@@ -30,21 +30,23 @@ public class TemplateServiceURLProvider {
 //    }
 //
     public String getVersion() {
-        Client client = ClientBuilder.newClient();
-        Response response = client.target(url + "/api/gateway-version-pact").request().get();
-        String result = response.readEntity(String.class);
-        response.close();
-        client.close();
-        return result;
+//        Client client = ClientBuilder.newClient();
+//        Response response = client.target(url + "/api/gateway-version-pact").request().get();
+//        String result = response.readEntity(String.class);
+//        response.close();
+//        client.close();
+//        return result;
+        return "";
 
     }
 
     public String getInvalidProperty() {
-        Client client = ClientBuilder.newClient();
-        Response response = client.target(url + "/invalidurl").request().get();
-        String result = response.readEntity(String.class);
-        response.close();
-        client.close();
-        return result;
+//        Client client = ClientBuilder.newClient();
+//        Response response = client.target(url + "/invalidurl").request().get();
+//        String result = response.readEntity(String.class);
+//        response.close();
+//        client.close();
+//        return result;
+        return "";
     }
 }

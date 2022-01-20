@@ -32,8 +32,15 @@ public class PlatformPactURL {
 //
     public String getVersion() {
         Client client = ClientBuilder.newClient();
-        Response response = client.target(url + "/api/gateway-version-pact").request().get();
+        Response response = null;
+        try {
+            response = client.target(url + "/api/gateway-version-pact").request().get();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        System.out.println("**************"+response);
         String result = response.readEntity(String.class);
+
         response.close();
         client.close();
         return result;

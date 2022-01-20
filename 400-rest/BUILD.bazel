@@ -2792,6 +2792,7 @@ java_library(
         "@maven//:xml_apis_xml_apis",
         "@maven//:xml_resolver_xml_resolver",
         "@maven//:xpp3_xpp3",
+        "@maven//:au_com_dius_pact_jvm_provider_junit5_2_12",
     ],
 )
 

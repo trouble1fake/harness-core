@@ -120,7 +120,7 @@ java_binary(
         "@maven//:com_google_cloud_google_cloud_storage",
         "@maven//:com_google_code_findbugs_annotations",
         "@maven//:com_google_code_findbugs_jsr305",
-        "@maven//:com_google_code_gson_gson",
+#        "@maven//:com_google_code_gson_gson",
         "@maven//:com_google_errorprone_error_prone_annotations",
         "@maven//:com_google_guava_guava",
         "@maven//:com_google_http_client_google_http_client",
@@ -378,6 +378,8 @@ java_binary(
         "@maven//:org_zeroturnaround_zt_exec",
         "@maven//:ru_vyarus_guice_validator",
         "@maven//:software_amazon_ion_ion_java",
+#        "@maven//:com_google_code_gson_gson",
+        "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
     ],
 )
 
@@ -763,6 +765,12 @@ java_library(
         "@maven//:ru_vyarus_guice_validator",
         "@maven//:software_amazon_ion_ion_java",
         "@maven//:au_com_dius_pact_jvm_consumer_junit",
+#        "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
+#        "@maven//:au_com_dius_pact_consumer",
+#        "@maven//:au_com_dius_pact_core_model",
+#        "@maven//:au_com_dius_pact_jvm_consumer_java8_2_12"
+#        "@maven//:au_com_dius_pact_jvm_consumer_junit_2_12"
+
     ],
 )
 

@@ -4431,7 +4431,7 @@ plain_artifacts = [
     "com.google.cloud:google-cloud-storage:1.52.0",
     "com.google.code.findbugs:annotations:3.0.0",
     "com.google.code.findbugs:jsr305:3.0.2",
-    "com.google.code.gson:gson:2.8.0",
+#    "com.google.code.gson:gson:2.8.0",
     "com.google.errorprone:error_prone_annotations:2.3.3",
     "com.google.guava:guava:30.1.1-jre",
     "com.google.http-client:google-http-client-apache-v2:1.38.0",
@@ -4908,8 +4908,8 @@ plain_artifacts = [
     "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.3.71",
     "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.3.71",
     "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.3.71",
-    "org.jetbrains.kotlin:kotlin-stdlib:1.2.31",
-    "org.jetbrains.kotlin:kotlin-stdlib:1.2.31",
+#    "org.jetbrains.kotlin:kotlin-stdlib:1.2.31",
+#    "org.jetbrains.kotlin:kotlin-stdlib:1.2.31",
     "org.jetbrains:annotations:13.0",
     "org.jfree:jfreechart:1.5.0",
     "org.jfrog.artifactory.client:artifactory-java-client-api:2.9.1",
@@ -5015,6 +5015,9 @@ plain_artifacts = [
     "io.swagger.core.v3:swagger-annotations:2.1.2",
     "io.swagger.core.v3:swagger-models:2.1.2",
     "io.swagger.core.v3:swagger-integration:2.1.2",
+    "com.google.code.gson:gson:2.8.6",
+    "org.jetbrains.kotlin:kotlin-stdlib:1.3.72",
+    "au.com.dius:pact-jvm-provider-junit5_2.12:3.5.24",
 ]
 
 amazon_artifacts = [
@@ -5155,7 +5158,11 @@ maven_install(
         maven_test_artifact("org.springframework.boot:spring-boot-starter-test:2.1.6.RELEASE"),
         maven_test_artifact("pl.pragmatists:JUnitParams:1.0.4"),
         maven_test_artifact("au.com.dius:pact-jvm-consumer-junit:4.0.10"),
-#        maven_test_artifact("")
+#        maven_test_artifact("au.com.dius:pact-jvm-provider-junit5_2.12:3.5.24"),
+#        maven_test_artifact("org.jetbrains.kotlin:kotlin-stdlib:1.3.72"),
+#        maven_test_artifact("au.com.dius.pact:consumer:4.3.4"),
+#        maven_test_artifact("au.com.dius.pact.core:model:4.3.4"),
+#        maven_test_artifact("au.com.dius:pact-jvm-consumer-java8_2.12:3.5.21")
     ],
     excluded_artifacts = [],
     maven_install_json = "//project:main_maven_install.json",
@@ -5170,6 +5177,7 @@ maven_install(
         "https://harness.jfrog.io/harness/thirdparty-annonymous",
         "https://s01.oss.sonatype.org/content/repositories/releases",
         "https://s01.oss.sonatype.org/content/repositories/snapshots",
+        "https://repo1.maven.org/maven2/"
     ],
     version_conflict_policy = "pinned",
 )
