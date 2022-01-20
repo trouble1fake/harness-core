@@ -173,12 +173,14 @@ public class RancherResolveState extends State {
         rancherResolveClustersTaskParameters.getClusterSelectionCriteria();
     List<ClusterSelectionCriteriaEntry> renderedClusterSelectionCriteriaEntries = new ArrayList<>();
 
-    for (ClusterSelectionCriteriaEntry clusterSelectionCriteriaEntry : clusterSelectionCriteria) {
-      renderedClusterSelectionCriteriaEntries.add(
-          ClusterSelectionCriteriaEntry.builder()
-              .labelName(context.renderExpression(clusterSelectionCriteriaEntry.getLabelName()))
-              .labelValues(context.renderExpression(clusterSelectionCriteriaEntry.getLabelValues()))
-              .build());
+    if (clusterSelectionCriteria != null) {
+      for (ClusterSelectionCriteriaEntry clusterSelectionCriteriaEntry : clusterSelectionCriteria) {
+        renderedClusterSelectionCriteriaEntries.add(
+            ClusterSelectionCriteriaEntry.builder()
+                .labelName(context.renderExpression(clusterSelectionCriteriaEntry.getLabelName()))
+                .labelValues(context.renderExpression(clusterSelectionCriteriaEntry.getLabelValues()))
+                .build());
+      }
     }
 
     rancherResolveClustersTaskParameters.setClusterSelectionCriteria(renderedClusterSelectionCriteriaEntries);
