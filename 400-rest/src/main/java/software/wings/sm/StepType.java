@@ -262,10 +262,12 @@ import software.wings.sm.states.provision.TerraformRollbackState;
 import software.wings.sm.states.provision.TerragruntApplyState;
 import software.wings.sm.states.provision.TerragruntDestroyState;
 import software.wings.sm.states.provision.TerragruntRollbackState;
+import software.wings.sm.states.rancher.RancherK8sBlueGreenDeploy;
 import software.wings.sm.states.rancher.RancherK8sCanaryDeploy;
 import software.wings.sm.states.rancher.RancherK8sDelete;
 import software.wings.sm.states.rancher.RancherK8sRollingDeploy;
 import software.wings.sm.states.rancher.RancherK8sRollingDeployRollback;
+import software.wings.sm.states.rancher.RancherKubernetesSwapServiceSelectors;
 import software.wings.sm.states.rancher.RancherResolveState;
 import software.wings.sm.states.spotinst.SpotInstDeployState;
 import software.wings.sm.states.spotinst.SpotInstListenerUpdateRollbackState;
@@ -532,6 +534,14 @@ public enum StepType {
   RANCHER_K8S_CANARY_DEPLOY(RancherK8sCanaryDeploy.class, WorkflowConstants.RANCHER_K8S_CANARY_DEPLOY,
       asList(KUBERNETES), asList(K8S_PHASE_STEP), Lists.newArrayList(DeploymentType.KUBERNETES),
       asList(PhaseType.NON_ROLLBACK), asList(CANARY)),
+  RANCHER_K8S_BLUE_GREEN_DEPLOY(RancherK8sBlueGreenDeploy.class, WorkflowConstants.RANCHER_K8S_BLUE_GREEN_DEPLOY,
+      asList(KUBERNETES), asList(K8S_PHASE_STEP), Lists.newArrayList(DeploymentType.KUBERNETES),
+      asList(PhaseType.NON_ROLLBACK), asList(BLUE_GREEN)),
+  RANCHER_KUBERNETES_SWAP_SERVICE_SELECTORS(RancherKubernetesSwapServiceSelectors.class,
+      WorkflowConstants.RANCHER_KUBERNETES_SWAP_SERVICE_SELECTORS, asList(KUBERNETES),
+      asList(CONTAINER_SETUP, CONTAINER_DEPLOY, ROUTE_UPDATE, WRAP_UP, K8S_PHASE_STEP),
+      Lists.newArrayList(DeploymentType.KUBERNETES), asList(PhaseType.NON_ROLLBACK, PhaseType.ROLLBACK),
+      asList(ROLLING, CANARY, BLUE_GREEN)),
   RANCHER_K8S_DELETE(RancherK8sDelete.class, WorkflowConstants.RANCHER_K8S_DELETE, asList(KUBERNETES),
       asList(K8S_PHASE_STEP, WRAP_UP), Lists.newArrayList(DeploymentType.KUBERNETES),
       asList(PhaseType.NON_ROLLBACK, PhaseType.ROLLBACK), asList(ROLLING, CANARY, BLUE_GREEN)),

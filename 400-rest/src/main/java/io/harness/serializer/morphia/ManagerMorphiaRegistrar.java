@@ -731,10 +731,12 @@ import software.wings.sm.states.provision.TerraformRollbackState;
 import software.wings.sm.states.provision.TerragruntApplyState;
 import software.wings.sm.states.provision.TerragruntDestroyState;
 import software.wings.sm.states.provision.TerragruntRollbackState;
+import software.wings.sm.states.rancher.RancherK8sBlueGreenDeploy;
 import software.wings.sm.states.rancher.RancherK8sCanaryDeploy;
 import software.wings.sm.states.rancher.RancherK8sDelete;
 import software.wings.sm.states.rancher.RancherK8sRollingDeploy;
 import software.wings.sm.states.rancher.RancherK8sRollingDeployRollback;
+import software.wings.sm.states.rancher.RancherKubernetesSwapServiceSelectors;
 import software.wings.sm.states.rancher.RancherResolveState;
 import software.wings.sm.states.spotinst.SpotInstDeployState;
 import software.wings.sm.states.spotinst.SpotInstDeployStateExecutionData;
@@ -1478,6 +1480,8 @@ public class ManagerMorphiaRegistrar implements MorphiaRegistrar {
     w.put("sm.states.RancherK8sRollingDeployRollback", RancherK8sRollingDeployRollback.class);
     w.put("sm.states.RancherK8sCanaryDeploy", RancherK8sCanaryDeploy.class);
     w.put("sm.states.RancherK8sDelete", RancherK8sDelete.class);
+    w.put("sm.states.RancherK8sBlueGreenDeploy", RancherK8sBlueGreenDeploy.class);
+    w.put("sm.states.RancherKubernetesSwapServiceSelectors", RancherKubernetesSwapServiceSelectors.class);
 
     w.put("sm.states.KubernetesDeploy", KubernetesDeploy.class);
     w.put("sm.states.KubernetesDeployRollback", KubernetesDeployRollback.class);

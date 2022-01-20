@@ -301,9 +301,4 @@ public class K8sCanaryDeploy extends AbstractK8sState {
     }
     return invalidFields;
   }
-
-  @Override
-  public ContextElementType getRequiredContextElementType() {
-    return ContextElementType.RANCHER_K8S_CLUSTER_CRITERIA;
-  }
 }
