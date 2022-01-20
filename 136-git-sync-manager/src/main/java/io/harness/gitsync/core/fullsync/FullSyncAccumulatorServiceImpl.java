@@ -38,7 +38,6 @@ import com.google.inject.Singleton;
 import com.google.protobuf.StringValue;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
