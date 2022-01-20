@@ -58,6 +58,8 @@ import io.harness.beans.PageRequest;
 import io.harness.beans.PageRequest.PageRequestBuilder;
 import io.harness.beans.PageResponse;
 import io.harness.category.element.UnitTests;
+import io.harness.cdlicense.bean.CgActiveServicesUsageInfo;
+import io.harness.cdlicense.impl.CgCdLicenseUsageService;
 import io.harness.cvng.beans.ServiceGuardLimitDTO;
 import io.harness.data.structure.UUIDGenerator;
 import io.harness.datahandler.models.AccountDetails;
@@ -166,6 +168,7 @@ public class AccountServiceTest extends WingsBaseTest {
   @Mock private EmailNotificationService emailNotificationService;
   @Mock private HarnessUserGroupService harnessUserGroupService;
   @Mock private AccountPermissionUtils accountPermissionUtils;
+  @Mock private CgCdLicenseUsageService cgCdLicenseUsageService;
   @Mock(answer = Answers.RETURNS_DEEP_STUBS) private MainConfiguration configuration;
 
   @InjectMocks @Inject private LicenseService licenseService;
