@@ -25,7 +25,6 @@ import io.harness.cvng.BuilderFactory;
 import io.harness.cvng.beans.CVMonitoringCategory;
 import io.harness.cvng.beans.DataSourceType;
 import io.harness.cvng.client.NextGenService;
-import io.harness.cvng.client.VerificationManagerService;
 import io.harness.cvng.core.beans.params.ServiceEnvironmentParams;
 import io.harness.cvng.core.entities.AppDynamicsCVConfig;
 import io.harness.cvng.core.entities.CVConfig;
@@ -58,8 +57,6 @@ import org.mockito.Mock;
 public class CVConfigServiceImplTest extends CvNextGenTestBase {
   @Inject private CVConfigService cvConfigService;
   @Mock private NextGenService nextGenService;
-
-  @Mock private VerificationManagerService verificationManagerService;
 
   private String accountId;
   private String connectorIdentifier;
@@ -116,7 +113,6 @@ public class CVConfigServiceImplTest extends CvNextGenTestBase {
           .build();
     });
     FieldUtils.writeField(cvConfigService, "nextGenService", nextGenService, true);
-    FieldUtils.writeField(cvConfigService, "verificationManagerService", verificationManagerService, true);
   }
 
   @Test

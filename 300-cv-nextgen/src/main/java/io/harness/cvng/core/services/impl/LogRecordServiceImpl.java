@@ -26,6 +26,7 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.Iterators;
 import com.google.common.io.Resources;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
@@ -37,7 +38,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
+@Singleton
 public class LogRecordServiceImpl implements LogRecordService {
   @Inject private HPersistence hPersistence;
   @Inject private CVNGDemoDataIndexService cvngDemoDataIndexService;

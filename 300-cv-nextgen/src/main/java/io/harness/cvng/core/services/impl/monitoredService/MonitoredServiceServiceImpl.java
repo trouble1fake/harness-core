@@ -511,8 +511,8 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
       return monitoredServiceResponse.getMonitoredServiceDTO();
     }
   }
-
-  private MonitoredService getMonitoredService(ProjectParams projectParams, String identifier) {
+  @Override
+  public MonitoredService getMonitoredService(ProjectParams projectParams, String identifier) {
     return hPersistence.createQuery(MonitoredService.class)
         .filter(MonitoredServiceKeys.accountId, projectParams.getAccountIdentifier())
         .filter(MonitoredServiceKeys.orgIdentifier, projectParams.getOrgIdentifier())

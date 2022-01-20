@@ -67,6 +67,7 @@ import io.harness.cvng.core.jobs.PersistentLockCleanup;
 import io.harness.cvng.core.jobs.SLIDataCollectionTaskCreateNextTaskHandler;
 import io.harness.cvng.core.jobs.ServiceGuardDataCollectionTaskCreateNextTaskHandler;
 import io.harness.cvng.core.services.CVNextGenConstants;
+import io.harness.cvng.core.services.api.SideKickService;
 import io.harness.cvng.exception.BadRequestExceptionMapper;
 import io.harness.cvng.exception.ConstraintViolationExceptionMapper;
 import io.harness.cvng.exception.NotFoundExceptionMapper;
@@ -415,6 +416,7 @@ public class VerificationApplication extends Application<VerificationConfigurati
     registerWaitEnginePublishers(injector);
     registerPmsSdkEvents(injector);
     registerDemoGenerationIterator(injector);
+    scheduleSidekickProcessing(injector);
     scheduleMaintenanceActivities(injector, configuration);
 
     log.info("Leaving startup maintenance mode");
@@ -423,6 +425,13 @@ public class VerificationApplication extends Application<VerificationConfigurati
     runMigrations(injector);
 
     log.info("Starting app done");
+  }
+
+  private void scheduleSidekickProcessing(Injector injector) {
+    ScheduledThreadPoolExecutor workflowVerificationExecutor =
+        new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat("side-kick").build());
+    workflowVerificationExecutor.scheduleWithFixedDelay(
+        () -> injector.getInstance(SideKickService.class).processNext(), 5, 5, TimeUnit.SECONDS);
   }
 
   private void registerUpdateProgressScheduler(Injector injector) {
