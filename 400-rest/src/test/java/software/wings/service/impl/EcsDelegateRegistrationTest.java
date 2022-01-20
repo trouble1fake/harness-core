@@ -73,7 +73,7 @@ public class EcsDelegateRegistrationTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void testHandleEcsDelegateRequest_KeepAliveRequest() throws Exception {
     delegateService = spy(DelegateServiceImpl.class);
-    delegateService.handleEcsDelegateRequest(Delegate.builder().keepAlivePacket(true).build());
+    delegateService.handleEcsDelegateRequest(Delegate.builder().build());
 
     verify(delegateService).updateSequenceNumberForEcsDelegate(any());
     verify(delegateService, times(0)).handleEcsDelegateRegistration(any());
@@ -102,7 +102,7 @@ public class EcsDelegateRegistrationTest extends WingsBaseTest {
     doReturn("oracle8u191").when(mainConfiguration).getCurrentJre();
     doReturn(jreConfigMap).when(mainConfiguration).getJreConfigs();
 
-    delegateService.handleEcsDelegateRequest(Delegate.builder().keepAlivePacket(false).build());
+    delegateService.handleEcsDelegateRequest(Delegate.builder().build());
 
     verify(delegateService, times(0)).updateSequenceNumberForEcsDelegate(any());
     verify(delegateService).handleEcsDelegateRegistration(any());
