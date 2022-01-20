@@ -603,7 +603,11 @@ public class NGVaultServiceImpl implements NGVaultService {
         }
         sleep(ofMillis(1000));
       } catch (DelegateServiceDriverException ex) {
-        throw new WingsException(ex.getCause().getMessage(), ex);
+        if (ex.getCause() != null) {
+          throw new WingsException(ex.getCause().getMessage(), ex);
+        } else {
+          throw new WingsException(ex);
+        }
       }
     }
   }
