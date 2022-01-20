@@ -166,6 +166,7 @@ import software.wings.security.LoginRateLimitFilter;
 import software.wings.security.ThreadLocalUserProvider;
 import software.wings.security.authentication.totp.TotpModule;
 import software.wings.service.impl.AccountServiceImpl;
+import software.wings.service.impl.AppManifestCloudProviderPTaskManager;
 import software.wings.service.impl.ApplicationManifestServiceImpl;
 import software.wings.service.impl.ArtifactStreamServiceImpl;
 import software.wings.service.impl.AuditServiceHelper;
@@ -884,8 +885,11 @@ public class NGMigrationApplication extends Application<MigratorConfig> {
     auditServiceHelper.getEntityCrudSubject().register(auditService);
 
     ClusterRecordHandler clusterRecordHandler = injector.getInstance(Key.get(ClusterRecordHandler.class));
+    AppManifestCloudProviderPTaskManager appManifestCloudProviderPTaskManager =
+        injector.getInstance(Key.get(AppManifestCloudProviderPTaskManager.class));
     SettingsServiceImpl settingsService = (SettingsServiceImpl) injector.getInstance(Key.get(SettingsService.class));
     settingsService.getSubject().register(clusterRecordHandler);
+    settingsService.getSubject().register(appManifestCloudProviderPTaskManager);
     settingsService.getArtifactStreamSubject().register(
         injector.getInstance(Key.get(ArtifactStreamSettingAttributePTaskManager.class)));
 
@@ -989,6 +993,7 @@ public class NGMigrationApplication extends Application<MigratorConfig> {
                                     .subjectCLass(SettingsServiceImpl.class)
                                     .observerClass(CloudProviderObserver.class)
                                     .observer(ClusterRecordHandler.class)
+                                    .observer(AppManifestCloudProviderPTaskManager.class)
                                     .build());
             remoteObservers.add(RemoteObserver.builder()
                                     .subjectCLass(SettingsServiceImpl.class)
