@@ -121,10 +121,7 @@ public class GitFullSyncEntityServiceImpl implements GitFullSyncEntityService {
                             .and(GitFullSyncEntityInfoKeys.orgIdentifier)
                             .is(org)
                             .and(GitFullSyncEntityInfoKeys.projectIdentifier)
-                            .is(project)
-                            .and(GitFullSyncEntityInfoKeys.syncStatus)
-                            .in(Arrays.asList(GitFullSyncEntityInfo.SyncStatus.SUCCESS,
-                                GitFullSyncEntityInfo.SyncStatus.QUEUED, GitFullSyncEntityInfo.SyncStatus.FAILED));
+                            .is(project);
 
     if (gitFullSyncEntityInfoFilterDTO.getEntityType() != null) {
       criteria.and(GitFullSyncEntityInfoKeys.entityDetail + "." + EntityDetailKeys.type)
@@ -132,6 +129,10 @@ public class GitFullSyncEntityServiceImpl implements GitFullSyncEntityService {
     }
     if (gitFullSyncEntityInfoFilterDTO.getSyncStatus() != null) {
       criteria.and(GitFullSyncEntityInfoKeys.syncStatus).is(gitFullSyncEntityInfoFilterDTO.getSyncStatus());
+    } else {
+      criteria.and(GitFullSyncEntityInfoKeys.syncStatus)
+          .in(Arrays.asList(GitFullSyncEntityInfo.SyncStatus.SUCCESS, GitFullSyncEntityInfo.SyncStatus.QUEUED,
+              GitFullSyncEntityInfo.SyncStatus.FAILED));
     }
     return criteria;
   }
