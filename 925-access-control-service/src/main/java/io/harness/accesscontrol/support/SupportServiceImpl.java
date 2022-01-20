@@ -75,6 +75,11 @@ public class SupportServiceImpl implements SupportService {
   }
 
   @Override
+  public Optional<SupportPreference> deleteSupportPreferenceIfPresent(String accountIdentifier) {
+    return supportPreferenceDao.deleteIfPresent(accountIdentifier);
+  }
+
+  @Override
   public Set<String> fetchSupportUsers() {
     Collection<UserMetadata> supportUsers =
         Failsafe.with(retryPolicy).get(() -> RestClientUtils.getResponse(accountClient.listAllHarnessSupportUsers()));

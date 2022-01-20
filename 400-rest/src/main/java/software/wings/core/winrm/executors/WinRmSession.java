@@ -114,10 +114,12 @@ public class WinRmSession implements AutoCloseable {
 
   public int executeCommandString(String command, Writer output, Writer error, boolean isOutputWriter) {
     if (args != null) {
+      String commandFilePath = null;
       try {
         File commandFile = File.createTempFile("winrm-kerberos-command", null);
+        commandFilePath = commandFile.getPath();
         byte[] buff = command.getBytes(StandardCharsets.UTF_8);
-        Files.write(Paths.get(commandFile.getPath()), buff);
+        Files.write(Paths.get(commandFilePath), buff);
 
         return SshHelperUtils.executeLocalCommand(format(COMMAND_PLACEHOLDER, InstallUtils.getHarnessPywinrmToolPath(),
                                                       args.getArgs(commandFile.getAbsolutePath())),
@@ -128,9 +130,21 @@ public class WinRmSession implements AutoCloseable {
         log.error(format("Error while creating temporary file: %s", e));
         logCallback.saveExecutionLog("Error while creating temporary file");
         return 1;
+      } finally {
+        deleteSilently(commandFilePath);
       }
     }
     return shell.execute(command, output, error);
+  }
+
+  private void deleteSilently(String path) {
+    if (path != null) {
+      try {
+        Files.deleteIfExists(Paths.get(path));
+      } catch (IOException e) {
+        log.error("Failed to delete file {}", path, e);
+      }
+    }
   }
 
   public int executeCommandsList(List<List<String>> commandList, Writer output, Writer error, boolean isOutputWriter,

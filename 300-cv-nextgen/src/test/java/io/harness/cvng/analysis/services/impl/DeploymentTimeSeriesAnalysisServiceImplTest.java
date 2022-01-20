@@ -177,7 +177,7 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
                                                                                 .healthSourceIdentifiers(null)
                                                                                 .filter(null)
                                                                                 .anomalous(false)
-                                                                                .hostName(null)
+                                                                                .hostNames(null)
                                                                                 .build();
     PageParams pageParams = PageParams.builder().page(0).size(10).build();
 
@@ -223,7 +223,7 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
                                                                                 .healthSourceIdentifiers(null)
                                                                                 .filter(null)
                                                                                 .anomalous(false)
-                                                                                .hostName(null)
+                                                                                .hostNames(null)
                                                                                 .build();
     PageParams pageParams = PageParams.builder().page(0).size(10).build();
     TransactionMetricInfoSummaryPageDTO transactionMetricInfoSummaryPageDTO =
@@ -252,7 +252,7 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
                                                                                 .healthSourceIdentifiers(null)
                                                                                 .filter(null)
                                                                                 .anomalous(false)
-                                                                                .hostName("node1")
+                                                                                .hostNames(Arrays.asList("node1"))
                                                                                 .build();
     PageParams pageParams = PageParams.builder().page(0).size(10).build();
     TransactionMetricInfoSummaryPageDTO transactionMetricInfoSummaryPageDTO =
@@ -293,7 +293,7 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
             .healthSourceIdentifiers(healthSourceIdentifiersFilter)
             .filter(null)
             .anomalous(false)
-            .hostName(null)
+            .hostNames(null)
             .build();
     PageParams pageParams = PageParams.builder().page(0).size(10).build();
 
@@ -342,7 +342,7 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
                                                                                 .healthSourceIdentifiers(null)
                                                                                 .filter(null)
                                                                                 .anomalous(false)
-                                                                                .hostName("node3")
+                                                                                .hostNames(Arrays.asList("node3"))
                                                                                 .build();
     PageParams pageParams = PageParams.builder().page(0).size(10).build();
 
@@ -381,7 +381,7 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
                                                                                 .healthSourceIdentifiers(null)
                                                                                 .filter(null)
                                                                                 .anomalous(false)
-                                                                                .hostName("randomnode")
+                                                                                .hostNames(Arrays.asList("randomnode"))
                                                                                 .build();
     PageParams pageParams = PageParams.builder().page(0).size(10).build();
     TransactionMetricInfoSummaryPageDTO summaryPageDTO = deploymentTimeSeriesAnalysisService.getMetrics(
@@ -393,7 +393,7 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
   @Test
   @Owner(developers = NEMANJA)
   @Category(UnitTests.class)
-  public void testGetMetrics_withAnomalousMetricsFilter() {
+  public void xtestGetMetrics_withAnomalousMetricsFilter() {
     verificationJobService.create(accountId, createCanaryVerificationJobDTO());
     VerificationJobInstance verificationJobInstance = createVerificationJobInstance();
     CVConfig cvConfig = verificationJobInstance.getCvConfigMap().values().iterator().next();
@@ -406,7 +406,7 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
                                                                                 .healthSourceIdentifiers(null)
                                                                                 .filter(null)
                                                                                 .anomalous(true)
-                                                                                .hostName(null)
+                                                                                .hostNames(null)
                                                                                 .build();
     PageParams pageParams = PageParams.builder().page(0).size(10).build();
     TransactionMetricInfoSummaryPageDTO transactionMetricInfoSummaryPageDTO =
@@ -440,7 +440,7 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
                                                                                 .healthSourceIdentifiers(null)
                                                                                 .filter(null)
                                                                                 .anomalous(true)
-                                                                                .hostName("node2")
+                                                                                .hostNames(Arrays.asList("node2"))
                                                                                 .build();
     PageParams pageParams = PageParams.builder().page(0).size(10).build();
     TransactionMetricInfoSummaryPageDTO transactionMetricInfoSummaryPageDTO =
@@ -486,7 +486,7 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
                                                                                 .healthSourceIdentifiers(null)
                                                                                 .filter(null)
                                                                                 .anomalous(false)
-                                                                                .hostName(null)
+                                                                                .hostNames(null)
                                                                                 .build();
     PageParams pageParams = PageParams.builder().page(0).size(10).build();
 
@@ -531,7 +531,7 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
                                                                                 .healthSourceIdentifiers(null)
                                                                                 .filter(null)
                                                                                 .anomalous(false)
-                                                                                .hostName(null)
+                                                                                .hostNames(null)
                                                                                 .build();
     PageParams pageParams = PageParams.builder().page(0).size(10).build();
 
@@ -691,7 +691,8 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
                                                                                 .healthSourceIdentifiers(null)
                                                                                 .filter(null)
                                                                                 .anomalous(false)
-                                                                                .hostName(null)
+                                                                                .hostNames(null)
+                                                                                .transactionNames(null)
                                                                                 .build();
     PageParams pageParams = PageParams.builder().page(0).size(10).build();
 
@@ -699,22 +700,183 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
         deploymentTimeSeriesAnalysisService.getMetrics(
             accountId, verificationJobInstanceId, deploymentTimeSeriesAnalysisFilter, pageParams);
 
-    assertThat(
-        transactionMetricInfoSummaryPageDTO.getPageResponse().getContent().get(0).getNodeCountByRiskStatusMap().get(
-            Risk.HEALTHY))
-        .isEqualTo(1);
-    assertThat(
-        transactionMetricInfoSummaryPageDTO.getPageResponse().getContent().get(0).getNodeCountByRiskStatusMap().get(
-            Risk.UNHEALTHY))
+    assertThat(transactionMetricInfoSummaryPageDTO.getPageResponse()
+                   .getContent()
+                   .get(0)
+                   .getNodeRiskCountDTO()
+                   .getTotalNodeCount())
+        .isEqualTo(3);
+    assertThat(transactionMetricInfoSummaryPageDTO.getPageResponse()
+                   .getContent()
+                   .get(0)
+                   .getNodeRiskCountDTO()
+                   .getAnomalousNodeCount())
         .isEqualTo(2);
-    assertThat(
-        transactionMetricInfoSummaryPageDTO.getPageResponse().getContent().get(1).getNodeCountByRiskStatusMap().get(
-            Risk.HEALTHY))
+    assertThat(transactionMetricInfoSummaryPageDTO.getPageResponse()
+                   .getContent()
+                   .get(1)
+                   .getNodeRiskCountDTO()
+                   .getTotalNodeCount())
+        .isEqualTo(2);
+    assertThat(transactionMetricInfoSummaryPageDTO.getPageResponse()
+                   .getContent()
+                   .get(1)
+                   .getNodeRiskCountDTO()
+                   .getAnomalousNodeCount())
         .isEqualTo(1);
-    assertThat(
-        transactionMetricInfoSummaryPageDTO.getPageResponse().getContent().get(1).getNodeCountByRiskStatusMap().get(
-            Risk.HEALTHY))
+    assertThat(transactionMetricInfoSummaryPageDTO.getPageResponse()
+                   .getContent()
+                   .get(0)
+                   .getNodeRiskCountDTO()
+                   .getNodeCountByRiskStatusMap()
+                   .get(Risk.HEALTHY))
         .isEqualTo(1);
+    assertThat(transactionMetricInfoSummaryPageDTO.getPageResponse()
+                   .getContent()
+                   .get(0)
+                   .getNodeRiskCountDTO()
+                   .getNodeCountByRiskStatusMap()
+                   .get(Risk.UNHEALTHY))
+        .isEqualTo(2);
+    assertThat(transactionMetricInfoSummaryPageDTO.getPageResponse()
+                   .getContent()
+                   .get(1)
+                   .getNodeRiskCountDTO()
+                   .getNodeCountByRiskStatusMap()
+                   .get(Risk.HEALTHY))
+        .isEqualTo(1);
+    assertThat(transactionMetricInfoSummaryPageDTO.getPageResponse()
+                   .getContent()
+                   .get(1)
+                   .getNodeRiskCountDTO()
+                   .getNodeCountByRiskStatusMap()
+                   .get(Risk.HEALTHY))
+        .isEqualTo(1);
+  }
+
+  @Test
+  @Owner(developers = KAPIL)
+  @Category(UnitTests.class)
+  public void testGetTransactionNames() {
+    verificationJobService.create(accountId, createCanaryVerificationJobDTO());
+    VerificationJobInstance verificationJobInstance = createVerificationJobInstance();
+    CVConfig cvConfig = verificationJobInstance.getCvConfigMap().values().iterator().next();
+    String verificationJobInstanceId = verificationJobInstanceService.create(verificationJobInstance);
+    String verificationTaskId = verificationTaskService.createDeploymentVerificationTask(
+        accountId, cvConfig.getUuid(), verificationJobInstanceId, cvConfig.getType());
+    deploymentTimeSeriesAnalysisService.save(createDeploymentTimeSeriesAnalysis(verificationTaskId));
+    List<String> transactionNameList =
+        deploymentTimeSeriesAnalysisService.getTransactionNames(accountId, verificationJobInstanceId);
+
+    assertThat(transactionNameList.size()).isEqualTo(2);
+    assertThat(transactionNameList.get(0)).isEqualTo("/todolist/inside");
+    assertThat(transactionNameList.get(1)).isEqualTo("/todolist/exception");
+  }
+
+  @Test
+  @Owner(developers = KAPIL)
+  @Category(UnitTests.class)
+  public void testNodeNames() {
+    verificationJobService.create(accountId, createCanaryVerificationJobDTO());
+    VerificationJobInstance verificationJobInstance = createVerificationJobInstance();
+    CVConfig cvConfig = verificationJobInstance.getCvConfigMap().values().iterator().next();
+    String verificationJobInstanceId = verificationJobInstanceService.create(verificationJobInstance);
+    String verificationTaskId = verificationTaskService.createDeploymentVerificationTask(
+        accountId, cvConfig.getUuid(), verificationJobInstanceId, cvConfig.getType());
+    deploymentTimeSeriesAnalysisService.save(createDeploymentTimeSeriesAnalysis(verificationTaskId));
+    List<String> nodeNameList = deploymentTimeSeriesAnalysisService.getNodeNames(accountId, verificationJobInstanceId);
+
+    assertThat(nodeNameList.size()).isEqualTo(3);
+    assertThat(nodeNameList.get(0)).isEqualTo("node2");
+    assertThat(nodeNameList.get(1)).isEqualTo("node3");
+    assertThat(nodeNameList.get(2)).isEqualTo("node1");
+  }
+
+  @Test
+  @Owner(developers = KAPIL)
+  @Category(UnitTests.class)
+  public void testGetMetrics_withTransactionNameFilters() {
+    verificationJobService.create(accountId, createCanaryVerificationJobDTO());
+    VerificationJobInstance verificationJobInstance = createVerificationJobInstance();
+    CVConfig cvConfig = verificationJobInstance.getCvConfigMap().values().iterator().next();
+    String verificationJobInstanceId = verificationJobInstanceService.create(verificationJobInstance);
+    String verificationTaskId = verificationTaskService.createDeploymentVerificationTask(
+        accountId, cvConfig.getUuid(), verificationJobInstanceId, cvConfig.getType());
+
+    deploymentTimeSeriesAnalysisService.save(createDeploymentTimeSeriesAnalysis(verificationTaskId));
+
+    DeploymentTimeSeriesAnalysisFilter deploymentTimeSeriesAnalysisFilter =
+        DeploymentTimeSeriesAnalysisFilter.builder()
+            .healthSourceIdentifiers(null)
+            .filter(null)
+            .anomalous(false)
+            .hostNames(null)
+            .transactionNames(Arrays.asList("/todolist/inside"))
+            .build();
+    PageParams pageParams = PageParams.builder().page(0).size(10).build();
+
+    TransactionMetricInfoSummaryPageDTO transactionMetricInfoSummaryPageDTO =
+        deploymentTimeSeriesAnalysisService.getMetrics(
+            accountId, verificationJobInstanceId, deploymentTimeSeriesAnalysisFilter, pageParams);
+
+    assertThat(transactionMetricInfoSummaryPageDTO.getPageResponse().getContent().size()).isEqualTo(1);
+    assertThat(transactionMetricInfoSummaryPageDTO.getPageResponse()
+                   .getContent()
+                   .get(0)
+                   .getTransactionMetric()
+                   .getTransactionName())
+        .isEqualTo("/todolist/inside");
+  }
+
+  @Test
+  @Owner(developers = KAPIL)
+  @Category(UnitTests.class)
+  public void testGetMetrics_withHostNamesFilters() {
+    verificationJobService.create(accountId, createCanaryVerificationJobDTO());
+    VerificationJobInstance verificationJobInstance = createVerificationJobInstance();
+    CVConfig cvConfig = verificationJobInstance.getCvConfigMap().values().iterator().next();
+    String verificationJobInstanceId = verificationJobInstanceService.create(verificationJobInstance);
+    String verificationTaskId = verificationTaskService.createDeploymentVerificationTask(
+        accountId, cvConfig.getUuid(), verificationJobInstanceId, cvConfig.getType());
+
+    deploymentTimeSeriesAnalysisService.save(createDeploymentTimeSeriesAnalysis(verificationTaskId));
+
+    DeploymentTimeSeriesAnalysisFilter deploymentTimeSeriesAnalysisFilter =
+        DeploymentTimeSeriesAnalysisFilter.builder()
+            .healthSourceIdentifiers(null)
+            .filter(null)
+            .anomalous(false)
+            .hostName(null)
+            .hostNames(Arrays.asList("node1", "node2"))
+            .transactionNames(null)
+            .build();
+    PageParams pageParams = PageParams.builder().page(0).size(10).build();
+
+    TransactionMetricInfoSummaryPageDTO transactionMetricInfoSummaryPageDTO =
+        deploymentTimeSeriesAnalysisService.getMetrics(
+            accountId, verificationJobInstanceId, deploymentTimeSeriesAnalysisFilter, pageParams);
+
+    assertThat(transactionMetricInfoSummaryPageDTO.getPageResponse().getContent().size()).isEqualTo(2);
+    assertThat(transactionMetricInfoSummaryPageDTO.getPageResponse().getContent().get(0).getNodes().size())
+        .isEqualTo(2);
+    assertThat(transactionMetricInfoSummaryPageDTO.getPageResponse().getContent().get(1).getNodes().size())
+        .isEqualTo(2);
+    assertThat(transactionMetricInfoSummaryPageDTO.getPageResponse()
+                   .getContent()
+                   .get(0)
+                   .getNodes()
+                   .first()
+                   .getHostName()
+                   .get())
+        .isEqualTo("node2");
+    assertThat(transactionMetricInfoSummaryPageDTO.getPageResponse()
+                   .getContent()
+                   .get(1)
+                   .getNodes()
+                   .first()
+                   .getHostName()
+                   .get())
+        .isEqualTo("node2");
   }
 
   private VerificationJobInstance createVerificationJobInstance() {

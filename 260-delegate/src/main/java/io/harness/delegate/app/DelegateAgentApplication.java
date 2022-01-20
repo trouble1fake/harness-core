@@ -79,7 +79,7 @@ public class DelegateAgentApplication extends Application<DelegateAgentConfig> {
   @Override
   public void run(final DelegateAgentConfig delegateAgentConfig, final Environment environment) throws Exception {
     ExecutorModule.getInstance().setExecutorService(ThreadPool.create(10, 40, 1, TimeUnit.SECONDS,
-        new ThreadFactoryBuilder().setNameFormat("sync-task-%d").setPriority(Thread.NORM_PRIORITY).build()));
+        new ThreadFactoryBuilder().setNameFormat("other-%d").setPriority(Thread.NORM_PRIORITY).build()));
 
     final Injector injector = Guice.createInjector(new DelegateAgentModule(configuration));
 
@@ -113,12 +113,22 @@ public class DelegateAgentApplication extends Application<DelegateAgentConfig> {
 
   private void addShutdownHook(final Injector injector) {
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+      try {
+        injector.getInstance(DelegateAgentService.class).shutdown(true);
+      } catch (final InterruptedException e) {
+        log.error("Delegate shutdown interrupted", e);
+        Thread.currentThread().interrupt();
+      }
+
       injector.getInstance(ExecutorService.class).shutdown();
       injector.getInstance(EventPublisher.class).shutdown();
       log.info("Executor services have been shut down.");
 
-      injector.getInstance(PingPongClient.class).stopAsync();
-      log.info("PingPong client have been shut down.");
+      final PingPongClient pingPongClient = injector.getInstance(PingPongClient.class);
+      if (pingPongClient != null) {
+        pingPongClient.stopAsync();
+        log.info("PingPong client have been shut down.");
+      }
 
       injector.getInstance(AsyncHttpClient.class).close();
       log.info("Async HTTP client has been closed.");
@@ -130,6 +140,7 @@ public class DelegateAgentApplication extends Application<DelegateAgentConfig> {
       }
       log.info("Log manager has been shutdown and logs have been flushed.");
     }));
+    log.info("Delegate agent shutdown hooks registered");
   }
 
   private void registerHealthChecks(final Environment environment, final Injector injector) {
