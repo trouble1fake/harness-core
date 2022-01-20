@@ -18,8 +18,9 @@ http_archive(
     sha256 = "d0f5f605d0d656007ce6c8b5a82df3037e1d8fe8b121ed42e536f569dec16113",
     strip_prefix = "protobuf-3.14.0",
     urls = [
-        "https://mirror.bazel.build/github.com/protocolbuffers/protobuf/archive/v3.14.0.tar.gz",
-        "https://github.com/protocolbuffers/protobuf/archive/v3.14.0.tar.gz",
+        "http://jfrogdev.dev.harness.io:80/artifactory/protobuf-github/archive/v3.14.0.tar.gz",
+        #"https://mirror.bazel.build/github.com/protocolbuffers/protobuf/archive/v3.14.0.tar.gz",
+        #"https://github.com/protocolbuffers/protobuf/archive/v3.14.0.tar.gz",
     ],
 )
 
@@ -32,8 +33,9 @@ http_archive(
     name = "io_bazel_rules_go",
     sha256 = "2b1641428dff9018f9e85c0384f03ec6c10660d935b750e3fa1492a281a53b0f",
     urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.29.0/rules_go-v0.29.0.zip",
-        "https://github.com/bazelbuild/rules_go/releases/download/v0.29.0/rules_go-v0.29.0.zip",
+        "http://jfrogdev.dev.harness.io:80/artifactory/rules-go-github/download/v0.29.0/rules_go-v0.29.0.zip",
+        # "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.29.0/rules_go-v0.29.0.zip",
+        # "https://github.com/bazelbuild/rules_go/releases/download/v0.29.0/rules_go-v0.29.0.zip",
     ],
 )
 
@@ -1006,8 +1008,8 @@ go_repository(
 go_repository(
     name = "com_github_drone_go_scm",
     importpath = "github.com/drone/go-scm",
-    sum = "h1:35m/CcHkYjQ4BlOM7rIIwrki6uDUbUH+Kkb9rv6om3M=",
-    version = "v1.15.1",
+    sum = "h1:VU6C6r2Hxf5FZUjTazCH2xlXBe21JDg7gBcJvsL7twk=",
+    version = "v1.18.0",
 )
 
 go_repository(
@@ -4645,10 +4647,10 @@ plain_artifacts = [
     "io.harness.cv:data-collection-dsl:0.31-RELEASE",
     "io.harness:ff-java-server-sdk:1.0.5.1",
     "io.jsonwebtoken:jjwt:0.9.1",
-    "io.kubernetes:client-java-api:11.0.2",
-    "io.kubernetes:client-java-extended:11.0.2",
-    "io.kubernetes:client-java-proto:11.0.2",
-    "io.kubernetes:client-java:11.0.2",
+    "io.kubernetes:client-java-api:9.0.2",
+    "io.kubernetes:client-java-extended:9.0.2",
+    "io.kubernetes:client-java-proto:9.0.2",
+    "io.kubernetes:client-java:9.0.2",
     "io.leangen.graphql:spqr:0.11.2",
     "io.netty:netty-all:4.1.51.Final",
     "io.netty:netty-buffer:4.1.52.Final",

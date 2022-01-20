@@ -51,6 +51,7 @@ spec:
       labels:
         harness.io/name: harness-delegate
     spec:
+      terminationGracePeriodSeconds: 600
       containers:
       - image: harness/delegate:latest
         imagePullPolicy: Always
@@ -140,6 +141,8 @@ spec:
           value: "true"
         - name: CLIENT_TOOLS_DOWNLOAD_DISABLED
           value: "true"
+        - name: LOG_STREAMING_SERVICE_URL
+          value: "http://localhost:8079"
       restartPolicy: Always
 
 
