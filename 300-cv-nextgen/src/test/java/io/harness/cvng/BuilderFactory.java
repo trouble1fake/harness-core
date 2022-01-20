@@ -60,6 +60,8 @@ import io.harness.cvng.core.entities.DatadogLogCVConfig;
 import io.harness.cvng.core.entities.DatadogLogCVConfig.DatadogLogCVConfigBuilder;
 import io.harness.cvng.core.entities.DatadogMetricCVConfig;
 import io.harness.cvng.core.entities.DatadogMetricCVConfig.DatadogMetricCVConfigBuilder;
+import io.harness.cvng.core.entities.DynatraceCVConfig;
+import io.harness.cvng.core.entities.DynatraceCVConfig.DynatraceCVConfigBuilder;
 import io.harness.cvng.core.entities.MetricPack;
 import io.harness.cvng.core.entities.NewRelicCVConfig;
 import io.harness.cvng.core.entities.NewRelicCVConfig.NewRelicCVConfigBuilder;
@@ -355,6 +357,16 @@ public class BuilderFactory {
         .orgIdentifier(context.getOrgIdentifier())
         .projectIdentifier(context.getProjectIdentifier())
         .serviceIdentifier(context.getServiceIdentifier())
+        .envIdentifier(context.getEnvIdentifier());
+  }
+
+  public DynatraceCVConfigBuilder dynatraceCVConfigBuilder() {
+    return DynatraceCVConfig.builder()
+        .accountId(context.getAccountId())
+        .orgIdentifier(context.getOrgIdentifier())
+        .projectIdentifier(context.getProjectIdentifier())
+        .serviceIdentifier(context.getServiceIdentifier())
+        .connectorIdentifier("DynatraceConnector")
         .envIdentifier(context.getEnvIdentifier());
   }
 

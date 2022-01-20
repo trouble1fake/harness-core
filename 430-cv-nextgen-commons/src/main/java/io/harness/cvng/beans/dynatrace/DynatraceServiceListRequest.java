@@ -27,11 +27,12 @@ public class DynatraceServiceListRequest extends DynatraceRequest {
   private static final List<String> FIELDS = Arrays.asList("lastSeenTms", "properties", "fromRelationships", "toRelationships");
   private static final Long PAGE_SIZE = 500L;
   private static final String ENTITY_SELECTOR = "type(\"SERVICE\")";
-  private static final String FROM_PARAM = "now-1y";
 
   private static final String DSL =
       DataCollectionRequest.readDSL("dynatrace-service-list.datacollection", DynatraceServiceListRequest.class);
 
+  long from;
+  long to;
   @Override
   public String getDSL() {
     return DSL;
@@ -44,7 +45,8 @@ public class DynatraceServiceListRequest extends DynatraceRequest {
     String fieldsParam = String.join(",", FIELDS);
     commonEnvVariables.put("fields", fieldsParam);
     commonEnvVariables.put("pageSize", PAGE_SIZE);
-    commonEnvVariables.put("from", FROM_PARAM);
+    commonEnvVariables.put("from", from);
+    commonEnvVariables.put("to", to);
     return commonEnvVariables;
   }
 }

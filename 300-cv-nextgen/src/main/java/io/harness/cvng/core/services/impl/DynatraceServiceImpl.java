@@ -21,6 +21,8 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import java.lang.reflect.Type;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -31,8 +33,13 @@ public class DynatraceServiceImpl implements DynatraceService {
   @Override
   public List<DynatraceServiceDTO> getAllServices(
       ProjectParams projectParams, String connectorIdentifier, String filter, String tracingId) {
+    Instant now = Instant.now();
     DataCollectionRequest<DynatraceConnectorDTO> request =
-        DynatraceServiceListRequest.builder().type(DataCollectionRequestType.DYNATRACE_SERVICE_LIST).build();
+            // we are getting active services in the last 6 months
+        DynatraceServiceListRequest.builder()
+                .from(now.minus(Duration.ofDays(6 * 30L)).toEpochMilli())
+                .to(now.toEpochMilli())
+                .type(DataCollectionRequestType.DYNATRACE_SERVICE_LIST).build();
 
     Type type = new TypeToken<List<DynatraceServiceDTO>>() {}.getType();
     return performRequestAndGetDataResult(request, type, projectParams, connectorIdentifier, tracingId);

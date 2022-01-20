@@ -18,27 +18,25 @@ public class DynatraceDataCollectionInfoMapper
     implements DataCollectionInfoMapper<DynatraceDataCollectionInfo, DynatraceCVConfig>,
                DataCollectionSLIInfoMapper<DynatraceDataCollectionInfo, DynatraceCVConfig> {
   @Override
-  public DynatraceDataCollectionInfo toDataCollectionInfo(DynatraceCVConfig cvConfig, VerificationTask.TaskType taskType) {
+  public DynatraceDataCollectionInfo toDataCollectionInfo(
+      DynatraceCVConfig cvConfig, VerificationTask.TaskType taskType) {
     DynatraceDataCollectionInfo dynatraceDataCollectionInfo =
         DynatraceDataCollectionInfo.builder()
             .metricPack(cvConfig.getMetricPack().toDTO())
-            // TODO slobodanpavic support custom metrics
-            //                    .customMetrics(
-            //                            CollectionUtils.emptyIfNull(cvConfig.getMetricInfos())
-            //                                    .stream()
-             //   .filter(metricInfo
-             //           -> MetricDataCollectionUtils.isMetricApplicableForDataCollection(metricInfo, taskType))
-            //                                    .map(metricInfo
-            //                                            -> AppDynamicsDataCollectionInfo.AppMetricInfoDTO.builder()
-            //                                            .metricName(metricInfo.getMetricName())
-            //                                            .metricIdentifier(metricInfo.getIdentifier())
-            //                                            .serviceInstanceMetricPath(metricInfo.getDeploymentVerification()
-            //                                            == null
-            //                                                    ? null
-            //                                                    :
-            //                                                    metricInfo.getDeploymentVerification().getServiceInstanceMetricPath())
-            //                                            .build())
-            //                                    .collect(Collectors.toList()))
+            .groupName(cvConfig.getGroupName())
+            .serviceId(cvConfig.getServiceEntityId())
+            .customMetrics(
+                CollectionUtils.emptyIfNull(cvConfig.getMetricInfos())
+                    .stream()
+                    .filter(metricInfo
+                        -> MetricDataCollectionUtils.isMetricApplicableForDataCollection(metricInfo, taskType))
+                    .map(metricInfo
+                        -> DynatraceDataCollectionInfo.MetricCollectionInfo.builder()
+                               .metricName(metricInfo.getMetricName())
+                               .identifier(metricInfo.getIdentifier())
+                               .metricSelector(metricInfo.getMetricSelector())
+                               .build())
+                    .collect(Collectors.toList()))
             .build();
     dynatraceDataCollectionInfo.setDataCollectionDsl(cvConfig.getDataCollectionDsl());
 
@@ -63,20 +61,16 @@ public class DynatraceDataCollectionInfoMapper
             .serviceId(baseCvConfig.getServiceName())
             .metricPack(baseCvConfig.getMetricPack().toDTO())
             .groupName(baseCvConfig.getGroupName())
-            .customMetrics(
-                cvConfigs.stream()
-                    .flatMap(cvConfig -> CollectionUtils.emptyIfNull(cvConfig.getMetricInfos()).stream())
-                    .filter(metricInfo -> sliMetricIdentifiers.contains(metricInfo.getIdentifier()))
-                    .map(metricInfo
-                        -> DynatraceDataCollectionInfo.MetricCollectionInfo.builder()
-                               .metricName(metricInfo.getMetricName())
-                               .identifier(metricInfo.getIdentifier())
-                               // TODO slobodanpavic check serviceInstance path for dynatrace
-//                               .serviceInstanceMetricPath(metricInfo.getDeploymentVerification() == null
-//                                       ? null
-//                                       : metricInfo.getDeploymentVerification().getServiceInstanceMetricPath())
-                               .build())
-                    .collect(Collectors.toList()))
+            .customMetrics(cvConfigs.stream()
+                               .flatMap(cvConfig -> CollectionUtils.emptyIfNull(cvConfig.getMetricInfos()).stream())
+                               .filter(metricInfo -> sliMetricIdentifiers.contains(metricInfo.getIdentifier()))
+                               .map(metricInfo
+                                   -> DynatraceDataCollectionInfo.MetricCollectionInfo.builder()
+                                          .metricName(metricInfo.getMetricName())
+                                          .identifier(metricInfo.getIdentifier())
+                                          .metricSelector(metricInfo.getMetricSelector())
+                                          .build())
+                               .collect(Collectors.toList()))
             .build();
     dynatraceDataCollectionInfo.setDataCollectionDsl(baseCvConfig.getDataCollectionDsl());
     return dynatraceDataCollectionInfo;

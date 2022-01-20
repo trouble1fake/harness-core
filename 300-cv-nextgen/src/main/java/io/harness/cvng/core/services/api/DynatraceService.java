@@ -15,6 +15,6 @@ public interface DynatraceService extends DataSourceConnectivityChecker {
   DynatraceServiceDTO getServiceDetails(
       ProjectParams projectParams, String connectorIdentifier, String serviceEntityId, String tracingId);
 
-  Set<MetricPackValidationResponse> validateData(ProjectParams projectParams, String projectIdentifier,
+  Set<MetricPackValidationResponse> validateData(ProjectParams projectParams, String connectorIdentifier,
       String serviceId, List<MetricPackDTO> metricPacks, String tracingId);
 }

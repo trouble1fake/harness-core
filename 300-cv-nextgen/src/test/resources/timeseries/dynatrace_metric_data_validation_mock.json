@@ -1,0 +1,13 @@
+{
+  "accountId": "kmpySmUISimoRrJL6NL73w",
+  "result": [
+    {
+      "metricName": "Method Response time",
+      "value": "181.0"
+    },
+    {
+      "metricName": "Name of server side errors",
+      "value": "52.0"
+    }
+  ]
+}

@@ -92,6 +92,7 @@ public class DynatraceHealthSourceSpec extends HealthSourceSpec {
   private List<DynatraceCVConfig> toCVConfigs(ProjectParams projectParams, String environmentRef, String serviceRef,
       String identifier, String name, MetricPackService metricPackService) {
     List<DynatraceCVConfig> cvConfigs = new ArrayList<>();
+    // map metric packs to cvConfigs
     CollectionUtils.emptyIfNull(metricPacks).forEach(metricPack -> {
       MetricPack metricPackFromDb = metricPack.toMetricPack(projectParams.getAccountIdentifier(),
           projectParams.getOrgIdentifier(), projectParams.getProjectIdentifier(), getType(), metricPackService);
@@ -114,6 +115,7 @@ public class DynatraceHealthSourceSpec extends HealthSourceSpec {
       cvConfigs.add(cvConfig);
     });
 
+    // map custom metrics to cvConfigs
     cvConfigs.addAll(CollectionUtils.emptyIfNull(metricDefinitions)
                          .stream()
                          .collect(Collectors.groupingBy(MetricDefinitionKey::fromMetricDefinition))
@@ -167,11 +169,9 @@ public class DynatraceHealthSourceSpec extends HealthSourceSpec {
   @FieldDefaults(level = AccessLevel.PRIVATE)
   public static class DynatraceMetricDefinition extends HealthSourceMetricDefinition {
     String groupName;
-    String query;
+    String metricSelector;
   }
 
-  // TODO slobodanpavic check properties of this key
-  // KEY for custom metric definitions
   @Value
   @Builder
   private static class MetricDefinitionKey {

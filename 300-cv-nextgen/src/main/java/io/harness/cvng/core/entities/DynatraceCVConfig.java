@@ -4,9 +4,7 @@ import io.harness.cvng.beans.CVMonitoringCategory;
 import io.harness.cvng.beans.DataSourceType;
 import io.harness.cvng.beans.TimeSeriesMetricType;
 import io.harness.cvng.core.beans.HealthSourceQueryType;
-import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.AppDynamicsHealthSourceSpec;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.DynatraceHealthSourceSpec;
-import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.MetricResponseMapping;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
@@ -77,6 +75,7 @@ public class DynatraceCVConfig extends MetricCVConfig {
               DynatraceMetricInfo.builder()
                       .identifier(md.getIdentifier())
                       .metricName(md.getMetricName())
+                      .metricSelector(md.getMetricSelector())
                       .sli(SLIMetricTransformer.transformDTOtoEntity(md.getSli()))
                       .liveMonitoring(LiveMonitoringTransformer.transformDTOtoEntity(md.getAnalysis()))
                       .deploymentVerification(DevelopmentVerificationTransformer.transformDTOtoEntity(md.getAnalysis()))
@@ -112,9 +111,10 @@ public class DynatraceCVConfig extends MetricCVConfig {
   @Value
   @SuperBuilder
   @FieldDefaults(level = AccessLevel.PRIVATE)
+  @EqualsAndHashCode(callSuper = true)
   public static class DynatraceMetricInfo extends AnalysisInfo {
     String metricName;
     TimeSeriesMetricType metricType;
-    MetricResponseMapping responseMapping;
+    String metricSelector;
   }
 }

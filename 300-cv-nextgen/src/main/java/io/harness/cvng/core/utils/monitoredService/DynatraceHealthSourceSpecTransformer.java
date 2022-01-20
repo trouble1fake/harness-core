@@ -34,10 +34,10 @@ public class DynatraceHealthSourceSpecTransformer
                               .thresholdTypes(cv.getThresholdTypeOfMetric(metricInfo.getMetricName(), cv))
                               .build();
 
-                      // TODO slobodanpavic check query prop
                       return DynatraceHealthSourceSpec.DynatraceMetricDefinition.builder()
                               .identifier(metricInfo.getIdentifier())
                               .metricName(metricInfo.getMetricName())
+                              .metricSelector(metricInfo.getMetricSelector())
                               .riskProfile(riskProfile)
                               .sli(HealthSourceMetricDefinition.SLIDTO.builder().enabled(metricInfo.getSli().isEnabled()).build())
                               .analysis(
