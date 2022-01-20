@@ -33,6 +33,9 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.hubspot.jackson.datatype.protobuf.ProtobufModule;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.retrofit.CircuitBreakerCallAdapter;
+import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
 import java.time.Duration;
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -42,8 +45,10 @@ import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.ResponseBody;
 import okhttp3.logging.HttpLoggingInterceptor;
 import org.apache.commons.lang3.StringUtils;
+import retrofit2.Converter;
 import retrofit2.Retrofit;
 import retrofit2.converter.jackson.JacksonConverterFactory;
 
@@ -105,8 +110,23 @@ public abstract class AbstractHttpClientFactory {
       retrofitBuilder.addCallAdapterFactory(CircuitBreakerCallAdapter.of(getCircuitBreaker()));
     }
     retrofitBuilder.addConverterFactory(JacksonConverterFactory.create(objectMapper));
-
+    retrofitBuilder.addConverterFactory(new NullOnEmptyConverterFactory());
     return retrofitBuilder.build();
+  }
+
+  public class NullOnEmptyConverterFactory extends Converter.Factory {
+    @Override
+    public Converter<ResponseBody, ?> responseBodyConverter(Type type, Annotation[] annotations, Retrofit retrofit) {
+      final Converter<ResponseBody, ?> delegate = retrofit.nextResponseBodyConverter(this, type, annotations);
+      return new Converter<ResponseBody, Object>() {
+        @Override
+        public Object convert(ResponseBody body) throws IOException {
+          if (body.contentLength() == 0)
+            return null;
+          return delegate.convert(body);
+        }
+      };
+    }
   }
 
   protected CircuitBreaker getCircuitBreaker() {
