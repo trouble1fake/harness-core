@@ -120,6 +120,21 @@ public class EventConfigServiceTest extends CategoryTest {
   @Test
   @Owner(developers = MOUNIK)
   @Category(UnitTests.class)
+  public void validateEventsConfigNoWorkflowRule() {
+    CgEventRule eventRule = new CgEventRule();
+    CgEventConfig cgEventConfig = getEventConfig(eventRule);
+    cgEventConfig.getConfig().setUrl("url1");
+    cgEventConfig.getRule().setType(CgEventRule.CgRuleType.WORKFLOW);
+    Assertions
+        .assertThatThrownBy(
+            () -> eventConfigService.createEventsConfig(GLOBAL_ACCOUNT_ID, GLOBAL_APP_ID, cgEventConfig))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("For Event rule type workflow rule need be declared");
+  }
+
+  @Test
+  @Owner(developers = MOUNIK)
+  @Category(UnitTests.class)
   public void validateEventsConfigEventListEmpty() {
     CgEventRule eventRule = new CgEventRule();
     CgEventConfig cgEventConfig = getEventConfig(eventRule);
@@ -140,6 +155,25 @@ public class EventConfigServiceTest extends CategoryTest {
   @Test
   @Owner(developers = MOUNIK)
   @Category(UnitTests.class)
+  public void validateEventsConfigEventListEmptyInWorkflowRule() {
+    CgEventRule eventRule = new CgEventRule();
+    CgEventConfig cgEventConfig = getEventConfig(eventRule);
+    cgEventConfig.getConfig().setUrl("url1");
+    cgEventConfig.getRule().setType(CgEventRule.CgRuleType.WORKFLOW);
+    CgEventRule.WorkflowRule workflowRule = new CgEventRule.WorkflowRule();
+    workflowRule.setAllWorkflows(true);
+    workflowRule.setAllEvents(false);
+    cgEventConfig.getRule().setWorkflowRule(workflowRule);
+    Assertions
+        .assertThatThrownBy(
+            () -> eventConfigService.createEventsConfig(GLOBAL_ACCOUNT_ID, GLOBAL_APP_ID, cgEventConfig))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("For Event rule type Workflow choose all events or specify at least one event");
+  }
+
+  @Test
+  @Owner(developers = MOUNIK)
+  @Category(UnitTests.class)
   public void validateEventsConfigPipelineListEmpty() {
     CgEventRule eventRule = new CgEventRule();
     CgEventConfig cgEventConfig = getEventConfig(eventRule);
@@ -155,6 +189,26 @@ public class EventConfigServiceTest extends CategoryTest {
             () -> eventConfigService.createEventsConfig(GLOBAL_ACCOUNT_ID, GLOBAL_APP_ID, cgEventConfig))
         .isInstanceOf(InvalidRequestException.class)
         .hasMessage("For Event rule type Pipeline choose all pipelines or specify at least one pipeline");
+  }
+
+  @Test
+  @Owner(developers = MOUNIK)
+  @Category(UnitTests.class)
+  public void validateEventsConfigWorkflowListEmpty() {
+    CgEventRule eventRule = new CgEventRule();
+    CgEventConfig cgEventConfig = getEventConfig(eventRule);
+    cgEventConfig.getConfig().setUrl("url1");
+    cgEventConfig.getRule().setType(CgEventRule.CgRuleType.WORKFLOW);
+    CgEventRule.WorkflowRule workflowRule = new CgEventRule.WorkflowRule();
+    workflowRule.setAllWorkflows(false);
+    workflowRule.setAllEvents(true);
+    workflowRule.setWorkflowIds(new LinkedList<>());
+    cgEventConfig.getRule().setWorkflowRule(workflowRule);
+    Assertions
+        .assertThatThrownBy(
+            () -> eventConfigService.createEventsConfig(GLOBAL_ACCOUNT_ID, GLOBAL_APP_ID, cgEventConfig))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("For Event rule type workflow choose all workflows or specify at least one workflow");
   }
 
   @Test
@@ -192,6 +246,20 @@ public class EventConfigServiceTest extends CategoryTest {
     pipelineRule.setAllPipelines(true);
     pipelineRule.setAllEvents(true);
     cgEventConfig.getRule().setPipelineRule(pipelineRule);
+    eventConfigService.createEventsConfig(GLOBAL_ACCOUNT_ID, GLOBAL_APP_ID, cgEventConfig);
+  }
+  @Test
+  @Owner(developers = MOUNIK)
+  @Category(UnitTests.class)
+  public void createEventsConfigRuleTypeWorkflow() {
+    CgEventRule eventRule = new CgEventRule();
+    CgEventConfig cgEventConfig = getEventConfig(eventRule);
+    cgEventConfig.getConfig().setUrl("url1");
+    cgEventConfig.getRule().setType(CgEventRule.CgRuleType.WORKFLOW);
+    CgEventRule.WorkflowRule workflowRule = new CgEventRule.WorkflowRule();
+    workflowRule.setAllWorkflows(true);
+    workflowRule.setAllEvents(true);
+    cgEventConfig.getRule().setWorkflowRule(workflowRule);
     eventConfigService.createEventsConfig(GLOBAL_ACCOUNT_ID, GLOBAL_APP_ID, cgEventConfig);
   }
 
@@ -259,6 +327,45 @@ public class EventConfigServiceTest extends CategoryTest {
     assertThat(returnConfig.getAccountId().equals(cgEventConfig.getAccountId()));
     assertThat(returnConfig.getUuid().equals(cgEventConfig.getUuid()));
     assertThat(returnConfig.getConfig().getUrl().equals(cgEventConfig.getConfig().getUrl()));
+  }
+
+  @Test
+  @Owner(developers = MOUNIK)
+  @Category(UnitTests.class)
+  public void updateEventsConfigChangeTypeSuccessfully() {
+    CgEventRule eventRule = new CgEventRule();
+    eventRule.setType(CgEventRule.CgRuleType.PIPELINE);
+    CgEventConfig cgEventConfig = getEventConfig(eventRule);
+    cgEventConfig.getConfig().setUrl("url1");
+    CgEventRule.PipelineRule pipelineRule = new CgEventRule.PipelineRule();
+    pipelineRule.setAllPipelines(true);
+    pipelineRule.setAllEvents(true);
+    cgEventConfig.getRule().setPipelineRule(pipelineRule);
+    cgEventConfig.setUuid("uuid1");
+    cgEventConfig.setName("config1");
+
+    CgEventRule eventRule2 = new CgEventRule();
+    CgEventConfig cgEventConfig2 = getEventConfig(eventRule2);
+    cgEventConfig2.getConfig().setUrl("url1");
+    cgEventConfig2.getRule().setType(CgEventRule.CgRuleType.WORKFLOW);
+    CgEventRule.WorkflowRule workflowRule = new CgEventRule.WorkflowRule();
+    workflowRule.setAllWorkflows(true);
+    workflowRule.setAllEvents(true);
+    cgEventConfig2.getRule().setWorkflowRule(workflowRule);
+    cgEventConfig2.setUuid("uuid2");
+    cgEventConfig2.setName("config2");
+
+    updateSetup(cgEventConfig);
+    when(query1.get()).thenReturn(cgEventConfig2);
+    when(hPersistence.createUpdateOperations(CgEventConfig.class)).thenReturn(updateOperations);
+    when(updateOperations.set(any(), any())).thenReturn(updateOperations);
+    CgEventConfig returnConfig =
+        eventConfigService.updateEventsConfig(GLOBAL_ACCOUNT_ID, GLOBAL_APP_ID, cgEventConfig2);
+    Mockito.verify(hPersistence).update((CgEventConfig) any(), eq(updateOperations));
+    assertThat(returnConfig.getName().equals(cgEventConfig2.getName()));
+    assertThat(returnConfig.getUuid().equals(cgEventConfig2.getUuid()));
+    assertThat(returnConfig.getRule().getType().equals(CgEventRule.CgRuleType.WORKFLOW));
+    assertThat(returnConfig.getRule().getWorkflowRule().equals(workflowRule));
   }
 
   private CgEventConfig getEventConfigSample() {
