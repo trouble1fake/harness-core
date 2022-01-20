@@ -637,10 +637,10 @@ public class DelegateModule extends AbstractModule {
    */
   @Provides
   @Singleton
-  @Named("watcherUpgradeExecutor")
-  public ScheduledExecutorService watcherUpgradeExecutor() {
+  @Named("watcherMonitorExecutor")
+  public ScheduledExecutorService watcherMonitorExecutor() {
     return new ScheduledThreadPoolExecutor(
-        1, new ThreadFactoryBuilder().setNameFormat("watcherUpgrade-%d").setPriority(Thread.MAX_PRIORITY).build());
+        1, new ThreadFactoryBuilder().setNameFormat("watcherMonitor-%d").setPriority(Thread.MAX_PRIORITY).build());
   }
 
   /*
@@ -819,14 +819,6 @@ public class DelegateModule extends AbstractModule {
   public ExecutorService taskPollExecutor() {
     return ThreadPool.create(4, 10, 3, TimeUnit.SECONDS,
         new ThreadFactoryBuilder().setNameFormat("task-poll-%d").setPriority(Thread.MAX_PRIORITY).build());
-  }
-
-  @Provides
-  @Singleton
-  @Named("asyncTaskDispatchExecutor")
-  public ExecutorService asyncTaskDispatchExecutor() {
-    return ThreadPool.create(10, 10, 3, TimeUnit.SECONDS,
-        new ThreadFactoryBuilder().setNameFormat("async-task-dispatch-%d").setPriority(Thread.MAX_PRIORITY).build());
   }
 
   @Provides
