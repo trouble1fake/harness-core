@@ -75,7 +75,7 @@ public class EcsDelegateRegistrationTest extends WingsBaseTest {
     delegateService = spy(DelegateServiceImpl.class);
     delegateService.handleEcsDelegateRequest(Delegate.builder().keepAlivePacket(true).build());
 
-    verify(delegateService).handleEcsDelegateKeepAlivePacket(any());
+    verify(delegateService).updateSequenceNumberForEcsDelegate(any());
     verify(delegateService, times(0)).handleEcsDelegateRegistration(any());
   }
 
@@ -104,7 +104,7 @@ public class EcsDelegateRegistrationTest extends WingsBaseTest {
 
     delegateService.handleEcsDelegateRequest(Delegate.builder().keepAlivePacket(false).build());
 
-    verify(delegateService, times(0)).handleEcsDelegateKeepAlivePacket(any());
+    verify(delegateService, times(0)).updateSequenceNumberForEcsDelegate(any());
     verify(delegateService).handleEcsDelegateRegistration(any());
   }
 
@@ -128,33 +128,33 @@ public class EcsDelegateRegistrationTest extends WingsBaseTest {
         .getDelegateSequenceConfig(anyString(), anyString(), anyInt());
 
     Delegate delegate = Delegate.builder().build();
-    delegateService.handleEcsDelegateKeepAlivePacket(delegate);
+    delegateService.updateSequenceNumberForEcsDelegate(delegate);
     verify(delegateService, times(0)).getDelegateUsingSequenceNum(anyString(), anyString(), anyString());
 
     delegate.setHostName("host");
-    delegateService.handleEcsDelegateKeepAlivePacket(delegate);
+    delegateService.updateSequenceNumberForEcsDelegate(delegate);
     verify(delegateService, times(0)).getDelegateUsingSequenceNum(anyString(), anyString(), anyString());
 
     delegate.setDelegateRandomToken("token");
-    delegateService.handleEcsDelegateKeepAlivePacket(delegate);
+    delegateService.updateSequenceNumberForEcsDelegate(delegate);
     verify(delegateService, times(0)).getDelegateUsingSequenceNum(anyString(), anyString(), anyString());
 
     delegate.setUuid("id");
-    delegateService.handleEcsDelegateKeepAlivePacket(delegate);
+    delegateService.updateSequenceNumberForEcsDelegate(delegate);
     verify(delegateService, times(0)).getDelegateUsingSequenceNum(anyString(), anyString(), anyString());
 
     delegate.setSequenceNum("1");
-    delegateService.handleEcsDelegateKeepAlivePacket(delegate);
+    delegateService.updateSequenceNumberForEcsDelegate(delegate);
     verify(delegateService, times(1)).getDelegateUsingSequenceNum(anyString(), anyString(), anyString());
 
-    delegateService.handleEcsDelegateKeepAlivePacket(delegate);
+    delegateService.updateSequenceNumberForEcsDelegate(delegate);
     verify(persistence, times(0)).createQuery(any());
     verify(persistence, times(0)).update(any(Query.class), any(UpdateOperations.class));
 
     mockWingsPersistanceForUpdateCall();
 
     delegate.setDelegateRandomToken("aabbcc");
-    delegateService.handleEcsDelegateKeepAlivePacket(delegate);
+    delegateService.updateSequenceNumberForEcsDelegate(delegate);
     verify(persistence, times(1)).createQuery(any());
     verify(persistence, times(1)).update(any(Query.class), any(UpdateOperations.class));
   }

@@ -2432,7 +2432,6 @@ public class DelegateServiceImpl implements DelegateService {
                                   .delegateType(delegateParams.getDelegateType())
                                   .supportedTaskTypes(delegateParams.getSupportedTaskTypes())
                                   .delegateRandomToken(delegateParams.getDelegateRandomToken())
-                                  .keepAlivePacket(delegateParams.isKeepAlivePacket())
                                   .tags(delegateParams.getTags())
                                   .polllingModeEnabled(delegateParams.isPollingModeEnabled())
                                   .proxy(delegateParams.isProxy())
@@ -2859,15 +2858,11 @@ public class DelegateServiceImpl implements DelegateService {
    */
   @Override
   public Delegate handleEcsDelegateRequest(final Delegate delegate) {
-    if (delegate.isKeepAlivePacket()) {
-      handleEcsDelegateKeepAlivePacket(delegate);
-      return null;
-    }
     final Delegate registeredDelegate = handleEcsDelegateRegistration(delegate);
     updateExistingDelegateWithSequenceConfigData(registeredDelegate);
     registeredDelegate.setUseCdn(mainConfiguration.useCdnForDelegateStorage());
     registeredDelegate.setUseJreVersion(getTargetJreVersion(delegate.getAccountId()));
-
+    updateSequenceNumberForEcsDelegate(delegate);
     return registeredDelegate;
   }
 
@@ -3054,7 +3049,7 @@ public class DelegateServiceImpl implements DelegateService {
    * registration.
    */
   @VisibleForTesting
-  void handleEcsDelegateKeepAlivePacket(final Delegate delegate) {
+  void updateSequenceNumberForEcsDelegate(final Delegate delegate) {
     log.debug("Handling Keep alive packet ");
     if (isBlank(delegate.getHostName()) || isBlank(delegate.getDelegateRandomToken()) || isBlank(delegate.getUuid())
         || isBlank(delegate.getSequenceNum())) {
@@ -3338,7 +3333,7 @@ public class DelegateServiceImpl implements DelegateService {
       Optional<DelegateSequenceConfig> optionalConfig =
           existingDelegateSequenceConfigs.stream()
               .filter(sequenceConfig
-                  -> sequenceConfig.getLastUpdatedAt() < currentTimeMillis() - TimeUnit.SECONDS.toMillis(100))
+                  -> sequenceConfig.getLastUpdatedAt() < currentTimeMillis() - TimeUnit.SECONDS.toMillis(300))
               .findFirst();
 
       if (optionalConfig.isPresent()) {

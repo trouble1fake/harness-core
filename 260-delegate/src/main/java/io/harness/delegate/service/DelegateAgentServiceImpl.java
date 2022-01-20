@@ -37,7 +37,6 @@ import static io.harness.delegate.message.MessageConstants.DELEGATE_MIGRATE;
 import static io.harness.delegate.message.MessageConstants.DELEGATE_RESTART_NEEDED;
 import static io.harness.delegate.message.MessageConstants.DELEGATE_RESUME;
 import static io.harness.delegate.message.MessageConstants.DELEGATE_SELF_DESTRUCT;
-import static io.harness.delegate.message.MessageConstants.DELEGATE_SEND_VERSION_HEADER;
 import static io.harness.delegate.message.MessageConstants.DELEGATE_SHUTDOWN_PENDING;
 import static io.harness.delegate.message.MessageConstants.DELEGATE_SHUTDOWN_STARTED;
 import static io.harness.delegate.message.MessageConstants.DELEGATE_STARTED;
@@ -116,6 +115,7 @@ import io.harness.delegate.beans.DelegateTaskAbortEvent;
 import io.harness.delegate.beans.DelegateTaskEvent;
 import io.harness.delegate.beans.DelegateTaskPackage;
 import io.harness.delegate.beans.DelegateTaskResponse;
+import io.harness.delegate.beans.DelegateUnregisterRequest;
 import io.harness.delegate.beans.FileBucket;
 import io.harness.delegate.beans.SecretDetail;
 import io.harness.delegate.beans.TaskData;
@@ -145,7 +145,6 @@ import io.harness.logstreaming.LogStreamingSanitizer;
 import io.harness.logstreaming.LogStreamingTaskClient;
 import io.harness.logstreaming.LogStreamingTaskClient.LogStreamingTaskClientBuilder;
 import io.harness.managerclient.DelegateAgentManagerClient;
-import io.harness.managerclient.DelegateAgentManagerClientFactory;
 import io.harness.network.FibonacciBackOff;
 import io.harness.network.Http;
 import io.harness.perpetualtask.PerpetualTaskWorker;
@@ -340,11 +339,11 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   @Inject @Named("systemExecutor") private ExecutorService systemExecutor;
   @Inject @Named("taskPollExecutor") private ExecutorService taskPollExecutor;
   @Inject @Named("asyncExecutor") private ExecutorService asyncExecutor;
+  @Inject @Named("syncExecutor") private ExecutorService syncExecutor;
   @Inject @Named("artifactExecutor") private ExecutorService artifactExecutor;
   @Inject @Named("timeoutExecutor") private ExecutorService timeoutEnforcement;
   @Inject @Named("grpcServiceExecutor") private ExecutorService grpcServiceExecutor;
   @Inject @Named("taskProgressExecutor") private ExecutorService taskProgressExecutor;
-  @Inject private ExecutorService syncExecutor;
 
   @Inject private SignalService signalService;
   @Inject private MessageService messageService;
@@ -427,6 +426,14 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     return socket.status() == STATUS.OPEN || socket.status() == STATUS.REOPENED;
   }
 
+  @Override
+  public void shutdown(final boolean shouldUnregister) throws InterruptedException {
+    shutdownExecutors();
+    if (shouldUnregister) {
+      unregisterDelegate();
+    }
+  }
+
   @Getter(value = PACKAGE, onMethod = @__({ @VisibleForTesting })) private boolean kubectlInstalled;
   @Getter(value = PACKAGE, onMethod = @__({ @VisibleForTesting })) private boolean goTemplateInstalled;
   @Getter(value = PACKAGE, onMethod = @__({ @VisibleForTesting })) private boolean harnessPywinrmInstalled;
@@ -452,9 +459,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       DelegateStackdriverLogAppender.setManagerClient(delegateAgentManagerClient);
 
       logProxyConfiguration();
-      if (delegateConfiguration.isVersionCheckDisabled()) {
-        DelegateAgentManagerClientFactory.setSendVersionHeader(false);
-      }
+
       connectionHeartbeat = DelegateConnectionHeartbeat.builder()
                                 .delegateConnectionId(delegateConnectionId)
                                 .version(getVersion())
@@ -482,7 +487,6 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         log.info("Delegate process started");
         if (delegateConfiguration.isGrpcServiceEnabled()) {
           restartableServiceManager.start();
-          Runtime.getRuntime().addShutdownHook(new Thread(() -> restartableServiceManager.stop()));
         }
       }
 
@@ -614,13 +618,11 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         socket.open(requestBuilder.build());
 
         startHeartbeat(builder, socket);
-        startKeepAlivePacket(builder, socket);
       }
 
       startChroniqleQueueMonitor();
       startTaskPolling();
       startHeartbeatWhenPollingEnabled(builder);
-      startKeepAliveRequestWhenPollingEnabled(builder);
 
       if (!multiVersion) {
         startUpgradeCheck(getVersion());
@@ -748,11 +750,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       URI uri = uriBuilder.build();
 
       // Stream the request body
-      RequestBuilder requestBuilder =
-          client.newRequestBuilder().method(METHOD.GET).uri(uri.toString()).header("Version", getVersion());
-      if (delegateConfiguration.isVersionCheckDisabled()) {
-        requestBuilder = client.newRequestBuilder().method(METHOD.GET).uri(uri.toString());
-      }
+      RequestBuilder requestBuilder = client.newRequestBuilder().method(METHOD.GET).uri(uri.toString());
 
       requestBuilder
           .encoder(new Encoder<Delegate, Reader>() { // Do not change this, wasync doesn't like lambdas
@@ -946,14 +944,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         log.debug("Executing: Event:{}, message:[{}]", Event.MESSAGE.name(), message);
       }
       try {
-        DelegateTaskEvent delegateTaskEvent = JsonUtils.asObject(message, DelegateTaskEvent.class);
-        try (TaskLogContext ignore = new TaskLogContext(delegateTaskEvent.getDelegateTaskId(), OVERRIDE_ERROR)) {
-          if (delegateTaskEvent instanceof DelegateTaskAbortEvent) {
-            abortDelegateTask((DelegateTaskAbortEvent) delegateTaskEvent);
-          } else {
-            dispatchDelegateTask(delegateTaskEvent);
-          }
-        }
+        processDelegateTaskEvent(JsonUtils.asObject(message, DelegateTaskEvent.class));
       } catch (Throwable e) {
         log.error("Exception while decoding task", e);
       }
@@ -968,10 +959,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
 
   private void startGrpcService() {
     if (delegateConfiguration.isGrpcServiceEnabled() && acquireTasks.get() && !restartableServiceManager.isRunning()) {
-      grpcServiceExecutor.submit(() -> {
-        restartableServiceManager.start();
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> restartableServiceManager.stop()));
-      });
+      grpcServiceExecutor.submit(() -> { restartableServiceManager.start(); });
     }
   }
 
@@ -1109,6 +1097,17 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     // Didn't register and not acquiring. Exiting.
     System.exit(1);
     return null;
+  }
+
+  private void unregisterDelegate() {
+    final DelegateUnregisterRequest request =
+        new DelegateUnregisterRequest(delegateId, HOST_NAME, delegateNg, DELEGATE_TYPE, getLocalHostAddress());
+    try {
+      log.info("Unregistering delegate {}", delegateId);
+      executeRestCall(delegateAgentManagerClient.unregisterDelegate(accountId, request));
+    } catch (final IOException e) {
+      log.error("Failed unregistering delegate {}", delegateId, e);
+    }
   }
 
   private void startProfileCheck() {
@@ -1265,9 +1264,6 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
             handleStopAcquiringMessage(message.getFromProcess());
           } else if (DELEGATE_RESUME.equals(message.getMessage())) {
             resume();
-          } else if (DELEGATE_SEND_VERSION_HEADER.equals(message.getMessage())) {
-            DelegateAgentManagerClientFactory.setSendVersionHeader(Boolean.parseBoolean(message.getParams().get(0)));
-            delegateAgentManagerClient = injector.getInstance(DelegateAgentManagerClient.class);
           } else if (DELEGATE_START_GRPC.equals(message.getMessage())) {
             startGrpcService();
           } else if (DELEGATE_STOP_GRPC.equals(message.getMessage())) {
@@ -1280,6 +1276,40 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     log.warn("Delegate with id: {} was put in freeze mode.", delegateId);
     frozenAt.set(System.currentTimeMillis());
     frozen.set(true);
+  }
+
+  private void shutdownExecutors() throws InterruptedException {
+    log.info("Initiating delegate shutdown");
+    acquireTasks.set(false);
+
+    final long shutdownStart = clock.millis();
+    log.info("Stopping executors");
+    artifactExecutor.shutdown();
+    asyncExecutor.shutdown();
+    syncExecutor.shutdown();
+    taskPollExecutor.shutdown();
+
+    final boolean terminatedArtifact = artifactExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+    final boolean terminatedAsync = asyncExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+    final boolean terminatedSync = syncExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+    final boolean terminatedPoll = taskPollExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+
+    log.info("Executors terminated after {}s. All tasks completed? Artifact [{}], Async [{}], Sync [{}], Polling [{}]",
+        Duration.ofMillis(clock.millis() - shutdownStart).toMillis() * 1000, terminatedArtifact, terminatedAsync,
+        terminatedSync, terminatedPoll);
+
+    if (perpetualTaskWorker != null) {
+      log.info("Stopping perpetual task workers");
+      perpetualTaskWorker.stop();
+    }
+
+    if (restartableServiceManager != null) {
+      restartableServiceManager.stop();
+    }
+
+    if (chronicleEventTailer != null) {
+      chronicleEventTailer.stopAsync().awaitTerminated();
+    }
   }
 
   private void handleStopAcquiringMessage(String sender) {
@@ -1373,7 +1403,6 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   private void startChroniqleQueueMonitor() {
     if (chronicleEventTailer != null) {
       chronicleEventTailer.startAsync().awaitRunning();
-      Runtime.getRuntime().addShutdownHook(new Thread(() -> chronicleEventTailer.stopAsync().awaitTerminated()));
     }
   }
 
@@ -1433,28 +1462,6 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     }, 0, delegateConfiguration.getHeartbeatIntervalMs(), TimeUnit.MILLISECONDS);
   }
 
-  private void startKeepAlivePacket(DelegateParamsBuilder builder, Socket socket) {
-    if (!isEcsDelegate()) {
-      return;
-    }
-
-    // Only perform for ECS delegate.
-    log.info("Starting KeepAlive Packet at interval {} ms", KEEP_ALIVE_INTERVAL);
-    heartbeatExecutor.scheduleAtFixedRate(() -> {
-      try {
-        systemExecutor.submit(() -> {
-          try {
-            sendKeepAlivePacket(builder, socket);
-          } catch (Exception ex) {
-            log.error("Exception while sending KeepAlive Packet", ex);
-          }
-        });
-      } catch (Exception e) {
-        log.error("Exception while scheduling KeepAlive Packet", e);
-      }
-    }, 0, KEEP_ALIVE_INTERVAL, TimeUnit.MILLISECONDS);
-  }
-
   private void startHeartbeatWhenPollingEnabled(DelegateParamsBuilder builder) {
     log.info("Starting heartbeat at interval {} ms", delegateConfiguration.getHeartbeatIntervalMs());
     heartbeatExecutor.scheduleAtFixedRate(() -> {
@@ -1472,25 +1479,6 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         }
       }
     }, 0, delegateConfiguration.getHeartbeatIntervalMs(), TimeUnit.MILLISECONDS);
-  }
-
-  private void startKeepAliveRequestWhenPollingEnabled(DelegateParamsBuilder builder) {
-    log.info("Starting Keep Alive Request at interval {} ms", KEEP_ALIVE_INTERVAL);
-    heartbeatExecutor.scheduleAtFixedRate(() -> {
-      if (pollingForTasks.get() && isEcsDelegate()) {
-        try {
-          systemExecutor.submit(() -> {
-            try {
-              sendKeepAliveRequestWhenPollingEnabled(builder);
-            } catch (Exception ex) {
-              log.error("Exception while sending Keep Alive Request: ", ex);
-            }
-          });
-        } catch (Exception e) {
-          log.error("Exception while scheduling Keep Alive Request: ", e);
-        }
-      }
-    }, 0, KEEP_ALIVE_INTERVAL, TimeUnit.MILLISECONDS);
   }
 
   private void startLocalHeartbeat() {
@@ -1785,12 +1773,12 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
 
   @Getter(lazy = true)
   private final Map<String, ThreadPoolExecutor> logExecutors =
-      NullSafeImmutableMap.builder()
-          .putIfNotNull("systemExecutor", (ThreadPoolExecutor) systemExecutor)
-          .putIfNotNull("asyncExecutor", (ThreadPoolExecutor) asyncExecutor)
-          .putIfNotNull("artifactExecutor", (ThreadPoolExecutor) artifactExecutor)
-          .putIfNotNull("timeoutEnforcement", (ThreadPoolExecutor) timeoutEnforcement)
-          .putIfNotNull("taskPollExecutor", (ThreadPoolExecutor) taskPollExecutor)
+      NullSafeImmutableMap.<String, ThreadPoolExecutor>builder()
+          .putIfNotNull("systemExecutor", systemExecutor)
+          .putIfNotNull("asyncExecutor", asyncExecutor)
+          .putIfNotNull("artifactExecutor", artifactExecutor)
+          .putIfNotNull("timeoutEnforcement", timeoutEnforcement)
+          .putIfNotNull("taskPollExecutor", taskPollExecutor)
           .build();
 
   public Map<String, String> obtainPerformance() {
