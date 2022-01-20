@@ -228,11 +228,15 @@ func (h *tiProxyHandler) UploadCg(ctx context.Context, req *pb.UploadCgRequest) 
 	if err != nil {
 		return res, errors.Wrap(err, "failed to get avro encoded callgraph")
 	}
-	err = client.UploadCg(org, project, pipeline, build, stage, step, repo, sha, source, target, timeMs, encCg)
-	if err != nil {
-		return res, errors.Wrap(err, "failed to upload cg to ti server")
+	for retry := 0; retry < 3; retry ++ {
+		err = client.UploadCg(org, project, pipeline, build, stage, step, repo, sha, source, target, timeMs, encCg)
+		if err != nil {
+			err =  errors.Wrap(err, "failed to upload cg to ti server")
+		} else {
+			return res, nil
+		}
 	}
-	return res, nil
+	return res, err
 }
 
 // getCgFiles return list of cg files in given directory
