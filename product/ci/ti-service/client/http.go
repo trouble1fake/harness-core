@@ -77,7 +77,7 @@ type HTTPClient struct {
 func (c *HTTPClient) Write(ctx context.Context, org, project, pipeline, build, stage, step, report, repo, sha, commitLink string, tests []*types.TestCase) error {
 	path := fmt.Sprintf(dbEndpoint, c.AccountID, org, project, pipeline, build, stage, step, report, repo, sha, commitLink)
 	ctx = context.WithValue(ctx, "reqId", sha)
-	_, err := c.do(ctx, c.Endpoint+path, "POST", &tests, nil)
+	_, err := c.doWithRetry(ctx, c.Endpoint+path, "POST", &tests, nil)
 	return err
 }
 
@@ -107,7 +107,7 @@ func (c *HTTPClient) SelectTests(org, project, pipeline, build, stage, step, rep
 func (c *HTTPClient) UploadCg(org, project, pipeline, build, stage, step, repo, sha, source, target string, timeMs int64, cg []byte) error {
 	path := fmt.Sprintf(cgEndpoint, c.AccountID, org, project, pipeline, build, stage, step, repo, sha, source, target, timeMs)
 	ctx := context.WithValue(context.Background(), "reqId", sha)
-	_, err := c.do(ctx, c.Endpoint+path, "POST", &cg, nil)
+	_, err := c.doWithRetry(ctx, c.Endpoint+path, "POST", &cg, nil)
 	return err
 }
 
@@ -152,6 +152,21 @@ func (c *HTTPClient) retry(ctx context.Context, method, path string, in, out int
 		}
 		return res, err
 	}
+}
+
+
+func (c *HTTPClient) doWithRetry(ctx context.Context, path, method string, in, out interface{}) (*http.Response, error) {
+	var res *http.Response
+	var err error
+	for retry := 0; retry < 3; retry++ {
+		res, err = c.do(ctx, path, method, in, out)
+		if err == nil {
+			return res, err
+		} else {
+			logger.FromContext(ctx).Errorw("http: request error. Retrying ...", "path", path, zap.Error(err))
+		}
+	}
+	return res, err
 }
 
 // do is a helper function that posts a signed http request with
