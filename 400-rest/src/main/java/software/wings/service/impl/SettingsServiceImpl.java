@@ -739,6 +739,15 @@ public class SettingsServiceImpl implements SettingsService {
   }
 
   @Override
+  public List<SettingAttribute> getSettingAttributeByReferencedConnector(
+      String accountId, String settingAttributeUuid) {
+    return wingsPersistence.createQuery(SettingAttribute.class)
+        .filter(SettingAttributeKeys.accountId, accountId)
+        .filter(SettingAttributeKeys.referencedConnector, settingAttributeUuid)
+        .asList();
+  }
+
+  @Override
   public ValidationResult validateConnectivity(SettingAttribute settingAttribute) {
     try {
       SettingAttribute existingSetting = get(settingAttribute.getAppId(), settingAttribute.getUuid());

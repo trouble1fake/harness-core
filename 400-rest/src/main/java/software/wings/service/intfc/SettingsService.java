@@ -177,4 +177,6 @@ public interface SettingsService extends OwnedByAccount, OwnedBySettingAttribute
   boolean hasDelegateSelectorProperty(SettingAttribute settingAttribute);
 
   List<String> getDelegateSelectors(SettingAttribute settingAttribute);
+
+  List<SettingAttribute> getSettingAttributeByReferencedConnector(String accountId, String settingAttributeUuid);
 }
