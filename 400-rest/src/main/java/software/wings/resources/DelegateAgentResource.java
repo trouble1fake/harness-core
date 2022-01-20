@@ -590,7 +590,6 @@ public class DelegateAgentResource {
         .sequenceNum(delegateParams.getSequenceNum())
         .delegateType(delegateParams.getDelegateType())
         .delegateRandomToken(delegateParams.getDelegateRandomToken())
-        .keepAlivePacket(delegateParams.isKeepAlivePacket())
         .polllingModeEnabled(delegateParams.isPollingModeEnabled())
         .ng(delegateParams.isNg())
         .sampleDelegate(delegateParams.isSampleDelegate())
