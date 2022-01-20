@@ -38,6 +38,7 @@ import com.google.inject.Singleton;
 import com.google.protobuf.StringValue;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
@@ -118,12 +119,14 @@ public class FullSyncAccumulatorServiceImpl implements FullSyncAccumulatorServic
 
   private void saveFullSyncEntityInfo(EntityScopeInfo entityScopeInfo, String messageId, Microservice microservice,
       FileChange entityForFullSync, String branchName, String rootFolder, YamlGitConfigDTO yamlGitConfigDTO) {
+    String projectIdentifier = entityScopeInfo.getProjectId().getValue();
+    String orgIdentifier = entityScopeInfo.getOrgId().getValue();
     final GitFullSyncEntityInfo gitFullSyncEntityInfo =
         GitFullSyncEntityInfo.builder()
             .accountIdentifier(entityScopeInfo.getAccountId())
             .filePath(entityForFullSync.getFilePath())
-            .projectIdentifier(getStringValueFromProtoString(entityScopeInfo.getProjectId()))
-            .orgIdentifier(getStringValueFromProtoString(entityScopeInfo.getOrgId()))
+            .projectIdentifier(projectIdentifier)
+            .orgIdentifier(orgIdentifier)
             .microservice(microservice.name())
             .messageId(messageId)
             .entityDetail(entityDetailProtoToRestMapper.createEntityDetailDTO(entityForFullSync.getEntityDetail()))
@@ -134,6 +137,8 @@ public class FullSyncAccumulatorServiceImpl implements FullSyncAccumulatorServic
             .rootFolder(rootFolder)
             .retryCount(0)
             .build();
+    gitFullSyncEntityService.updateStatus(entityScopeInfo.getAccountId(), orgIdentifier, projectIdentifier,
+        entityForFullSync.getFilePath(), GitFullSyncEntityInfo.SyncStatus.OVERRIDDEN);
     gitFullSyncEntityService.save(gitFullSyncEntityInfo);
   }
 

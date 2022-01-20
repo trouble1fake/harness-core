@@ -10,6 +10,8 @@ package io.harness.gitsync.core.fullsync;
 import static io.harness.annotations.dev.HarnessTeam.DX;
 import static io.harness.utils.PageUtils.getPageRequest;
 
+import static org.springframework.data.mongodb.core.query.Update.update;
+
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.gitsync.core.beans.GitFullSyncEntityInfo;
 import io.harness.gitsync.core.beans.GitFullSyncEntityInfo.GitFullSyncEntityInfoKeys;
@@ -23,7 +25,9 @@ import io.harness.repositories.fullSync.GitFullSyncEntityRepository;
 import io.harness.utils.PageUtils;
 
 import com.google.inject.Inject;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Pageable;
@@ -66,6 +70,29 @@ public class GitFullSyncEntityServiceImpl implements GitFullSyncEntityService {
     return gitFullSyncEntityRepository.findByAccountIdentifierAndMessageId(accountIdentifier, messageId);
   }
 
+  @Override
+  public Optional<GitFullSyncEntityInfo> get(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, String filePath) {
+    return Optional.ofNullable(
+        gitFullSyncEntityRepository.findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndFilePath(
+            accountIdentifier, orgIdentifier, projectIdentifier, filePath));
+  }
+
+  @Override
+  public void updateStatus(String accountIdentifier, String orgIdentifier, String projectIdentifier, String filePath,
+      GitFullSyncEntityInfo.SyncStatus status) {
+    Criteria criteria = Criteria.where(GitFullSyncEntityInfoKeys.accountIdentifier)
+                            .is(accountIdentifier)
+                            .and(GitFullSyncEntityInfoKeys.orgIdentifier)
+                            .is(orgIdentifier)
+                            .and(GitFullSyncEntityInfoKeys.projectIdentifier)
+                            .is(projectIdentifier)
+                            .and(GitFullSyncEntityInfoKeys.filePath)
+                            .is(filePath);
+    Update update = update(GitFullSyncEntityInfoKeys.syncStatus, status);
+    gitFullSyncEntityRepository.update(criteria, update);
+  }
+
   private void markFailed(String uuid, String accountId, String errorMsg) {
     Criteria criteria = new Criteria();
     criteria.and(GitFullSyncEntityInfoKeys.uuid).is(uuid);
@@ -94,7 +121,10 @@ public class GitFullSyncEntityServiceImpl implements GitFullSyncEntityService {
                             .and(GitFullSyncEntityInfoKeys.orgIdentifier)
                             .is(org)
                             .and(GitFullSyncEntityInfoKeys.projectIdentifier)
-                            .is(project);
+                            .is(project)
+                            .and(GitFullSyncEntityInfoKeys.syncStatus)
+                            .in(Arrays.asList(GitFullSyncEntityInfo.SyncStatus.SUCCESS,
+                                GitFullSyncEntityInfo.SyncStatus.QUEUED, GitFullSyncEntityInfo.SyncStatus.FAILED));
 
     if (gitFullSyncEntityInfoFilterDTO.getEntityType() != null) {
       criteria.and(GitFullSyncEntityInfoKeys.entityDetail + "." + EntityDetailKeys.type)

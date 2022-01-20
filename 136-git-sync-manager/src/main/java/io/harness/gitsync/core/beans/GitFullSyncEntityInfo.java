@@ -70,7 +70,7 @@ public class GitFullSyncEntityInfo implements PersistentEntity, PersistentRegula
   @EqualsAndHashCode.Exclude @CreatedDate private long createdAt;
   @EqualsAndHashCode.Exclude @LastModifiedDate private long lastUpdatedAt;
 
-  public enum SyncStatus { QUEUED, SUCCESS, FAILED }
+  public enum SyncStatus { QUEUED, SUCCESS, FAILED, OVERRIDDEN }
 
   @Override
   public Long obtainNextIteration(String fieldName) {
