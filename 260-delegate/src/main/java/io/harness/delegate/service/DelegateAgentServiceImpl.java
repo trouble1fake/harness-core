@@ -1657,29 +1657,6 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     }
   }
 
-  private void sendKeepAlivePacket(DelegateParamsBuilder builder, Socket socket) {
-    if (!shouldContactManager()) {
-      return;
-    }
-
-    if (socket.status() == STATUS.OPEN || socket.status() == STATUS.REOPENED) {
-      log.info("Sending keepAlive packet...");
-      updateBuilderIfEcsDelegate(builder);
-      try {
-        HTimeLimiter.callInterruptible21(timeLimiter, Duration.ofSeconds(15), () -> {
-          DelegateParams delegateParams = builder.build().toBuilder().keepAlivePacket(true).build();
-          return socket.fire(JsonUtils.asJson(delegateParams));
-        });
-      } catch (UncheckedTimeoutException ex) {
-        log.warn("Timed out sending keep alive packet", ex);
-      } catch (Exception e) {
-        log.error("Error sending heartbeat", e);
-      }
-    } else {
-      log.warn("Socket is not open");
-    }
-  }
-
   private void sendHeartbeatWhenPollingEnabled(DelegateParamsBuilder builder) {
     if (!shouldContactManager() || !acquireTasks.get() || frozen.get()) {
       return;
@@ -1692,7 +1669,6 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       DelegateParams delegateParams =
           builder.build()
               .toBuilder()
-              .keepAlivePacket(false)
               .pollingModeEnabled(true)
               .currentlyExecutingDelegateTasks(currentlyExecutingTasks.values()
                                                    .stream()
@@ -1744,24 +1720,6 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     if (usingCdn != useCdn) {
       log.info("Switch storage - usingCdn: [{}], useCdn: [{}]", usingCdn, useCdn);
       switchStorage.set(true);
-    }
-  }
-
-  private void sendKeepAliveRequestWhenPollingEnabled(DelegateParamsBuilder builder) {
-    if (!shouldContactManager()) {
-      return;
-    }
-
-    log.info("Sending Keep Alive Request...");
-    try {
-      updateBuilderIfEcsDelegate(builder);
-      DelegateParams delegateParams =
-          builder.build().toBuilder().keepAlivePacket(true).pollingModeEnabled(true).build();
-      executeRestCall(delegateAgentManagerClient.registerDelegate(accountId, delegateParams));
-    } catch (UncheckedTimeoutException ex) {
-      log.warn("Timed out sending Keep Alive Request", ex);
-    } catch (Exception e) {
-      log.error("Error sending Keep Alive Request", e);
     }
   }
 
