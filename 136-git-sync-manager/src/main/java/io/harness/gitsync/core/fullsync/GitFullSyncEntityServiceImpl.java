@@ -123,9 +123,9 @@ public class GitFullSyncEntityServiceImpl implements GitFullSyncEntityService {
                             .and(GitFullSyncEntityInfoKeys.projectIdentifier)
                             .is(project);
 
-    if (gitFullSyncEntityInfoFilterDTO.getEntityType() != null) {
+    if (gitFullSyncEntityInfoFilterDTO.getEntityTypes() != null) {
       criteria.and(GitFullSyncEntityInfoKeys.entityDetail + "." + EntityDetailKeys.type)
-          .is(gitFullSyncEntityInfoFilterDTO.getEntityType());
+          .in(gitFullSyncEntityInfoFilterDTO.getEntityTypes());
     }
     if (gitFullSyncEntityInfoFilterDTO.getSyncStatus() != null) {
       criteria.and(GitFullSyncEntityInfoKeys.syncStatus).is(gitFullSyncEntityInfoFilterDTO.getSyncStatus());

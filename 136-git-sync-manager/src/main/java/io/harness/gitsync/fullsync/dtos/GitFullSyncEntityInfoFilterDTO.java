@@ -15,6 +15,7 @@ import io.harness.gitsync.core.beans.GitFullSyncEntityInfo;
 import io.harness.gitsync.sdk.GitSyncApiConstants;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.List;
 import javax.ws.rs.QueryParam;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -32,7 +33,7 @@ import lombok.experimental.FieldNameConstants;
 public class GitFullSyncEntityInfoFilterDTO {
   @Schema(description = GitSyncApiConstants.ENTITY_TYPE_PARAM_MESSAGE)
   @QueryParam(GitSyncApiConstants.ENTITY_TYPE)
-  EntityType entityType;
+  List<EntityType> entityTypes;
 
   @Schema(description = GitSyncApiConstants.SYNC_STATUS_PARAM_MESSAGE)
   @QueryParam(GitSyncApiConstants.SYNC_STATUS)
