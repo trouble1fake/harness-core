@@ -17,11 +17,18 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class AnomalyData {
   String id;
+  Long time;
+  String anomalyRelativeTime;
+  Double actualAmount;
+  Double expectedAmount;
+  Double trend;
+  String resourceName;
+  String resourceInfo;
   EntityInfo entity;
+  String details;
+  String status;
+  String statusRelativeTime;
   String comment;
   Double anomalyScore;
-  Double expectedAmount;
-  Double actualAmount;
-  Long time;
   AnomalyFeedback userFeedback;
 }

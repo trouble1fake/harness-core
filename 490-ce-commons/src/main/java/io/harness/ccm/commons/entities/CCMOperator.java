@@ -7,4 +7,17 @@
 
 package io.harness.ccm.commons.entities;
 
-public enum CCMOperator { NOT_IN, IN, EQUALS, NOT_NULL, NULL, LIKE }
+public enum CCMOperator {
+  NOT_IN,
+  IN,
+  EQUALS,
+  NOT_NULL,
+  NULL,
+  LIKE,
+  GREATER_THAN,
+  LESS_THAN,
+  GREATER_THAN_EQUALS_TO,
+  LESS_THAN_EQUALS_TO,
+  AFTER,
+  BEFORE
+}

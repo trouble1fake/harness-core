@@ -7,20 +7,40 @@
 
 package io.harness.ccm.commons.dao.anomaly;
 
-import io.harness.ccm.commons.entities.anomaly.AnomalyDataList;
-import io.harness.ccm.commons.utils.TimescaleUtils;
+import static io.harness.timescaledb.Tables.ANOMALIES;
+
+import static com.google.common.base.MoreObjects.firstNonNull;
+
+import io.harness.annotations.retry.RetryOnException;
+import io.harness.timescaledb.tables.pojos.Anomalies;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.sun.istack.internal.Nullable;
+import java.util.List;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.jooq.Condition;
 import org.jooq.DSLContext;
+import org.jooq.OrderField;
+import org.jooq.impl.DSL;
 
 @Slf4j
 @Singleton
 public class AnomalyDao {
   @Inject private DSLContext dslContext;
 
-  public AnomalyDataList getAnomalyData(String query) {
-    return TimescaleUtils.retryRun(() -> dslContext.fetchOne(query).into(AnomalyDataList.class));
+  private static final int RETRY_COUNT = 3;
+  private static final int SLEEP_DURATION = 100;
+
+  @RetryOnException(retryCount = RETRY_COUNT, sleepDurationInMilliseconds = SLEEP_DURATION)
+  public List<Anomalies> fetchAnomalies(@NonNull String accountId, @Nullable Condition condition,
+      @NonNull List<OrderField<?>> orderFields, @NonNull Integer offset, @NonNull Integer limit) {
+    return dslContext.selectFrom(ANOMALIES)
+        .where(ANOMALIES.ACCOUNTID.eq(accountId).and(firstNonNull(condition, DSL.noCondition())))
+        .orderBy(orderFields)
+        .offset(offset)
+        .limit(limit)
+        .fetchInto(Anomalies.class);
   }
 }
