@@ -25,7 +25,7 @@ public class NotificationRules {
 
   List<PipelineEvent> pipelineEvents;
 
-  @ApiModelProperty(dataType = "io.harness.notification.bean.NotificationChannelWrapper")
+  @ApiModelProperty(dataType = "NotificationChannelWrapper")
   @JsonProperty("notificationMethod")
   ParameterField<NotificationChannelWrapper> notificationChannelWrapper;
 }

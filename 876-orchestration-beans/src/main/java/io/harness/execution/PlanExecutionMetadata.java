@@ -15,6 +15,7 @@ import io.harness.mongo.index.CompoundMongoIndex;
 import io.harness.mongo.index.FdTtlIndex;
 import io.harness.mongo.index.MongoIndex;
 import io.harness.ng.DbAliases;
+import io.harness.notification.bean.NotificationRules;
 import io.harness.persistence.PersistentEntity;
 import io.harness.persistence.UuidAware;
 import io.harness.plan.NodeType;
@@ -58,6 +59,7 @@ public class PlanExecutionMetadata implements PersistentEntity, UuidAware, PmsNo
 
   @Wither private String triggerJsonPayload;
   @Wither private TriggerPayload triggerPayload;
+  private List<NotificationRules> notificationRules;
 
   @Default @FdTtlIndex Date validUntil = Date.from(OffsetDateTime.now().plusMonths(TTL_MONTHS).toInstant());
 
