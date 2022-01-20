@@ -209,7 +209,7 @@ public class GitFullSyncResource {
         gitFullSyncConfigService.delete(accountIdentifier, orgIdentifier, projectIdentifier));
   }
 
-  @GET
+  @POST
   @Path("/files")
   @ApiOperation(value = "List files in full sync along with their status", nickname = "listFullSyncFiles")
   @Operation(operationId = "listFullSyncFiles", summary = "List files in full sync along with their status",
