@@ -23,11 +23,11 @@ import software.wings.beans.OrchestrationWorkflow;
 import software.wings.beans.Workflow;
 import software.wings.beans.WorkflowPhase;
 import software.wings.service.impl.workflow.creation.helpers.K8BlueGreenWorkflowPhaseHelper;
+import software.wings.service.impl.workflow.creation.helpers.RancherK8BlueGreenWorkflowPhaseHelper;
+import software.wings.service.intfc.InfrastructureDefinitionService;
 
 import com.google.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
-import software.wings.service.impl.workflow.creation.helpers.RancherK8BlueGreenWorkflowPhaseHelper;
-import software.wings.service.intfc.InfrastructureDefinitionService;
 
 @OwnedBy(CDC)
 @Slf4j
@@ -73,9 +73,9 @@ public class K8V2BlueGreenWorkflowCreator extends WorkflowCreator {
 
   private void updateWorkflowHelper(String accountId, String infraDefinitionId) {
     if (infrastructureDefinitionService.getInfraDefById(accountId, infraDefinitionId)
-        .getInfrastructure()
-        .getInfrastructureType()
-        .equals(RANCHER_INFRA_TYPE)) {
+            .getInfrastructure()
+            .getInfrastructureType()
+            .equals(RANCHER_INFRA_TYPE)) {
       this.k8BlueGreenWorkflowPhaseHelper = this.rancherK8BlueGreenWorkflowPhaseHelper;
     }
   }
