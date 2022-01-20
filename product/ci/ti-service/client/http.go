@@ -11,7 +11,6 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
-	"github.com/cenkalti/backoff"
 
 	"fmt"
 	"io"
