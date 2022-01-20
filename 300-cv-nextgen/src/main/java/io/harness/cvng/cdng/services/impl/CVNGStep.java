@@ -24,8 +24,10 @@ import io.harness.cvng.cdng.entities.CVNGStepTask.CVNGStepTaskBuilder;
 import io.harness.cvng.cdng.services.api.CVNGStepTaskService;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceDTO;
 import io.harness.cvng.core.beans.params.ServiceEnvironmentParams;
+import io.harness.cvng.core.beans.sidekick.DemoActivitySideKickData;
 import io.harness.cvng.core.entities.CVConfig;
 import io.harness.cvng.core.services.api.FeatureFlagService;
+import io.harness.cvng.core.services.api.SideKickService;
 import io.harness.cvng.core.services.api.monitoredService.HealthSourceService;
 import io.harness.cvng.core.services.api.monitoredService.MonitoredServiceService;
 import io.harness.cvng.verificationjob.entities.VerificationJob;
@@ -88,6 +90,7 @@ public class CVNGStep implements AsyncExecutable<CVNGStepParameter> {
   @Inject private MonitoredServiceService monitoredServiceService;
   @Inject private FeatureFlagService featureFlagService;
   @Inject private VerificationJobInstanceService verificationJobInstanceService;
+  @Inject private SideKickService sideKickService;
 
   @Override
   public AsyncExecutableResponse executeAsync(Ambiance ambiance, CVNGStepParameter stepParameters,
@@ -135,13 +138,15 @@ public class CVNGStep implements AsyncExecutable<CVNGStepParameter> {
         String verificationJobInstanceId;
         DeploymentActivity activity = getDeploymentActivity(
             stepParameters, serviceEnvironmentParams, monitoredServiceDTO, ambiance, deploymentStartTime);
-        if (isDemoEnabled(accountId, ambiance)) {
+        boolean isDemoEnabled = isDemoEnabled(accountId, ambiance);
+        boolean shouldFailVerification = false;
+        if (isDemoEnabled) {
+          shouldFailVerification = shouldFailVerification(ambiance, stepParameters.getSensitivity());
           VerificationJobInstance verificationJobInstance =
               getVerificationJobInstanceForDemo(AmbianceUtils.obtainCurrentLevel(ambiance).getIdentifier(),
                   stepParameters, serviceEnvironmentParams, monitoredServiceDTO, deploymentStartTime,
-                  shouldFailVerification(ambiance, stepParameters.getSensitivity())
-                      ? ActivityVerificationStatus.VERIFICATION_FAILED
-                      : ActivityVerificationStatus.VERIFICATION_PASSED);
+                  shouldFailVerification ? ActivityVerificationStatus.VERIFICATION_FAILED
+                                         : ActivityVerificationStatus.VERIFICATION_PASSED);
           activity.setDemoActivity(true);
           verificationJobInstanceId =
               verificationJobInstanceService.createDemoInstances(Arrays.asList(verificationJobInstance)).get(0);
@@ -168,6 +173,10 @@ public class CVNGStep implements AsyncExecutable<CVNGStepParameter> {
                                         .build();
         cvngStepTaskService.create(cvngStepTask);
         callbackId = verificationJobInstanceId;
+        if (isDemoEnabled && !shouldFailVerification) {
+          sideKickService.schedule(DemoActivitySideKickData.builder().deploymentActivityId(activityId).build(),
+              activity.getActivityStartTime().plus(Duration.ofMinutes(10)));
+        }
       }
       return AsyncExecutableResponse.newBuilder().addCallbackIds(callbackId).build();
     }

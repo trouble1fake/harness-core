@@ -51,7 +51,7 @@ public class NGTelemetryPublisher {
 
       String accountId = getAccountId();
 
-      if (EmptyPredicate.isNotEmpty(accountId)) {
+      if (EmptyPredicate.isNotEmpty(accountId) || !accountId.equals(GLOBAL_ACCOUNT_ID)) {
         List<InstanceDTO> serviceInstancesInAMonth = cdPipelineInstrumentationHelper.getServiceInstancesInInterval(
             accountId, CURRENT_TIMESTAMP - MILLISECONDS_IN_A_MONTH, CURRENT_TIMESTAMP);
         totalNumberOfServiceInstancesInAMonth = (long) serviceInstancesInAMonth.size();

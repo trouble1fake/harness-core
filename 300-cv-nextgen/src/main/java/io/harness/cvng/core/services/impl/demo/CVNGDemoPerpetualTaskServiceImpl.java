@@ -16,9 +16,12 @@ import io.harness.cvng.beans.DataCollectionTaskDTO.DataCollectionTaskResult;
 import io.harness.cvng.beans.DataCollectionTaskDTO.DataCollectionTaskResult.DataCollectionTaskResultBuilder;
 import io.harness.cvng.beans.activity.ActivityVerificationStatus;
 import io.harness.cvng.core.beans.demo.DemoTemplate;
+import io.harness.cvng.core.beans.dependency.ServiceDependencyMetadata;
+import io.harness.cvng.core.beans.monitoredService.MonitoredServiceDTO;
 import io.harness.cvng.core.beans.params.ServiceEnvironmentParams;
 import io.harness.cvng.core.entities.CVConfig;
 import io.harness.cvng.core.entities.DataCollectionTask;
+import io.harness.cvng.core.entities.MonitoredService;
 import io.harness.cvng.core.entities.VerificationTask;
 import io.harness.cvng.core.entities.VerificationTask.DeploymentInfo;
 import io.harness.cvng.core.entities.VerificationTask.LiveMonitoringInfo;
@@ -30,6 +33,7 @@ import io.harness.cvng.core.services.api.LogRecordService;
 import io.harness.cvng.core.services.api.TimeSeriesRecordService;
 import io.harness.cvng.core.services.api.VerificationTaskService;
 import io.harness.cvng.core.services.api.demo.CVNGDemoPerpetualTaskService;
+import io.harness.cvng.core.services.api.monitoredService.MonitoredServiceService;
 import io.harness.cvng.models.VerificationType;
 import io.harness.cvng.servicelevelobjective.services.api.ServiceLevelIndicatorService;
 import io.harness.persistence.HPersistence;
@@ -53,6 +57,7 @@ public class CVNGDemoPerpetualTaskServiceImpl implements CVNGDemoPerpetualTaskSe
   @Inject private CVConfigService cvConfigService;
   @Inject private ActivityService activityService;
   @Inject private ServiceLevelIndicatorService serviceLevelIndicatorService;
+  @Inject private MonitoredServiceService monitoredServiceService;
 
   @Override
   public String createCVNGDemoPerpetualTask(String accountId, String dataCollectionWorkerId) {
@@ -98,8 +103,8 @@ public class CVNGDemoPerpetualTaskServiceImpl implements CVNGDemoPerpetualTaskSe
     DemoTemplate demoTemplate;
     CVConfig cvConfig = getRelatedCvConfig(dataCollectionTask.getVerificationTaskId());
     // get activity for monitored service that finished in last 15 mins.
-    demoTemplate = getDemoTemplate(dataCollectionTask.getVerificationTaskId(),
-        getFirstFailedDeploymentActivity(cvConfig, dataCollectionTask).isPresent());
+    demoTemplate =
+        getDemoTemplate(dataCollectionTask.getVerificationTaskId(), isHighRiskTimeRange(cvConfig, dataCollectionTask));
     if (dataCollectionTask.getDataCollectionInfo().getVerificationType().equals(VerificationType.TIME_SERIES)) {
       timeSeriesRecordService.createDemoAnalysisData(dataCollectionTask.getAccountId(),
           dataCollectionTask.getVerificationTaskId(), dataCollectionTask.getDataCollectionWorkerId(), demoTemplate,
@@ -111,27 +116,67 @@ public class CVNGDemoPerpetualTaskServiceImpl implements CVNGDemoPerpetualTaskSe
     }
   }
 
-  private Optional<DeploymentActivity> getFirstFailedDeploymentActivity(
-      CVConfig cvConfig, DataCollectionTask dataCollectionTask) {
-    List<DeploymentActivity> deploymentActivities =
-        activityService.getDemoDeploymentActivity(ServiceEnvironmentParams.builder()
-                                                      .accountIdentifier(cvConfig.getAccountId())
-                                                      .orgIdentifier(cvConfig.getOrgIdentifier())
-                                                      .projectIdentifier(cvConfig.getProjectIdentifier())
-                                                      .serviceIdentifier(cvConfig.getServiceIdentifier())
-                                                      .environmentIdentifier(cvConfig.getEnvIdentifier())
-                                                      .build(),
-            dataCollectionTask.getStartTime().minus(Duration.ofMinutes(15)), dataCollectionTask.getStartTime());
-    return deploymentActivities.stream()
-        .filter(deploymentActivity -> {
-          if (deploymentActivity.getVerificationSummary() != null) {
-            return deploymentActivity.getAnalysisStatus() == ActivityVerificationStatus.VERIFICATION_FAILED;
-          }
-          return false;
-        })
-        .findAny();
+  private boolean isHighRiskTimeRange(CVConfig cvConfig, DataCollectionTask dataCollectionTask) {
+    ServiceEnvironmentParams serviceEnvironmentParams = ServiceEnvironmentParams.builder()
+                                                            .accountIdentifier(cvConfig.getAccountId())
+                                                            .orgIdentifier(cvConfig.getOrgIdentifier())
+                                                            .projectIdentifier(cvConfig.getProjectIdentifier())
+                                                            .serviceIdentifier(cvConfig.getServiceIdentifier())
+                                                            .environmentIdentifier(cvConfig.getEnvIdentifier())
+                                                            .build();
+    List<DeploymentActivity> deploymentActivities = activityService.getDemoDeploymentActivity(serviceEnvironmentParams,
+        dataCollectionTask.getStartTime().minus(Duration.ofMinutes(15)), dataCollectionTask.getStartTime());
+    boolean isHighRiskTimeRange =
+        deploymentActivities.stream()
+            .filter(deploymentActivity -> {
+              if (deploymentActivity.getVerificationSummary() != null) {
+                return deploymentActivity.getAnalysisStatus() == ActivityVerificationStatus.VERIFICATION_FAILED;
+              }
+              return false;
+            })
+            .findAny()
+            .isPresent();
+    if (isHighRiskTimeRange) {
+      return true;
+    } else {
+      Optional<MonitoredService> kubernetesMonitoredService =
+          getKubernetesDependentMonitoredService(serviceEnvironmentParams);
+      if (kubernetesMonitoredService.isPresent()) {
+        return activityService
+            .getAnyDemoKubernetesEvent(
+                ServiceEnvironmentParams.builder()
+                    .accountIdentifier(kubernetesMonitoredService.get().getAccountId())
+                    .orgIdentifier(kubernetesMonitoredService.get().getOrgIdentifier())
+                    .projectIdentifier(kubernetesMonitoredService.get().getProjectIdentifier())
+                    .serviceIdentifier(kubernetesMonitoredService.get().getServiceIdentifier())
+                    .environmentIdentifier(kubernetesMonitoredService.get().getEnvironmentIdentifier())
+                    .build(),
+                dataCollectionTask.getStartTime().minus(Duration.ofMinutes(15)), dataCollectionTask.getStartTime())
+            .isPresent();
+      } else {
+        return false;
+      }
+    }
   }
 
+  private Optional<MonitoredService> getKubernetesDependentMonitoredService(
+      ServiceEnvironmentParams serviceEnvironmentParams) {
+    MonitoredServiceDTO monitoredService =
+        monitoredServiceService.get(serviceEnvironmentParams).getMonitoredServiceDTO();
+    Optional<MonitoredServiceDTO.ServiceDependencyDTO> serviceDependencyDTO =
+        monitoredService.getDependencies()
+            .stream()
+            .filter(serviceDependency
+                -> serviceDependency.getDependencyMetadata().getType()
+                    == ServiceDependencyMetadata.DependencyMetadataType.KUBERNETES)
+            .findAny();
+    if (serviceDependencyDTO.isPresent()) {
+      MonitoredService kubernetesMonitoredService = monitoredServiceService.getMonitoredService(
+          serviceEnvironmentParams, serviceDependencyDTO.get().getMonitoredServiceIdentifier());
+      return Optional.of(kubernetesMonitoredService);
+    }
+    return Optional.empty();
+  }
   private CVConfig getRelatedCvConfig(String verificationTaskId) {
     VerificationTask verificationTask = verificationTaskService.get(verificationTaskId);
     switch (verificationTask.getTaskInfo().getTaskType()) {

@@ -60,6 +60,7 @@ import io.harness.cvng.core.entities.PrometheusCVConfig;
 import io.harness.cvng.core.entities.SLIDataCollectionTask;
 import io.harness.cvng.core.entities.ServiceDependency;
 import io.harness.cvng.core.entities.ServiceGuardDataCollectionTask;
+import io.harness.cvng.core.entities.SideKick;
 import io.harness.cvng.core.entities.SplunkCVConfig;
 import io.harness.cvng.core.entities.StackdriverCVConfig;
 import io.harness.cvng.core.entities.StackdriverLogCVConfig;
@@ -196,6 +197,7 @@ public class CVNextGenMorphiaRegister implements MorphiaRegistrar {
     set.add(SLOHealthIndicator.class);
     set.add(ThresholdServiceLevelIndicator.class);
     set.add(SLIRecord.class);
+    set.add(SideKick.class);
   }
 
   @Override
