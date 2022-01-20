@@ -677,7 +677,7 @@ public class UserGroupServiceImpl implements UserGroupService {
           if (featureFlagService.isEnabled(FeatureName.CG_RBAC_EXCLUSION, accountId)) {
             if (isAppPermissionWithEmptyIds(appPermission)) {
               throw new InvalidRequestException("Invalid Request: Please provide atleast one application");
-            } else if (isNotEmpty(entityFilter.getIds())) {
+            } else if (isEntityFilterWithCustomIds(entityFilter)) {
               throw new InvalidRequestException("Invalid Request: Cannot add custom entities to a Dynamic Filter");
             }
           } else {
@@ -1184,6 +1184,14 @@ public class UserGroupServiceImpl implements UserGroupService {
 
   private boolean isAppPermissionWithEmptyIds(AppPermission appPermission) {
     return isEmpty(appPermission.getAppFilter().getIds());
+  }
+
+  private boolean isEntityFilterWithCustomIds(Filter entityFilter) {
+    if (entityFilter != null && isNotEmpty(entityFilter.getIds())) {
+      return true;
+    }
+
+    return false;
   }
 
   private void updateUserPermissionAndRestrictionCache(UserGroup userGroup) {

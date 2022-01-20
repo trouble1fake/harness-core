@@ -10,6 +10,7 @@ package io.harness.cvng.dashboard.services.impl;
 import static io.harness.cvng.core.utils.DateTimeUtils.roundDownTo5MinBoundary;
 import static io.harness.cvng.core.utils.DateTimeUtils.roundDownToMinBoundary;
 import static io.harness.cvng.dashboard.entities.HeatMap.HeatMapResolution.FIVE_MIN;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.persistence.HQuery.excludeAuthority;
 
 import io.harness.cvng.analysis.beans.Risk;
@@ -186,10 +187,12 @@ public class HeatMapServiceImpl implements HeatMapService {
     heatMapMap.forEach((key, value) -> {
       SortedSet<HeatMapRisk> risks = new TreeSet<>(
           value.getHeatMapRisks().stream().filter(x -> x.getRiskScore() != -1).collect(Collectors.toList()));
-      HeatMapRisk last = risks.last();
-      if (last.getEndTime().isAfter(bucketEndTime)) {
-        value.setHeatMapRisks(Lists.newArrayList(last));
-        uniqueHeatMaps.add(value);
+      if (isNotEmpty(risks)) {
+        HeatMapRisk last = risks.last();
+        if (last.getEndTime().isAfter(bucketEndTime)) {
+          value.setHeatMapRisks(Lists.newArrayList(last));
+          uniqueHeatMaps.add(value);
+        }
       }
     });
     return uniqueHeatMaps;

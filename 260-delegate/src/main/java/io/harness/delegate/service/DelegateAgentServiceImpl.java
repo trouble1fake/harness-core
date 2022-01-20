@@ -116,6 +116,7 @@ import io.harness.delegate.beans.DelegateTaskAbortEvent;
 import io.harness.delegate.beans.DelegateTaskEvent;
 import io.harness.delegate.beans.DelegateTaskPackage;
 import io.harness.delegate.beans.DelegateTaskResponse;
+import io.harness.delegate.beans.DelegateUnregisterRequest;
 import io.harness.delegate.beans.FileBucket;
 import io.harness.delegate.beans.SecretDetail;
 import io.harness.delegate.beans.TaskData;
@@ -340,11 +341,11 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   @Inject @Named("systemExecutor") private ExecutorService systemExecutor;
   @Inject @Named("taskPollExecutor") private ExecutorService taskPollExecutor;
   @Inject @Named("asyncExecutor") private ExecutorService asyncExecutor;
+  @Inject @Named("syncExecutor") private ExecutorService syncExecutor;
   @Inject @Named("artifactExecutor") private ExecutorService artifactExecutor;
   @Inject @Named("timeoutExecutor") private ExecutorService timeoutEnforcement;
   @Inject @Named("grpcServiceExecutor") private ExecutorService grpcServiceExecutor;
   @Inject @Named("taskProgressExecutor") private ExecutorService taskProgressExecutor;
-  @Inject private ExecutorService syncExecutor;
 
   @Inject private SignalService signalService;
   @Inject private MessageService messageService;
@@ -427,6 +428,14 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     return socket.status() == STATUS.OPEN || socket.status() == STATUS.REOPENED;
   }
 
+  @Override
+  public void shutdown(final boolean shouldUnregister) throws InterruptedException {
+    shutdownExecutors();
+    if (shouldUnregister) {
+      unregisterDelegate();
+    }
+  }
+
   @Getter(value = PACKAGE, onMethod = @__({ @VisibleForTesting })) private boolean kubectlInstalled;
   @Getter(value = PACKAGE, onMethod = @__({ @VisibleForTesting })) private boolean goTemplateInstalled;
   @Getter(value = PACKAGE, onMethod = @__({ @VisibleForTesting })) private boolean harnessPywinrmInstalled;
@@ -482,7 +491,6 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         log.info("Delegate process started");
         if (delegateConfiguration.isGrpcServiceEnabled()) {
           restartableServiceManager.start();
-          Runtime.getRuntime().addShutdownHook(new Thread(() -> restartableServiceManager.stop()));
         }
       }
 
@@ -946,14 +954,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         log.debug("Executing: Event:{}, message:[{}]", Event.MESSAGE.name(), message);
       }
       try {
-        DelegateTaskEvent delegateTaskEvent = JsonUtils.asObject(message, DelegateTaskEvent.class);
-        try (TaskLogContext ignore = new TaskLogContext(delegateTaskEvent.getDelegateTaskId(), OVERRIDE_ERROR)) {
-          if (delegateTaskEvent instanceof DelegateTaskAbortEvent) {
-            abortDelegateTask((DelegateTaskAbortEvent) delegateTaskEvent);
-          } else {
-            dispatchDelegateTask(delegateTaskEvent);
-          }
-        }
+        processDelegateTaskEvent(JsonUtils.asObject(message, DelegateTaskEvent.class));
       } catch (Throwable e) {
         log.error("Exception while decoding task", e);
       }
@@ -968,10 +969,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
 
   private void startGrpcService() {
     if (delegateConfiguration.isGrpcServiceEnabled() && acquireTasks.get() && !restartableServiceManager.isRunning()) {
-      grpcServiceExecutor.submit(() -> {
-        restartableServiceManager.start();
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> restartableServiceManager.stop()));
-      });
+      grpcServiceExecutor.submit(() -> { restartableServiceManager.start(); });
     }
   }
 
@@ -1109,6 +1107,17 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     // Didn't register and not acquiring. Exiting.
     System.exit(1);
     return null;
+  }
+
+  private void unregisterDelegate() {
+    final DelegateUnregisterRequest request =
+        new DelegateUnregisterRequest(delegateId, HOST_NAME, delegateNg, DELEGATE_TYPE, getLocalHostAddress());
+    try {
+      log.info("Unregistering delegate {}", delegateId);
+      executeRestCall(delegateAgentManagerClient.unregisterDelegate(accountId, request));
+    } catch (final IOException e) {
+      log.error("Failed unregistering delegate {}", delegateId, e);
+    }
   }
 
   private void startProfileCheck() {
@@ -1282,6 +1291,40 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     frozen.set(true);
   }
 
+  private void shutdownExecutors() throws InterruptedException {
+    log.info("Initiating delegate shutdown");
+    acquireTasks.set(false);
+
+    final long shutdownStart = clock.millis();
+    log.info("Stopping executors");
+    artifactExecutor.shutdown();
+    asyncExecutor.shutdown();
+    syncExecutor.shutdown();
+    taskPollExecutor.shutdown();
+
+    final boolean terminatedArtifact = artifactExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+    final boolean terminatedAsync = asyncExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+    final boolean terminatedSync = syncExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+    final boolean terminatedPoll = taskPollExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+
+    log.info("Executors terminated after {}s. All tasks completed? Artifact [{}], Async [{}], Sync [{}], Polling [{}]",
+        Duration.ofMillis(clock.millis() - shutdownStart).toMillis() * 1000, terminatedArtifact, terminatedAsync,
+        terminatedSync, terminatedPoll);
+
+    if (perpetualTaskWorker != null) {
+      log.info("Stopping perpetual task workers");
+      perpetualTaskWorker.stop();
+    }
+
+    if (restartableServiceManager != null) {
+      restartableServiceManager.stop();
+    }
+
+    if (chronicleEventTailer != null) {
+      chronicleEventTailer.stopAsync().awaitTerminated();
+    }
+  }
+
   private void handleStopAcquiringMessage(String sender) {
     log.info("Got stop-acquiring message from watcher {}", sender);
     if (acquireTasks.getAndSet(false)) {
@@ -1373,7 +1416,6 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   private void startChroniqleQueueMonitor() {
     if (chronicleEventTailer != null) {
       chronicleEventTailer.startAsync().awaitRunning();
-      Runtime.getRuntime().addShutdownHook(new Thread(() -> chronicleEventTailer.stopAsync().awaitTerminated()));
     }
   }
 
@@ -1785,12 +1827,12 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
 
   @Getter(lazy = true)
   private final Map<String, ThreadPoolExecutor> logExecutors =
-      NullSafeImmutableMap.builder()
-          .putIfNotNull("systemExecutor", (ThreadPoolExecutor) systemExecutor)
-          .putIfNotNull("asyncExecutor", (ThreadPoolExecutor) asyncExecutor)
-          .putIfNotNull("artifactExecutor", (ThreadPoolExecutor) artifactExecutor)
-          .putIfNotNull("timeoutEnforcement", (ThreadPoolExecutor) timeoutEnforcement)
-          .putIfNotNull("taskPollExecutor", (ThreadPoolExecutor) taskPollExecutor)
+      NullSafeImmutableMap.<String, ThreadPoolExecutor>builder()
+          .putIfNotNull("systemExecutor", systemExecutor)
+          .putIfNotNull("asyncExecutor", asyncExecutor)
+          .putIfNotNull("artifactExecutor", artifactExecutor)
+          .putIfNotNull("timeoutEnforcement", timeoutEnforcement)
+          .putIfNotNull("taskPollExecutor", taskPollExecutor)
           .build();
 
   public Map<String, String> obtainPerformance() {

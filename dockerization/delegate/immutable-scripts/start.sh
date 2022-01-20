@@ -39,6 +39,7 @@ echo "accountSecret: $ACCOUNT_SECRET" >> config-delegate.yml
 echo "managerUrl: $MANAGER_HOST_AND_PORT/api/" >> config-delegate.yml
 echo "verificationServiceUrl: $MANAGER_HOST_AND_PORT/verification/" >> config-delegate.yml
 echo "cvNextGenUrl: $MANAGER_HOST_AND_PORT/cv/api/" >> config-delegate.yml
+echo "logStreamingServiceBaseUrl: $LOG_STREAMING_SERVICE_URL" >> config-delegate.yml
 echo "heartbeatIntervalMs: 60000" >> config-delegate.yml
 echo "localDiskPath: /tmp" >> config-delegate.yml
 echo "maxCachedArtifacts: 2" >> config-delegate.yml
@@ -51,5 +52,4 @@ append_config "versionCheckDisabled" $VERSION_CHECK_DISABLED
 append_config "clientToolsDownloadDisabled" $CLIENT_TOOLS_DOWNLOAD_DISABLED
 
 # 3. Start the delegate
-java $JAVA_OPTS $PROXY_SYS_PROPS -Xbootclasspath/p:alpn-boot-8.1.13.v20181017.jar -Xmx4096m -XX:+HeapDumpOnOutOfMemoryError -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:mygclogfilename.gc -XX:+UseParallelGC -XX:MaxGCPauseMillis=500 -Dfile.encoding=UTF-8 -Dcom.sun.jndi.ldap.object.disableEndpointIdentification=true -DLANG=en_US.UTF-8 -jar delegate.jar server config-delegate.yml
-}
+exec java $JAVA_OPTS $PROXY_SYS_PROPS -Xbootclasspath/p:alpn-boot-8.1.13.v20181017.jar -Xmx4096m -XX:+HeapDumpOnOutOfMemoryError -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:mygclogfilename.gc -XX:+UseParallelGC -XX:MaxGCPauseMillis=500 -Dfile.encoding=UTF-8 -Dcom.sun.jndi.ldap.object.disableEndpointIdentification=true -DLANG=en_US.UTF-8 -jar delegate.jar server config-delegate.yml

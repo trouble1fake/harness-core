@@ -46,6 +46,7 @@ import io.harness.ff.FeatureFlagService;
 import io.harness.generator.AccountGenerator;
 import io.harness.generator.ApplicationGenerator;
 import io.harness.generator.DelegateProfileGenerator;
+import io.harness.generator.DelegateRingGenerator;
 import io.harness.generator.EnvironmentGenerator;
 import io.harness.generator.EnvironmentGenerator.Environments;
 import io.harness.generator.InfrastructureProvisionerGenerator;
@@ -166,6 +167,7 @@ public class DataGenService {
   @Inject private IndexManager indexManager;
   @Inject private SecretManager secretManager;
   @Inject private DelegateProfileGenerator delegateProfileGenerator;
+  @Inject private DelegateRingGenerator delegateRingGenerator;
 
   public void populateData() {
     dropDBAndEnsureIndexes();
@@ -184,6 +186,7 @@ public class DataGenService {
     Owners owners = ownerManager.create();
     Account account = accountGenerator.ensurePredefined(seed, owners, Accounts.GENERIC_TEST);
     delegateProfileGenerator.ensureAllPredefined(seed, owners);
+    delegateRingGenerator.createAllRings();
     createGlobalSettings(account);
     createApps(account);
     createTestApplication(account);
