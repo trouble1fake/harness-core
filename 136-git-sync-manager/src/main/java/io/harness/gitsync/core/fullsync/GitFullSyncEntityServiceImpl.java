@@ -123,7 +123,8 @@ public class GitFullSyncEntityServiceImpl implements GitFullSyncEntityService {
                             .and(GitFullSyncEntityInfoKeys.projectIdentifier)
                             .is(project);
 
-    if (gitFullSyncEntityInfoFilterDTO.getEntityTypes() != null) {
+    if (gitFullSyncEntityInfoFilterDTO.getEntityTypes() != null
+        && !gitFullSyncEntityInfoFilterDTO.getEntityTypes().isEmpty()) {
       criteria.and(GitFullSyncEntityInfoKeys.entityDetail + "." + EntityDetailKeys.type)
           .in(gitFullSyncEntityInfoFilterDTO.getEntityTypes());
     }
