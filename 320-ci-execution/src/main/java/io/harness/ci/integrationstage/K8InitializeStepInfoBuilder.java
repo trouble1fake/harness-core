@@ -303,9 +303,6 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
         return createPluginCompatibleStepContainerDefinition((PluginCompatibleStep) ciStepInfo, integrationStage,
             ciExecutionArgs, portFinder, stepIndex, stepElement.getIdentifier(), stepElement.getName(),
             stepElement.getType(), timeout, accountId);
-      case SECURITY:
-        return createSecurityStepContainerDefinition((SecurityStepInfo) ciStepInfo, integrationStage, ciExecutionArgs,
-            portFinder, stepIndex, stepElement.getIdentifier(), stepElement.getName(), accountId);
       case PLUGIN:
         return createPluginStepContainerDefinition((PluginStepInfo) ciStepInfo, integrationStage, ciExecutionArgs,
             portFinder, stepIndex, stepElement.getIdentifier(), stepElement.getName(), accountId);
@@ -476,7 +473,7 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
                                        securityStepInfo.getConnectorRef(), true))
                                    .build())
         .containerResourceParams(
-            getStepContainerResource(securityStepInfo.getResources(), "Security", identifier, accountId))
+            getStepContainerResource(securityStepInfo.getResources(), "Plugin", identifier, accountId))
         .isHarnessManagedImage(securityStepInfo.isHarnessManagedImage())
         .ports(Collections.singletonList(port))
         .containerType(CIContainerType.PLUGIN)
