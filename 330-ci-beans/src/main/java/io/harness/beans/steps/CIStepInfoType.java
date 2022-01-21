@@ -20,6 +20,7 @@ public enum CIStepInfoType {
   CLEANUP(CI_MANAGER, "Cleanup"),
   RUN(CI_LITE_ENGINE, "Run"),
   PLUGIN(CI_LITE_ENGINE, "Plugin"),
+  SECURITY(CI_LITE_ENGINE, "Security"),
   GIT_CLONE(CI_LITE_ENGINE, "GitClone"),
   INITIALIZE_TASK(CI_LITE_ENGINE, "liteEngineTask"),
   RUN_TESTS(CI_LITE_ENGINE, "RunTests"),

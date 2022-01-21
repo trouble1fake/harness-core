@@ -13,6 +13,7 @@ import io.harness.beans.plugin.compatible.PluginCompatibleStep;
 import io.harness.beans.steps.stepinfo.PluginStepInfo;
 import io.harness.beans.steps.stepinfo.RunStepInfo;
 import io.harness.beans.steps.stepinfo.RunTestsStepInfo;
+import io.harness.beans.steps.stepinfo.SecurityStepInfo;
 import io.harness.ci.config.CIExecutionServiceConfig;
 import io.harness.ci.integrationstage.InitializeStepInfoBuilder;
 import io.harness.ci.integrationstage.K8InitializeStepInfoBuilder;
@@ -21,6 +22,7 @@ import io.harness.ci.serializer.PluginStepProtobufSerializer;
 import io.harness.ci.serializer.ProtobufStepSerializer;
 import io.harness.ci.serializer.RunStepProtobufSerializer;
 import io.harness.ci.serializer.RunTestsStepProtobufSerializer;
+import io.harness.ci.serializer.SecurityStepProtobufSerializer;
 import io.harness.engine.expressions.AmbianceExpressionEvaluatorProvider;
 import io.harness.pms.listener.NgOrchestrationNotifyEventListener;
 import io.harness.threading.ThreadPool;
@@ -63,6 +65,8 @@ public class CIExecutionServiceModule extends AbstractModule {
     bind(InitializeStepInfoBuilder.class).to(K8InitializeStepInfoBuilder.class);
     bind(new TypeLiteral<ProtobufStepSerializer<RunStepInfo>>() {}).toInstance(new RunStepProtobufSerializer());
     bind(new TypeLiteral<ProtobufStepSerializer<PluginStepInfo>>() {}).toInstance(new PluginStepProtobufSerializer());
+    bind(new TypeLiteral<ProtobufStepSerializer<SecurityStepInfo>>() {
+    }).toInstance(new SecurityStepProtobufSerializer());
     bind(new TypeLiteral<ProtobufStepSerializer<RunTestsStepInfo>>() {
     }).toInstance(new RunTestsStepProtobufSerializer());
     bind(new TypeLiteral<ProtobufStepSerializer<PluginCompatibleStep>>() {

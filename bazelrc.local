@@ -2,6 +2,8 @@ import bazelrc.common
 try-import bazelrc.cache
 
 # Add properties that are specific to local bazel  build
+build --action_env=HARNESS_GENERATION_PASSPHRASE
+build --action_env=LOG_SERVICE_DISABLE_AUTH
 
 build --disk_cache=~/.bazel-dirs/cache
 

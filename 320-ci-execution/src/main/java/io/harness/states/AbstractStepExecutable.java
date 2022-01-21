@@ -34,6 +34,7 @@ import io.harness.beans.steps.outcome.StepArtifacts;
 import io.harness.beans.steps.stepinfo.PluginStepInfo;
 import io.harness.beans.steps.stepinfo.RunStepInfo;
 import io.harness.beans.steps.stepinfo.RunTestsStepInfo;
+import io.harness.beans.steps.stepinfo.SecurityStepInfo;
 import io.harness.beans.sweepingoutputs.CodeBaseConnectorRefSweepingOutput;
 import io.harness.beans.sweepingoutputs.ContainerPortDetails;
 import io.harness.beans.sweepingoutputs.ContextElement;
@@ -45,6 +46,7 @@ import io.harness.ci.serializer.PluginCompatibleStepSerializer;
 import io.harness.ci.serializer.PluginStepProtobufSerializer;
 import io.harness.ci.serializer.RunStepProtobufSerializer;
 import io.harness.ci.serializer.RunTestsStepProtobufSerializer;
+import io.harness.ci.serializer.SecurityStepProtobufSerializer;
 import io.harness.ci.serializer.vm.VmStepSerializer;
 import io.harness.data.structure.CollectionUtils;
 import io.harness.delegate.beans.TaskData;
@@ -111,6 +113,7 @@ public abstract class AbstractStepExecutable implements AsyncExecutableWithRbac<
   @Inject private PluginStepProtobufSerializer pluginStepProtobufSerializer;
   @Inject private RunTestsStepProtobufSerializer runTestsStepProtobufSerializer;
   @Inject private PluginCompatibleStepSerializer pluginCompatibleStepSerializer;
+  @Inject private SecurityStepProtobufSerializer securityStepProtobufSerializer;
 
   @Inject private OutcomeService outcomeService;
   @Inject private ExecutionSweepingOutputService executionSweepingOutputResolver;
@@ -392,6 +395,10 @@ public abstract class AbstractStepExecutable implements AsyncExecutableWithRbac<
       case RUN:
         return runStepProtobufSerializer.serializeStepWithStepParameters((RunStepInfo) ciStepInfo, port, taskId, logKey,
             stepIdentifier, ParameterField.createValueField(Timeout.fromString(timeout)), accountId, stepName);
+      case SECURITY:
+        return securityStepProtobufSerializer.serializeStepWithStepParameters((SecurityStepInfo) ciStepInfo, port,
+            taskId, logKey, stepIdentifier, ParameterField.createValueField(Timeout.fromString(timeout)), accountId,
+            stepName);
       case PLUGIN:
         return pluginStepProtobufSerializer.serializeStepWithStepParameters((PluginStepInfo) ciStepInfo, port, taskId,
             logKey, stepIdentifier, ParameterField.createValueField(Timeout.fromString(timeout)), accountId, stepName);

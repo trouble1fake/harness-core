@@ -53,6 +53,7 @@ import io.harness.beans.steps.CIStepInfoUtils;
 import io.harness.beans.steps.stepinfo.PluginStepInfo;
 import io.harness.beans.steps.stepinfo.RunStepInfo;
 import io.harness.beans.steps.stepinfo.RunTestsStepInfo;
+import io.harness.beans.steps.stepinfo.SecurityStepInfo;
 import io.harness.beans.sweepingoutputs.StageInfraDetails.Type;
 import io.harness.ci.config.CIExecutionServiceConfig;
 import io.harness.ci.utils.QuantityUtils;
@@ -302,6 +303,9 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
         return createPluginCompatibleStepContainerDefinition((PluginCompatibleStep) ciStepInfo, integrationStage,
             ciExecutionArgs, portFinder, stepIndex, stepElement.getIdentifier(), stepElement.getName(),
             stepElement.getType(), timeout, accountId);
+      case SECURITY:
+        return createSecurityStepContainerDefinition((SecurityStepInfo) ciStepInfo, integrationStage, ciExecutionArgs,
+            portFinder, stepIndex, stepElement.getIdentifier(), stepElement.getName(), accountId);
       case PLUGIN:
         return createPluginStepContainerDefinition((PluginStepInfo) ciStepInfo, integrationStage, ciExecutionArgs,
             portFinder, stepIndex, stepElement.getIdentifier(), stepElement.getName(), accountId);
@@ -439,6 +443,47 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
         .privileged(privileged)
         .runAsUser(runAsUser)
         .imagePullPolicy(RunTimeInputHandler.resolveImagePullPolicy(runTestsStepInfo.getImagePullPolicy()))
+        .build();
+  }
+
+  private ContainerDefinitionInfo createSecurityStepContainerDefinition(SecurityStepInfo securityStepInfo,
+      StageElementConfig integrationStage, CIExecutionArgs ciExecutionArgs, PortFinder portFinder, int stepIndex,
+      String identifier, String name, String accountId) {
+    Integer port = portFinder.getNextPort();
+
+    String containerName = format("%s%d", STEP_PREFIX, stepIndex);
+    Map<String, String> envVarMap = new HashMap<>();
+    envVarMap.putAll(getEnvVariables(integrationStage));
+    envVarMap.putAll(BuildEnvironmentUtils.getBuildEnvironmentVariables(ciExecutionArgs));
+    if (!isEmpty(securityStepInfo.getEnvVariables())) {
+      envVarMap.putAll(securityStepInfo.getEnvVariables());
+    }
+
+    boolean privileged = resolveBooleanParameter(securityStepInfo.getPrivileged(), false);
+    Integer runAsUser = resolveIntegerParameter(securityStepInfo.getRunAsUser(), null);
+
+    return ContainerDefinitionInfo.builder()
+        .name(containerName)
+        .commands(StepContainerUtils.getCommand())
+        .args(StepContainerUtils.getArguments(port))
+        .envVars(envVarMap)
+        .stepIdentifier(identifier)
+        .secretVariables(getSecretVariables(integrationStage))
+        .containerImageDetails(ContainerImageDetails.builder()
+                                   .imageDetails(IntegrationStageUtils.getImageInfo(resolveStringParameter(
+                                       "Image", "Security", identifier, securityStepInfo.getImage(), true)))
+                                   .connectorIdentifier(resolveStringParameter("connectorRef", "Security", identifier,
+                                       securityStepInfo.getConnectorRef(), true))
+                                   .build())
+        .containerResourceParams(
+            getStepContainerResource(securityStepInfo.getResources(), "Plugin", identifier, accountId))
+        .isHarnessManagedImage(securityStepInfo.isHarnessManagedImage())
+        .ports(Collections.singletonList(port))
+        .containerType(CIContainerType.PLUGIN)
+        .stepName(name)
+        .privileged(privileged)
+        .runAsUser(runAsUser)
+        .imagePullPolicy(RunTimeInputHandler.resolveImagePullPolicy(securityStepInfo.getImagePullPolicy()))
         .build();
   }
 
@@ -659,6 +704,9 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
       case RUN:
         return getContainerMemoryLimit(
             ((RunStepInfo) ciStepInfo).getResources(), stepElement.getType(), stepElement.getIdentifier(), accountId);
+      case SECURITY:
+        return getContainerMemoryLimit(((SecurityStepInfo) ciStepInfo).getResources(), stepElement.getType(),
+            stepElement.getIdentifier(), accountId);
       case PLUGIN:
         return getContainerMemoryLimit(((PluginStepInfo) ciStepInfo).getResources(), stepElement.getType(),
             stepElement.getIdentifier(), accountId);
@@ -723,6 +771,9 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
       case RUN:
         return getContainerCpuLimit(
             ((RunStepInfo) ciStepInfo).getResources(), stepElement.getType(), stepElement.getIdentifier(), accountId);
+      case SECURITY:
+        return getContainerCpuLimit(((SecurityStepInfo) ciStepInfo).getResources(), stepElement.getType(),
+            stepElement.getIdentifier(), accountId);
       case PLUGIN:
         return getContainerCpuLimit(((PluginStepInfo) ciStepInfo).getResources(), stepElement.getType(),
             stepElement.getIdentifier(), accountId);

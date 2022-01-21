@@ -12,6 +12,7 @@ import io.harness.beans.steps.CIStepInfo;
 import io.harness.beans.steps.stepinfo.PluginStepInfo;
 import io.harness.beans.steps.stepinfo.RunStepInfo;
 import io.harness.beans.steps.stepinfo.RunTestsStepInfo;
+import io.harness.beans.steps.stepinfo.SecurityStepInfo;
 import io.harness.delegate.beans.ci.vm.steps.VmStepInfo;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.execution.utils.AmbianceUtils;
@@ -27,6 +28,7 @@ import java.util.Set;
 public class VmStepSerializer {
   @Inject VmPluginCompatibleStepSerializer vmPluginCompatibleStepSerializer;
   @Inject VmPluginStepSerializer vmPluginStepSerializer;
+  @Inject VmSecurityStepSerializer vmSecurityStepSerializer;
   @Inject VmRunStepSerializer vmRunStepSerializer;
   @Inject VmRunTestStepSerializer vmRunTestStepSerializer;
 
@@ -46,6 +48,9 @@ public class VmStepSerializer {
       case RUN_TESTS:
         return vmRunTestStepSerializer.serialize(
             (RunTestsStepInfo) stepInfo, identifier, parameterFieldTimeout, stepName, ambiance);
+      case SECURITY:
+        return vmSecurityStepSerializer.serialize(
+            (SecurityStepInfo) stepInfo, identifier, parameterFieldTimeout, stepName, ambiance);
       case PLUGIN:
         return vmPluginStepSerializer.serialize(
             (PluginStepInfo) stepInfo, identifier, parameterFieldTimeout, stepName, ambiance);
