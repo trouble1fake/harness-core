@@ -77,8 +77,7 @@ type HTTPClient struct {
 func (c *HTTPClient) Write(ctx context.Context, org, project, pipeline, build, stage, step, report, repo, sha, commitLink string, tests []*types.TestCase) error {
 	path := fmt.Sprintf(dbEndpoint, c.AccountID, org, project, pipeline, build, stage, step, report, repo, sha, commitLink)
 	ctx = context.WithValue(ctx, "reqId", sha)
-	backoff := createBackoff(600 * time.Second)
-	_, err := c.retry(ctx, c.Endpoint+path, "POST", &tests, nil, false, backoff)
+	_, err := c.do(ctx, c.Endpoint+path, "POST", &tests, nil)
 	return err
 }
 
@@ -108,7 +107,7 @@ func (c *HTTPClient) SelectTests(org, project, pipeline, build, stage, step, rep
 func (c *HTTPClient) UploadCg(org, project, pipeline, build, stage, step, repo, sha, source, target string, timeMs int64, cg []byte) error {
 	path := fmt.Sprintf(cgEndpoint, c.AccountID, org, project, pipeline, build, stage, step, repo, sha, source, target, timeMs)
 	ctx := context.WithValue(context.Background(), "reqId", sha)
-	backoff := createBackoff(60 * time.Second)
+	backoff := createBackoff(600 * time.Second)
 	_, err := c.retry(ctx, c.Endpoint+path, "POST", &cg, nil, false, backoff)
 	return err
 }
