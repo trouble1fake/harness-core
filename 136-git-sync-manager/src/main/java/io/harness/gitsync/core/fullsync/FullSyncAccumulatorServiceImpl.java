@@ -85,6 +85,9 @@ public class FullSyncAccumulatorServiceImpl implements FullSyncAccumulatorServic
     }
     if (fullSyncEventRequest.getIsNewBranch()) {
       createNewBranch(fullSyncEventRequest, yamlGitConfigDTO.getRepo());
+    } else {
+      gitBranchService.updateBranchSyncStatus(gitConfigScope.getAccountId(), yamlGitConfigDTO.getRepo(),
+          fullSyncEventRequest.getBranch(), BranchSyncStatus.SYNCED);
     }
     GitFullSyncJob gitFullSyncJob = saveTheFullSyncJob(fullSyncEventRequest, messageId);
     if (gitFullSyncJob == null) {

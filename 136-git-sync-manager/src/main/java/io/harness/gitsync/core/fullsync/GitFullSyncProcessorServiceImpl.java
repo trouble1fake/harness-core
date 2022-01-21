@@ -111,8 +111,8 @@ public class GitFullSyncProcessorServiceImpl implements io.harness.gitsync.core.
         fullSyncServiceBlockingStubMap.get(microservice);
     GitFullSyncEntityInfo gitFullSyncEntityInfo = entityInfoList.get(0);
     final YamlGitConfigDTO yamlGitConfigDTO = yamlGitConfigService.getByProjectIdAndRepo(
-        gitFullSyncEntityInfo.getProjectIdentifier(), gitFullSyncEntityInfo.getOrgIdentifier(),
-        gitFullSyncEntityInfo.getAccountIdentifier(), gitFullSyncEntityInfo.getRepoUrl());
+        gitFullSyncEntityInfo.getAccountIdentifier(), gitFullSyncEntityInfo.getOrgIdentifier(),
+        gitFullSyncEntityInfo.getProjectIdentifier(), gitFullSyncEntityInfo.getRepoUrl());
     List<FullSyncChangeSet> fullSyncChangeSets = new ArrayList<>();
     for (GitFullSyncEntityInfo fullSyncEntityInfo : entityInfoList) {
       fullSyncChangeSets.add(getFullSyncChangeSet(fullSyncEntityInfo, yamlGitConfigDTO));
@@ -164,7 +164,7 @@ public class GitFullSyncProcessorServiceImpl implements io.harness.gitsync.core.
       }
 
       updateTheStatusOfJob(processingFailed, fullSyncJob);
-      if (fullSyncJob.isCreatePullRequest()) {
+      if (!processingFailed && fullSyncJob.isCreatePullRequest()) {
         createAPullRequest(fullSyncJob);
       }
     } finally {
