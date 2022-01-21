@@ -109,8 +109,8 @@ public abstract class AbstractHttpClientFactory {
     if (this.enableCircuitBreaker) {
       retrofitBuilder.addCallAdapterFactory(CircuitBreakerCallAdapter.of(getCircuitBreaker()));
     }
-    retrofitBuilder.addConverterFactory(JacksonConverterFactory.create(objectMapper));
     retrofitBuilder.addConverterFactory(new NullOnEmptyConverterFactory());
+    retrofitBuilder.addConverterFactory(JacksonConverterFactory.create(objectMapper));
     return retrofitBuilder.build();
   }
 
@@ -121,7 +121,7 @@ public abstract class AbstractHttpClientFactory {
       return new Converter<ResponseBody, Object>() {
         @Override
         public Object convert(ResponseBody body) throws IOException {
-          if (body.contentLength() == 0)
+          if (body.contentLength() <= 0)
             return null;
           return delegate.convert(body);
         }
