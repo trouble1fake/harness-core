@@ -7,8 +7,7 @@
 
 package io.harness.rule;
 
-import static java.lang.String.format;
-
+import com.google.common.collect.ImmutableMap;
 import io.harness.NoopStatement;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
@@ -16,12 +15,6 @@ import io.harness.exception.CategoryConfigException;
 import io.harness.rule.UserInfo.UserInfoBuilder;
 import io.harness.scm.ScmSecret;
 import io.harness.scm.SecretName;
-
-import com.google.common.collect.ImmutableMap;
-import java.io.File;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Map.Entry;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.rcarz.jiraclient.BasicCredentials;
@@ -32,6 +25,13 @@ import org.junit.Ignore;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
+
+import java.io.File;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import static java.lang.String.format;
 
 @Slf4j
 @OwnedBy(HarnessTeam.DX)
@@ -73,6 +73,7 @@ public class OwnerRule implements TestRule {
   public static final String PL = "PL";
   public static final String SWAT = "SWAT";
   public static final String GTM = "GTM";
+  public static final String CIT = "CIT";
 
   public static final String AADITI = "aaditi.joag";
   public static final String ABHIJITH = "abhijith.pradeep";
@@ -227,6 +228,8 @@ public class OwnerRule implements TestRule {
   public static final String KAPIL = "kapil.choudhary";
   public static final String PAVIC = "slobodan.pavic";
   public static final String SHIVAM = "shivam.negi";
+  public static final String NGONZALEZ = "nasser.gonzalez";
+  public static final String ROJ = "Roger.Simms";
 
   @Deprecated public static final String UNKNOWN = "unknown";
 
@@ -389,6 +392,8 @@ public class OwnerRule implements TestRule {
           .put(DEEPAK_CHHIKARA, defaultUserInfo(DEEPAK_CHHIKARA).slack("U02D8V7PVFG").team(CV).build())
           .put(PAVIC, defaultUserInfo(PAVIC).slack("U02GPSRJB40").team(CV).build())
           .put(SHIVAM, defaultUserInfo(SHIVAM).slack("U01CPMYC37T").team(CDC).build())
+          .put(NGONZALEZ, defaultUserInfo(NGONZALEZ).slack("U02LFG1UFGF").team(CIT).build())
+          .put(ROJ, defaultUserInfo(ROJ).slack("U02P80HJ59R").team(CIT).build())
           .build();
 
   private static String prDeveloperId = findDeveloperId(System.getenv(GHPRB_PULL_AUTHOR_EMAIL));
@@ -405,7 +410,8 @@ public class OwnerRule implements TestRule {
           .put(PL, TeamInfo.builder().team(PL).leader(ANKIT).leader(VIKAS).build())
           .put(SWAT, TeamInfo.builder().team(SWAT).leader(BRETT).build())
           .put(GTM, TeamInfo.builder().team(GTM).leader(RAMA).build())
-          .build();
+          .put(CIT, TeamInfo.builder().team(CIT).leader(ROJ).build())
+              .build();
 
   @Override
   public Statement apply(Statement statement, Description description) {

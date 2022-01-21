@@ -7,21 +7,18 @@
 
 package io.harness.cdng.provision.terraform;
 
+import com.google.common.collect.ImmutableList;
 import io.harness.annotation.HarnessEntity;
 import io.harness.annotation.StoreIn;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.manifest.yaml.GitStoreConfigDTO;
+import io.harness.cdng.manifest.yaml.storeConfig.StoreConfig;
 import io.harness.mongo.index.MongoIndex;
 import io.harness.mongo.index.SortCompoundMongoIndex;
 import io.harness.ng.DbAliases;
 import io.harness.persistence.CreatedAtAware;
 import io.harness.persistence.PersistentEntity;
-
-import com.google.common.collect.ImmutableList;
-import java.util.List;
-import java.util.Map;
-import javax.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.FieldNameConstants;
@@ -29,6 +26,10 @@ import org.mongodb.morphia.annotations.Entity;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.TypeAlias;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import javax.validation.constraints.NotNull;
+import java.util.List;
+import java.util.Map;
 
 @Data
 @Builder
@@ -61,7 +62,8 @@ public class TerraformConfig implements PersistentEntity, CreatedAtAware {
   @NotNull String pipelineExecutionId;
   @NotNull long createdAt;
 
-  @NotNull GitStoreConfigDTO configFiles;
+  @NotNull GitStoreConfigDTO configFiles; //maybe a rename to gitStoreConfig
+  @NotNull StoreConfig fileStoreConfig;
   List<TerraformVarFileConfig> varFileConfigs;
   String backendConfig;
   Map<String, String> environmentVariables;

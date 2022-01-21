@@ -7,20 +7,11 @@
 
 package io.harness.serializer.kryo;
 
-import static io.harness.annotations.dev.HarnessTeam.CDC;
-
+import com.esotericsoftware.kryo.Kryo;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.advisers.RollbackCustomStepParameters;
 import io.harness.cdng.artifact.bean.artifactsource.DockerArtifactSource;
-import io.harness.cdng.artifact.bean.yaml.ArtifactListConfig;
-import io.harness.cdng.artifact.bean.yaml.ArtifactOverrideSetWrapper;
-import io.harness.cdng.artifact.bean.yaml.ArtifactOverrideSets;
-import io.harness.cdng.artifact.bean.yaml.DockerHubArtifactConfig;
-import io.harness.cdng.artifact.bean.yaml.EcrArtifactConfig;
-import io.harness.cdng.artifact.bean.yaml.GcrArtifactConfig;
-import io.harness.cdng.artifact.bean.yaml.PrimaryArtifact;
-import io.harness.cdng.artifact.bean.yaml.SidecarArtifact;
-import io.harness.cdng.artifact.bean.yaml.SidecarArtifactWrapper;
+import io.harness.cdng.artifact.bean.yaml.*;
 import io.harness.cdng.artifact.steps.ArtifactStepParameters;
 import io.harness.cdng.environment.yaml.EnvironmentYaml;
 import io.harness.cdng.helm.HelmDeployStepInfo;
@@ -34,46 +25,14 @@ import io.harness.cdng.infra.steps.InfraSectionStepParameters;
 import io.harness.cdng.infra.steps.InfraStepParameters;
 import io.harness.cdng.infra.yaml.K8SDirectInfrastructure;
 import io.harness.cdng.infra.yaml.K8sGcpInfrastructure;
-import io.harness.cdng.k8s.DeleteResourcesWrapper;
-import io.harness.cdng.k8s.K8sBlueGreenOutcome;
-import io.harness.cdng.k8s.K8sCanaryOutcome;
-import io.harness.cdng.k8s.K8sCanaryStepInfo;
-import io.harness.cdng.k8s.K8sCanaryStepParameters;
-import io.harness.cdng.k8s.K8sDeleteStepInfo;
-import io.harness.cdng.k8s.K8sDeleteStepParameters;
-import io.harness.cdng.k8s.K8sInstanceUnitType;
-import io.harness.cdng.k8s.K8sRollingOutcome;
-import io.harness.cdng.k8s.K8sRollingRollbackStepInfo;
-import io.harness.cdng.k8s.K8sRollingRollbackStepParameters;
-import io.harness.cdng.k8s.K8sRollingStepInfo;
-import io.harness.cdng.k8s.K8sRollingStepParameters;
-import io.harness.cdng.k8s.K8sScaleStepInfo;
-import io.harness.cdng.k8s.K8sScaleStepParameter;
-import io.harness.cdng.k8s.K8sStepPassThroughData;
+import io.harness.cdng.k8s.*;
 import io.harness.cdng.k8s.beans.GitFetchResponsePassThroughData;
 import io.harness.cdng.k8s.beans.HelmValuesFetchResponsePassThroughData;
 import io.harness.cdng.k8s.beans.K8sExecutionPassThroughData;
 import io.harness.cdng.k8s.beans.StepExceptionPassThroughData;
 import io.harness.cdng.manifest.ManifestConfigType;
-import io.harness.cdng.manifest.yaml.BitbucketStore;
-import io.harness.cdng.manifest.yaml.GcsStoreConfig;
-import io.harness.cdng.manifest.yaml.GitLabStore;
-import io.harness.cdng.manifest.yaml.GitStore;
-import io.harness.cdng.manifest.yaml.GithubStore;
-import io.harness.cdng.manifest.yaml.HttpStoreConfig;
-import io.harness.cdng.manifest.yaml.ManifestConfig;
-import io.harness.cdng.manifest.yaml.ManifestConfigWrapper;
-import io.harness.cdng.manifest.yaml.ManifestOverrideSetWrapper;
-import io.harness.cdng.manifest.yaml.ManifestOverrideSets;
-import io.harness.cdng.manifest.yaml.ManifestsOutcome;
-import io.harness.cdng.manifest.yaml.S3StoreConfig;
-import io.harness.cdng.manifest.yaml.kinds.HelmChartManifest;
-import io.harness.cdng.manifest.yaml.kinds.K8sManifest;
-import io.harness.cdng.manifest.yaml.kinds.KustomizeManifest;
-import io.harness.cdng.manifest.yaml.kinds.KustomizePatchesManifest;
-import io.harness.cdng.manifest.yaml.kinds.OpenshiftManifest;
-import io.harness.cdng.manifest.yaml.kinds.OpenshiftParamManifest;
-import io.harness.cdng.manifest.yaml.kinds.ValuesManifest;
+import io.harness.cdng.manifest.yaml.*;
+import io.harness.cdng.manifest.yaml.kinds.*;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfigType;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfigWrapper;
 import io.harness.cdng.pipeline.PipelineInfrastructure;
@@ -83,23 +42,15 @@ import io.harness.cdng.pipeline.beans.RollbackOptionalChildChainStepParameters;
 import io.harness.cdng.pipeline.executions.CDAccountExecutionMetadata;
 import io.harness.cdng.provision.terraform.TerraformApplyStepInfo;
 import io.harness.cdng.provision.terraform.TerraformPlanStepInfo;
-import io.harness.cdng.service.beans.KubernetesServiceSpec;
-import io.harness.cdng.service.beans.NativeHelmServiceSpec;
-import io.harness.cdng.service.beans.ServiceConfig;
-import io.harness.cdng.service.beans.ServiceConfigOutcome;
-import io.harness.cdng.service.beans.ServiceDefinition;
-import io.harness.cdng.service.beans.ServiceDefinitionType;
-import io.harness.cdng.service.beans.ServiceUseFromStage;
+import io.harness.cdng.service.beans.*;
 import io.harness.cdng.service.beans.ServiceUseFromStage.Overrides;
-import io.harness.cdng.service.beans.ServiceYaml;
-import io.harness.cdng.service.beans.StageOverridesConfig;
 import io.harness.cdng.service.steps.ServiceStepParameters;
 import io.harness.cdng.tasks.manifestFetch.step.ManifestFetchOutcome;
 import io.harness.cdng.tasks.manifestFetch.step.ManifestFetchParameters;
 import io.harness.cdng.variables.beans.NGVariableOverrideSetWrapper;
 import io.harness.serializer.KryoRegistrar;
 
-import com.esotericsoftware.kryo.Kryo;
+import static io.harness.annotations.dev.HarnessTeam.CDC;
 
 @OwnedBy(CDC)
 public class NGKryoRegistrar implements KryoRegistrar {
@@ -203,5 +154,6 @@ public class NGKryoRegistrar implements KryoRegistrar {
     kryo.register(ManifestConfigWrapper.class, 12555);
     kryo.register(StoreConfigType.class, 12556);
     kryo.register(ManifestConfigType.class, 12557);
+    kryo.register(ArtifactoryStoreConfig.class, 12558);
   }
 }

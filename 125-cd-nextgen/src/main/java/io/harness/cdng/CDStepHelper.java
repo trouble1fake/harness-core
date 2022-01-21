@@ -7,25 +7,8 @@
 
 package io.harness.cdng;
 
-import static io.harness.beans.FeatureName.OPTIMIZED_GIT_FETCH_FILES;
-import static io.harness.cdng.infra.yaml.InfrastructureKind.KUBERNETES_DIRECT;
-import static io.harness.cdng.infra.yaml.InfrastructureKind.KUBERNETES_GCP;
-import static io.harness.common.ParameterFieldHelper.getBooleanParameterFieldValue;
-import static io.harness.common.ParameterFieldHelper.getParameterFieldValue;
-import static io.harness.connector.ConnectorModule.DEFAULT_CONNECTOR_SERVICE;
-import static io.harness.data.structure.EmptyPredicate.isEmpty;
-import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
-import static io.harness.data.structure.HarnessStringUtils.emptyIfNull;
-import static io.harness.data.structure.ListUtils.trimStrings;
-import static io.harness.eraro.ErrorCode.GENERAL_ERROR;
-import static io.harness.logging.CommandExecutionStatus.FAILURE;
-import static io.harness.logging.UnitStatus.RUNNING;
-import static io.harness.validation.Validator.notEmptyCheck;
-
-import static java.lang.String.format;
-import static org.apache.commons.lang3.StringUtils.trim;
-import static org.apache.commons.lang3.StringUtils.trimToEmpty;
-
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import io.harness.beans.DecryptableEntity;
 import io.harness.beans.FeatureName;
 import io.harness.cdng.featureFlag.CDFeatureFlagHelper;
@@ -40,18 +23,14 @@ import io.harness.cdng.manifest.ManifestStoreType;
 import io.harness.cdng.manifest.ManifestType;
 import io.harness.cdng.manifest.mappers.ManifestOutcomeValidator;
 import io.harness.cdng.manifest.steps.ManifestsOutcome;
-import io.harness.cdng.manifest.yaml.GcsStoreConfig;
-import io.harness.cdng.manifest.yaml.GitStoreConfig;
-import io.harness.cdng.manifest.yaml.HttpStoreConfig;
-import io.harness.cdng.manifest.yaml.ManifestOutcome;
-import io.harness.cdng.manifest.yaml.S3StoreConfig;
-import io.harness.cdng.manifest.yaml.ValuesManifestOutcome;
+import io.harness.cdng.manifest.yaml.*;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfig;
 import io.harness.common.NGTimeConversionHelper;
 import io.harness.connector.ConnectorInfoDTO;
 import io.harness.connector.helper.GitApiAccessDecryptionHelper;
 import io.harness.connector.services.ConnectorService;
 import io.harness.connector.validator.scmValidators.GitConfigAuthenticationInfoHelper;
+import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryConnectorDTO;
 import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
 import io.harness.delegate.beans.connector.gcpconnector.GcpConnectorDTO;
 import io.harness.delegate.beans.connector.helm.HttpHelmConnectorDTO;
@@ -60,26 +39,10 @@ import io.harness.delegate.beans.connector.scm.ScmConnector;
 import io.harness.delegate.beans.connector.scm.adapter.ScmConnectorMapper;
 import io.harness.delegate.beans.connector.scm.bitbucket.BitbucketConnectorDTO;
 import io.harness.delegate.beans.connector.scm.genericgitconnector.GitConfigDTO;
-import io.harness.delegate.beans.connector.scm.github.GithubApiAccessDTO;
-import io.harness.delegate.beans.connector.scm.github.GithubApiAccessType;
-import io.harness.delegate.beans.connector.scm.github.GithubConnectorDTO;
-import io.harness.delegate.beans.connector.scm.github.GithubHttpAuthenticationType;
-import io.harness.delegate.beans.connector.scm.github.GithubHttpCredentialsDTO;
-import io.harness.delegate.beans.connector.scm.github.GithubTokenSpecDTO;
-import io.harness.delegate.beans.connector.scm.github.GithubUsernameTokenDTO;
-import io.harness.delegate.beans.connector.scm.gitlab.GitlabApiAccessDTO;
-import io.harness.delegate.beans.connector.scm.gitlab.GitlabApiAccessType;
-import io.harness.delegate.beans.connector.scm.gitlab.GitlabConnectorDTO;
-import io.harness.delegate.beans.connector.scm.gitlab.GitlabHttpAuthenticationType;
-import io.harness.delegate.beans.connector.scm.gitlab.GitlabHttpCredentialsDTO;
-import io.harness.delegate.beans.connector.scm.gitlab.GitlabTokenSpecDTO;
-import io.harness.delegate.beans.connector.scm.gitlab.GitlabUsernameTokenDTO;
+import io.harness.delegate.beans.connector.scm.github.*;
+import io.harness.delegate.beans.connector.scm.gitlab.*;
 import io.harness.delegate.beans.logstreaming.UnitProgressData;
-import io.harness.delegate.beans.storeconfig.GcsHelmStoreDelegateConfig;
-import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
-import io.harness.delegate.beans.storeconfig.HttpHelmStoreDelegateConfig;
-import io.harness.delegate.beans.storeconfig.S3HelmStoreDelegateConfig;
-import io.harness.delegate.beans.storeconfig.StoreDelegateConfig;
+import io.harness.delegate.beans.storeconfig.*;
 import io.harness.delegate.task.git.GitFetchFilesConfig;
 import io.harness.delegate.task.k8s.K8sInfraDelegateConfig;
 import io.harness.encryption.SecretRefData;
@@ -113,18 +76,34 @@ import io.harness.pms.yaml.validation.ExpressionUtils;
 import io.harness.secretmanagerclient.services.api.SecretManagerClientService;
 import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.steps.EntityReferenceExtractorUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.hibernate.validator.constraints.NotEmpty;
 
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
-import org.apache.commons.lang3.tuple.Pair;
-import org.hibernate.validator.constraints.NotEmpty;
+
+import static io.harness.beans.FeatureName.OPTIMIZED_GIT_FETCH_FILES;
+import static io.harness.cdng.infra.yaml.InfrastructureKind.KUBERNETES_DIRECT;
+import static io.harness.cdng.infra.yaml.InfrastructureKind.KUBERNETES_GCP;
+import static io.harness.common.ParameterFieldHelper.getBooleanParameterFieldValue;
+import static io.harness.common.ParameterFieldHelper.getParameterFieldValue;
+import static io.harness.connector.ConnectorModule.DEFAULT_CONNECTOR_SERVICE;
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+import static io.harness.data.structure.HarnessStringUtils.emptyIfNull;
+import static io.harness.data.structure.ListUtils.trimStrings;
+import static io.harness.eraro.ErrorCode.GENERAL_ERROR;
+import static io.harness.logging.CommandExecutionStatus.FAILURE;
+import static io.harness.logging.UnitStatus.RUNNING;
+import static io.harness.validation.Validator.notEmptyCheck;
+import static java.lang.String.format;
+import static org.apache.commons.lang3.StringUtils.trim;
+import static org.apache.commons.lang3.StringUtils.trimToEmpty;
 
 public class CDStepHelper {
   @Inject private GitConfigAuthenticationInfoHelper gitConfigAuthenticationInfoHelper;
@@ -445,6 +424,12 @@ public class CDStepHelper {
               format("Invalid connector selected in %s. Select Amazon Web Services connector", message));
         }
         break;
+      case ManifestStoreType.ARTIFACTORY:
+        if (!((connectorInfoDTO.getConnectorConfig()) instanceof ArtifactoryConnectorDTO)) {
+          throw new InvalidRequestException(
+                  format("Invalid connector selected in %s. Select Artifactory connector", message));
+        }
+        break;
 
       case ManifestStoreType.GCS:
         if (!(connectorInfoDTO.getConnectorConfig() instanceof GcpConnectorDTO)) {
@@ -504,6 +489,9 @@ public class CDStepHelper {
           .build();
     }
 
+    if (ManifestStoreType.ARTIFACTORY.equals(storeConfig.getKind())) {
+      throw new UnsupportedOperationException("TODO");
+    }
     if (ManifestStoreType.GCS.equals(storeConfig.getKind())) {
       GcsStoreConfig gcsStoreConfig = (GcsStoreConfig) storeConfig;
       ConnectorInfoDTO gcpConnectorDTO =

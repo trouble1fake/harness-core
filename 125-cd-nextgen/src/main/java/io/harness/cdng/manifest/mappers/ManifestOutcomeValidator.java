@@ -7,30 +7,25 @@
 
 package io.harness.cdng.manifest.mappers;
 
+import io.harness.annotations.dev.OwnedBy;
+import io.harness.cdng.manifest.ManifestStoreType;
+import io.harness.cdng.manifest.ManifestType;
+import io.harness.cdng.manifest.yaml.*;
+import io.harness.cdng.manifest.yaml.storeConfig.StoreConfig;
+import io.harness.delegate.beans.storeconfig.FetchType;
+import io.harness.exception.InvalidArgumentsException;
+import io.harness.pms.yaml.ParameterField;
+import lombok.experimental.UtilityClass;
+import org.apache.commons.lang3.tuple.Pair;
+
+import java.util.List;
+
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.cdng.manifest.ManifestType.HelmChart;
 import static io.harness.cdng.manifest.ManifestType.Kustomize;
 import static io.harness.common.ParameterFieldHelper.getParameterFieldValue;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
-
 import static java.lang.String.format;
-
-import io.harness.annotations.dev.OwnedBy;
-import io.harness.cdng.manifest.ManifestStoreType;
-import io.harness.cdng.manifest.ManifestType;
-import io.harness.cdng.manifest.yaml.GcsStoreConfig;
-import io.harness.cdng.manifest.yaml.GitStoreConfig;
-import io.harness.cdng.manifest.yaml.HelmChartManifestOutcome;
-import io.harness.cdng.manifest.yaml.ManifestOutcome;
-import io.harness.cdng.manifest.yaml.S3StoreConfig;
-import io.harness.cdng.manifest.yaml.storeConfig.StoreConfig;
-import io.harness.delegate.beans.storeconfig.FetchType;
-import io.harness.exception.InvalidArgumentsException;
-import io.harness.pms.yaml.ParameterField;
-
-import java.util.List;
-import lombok.experimental.UtilityClass;
-import org.apache.commons.lang3.tuple.Pair;
 
 @OwnedBy(CDP)
 @UtilityClass
@@ -53,6 +48,8 @@ public class ManifestOutcomeValidator {
       validateS3Store((S3StoreConfig) store, manifestId, allowExpression);
     } else if (ManifestStoreType.GCS.equals(store.getKind())) {
       validateGcsStore((GcsStoreConfig) store, manifestId, allowExpression);
+    } else if (ManifestStoreType.ARTIFACTORY.equals(store.getKind())) {
+      validateArtifactoryStore((ArtifactoryStoreConfig) store, manifestId, allowExpression);
     }
   }
 
@@ -136,6 +133,21 @@ public class ManifestOutcomeValidator {
 
     if (!hasValue(store.getBucketName(), allowExpression)) {
       throw new InvalidArgumentsException(Pair.of("bucketName", "Cannot be empty or null for S3 store"));
+    }
+  }
+
+  private void validateArtifactoryStore(ArtifactoryStoreConfig store, String manifestId, boolean allowExpression) {
+    if (!hasValue(store.getConnectorRef(), allowExpression)) {
+      throw new InvalidArgumentsException(
+              format("Missing or empty connectorRef in Artifactory store spec for manifest with identifier: %s", manifestId));
+    }
+
+    if (!hasValue(store.getArtifactName(), allowExpression)) {
+      throw new InvalidArgumentsException(Pair.of("artifact_name", "Cannot be empty or null for Artifact store"));
+    }
+
+    if (!hasValue(store.getRepositoryPath(), allowExpression)) {
+      throw new InvalidArgumentsException(Pair.of("repositoryPath", "Cannot be empty or null for Artifact store"));
     }
   }
 

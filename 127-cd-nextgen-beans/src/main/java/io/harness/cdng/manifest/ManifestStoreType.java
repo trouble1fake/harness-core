@@ -23,11 +23,11 @@ public interface ManifestStoreType {
   String HTTP = "Http";
   String S3 = "S3";
   String GCS = "Gcs";
+  String ARTIFACTORY = "Artifactory";
 
   static boolean isInGitSubset(String manifestType) {
     switch (manifestType) {
       case GIT:
-      case GITHUB:
       case BITBUCKET:
       case GITLAB:
         return true;
@@ -42,6 +42,7 @@ public interface ManifestStoreType {
       case HTTP:
       case S3:
       case GCS:
+      case ARTIFACTORY:
         return true;
 
       default:
@@ -50,5 +51,5 @@ public interface ManifestStoreType {
   }
 
   Set<String> HelmChartRepo = ImmutableSet.of(HTTP, GCS, S3);
-  Set<String> HelmAllRepo = ImmutableSet.of(HTTP, GCS, S3, GIT, GITHUB, GITLAB, BITBUCKET);
+  Set<String> HelmAllRepo = ImmutableSet.of(HTTP, GCS, S3, GIT, GITLAB, BITBUCKET, ARTIFACTORY);
 }
