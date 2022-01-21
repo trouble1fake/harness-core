@@ -82,7 +82,7 @@ public class EntityActivityCrudEventMessageListener implements MessageListener {
       log.info("Completed processing the activity crud event with the id {}", messageId);
       return true;
     } catch (Exception ex) {
-      log.info("Error processing the activity crud event with the id {}", messageId, ex);
+      log.error("Error processing the activity crud event with the id {}", messageId, ex);
     }
     return false;
   }
