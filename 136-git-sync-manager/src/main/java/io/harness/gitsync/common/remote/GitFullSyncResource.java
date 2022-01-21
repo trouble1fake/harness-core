@@ -69,6 +69,7 @@ import javax.ws.rs.QueryParam;
 import lombok.AllArgsConstructor;
 import org.hibernate.validator.constraints.NotBlank;
 import org.hibernate.validator.constraints.NotEmpty;
+import retrofit2.http.Body;
 
 @Api("/full-sync")
 @Path("/full-sync")
@@ -227,8 +228,8 @@ public class GitFullSyncResource {
       harness.accesscontrol.ProjectIdentifier @ProjectIdentifier String projectIdentifier,
       @Parameter(description = GitSyncApiConstants.SEARCH_TERM_PARAM_MESSAGE) @QueryParam(
           NGResourceFilterConstants.SEARCH_TERM_KEY) String searchTerm,
-      @RequestBody(description = "Filters like entityType and syncStatus")
-      @BeanParam GitFullSyncEntityInfoFilterDTO gitFullSyncEntityInfoFilterDTO) {
+      @RequestBody(description = "Filters like entityType and syncStatus",
+          required = true) @Body GitFullSyncEntityInfoFilterDTO gitFullSyncEntityInfoFilterDTO) {
     return ResponseDTO.newResponse(gitFullSyncEntityService.list(
         accountIdentifier, orgIdentifier, projectIdentifier, pageRequest, searchTerm, gitFullSyncEntityInfoFilterDTO));
   }
