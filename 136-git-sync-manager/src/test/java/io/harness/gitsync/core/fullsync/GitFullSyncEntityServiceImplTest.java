@@ -145,8 +145,8 @@ public class GitFullSyncEntityServiceImplTest extends GitSyncTestBase {
     count = gitFullSyncEntityService.count(ACCOUNT, null, null, GitFullSyncEntityInfoFilterDTO.builder().build());
     assertThat(count).isEqualTo(0);
 
-    count = gitFullSyncEntityService.count(
-        ACCOUNT, ORG, PROJECT, GitFullSyncEntityInfoFilterDTO.builder().entityTypes(Arrays.asList(EntityType.CONNECTORS).build());
+    count = gitFullSyncEntityService.count(ACCOUNT, ORG, PROJECT,
+        GitFullSyncEntityInfoFilterDTO.builder().entityTypes(Arrays.asList(EntityType.CONNECTORS)).build());
     assertThat(count).isEqualTo(6);
 
     count = gitFullSyncEntityService.count(
