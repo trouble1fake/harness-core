@@ -38,9 +38,7 @@ import lombok.experimental.FieldDefaults;
 @Schema(name = "GitFullSyncEntityInfoFilter", description = "This contains filters for Git Full Sync")
 @OwnedBy(PL)
 public class GitFullSyncEntityInfoFilterDTO {
-  @Schema(description = GitSyncApiConstants.ENTITY_TYPE_PARAM_MESSAGE)
-  List<EntityType> entityTypes;
+  @Schema(description = GitSyncApiConstants.ENTITY_TYPE_PARAM_MESSAGE) List<EntityType> entityTypes;
 
-  @Schema(description = GitSyncApiConstants.SYNC_STATUS_PARAM_MESSAGE)
-  GitFullSyncEntityInfo.SyncStatus syncStatus;
+  @Schema(description = GitSyncApiConstants.SYNC_STATUS_PARAM_MESSAGE) GitFullSyncEntityInfo.SyncStatus syncStatus;
 }
