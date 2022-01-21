@@ -15,6 +15,8 @@ import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.delegate.task.TaskFailureReason.EXPIRED;
 import static io.harness.persistence.HPersistence.upsertReturnNewOptions;
 
+import static software.wings.service.impl.DelegateSelectionLogsServiceImpl.*;
+
 import static com.google.common.cache.CacheLoader.InvalidCacheLoadException;
 import static java.lang.System.currentTimeMillis;
 import static java.util.Collections.emptyList;
@@ -128,17 +130,6 @@ public class AssignDelegateServiceImpl implements AssignDelegateService, Delegat
   @Inject private DelegateCache delegateCache;
   @Inject private DelegateTaskServiceClassic delegateTaskServiceClassic;
 
-  private static final String CAN_NOT_ASSIGN_TASK_GROUP =
-      "Cannot assign task due to unsupported task type for delegate(s) ";
-  private static final String CAN_NOT_ASSIGN_CG_NG_TASK_GROUP =
-      "Cannot assign - CG task to CG Delegate only and NG task to NG delegate(s) ";
-  private static final String CAN_NOT_ASSIGN_DELEGATE_SCOPE_GROUP =
-      "Cannot assign due to task abstraction value mismatch with delegate scope for delegate(s) ";
-  private static final String CAN_NOT_ASSIGN_PROFILE_SCOPE_GROUP =
-      "Cannot assign due to profile scope mismatch with task for delegate(s) ";
-  private static final String CAN_NOT_ASSIGN_SELECTOR_TASK_GROUP =
-      "Cannot assign due to mismatch in task selector(s) with selector(s) in delegate(s) ";
-
   private LoadingCache<ImmutablePair<String, String>, Optional<DelegateConnectionResult>>
       delegateConnectionResultCache =
           CacheBuilder.newBuilder()
@@ -181,7 +172,6 @@ public class AssignDelegateServiceImpl implements AssignDelegateService, Delegat
     if (delegate == null) {
       return false;
     }
-    Map<String, List<String>> nonAssignableDelegates = new HashMap<>();
     boolean canAssignTaskToDelegate =
         canAssignTaskToDelegate(delegate.getSupportedTaskTypes(), task.getData().getTaskType());
     if (!canAssignTaskToDelegate) {
@@ -434,6 +424,10 @@ public class AssignDelegateServiceImpl implements AssignDelegateService, Delegat
         includeMatched = true;
         break;
       }
+    }
+
+    if (!includeMatched) {
+      return false;
     }
 
     List<DelegateScope> excludeScopes = new ArrayList<>();
@@ -850,14 +844,13 @@ public class AssignDelegateServiceImpl implements AssignDelegateService, Delegat
                                         && canAssignTask(delegate.getUuid(), task, nonAssignableDelegates))
                                 .map(Delegate::getUuid)
                                 .collect(Collectors.toList());
+      delegateSelectionLogsService.logNonSelectedDelegates(task.getAccountId(), task.getUuid(), nonAssignableDelegates);
 
-      //@TODO: clean up
       List<String> nonAssignables =
           nonAssignableDelegates.keySet()
               .stream()
-              .map(errorMessage -> errorMessage + " : " + nonAssignableDelegates.get(errorMessage))
+              .map(errorMessage -> errorMessage + " : " + String.join(",", nonAssignableDelegates.get(errorMessage)))
               .collect(Collectors.toList());
-      delegateSelectionLogsService.logNonSelectedDelegates(task.getAccountId(), task.getUuid(), nonAssignables);
       nonAssignables.forEach(message -> delegateTaskServiceClassic.addToTaskActivityLog(task, message));
     } catch (Exception e) {
       log.error("Error checking for eligible or whitelisted delegates", e);

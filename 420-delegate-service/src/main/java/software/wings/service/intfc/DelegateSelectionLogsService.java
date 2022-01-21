@@ -15,6 +15,7 @@ import io.harness.delegate.beans.DelegateSelectionLogResponse;
 import io.harness.selection.log.DelegateSelectionLog;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -26,7 +27,7 @@ public interface DelegateSelectionLogsService {
 
   void logEligibleDelegatesToExecuteTask(Set<String> delegateIds, String accountId, String taskId);
 
-  void logNonSelectedDelegates(String accountId, String taskId, List<String> nonAssignableDelegates);
+  void logNonSelectedDelegates(String accountId, String taskId, Map<String, List<String>> nonAssignableDelegates);
 
   void logBroadcastToDelegate(Set<String> delegateIds, String accountId, String taskId);
 
