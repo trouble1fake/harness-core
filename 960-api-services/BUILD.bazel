@@ -80,6 +80,7 @@ java_library(
         "@maven//:io_kubernetes_client_java",
         "@maven//:io_kubernetes_client_java_api",
         "@maven//:io_reactivex_rxjava",
+        "@maven//:javax_xml_ws_jaxws_api",
         "@maven//:javax_validation_validation_api",
         "@maven//:joda_time_joda_time",
         "@maven//:me_snowdrop_istio_client",

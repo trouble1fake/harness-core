@@ -46,7 +46,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.sun.istack.internal.NotNull;
 import io.leangen.graphql.annotations.GraphQLArgument;
 import io.leangen.graphql.annotations.GraphQLContext;
 import io.leangen.graphql.annotations.GraphQLEnvironment;
@@ -62,6 +61,8 @@ import org.jooq.Condition;
 import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.impl.DSL;
+
+import javax.validation.constraints.NotNull;
 
 @Slf4j
 @Singleton

@@ -1,19 +1,18 @@
 # Add properties that are shared between developers and ci build system
+import bazelrc.gcp
+
+build --java_language_version=11
 
 build --java_language_version=8
 
 build --enable_platform_specific_config
 
-build:linux --javabase=@openjdk8u242_linux_archive//:runtime
-build:macos --javabase=@openjdk8u242_macos_archive//:runtime
+#build:macos --javabase=@bazel_tools//tools/jdk:remote_jdk11
 
-build:linux --host_javabase=@openjdk8u242_linux_archive//:runtime
-build:macos --host_javabase=@openjdk8u242_macos_archive//:runtime
+#build:macos --host_javabase=@bazel_tools//tools/jdk:remote_jdk11
 
-build --host_java_toolchain=@bazel_tools//tools/jdk:toolchain_vanilla
-build --java_toolchain=@bazel_tools//tools/jdk:toolchain_vanilla
-# build --host_java_toolchain=@bazel_tools//tools/jdk:toolchain_hostjdk8
-# build --java_toolchain=@bazel_tools//tools/jdk:toolchain_hostjdk8
+build --host_java_toolchain=@bazel_tools//tools/jdk:toolchain_java11
+build --java_toolchain=@bazel_tools//tools/jdk:toolchain_java11
 
 build --action_env=HARNESS_GENERATION_PASSPHRASE
 

@@ -30,7 +30,6 @@ import io.harness.persistence.UuidAware;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.github.reinert.jjschema.SchemaIgnore;
 import com.google.common.collect.ImmutableList;
-import com.sun.istack.internal.NotNull;
 import java.util.List;
 import javax.validation.constraints.Size;
 import lombok.AccessLevel;
