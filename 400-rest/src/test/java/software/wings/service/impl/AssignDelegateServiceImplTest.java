@@ -46,10 +46,7 @@ import static java.util.Optional.of;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anySet;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import io.harness.annotations.dev.BreakDependencyOn;
@@ -77,7 +74,6 @@ import io.harness.delegate.task.http.HttpTaskParameters;
 import io.harness.ff.FeatureFlagService;
 import io.harness.persistence.HPersistence;
 import io.harness.rule.Owner;
-import io.harness.selection.log.BatchDelegateSelectionLog;
 import io.harness.service.intfc.DelegateCache;
 
 import software.wings.WingsBaseTest;
@@ -127,7 +123,6 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 
 @TargetModule(HarnessModule._420_DELEGATE_SERVICE)
 @OwnedBy(HarnessTeam.DEL)
@@ -268,15 +263,13 @@ public class AssignDelegateServiceImplTest extends WingsBaseTest {
           delegateBuilder.includeScopes(test.getIncludeScopes()).excludeScopes(test.getExcludeScopes()).build();
       when(delegateCache.get("ACCOUNT_ID", "DELEGATE_ID", false)).thenReturn(delegate);
 
-      BatchDelegateSelectionLog batch =
-          BatchDelegateSelectionLog.builder().taskId(delegateTaskBuilder.build().getUuid()).build();
-      assertThat(assignDelegateService.canAssign(batch, "DELEGATE_ID", delegateTaskBuilder.build()))
+      assertThat(assignDelegateService.canAssign("DELEGATE_ID", delegateTaskBuilder.build()))
           .isEqualTo(test.isAssignable());
 
-      verify(delegateSelectionLogsService, Mockito.times(test.getNumOfNoIncludeScopeMatchedInvocations()))
-          .logNoIncludeScopeMatched(eq(batch), anyString(), anyString());
-      verify(delegateSelectionLogsService, Mockito.times(test.getNumOfExcludeScopeMatchedInvocations()))
-          .logExcludeScopeMatched(eq(batch), anyString(), anyString(), anyString());
+      /* verify(delegateSelectionLogsService, Mockito.times(test.getNumOfNoIncludeScopeMatchedInvocations()))
+           .logNoIncludeScopeMatched(eq(batch), anyString(), anyString());
+       verify(delegateSelectionLogsService, Mockito.times(test.getNumOfExcludeScopeMatchedInvocations()))
+           .logExcludeScopeMatched(eq(batch), anyString(), anyString(), anyString());*/
     }
   }
 
@@ -306,9 +299,7 @@ public class AssignDelegateServiceImplTest extends WingsBaseTest {
     when(delegateCache.get("ACCOUNT_ID", "DELEGATE_ID", false)).thenReturn(delegate);
     when(featureFlagService.isEnabled(any(), anyString())).thenReturn(true);
 
-    BatchDelegateSelectionLog batch =
-        BatchDelegateSelectionLog.builder().taskId(delegateTaskBuilder.build().getUuid()).build();
-    assertThat(assignDelegateService.canAssign(batch, "DELEGATE_ID", delegateTaskBuilder.build())).isEqualTo(true);
+    assertThat(assignDelegateService.canAssign("DELEGATE_ID", delegateTaskBuilder.build())).isEqualTo(true);
 
     delegate = delegateBuilder
                    .includeScopes(ImmutableList.of(
@@ -318,8 +309,7 @@ public class AssignDelegateServiceImplTest extends WingsBaseTest {
 
     delegateTaskBuilder.setupAbstraction("envId", SCOPE_WILDCARD);
 
-    batch = BatchDelegateSelectionLog.builder().taskId(delegateTaskBuilder.build().getUuid()).build();
-    assertThat(assignDelegateService.canAssign(batch, "DELEGATE_ID", delegateTaskBuilder.build())).isEqualTo(true);
+    assertThat(assignDelegateService.canAssign("DELEGATE_ID", delegateTaskBuilder.build())).isEqualTo(true);
   }
 
   @Test
@@ -348,9 +338,7 @@ public class AssignDelegateServiceImplTest extends WingsBaseTest {
     when(delegateCache.get("ACCOUNT_ID", "DELEGATE_ID", false)).thenReturn(delegate);
     when(featureFlagService.isEnabled(any(), anyString())).thenReturn(true);
 
-    BatchDelegateSelectionLog batch =
-        BatchDelegateSelectionLog.builder().taskId(delegateTaskBuilder.build().getUuid()).build();
-    assertThat(assignDelegateService.canAssign(batch, "DELEGATE_ID", delegateTaskBuilder.build())).isEqualTo(true);
+    assertThat(assignDelegateService.canAssign("DELEGATE_ID", delegateTaskBuilder.build())).isEqualTo(true);
 
     delegate = delegateBuilder
                    .excludeScopes(ImmutableList.of(
@@ -360,8 +348,7 @@ public class AssignDelegateServiceImplTest extends WingsBaseTest {
 
     delegateTaskBuilder.setupAbstraction("enviId", SCOPE_WILDCARD);
 
-    batch = BatchDelegateSelectionLog.builder().taskId(delegateTaskBuilder.build().getUuid()).build();
-    assertThat(assignDelegateService.canAssign(batch, "DELEGATE_ID", delegateTaskBuilder.build())).isEqualTo(true);
+    assertThat(assignDelegateService.canAssign("DELEGATE_ID", delegateTaskBuilder.build())).isEqualTo(true);
   }
 
   @Value
@@ -647,12 +634,11 @@ public class AssignDelegateServiceImplTest extends WingsBaseTest {
 
       persistence.save(delegateProfile);
 
-      BatchDelegateSelectionLog batch = BatchDelegateSelectionLog.builder().taskId(test.getTask().getUuid()).build();
-      assertThat(assignDelegateService.canAssign(batch, test.getDelegate().getUuid(), test.getTask()))
+      assertThat(assignDelegateService.canAssign(test.getDelegate().getUuid(), test.getTask()))
           .isEqualTo(test.isAssignable());
-      verify(delegateSelectionLogsService, Mockito.times(test.getNumOfProfileScopeNotMatchedInvocations()))
+      /*verify(delegateSelectionLogsService, Mockito.times(test.getNumOfProfileScopeNotMatchedInvocations()))
           .logProfileScopeRuleNotMatched(
-              eq(batch), eq(accountId), eq(test.getDelegate().getUuid()), eq(delegateProfile.getUuid()), anySet());
+              eq(batch), eq(accountId), eq(test.getDelegate().getUuid()), eq(delegateProfile.getUuid()), anySet());*/
     }
 
     // Case to cover non-existing delegate profile
@@ -664,7 +650,7 @@ public class AssignDelegateServiceImplTest extends WingsBaseTest {
                                                   .build();
     when(delegateCache.get(accountId, delegateWithNonExistingProfile.getUuid(), false))
         .thenReturn(delegateWithNonExistingProfile);
-    assertThat(assignDelegateService.canAssign(null, delegateWithNonExistingProfile.getUuid(),
+    assertThat(assignDelegateService.canAssign(delegateWithNonExistingProfile.getUuid(),
                    DelegateTask.builder()
                        .uuid(generateUuid())
                        .accountId(accountId)
@@ -858,8 +844,7 @@ public class AssignDelegateServiceImplTest extends WingsBaseTest {
           .thenReturn(delegate.getTags() == null ? new HashSet<>() : new HashSet<>(test.getDelegateTags()));
 
       DelegateTask delegateTask = delegateTaskBuilder.executionCapabilities(test.getExecutionCapabilities()).build();
-      BatchDelegateSelectionLog batch = BatchDelegateSelectionLog.builder().taskId(delegateTask.getUuid()).build();
-      assertThat(assignDelegateService.canAssign(batch, "DELEGATE_ID", delegateTask)).isEqualTo(test.isAssignable());
+      assertThat(assignDelegateService.canAssign("DELEGATE_ID", delegateTask)).isEqualTo(test.isAssignable());
     }
 
     delegateTaskBuilder.setupAbstraction("envId", "ENV_ID");
@@ -873,8 +858,7 @@ public class AssignDelegateServiceImplTest extends WingsBaseTest {
           .thenReturn(delegate.getTags() == null ? new HashSet<>() : new HashSet<>(test.getDelegateTags()));
 
       DelegateTask delegateTask = delegateTaskBuilder.executionCapabilities(test.getExecutionCapabilities()).build();
-      BatchDelegateSelectionLog batch = BatchDelegateSelectionLog.builder().taskId(delegateTask.getUuid()).build();
-      assertThat(assignDelegateService.canAssign(batch, "DELEGATE_ID", delegateTask)).isFalse();
+      assertThat(assignDelegateService.canAssign("DELEGATE_ID", delegateTask)).isFalse();
     }
   }
 
@@ -946,8 +930,7 @@ public class AssignDelegateServiceImplTest extends WingsBaseTest {
       when(delegateCache.get("ACCOUNT_ID", "DELEGATE_ID", false)).thenReturn(delegate);
 
       DelegateTask delegateTask = delegateTaskBuilder.executionCapabilities(test.getExecutionCapabilities()).build();
-      BatchDelegateSelectionLog batch = BatchDelegateSelectionLog.builder().taskId(delegateTask.getUuid()).build();
-      assertThat(assignDelegateService.canAssign(batch, "DELEGATE_ID", delegateTask)).isEqualTo(test.isAssignable());
+      assertThat(assignDelegateService.canAssign("DELEGATE_ID", delegateTask)).isEqualTo(test.isAssignable());
     }
   }
 
@@ -1196,9 +1179,8 @@ public class AssignDelegateServiceImplTest extends WingsBaseTest {
                             .excludeScopes(emptyList())
                             .supportedTaskTypes(Arrays.asList(TaskType.HTTP.name()))
                             .build();
-    BatchDelegateSelectionLog batch = BatchDelegateSelectionLog.builder().taskId(delegateTask.getUuid()).build();
     when(delegateCache.get("ACCOUNT_ID", "DELEGATE_ID", false)).thenReturn(delegate);
-    assertThat(assignDelegateService.canAssign(batch, "DELEGATE_ID", delegateTask)).isTrue();
+    assertThat(assignDelegateService.canAssign("DELEGATE_ID", delegateTask)).isTrue();
   }
 
   @Test
@@ -1223,9 +1205,8 @@ public class AssignDelegateServiceImplTest extends WingsBaseTest {
                             .excludeScopes(singletonList(null))
                             .supportedTaskTypes(Arrays.asList(TaskType.HTTP.name()))
                             .build();
-    BatchDelegateSelectionLog batch = BatchDelegateSelectionLog.builder().taskId(delegateTask.getUuid()).build();
     when(delegateCache.get("ACCOUNT_ID", "DELEGATE_ID", false)).thenReturn(delegate);
-    assertThat(assignDelegateService.canAssign(batch, "DELEGATE_ID", delegateTask)).isTrue();
+    assertThat(assignDelegateService.canAssign("DELEGATE_ID", delegateTask)).isTrue();
   }
 
   @Test
@@ -1254,9 +1235,8 @@ public class AssignDelegateServiceImplTest extends WingsBaseTest {
                             .excludeScopes(emptyList())
                             .supportedTaskTypes(Arrays.asList(TaskType.HTTP.name()))
                             .build();
-    BatchDelegateSelectionLog batch = BatchDelegateSelectionLog.builder().taskId(delegateTask.getUuid()).build();
     when(delegateCache.get("ACCOUNT_ID", "DELEGATE_ID", false)).thenReturn(delegate);
-    assertThat(assignDelegateService.canAssign(batch, "DELEGATE_ID", delegateTask)).isTrue();
+    assertThat(assignDelegateService.canAssign("DELEGATE_ID", delegateTask)).isTrue();
   }
 
   @Test
@@ -1314,12 +1294,11 @@ public class AssignDelegateServiceImplTest extends WingsBaseTest {
                             .excludeScopes(emptyList())
                             .supportedTaskTypes(Arrays.asList(TaskType.SCRIPT.name()))
                             .build();
-    BatchDelegateSelectionLog batch = BatchDelegateSelectionLog.builder().taskId(delegateTask.getUuid()).build();
     when(infrastructureMappingService.get("APP_ID", "infraMapping_Id")).thenReturn(infrastructureMapping);
     when(delegateCache.get("ACCOUNT_ID", "DELEGATE_ID", false)).thenReturn(delegate);
-    assertThat(assignDelegateService.canAssign(batch, "DELEGATE_ID", delegateTask)).isTrue();
+    assertThat(assignDelegateService.canAssign("DELEGATE_ID", delegateTask)).isTrue();
 
-    assertThat(assignDelegateService.canAssign(batch, "DELEGATE_ID", delegateTask2)).isFalse();
+    assertThat(assignDelegateService.canAssign("DELEGATE_ID", delegateTask2)).isFalse();
   }
 
   @Test
@@ -1406,7 +1385,7 @@ public class AssignDelegateServiceImplTest extends WingsBaseTest {
   public void shouldRetrieveNoActiveDelegates() {
     String accountId = generateUuid();
 
-    List<String> activeDelegates = assignDelegateService.retrieveActiveDelegates(accountId, null);
+    List<String> activeDelegates = assignDelegateService.retrieveActiveDelegates(accountId);
     assertThat(activeDelegates).isNotNull();
     assertThat(activeDelegates).isEmpty();
   }
@@ -1473,17 +1452,14 @@ public class AssignDelegateServiceImplTest extends WingsBaseTest {
         .thenReturn(asList(activeDelegate1, activeDelegate2, disconnectedDelegate, wapprDelegate, deletedDelegate,
             delegateInScalingGroup));
 
-    BatchDelegateSelectionLog batch = BatchDelegateSelectionLog.builder().taskId(generateUuid()).build();
-
-    List<String> activeDelegates = assignDelegateService.retrieveActiveDelegates(accountId, batch);
+    List<String> activeDelegates = assignDelegateService.retrieveActiveDelegates(accountId);
     assertThat(activeDelegates).isNotNull();
     assertThat(activeDelegates.size()).isEqualTo(2);
     assertThat(activeDelegates.containsAll(asList(activeDelegate1Id, activeDelegate2Id))).isTrue();
 
     activeDelegate1.setNg(true);
-    batch = BatchDelegateSelectionLog.builder().taskId(generateUuid()).build();
 
-    activeDelegates = assignDelegateService.retrieveActiveDelegates(accountId, batch);
+    activeDelegates = assignDelegateService.retrieveActiveDelegates(accountId);
     assertThat(activeDelegates).isNotNull();
     assertThat(activeDelegates.size()).isEqualTo(1);
     assertThat(activeDelegates).containsExactly(activeDelegate2Id);
@@ -1687,35 +1663,34 @@ public class AssignDelegateServiceImplTest extends WingsBaseTest {
                             .supportedTaskTypes(Arrays.asList(TaskType.HTTP.name()))
                             .build();
 
-    BatchDelegateSelectionLog batch = Mockito.mock(BatchDelegateSelectionLog.class);
     when(delegateCache.get(accountId, delegateId, false)).thenReturn(delegate);
 
     // Test delegate cg and task cg
-    canAssignCgNgAssert(delegateTask, batch, delegate, false, null, true);
-    canAssignCgNgAssert(delegateTask, batch, delegate, false, ImmutableMap.of(), true);
-    canAssignCgNgAssert(delegateTask, batch, delegate, false, ImmutableMap.of("k1", "v1"), true);
-    canAssignCgNgAssert(delegateTask, batch, delegate, false, ImmutableMap.of("ng", "FALSE"), true);
-    canAssignCgNgAssert(delegateTask, batch, delegate, false, ImmutableMap.of("ng", "false"), true);
-    canAssignCgNgAssert(delegateTask, batch, delegate, false, ImmutableMap.of("ng", "invalidValue"), true);
+    canAssignCgNgAssert(delegateTask, delegate, false, null, true);
+    canAssignCgNgAssert(delegateTask, delegate, false, ImmutableMap.of(), true);
+    canAssignCgNgAssert(delegateTask, delegate, false, ImmutableMap.of("k1", "v1"), true);
+    canAssignCgNgAssert(delegateTask, delegate, false, ImmutableMap.of("ng", "FALSE"), true);
+    canAssignCgNgAssert(delegateTask, delegate, false, ImmutableMap.of("ng", "false"), true);
+    canAssignCgNgAssert(delegateTask, delegate, false, ImmutableMap.of("ng", "invalidValue"), true);
 
     // Test delegate ng and task ng
-    canAssignCgNgAssert(delegateTask, batch, delegate, true, ImmutableMap.of("ng", "TRUE"), true);
-    canAssignCgNgAssert(delegateTask, batch, delegate, true, ImmutableMap.of("ng", "true"), true);
+    canAssignCgNgAssert(delegateTask, delegate, true, ImmutableMap.of("ng", "TRUE"), true);
+    canAssignCgNgAssert(delegateTask, delegate, true, ImmutableMap.of("ng", "true"), true);
 
     // Test other non-matching cases
-    canAssignCgNgAssert(delegateTask, batch, delegate, true, null, false);
-    canAssignCgNgAssert(delegateTask, batch, delegate, true, ImmutableMap.of(), false);
-    canAssignCgNgAssert(delegateTask, batch, delegate, true, ImmutableMap.of("k1", "v1"), false);
-    canAssignCgNgAssert(delegateTask, batch, delegate, false, ImmutableMap.of("ng", "TRUE"), false);
-    canAssignCgNgAssert(delegateTask, batch, delegate, false, ImmutableMap.of("ng", "true"), false);
-    canAssignCgNgAssert(delegateTask, batch, delegate, true, ImmutableMap.of("ng", "invalidValue"), false);
+    canAssignCgNgAssert(delegateTask, delegate, true, null, false);
+    canAssignCgNgAssert(delegateTask, delegate, true, ImmutableMap.of(), false);
+    canAssignCgNgAssert(delegateTask, delegate, true, ImmutableMap.of("k1", "v1"), false);
+    canAssignCgNgAssert(delegateTask, delegate, false, ImmutableMap.of("ng", "TRUE"), false);
+    canAssignCgNgAssert(delegateTask, delegate, false, ImmutableMap.of("ng", "true"), false);
+    canAssignCgNgAssert(delegateTask, delegate, true, ImmutableMap.of("ng", "invalidValue"), false);
   }
 
-  private void canAssignCgNgAssert(DelegateTask delegateTask, BatchDelegateSelectionLog batch, Delegate delegate,
-      boolean isDelegateNg, Map<String, String> setupAbstractions, boolean canAssign) {
+  private void canAssignCgNgAssert(DelegateTask delegateTask, Delegate delegate, boolean isDelegateNg,
+      Map<String, String> setupAbstractions, boolean canAssign) {
     delegate.setNg(isDelegateNg);
     delegateTask.setSetupAbstractions(setupAbstractions);
-    assertThat(assignDelegateService.canAssign(batch, delegate.getUuid(), delegateTask)).isEqualTo(canAssign);
+    assertThat(assignDelegateService.canAssign(delegate.getUuid(), delegateTask)).isEqualTo(canAssign);
   }
 
   @Test
@@ -1739,7 +1714,6 @@ public class AssignDelegateServiceImplTest extends WingsBaseTest {
                             .supportedTaskTypes(Arrays.asList(TaskType.SCRIPT.name()))
                             .build();
 
-    BatchDelegateSelectionLog batch = Mockito.mock(BatchDelegateSelectionLog.class);
     // Test matching mustExecuteOnDelegateId
     when(delegateCache.get(accountId, delegateId, false)).thenReturn(delegate);
 
@@ -1753,35 +1727,35 @@ public class AssignDelegateServiceImplTest extends WingsBaseTest {
     Map<String, String> projectSetupAbstractions = ImmutableMap.of("owner", "o1/p1");
     Map<String, String> projectLikeSetupAbstractions = ImmutableMap.of("owner", "o1/p1like");
 
-    canAssignOwnerAssert(delegateTask, batch, delegate, null, null, true);
-    canAssignOwnerAssert(delegateTask, batch, delegate, null, noSetupAbstractions, true);
-    canAssignOwnerAssert(delegateTask, batch, delegate, null, orgSetupAbstractions, true);
-    canAssignOwnerAssert(delegateTask, batch, delegate, null, projectSetupAbstractions, true);
+    canAssignOwnerAssert(delegateTask, delegate, null, null, true);
+    canAssignOwnerAssert(delegateTask, delegate, null, noSetupAbstractions, true);
+    canAssignOwnerAssert(delegateTask, delegate, null, orgSetupAbstractions, true);
+    canAssignOwnerAssert(delegateTask, delegate, null, projectSetupAbstractions, true);
 
-    canAssignOwnerAssert(delegateTask, batch, delegate, orgOwner, null, false);
-    canAssignOwnerAssert(delegateTask, batch, delegate, orgOwner, noSetupAbstractions, false);
-    canAssignOwnerAssert(delegateTask, batch, delegate, orgOwner, orgSetupAbstractions, true);
-    canAssignOwnerAssert(delegateTask, batch, delegate, orgOwner, projectSetupAbstractions, true);
-    canAssignOwnerAssert(delegateTask, batch, delegate, orgOwner, orgLikeSetupAbstractions, false);
+    canAssignOwnerAssert(delegateTask, delegate, orgOwner, null, false);
+    canAssignOwnerAssert(delegateTask, delegate, orgOwner, noSetupAbstractions, false);
+    canAssignOwnerAssert(delegateTask, delegate, orgOwner, orgSetupAbstractions, true);
+    canAssignOwnerAssert(delegateTask, delegate, orgOwner, projectSetupAbstractions, true);
+    canAssignOwnerAssert(delegateTask, delegate, orgOwner, orgLikeSetupAbstractions, false);
 
-    canAssignOwnerAssert(delegateTask, batch, delegate, projectOwner, null, false);
-    canAssignOwnerAssert(delegateTask, batch, delegate, projectOwner, noSetupAbstractions, false);
-    canAssignOwnerAssert(delegateTask, batch, delegate, projectOwner, orgSetupAbstractions, false);
-    canAssignOwnerAssert(delegateTask, batch, delegate, projectOwner, projectSetupAbstractions, true);
-    canAssignOwnerAssert(delegateTask, batch, delegate, projectOwner, projectLikeSetupAbstractions, false);
+    canAssignOwnerAssert(delegateTask, delegate, projectOwner, null, false);
+    canAssignOwnerAssert(delegateTask, delegate, projectOwner, noSetupAbstractions, false);
+    canAssignOwnerAssert(delegateTask, delegate, projectOwner, orgSetupAbstractions, false);
+    canAssignOwnerAssert(delegateTask, delegate, projectOwner, projectSetupAbstractions, true);
+    canAssignOwnerAssert(delegateTask, delegate, projectOwner, projectLikeSetupAbstractions, false);
 
     // testing above valid scenarios with wrong values of project / org
     Map<String, String> invalidOrgSetupAbstractions = ImmutableMap.of("owner", "o2");
     Map<String, String> invalidProjectSetupAbstractions = ImmutableMap.of("owner", "o2/p2");
-    canAssignOwnerAssert(delegateTask, batch, delegate, orgOwner, invalidOrgSetupAbstractions, false);
-    canAssignOwnerAssert(delegateTask, batch, delegate, projectOwner, invalidProjectSetupAbstractions, false);
+    canAssignOwnerAssert(delegateTask, delegate, orgOwner, invalidOrgSetupAbstractions, false);
+    canAssignOwnerAssert(delegateTask, delegate, projectOwner, invalidProjectSetupAbstractions, false);
   }
 
-  private void canAssignOwnerAssert(DelegateTask delegateTask, BatchDelegateSelectionLog batch, Delegate delegate,
+  private void canAssignOwnerAssert(DelegateTask delegateTask, Delegate delegate,
       DelegateEntityOwner delegateEntityOwner, Map<String, String> setupAbstractions, boolean canAssign) {
     delegate.setOwner(delegateEntityOwner);
     delegateTask.setSetupAbstractions(setupAbstractions);
-    assertThat(assignDelegateService.canAssign(batch, delegate.getUuid(), delegateTask)).isEqualTo(canAssign);
+    assertThat(assignDelegateService.canAssign(delegate.getUuid(), delegateTask)).isEqualTo(canAssign);
   }
 
   @Test
@@ -1897,12 +1871,12 @@ public class AssignDelegateServiceImplTest extends WingsBaseTest {
             .data(TaskData.builder().async(false).taskType(TaskType.SPOTINST_COMMAND_TASK.name()).build())
             .build();
 
-    assertThat(assignDelegateService.canAssign(null, delegateId1, asyncTask)).isTrue();
-    assertThat(assignDelegateService.canAssign(null, delegateId1, syncTask)).isTrue();
-    assertThat(assignDelegateService.canAssign(null, delegateId2, asyncTask)).isFalse();
-    assertThat(assignDelegateService.canAssign(null, delegateId2, syncTask)).isFalse();
-    assertThat(assignDelegateService.canAssign(null, delegateId1, wrongAsyncTask)).isFalse();
-    assertThat(assignDelegateService.canAssign(null, delegateId1, wrongSyncTask)).isFalse();
+    assertThat(assignDelegateService.canAssign(delegateId1, asyncTask)).isTrue();
+    assertThat(assignDelegateService.canAssign(delegateId1, syncTask)).isTrue();
+    assertThat(assignDelegateService.canAssign(delegateId2, asyncTask)).isFalse();
+    assertThat(assignDelegateService.canAssign(delegateId2, syncTask)).isFalse();
+    assertThat(assignDelegateService.canAssign(delegateId1, wrongAsyncTask)).isFalse();
+    assertThat(assignDelegateService.canAssign(delegateId1, wrongSyncTask)).isFalse();
   }
 
   @Test
@@ -1913,8 +1887,8 @@ public class AssignDelegateServiceImplTest extends WingsBaseTest {
     DelegateTask task = constructDelegateTask(false, Collections.emptySet(), DelegateTask.Status.QUEUED);
     when(accountDelegatesCache.get(ACCOUNT_ID)).thenReturn(asList(delegate));
     when(delegateCache.get(ACCOUNT_ID, delegate.getUuid(), false)).thenReturn(delegate);
-    assertThat(assignDelegateService.getEligibleDelegatesToExecuteTask(task, null)).isNotEmpty();
-    assertThat(assignDelegateService.getEligibleDelegatesToExecuteTask(task, null)).contains(delegate.getUuid());
+    assertThat(assignDelegateService.getEligibleDelegatesToExecuteTask(task)).isNotEmpty();
+    assertThat(assignDelegateService.getEligibleDelegatesToExecuteTask(task)).contains(delegate.getUuid());
   }
 
   @Test
@@ -1934,8 +1908,8 @@ public class AssignDelegateServiceImplTest extends WingsBaseTest {
                                                     .build();
     when(delegateConnectionResultCache.get(ImmutablePair.of(delegate.getUuid(), connectionResult.getCriteria())))
         .thenReturn(of(connectionResult));
-    assertThat(assignDelegateService.getEligibleDelegatesToExecuteTask(task, null)).isNotEmpty();
-    assertThat(assignDelegateService.getEligibleDelegatesToExecuteTask(task, null)).contains(delegate.getUuid());
+    assertThat(assignDelegateService.getEligibleDelegatesToExecuteTask(task)).isNotEmpty();
+    assertThat(assignDelegateService.getEligibleDelegatesToExecuteTask(task)).contains(delegate.getUuid());
   }
 
   @Test
@@ -1943,7 +1917,7 @@ public class AssignDelegateServiceImplTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void testGetEligibleDelegatesToExecuteTaskWithNoActiveDelegates() throws ExecutionException {
     DelegateTask task = constructDelegateTask(false, Collections.emptySet(), DelegateTask.Status.QUEUED);
-    assertThat(assignDelegateService.getEligibleDelegatesToExecuteTask(task, null)).isEmpty();
+    assertThat(assignDelegateService.getEligibleDelegatesToExecuteTask(task)).isEmpty();
   }
 
   @Test
@@ -1955,7 +1929,7 @@ public class AssignDelegateServiceImplTest extends WingsBaseTest {
     DelegateTask task = constructDelegateTask(false, Collections.emptySet(), DelegateTask.Status.QUEUED);
     when(accountDelegatesCache.get("ACCOUNT_ID")).thenReturn(asList(delegate));
     when(delegateCache.get("ACCOUNT_ID", delegate.getUuid(), false)).thenReturn(delegate);
-    assertThat(assignDelegateService.getEligibleDelegatesToExecuteTask(task, null)).isEmpty();
+    assertThat(assignDelegateService.getEligibleDelegatesToExecuteTask(task)).isEmpty();
   }
 
   @Test
@@ -1965,9 +1939,9 @@ public class AssignDelegateServiceImplTest extends WingsBaseTest {
     Delegate delegate = createAccountDelegate();
     when(accountDelegatesCache.get("ACCOUNT_ID")).thenReturn(asList(delegate));
     when(delegateCache.get("ACCOUNT_ID", delegate.getUuid(), false)).thenReturn(delegate);
-    assertThat(assignDelegateService.getConnectedDelegateList(Arrays.asList(delegate.getUuid()), ACCOUNT_ID, null))
+    assertThat(assignDelegateService.getConnectedDelegateList(Arrays.asList(delegate.getUuid()), ACCOUNT_ID))
         .isNotEmpty();
-    assertThat(assignDelegateService.getConnectedDelegateList(Arrays.asList(delegate.getUuid()), ACCOUNT_ID, null))
+    assertThat(assignDelegateService.getConnectedDelegateList(Arrays.asList(delegate.getUuid()), ACCOUNT_ID))
         .contains(delegate.getUuid());
   }
 

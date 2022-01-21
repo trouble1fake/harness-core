@@ -35,7 +35,6 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
@@ -92,7 +91,6 @@ import io.harness.persistence.HPersistence;
 import io.harness.remote.NGObjectMapperHelper;
 import io.harness.rule.Owner;
 import io.harness.security.encryption.EncryptionConfig;
-import io.harness.selection.log.BatchDelegateSelectionLog;
 import io.harness.serializer.KryoSerializer;
 import io.harness.service.dto.RetryDelegate;
 import io.harness.service.impl.DelegateSyncServiceImpl;
@@ -301,17 +299,13 @@ public class DelegateServiceImplTest extends WingsBaseTest {
   public void shouldExecuteTask() {
     Delegate delegate = createDelegateBuilder().build();
     persistence.save(delegate);
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
+    when(assignDelegateService.getEligibleDelegatesToExecuteTask(any(DelegateTask.class)))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
-    when(assignDelegateService.getConnectedDelegateList(any(), anyString(), anyObject()))
+    when(assignDelegateService.getConnectedDelegateList(any(), anyString()))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
     DelegateTask delegateTask = getDelegateTask();
-    BatchDelegateSelectionLog batch = BatchDelegateSelectionLog.builder().build();
-    when(delegateSelectionLogsService.createBatch(delegateTask)).thenReturn(batch);
-    when(assignDelegateService.canAssign(eq(batch), anyString(), any())).thenReturn(true);
-    when(assignDelegateService.retrieveActiveDelegates(
-             eq(delegateTask.getAccountId()), any(BatchDelegateSelectionLog.class)))
+    when(assignDelegateService.canAssign(anyString(), any())).thenReturn(true);
+    when(assignDelegateService.retrieveActiveDelegates(eq(delegateTask.getAccountId())))
         .thenReturn(Collections.singletonList(delegate.getUuid()));
 
     RetryDelegate retryDelegate = RetryDelegate.builder().retryPossible(true).delegateTask(delegateTask).build();
@@ -331,8 +325,7 @@ public class DelegateServiceImplTest extends WingsBaseTest {
       new Thread(delegateSyncService).start();
     });
     thread.start();
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
+    when(assignDelegateService.getEligibleDelegatesToExecuteTask(any(DelegateTask.class)))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
 
     DelegateResponseData responseData = delegateTaskServiceClassic.executeTask(delegateTask);
@@ -371,17 +364,15 @@ public class DelegateServiceImplTest extends WingsBaseTest {
   public void shouldSaveDelegateTaskWithoutPreAssignedDelegateIdSetToMustExecuteOn() {
     String delegateId = generateUuid();
     String taskId = generateUuid();
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
+    when(assignDelegateService.getEligibleDelegatesToExecuteTask(any(DelegateTask.class)))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
-    when(assignDelegateService.getConnectedDelegateList(any(), anyString(), anyObject()))
+    when(assignDelegateService.getConnectedDelegateList(any(), anyString()))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
 
     DelegateTask delegateTask = getDelegateTask();
     delegateTask.getData().setAsync(false);
     delegateTask.setUuid(taskId);
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
+    when(assignDelegateService.getEligibleDelegatesToExecuteTask(any(DelegateTask.class)))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
 
     delegateTaskServiceClassic.processDelegateTask(delegateTask, DelegateTask.Status.QUEUED);
@@ -426,10 +417,9 @@ public class DelegateServiceImplTest extends WingsBaseTest {
     Delegate delegate = createDelegateBuilder().build();
     doReturn(delegate).when(delegateCache).get(ACCOUNT_ID, delegate.getUuid(), false);
 
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
+    when(assignDelegateService.getEligibleDelegatesToExecuteTask(any(DelegateTask.class)))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
-    when(assignDelegateService.getConnectedDelegateList(any(), anyString(), anyObject()))
+    when(assignDelegateService.getConnectedDelegateList(any(), anyString()))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
 
     DelegateTask delegateTask = getDelegateTask();
@@ -441,7 +431,7 @@ public class DelegateServiceImplTest extends WingsBaseTest {
         .when(spydelegateTaskServiceClassic)
         .assignTask(anyString(), anyString(), any(DelegateTask.class), anyString());
 
-    when(assignDelegateService.canAssign(any(), anyString(), any())).thenReturn(true);
+    when(assignDelegateService.canAssign(anyString(), any())).thenReturn(true);
     when(assignDelegateService.isWhitelisted(any(), anyString())).thenReturn(true);
     when(assignDelegateService.shouldValidate(any(), anyString())).thenReturn(false);
 

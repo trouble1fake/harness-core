@@ -2821,7 +2821,7 @@ public class DelegateServiceImpl implements DelegateService {
           taskSelectionDetails.getTaskSetupAbstractions().get(Cd1SetupFields.INFRASTRUCTURE_MAPPING_ID_FIELD);
     }
 
-    return assignDelegateService.canAssign(null, delegateId, accountId, appId, envId, infraMappingId,
+    return assignDelegateService.canAssign(delegateId, accountId, appId, envId, infraMappingId,
         taskSelectionDetails.getTaskGroup(), selectorCapabilities, taskSelectionDetails.getTaskSetupAbstractions());
   }
 

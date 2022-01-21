@@ -40,7 +40,6 @@ import io.harness.logging.ExceptionLogger;
 import io.harness.metrics.intfc.DelegateMetricsService;
 import io.harness.persistence.HIterator;
 import io.harness.persistence.HPersistence;
-import io.harness.selection.log.BatchDelegateSelectionLog;
 import io.harness.service.intfc.DelegateTaskService;
 import io.harness.version.VersionInfoManager;
 
@@ -290,14 +289,10 @@ public class DelegateQueueTask implements Runnable {
           continue;
         }
         delegateTask.setBroadcastToDelegateIds(broadcastToDelegates);
-
-        BatchDelegateSelectionLog batch = delegateSelectionLogsService.createBatch(delegateTask);
         if (isNotEmpty(broadcastToDelegates)) {
           delegateSelectionLogsService.logBroadcastToDelegate(
-              batch, Sets.newHashSet(broadcastToDelegates), delegateTask.getAccountId());
+              Sets.newHashSet(broadcastToDelegates), delegateTask.getAccountId(), delegateTask.getUuid());
         }
-
-        delegateSelectionLogsService.save(batch);
 
         try (AutoLogContext ignore1 = new TaskLogContext(delegateTask.getUuid(), delegateTask.getData().getTaskType(),
                  TaskType.valueOf(delegateTask.getData().getTaskType()).getTaskGroup().name(), OVERRIDE_ERROR);

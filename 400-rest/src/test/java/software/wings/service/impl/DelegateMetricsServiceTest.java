@@ -108,9 +108,9 @@ public class DelegateMetricsServiceTest extends WingsBaseTest {
   @Owner(developers = BOJAN)
   @Category(UnitTests.class)
   public void testRecordMetrics_saveDelegateTask() {
-    Mockito.when(assignDelegateService.getEligibleDelegatesToExecuteTask(anyObject(), anyObject()))
+    Mockito.when(assignDelegateService.getEligibleDelegatesToExecuteTask(anyObject()))
         .thenReturn(Lists.newArrayList("delegateId1"));
-    Mockito.when(assignDelegateService.getConnectedDelegateList(anyObject(), anyObject(), anyObject()))
+    Mockito.when(assignDelegateService.getConnectedDelegateList(anyObject(), anyObject()))
         .thenReturn(Lists.newArrayList("delegateId1"));
     delegateTaskServiceClassic.processDelegateTask(createDefaultDelegateTask(), DelegateTask.Status.QUEUED);
     Mockito.verify(metricService).incCounter(eq("delegate_task_creation"));
