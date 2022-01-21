@@ -34,6 +34,7 @@ import io.harness.rule.Owner;
 
 import com.google.inject.Inject;
 import com.google.protobuf.StringValue;
+import java.util.Arrays;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -118,7 +119,7 @@ public class GitFullSyncEntityServiceImplTest extends GitSyncTestBase {
         PageRequest.builder().pageIndex(0).pageSize(5).build(), null,
         GitFullSyncEntityInfoFilterDTO.builder()
             .syncStatus(SyncStatus.SUCCESS)
-            .entityType(EntityType.INPUT_SETS)
+            .entityTypes(Arrays.asList(EntityType.INPUT_SETS))
             .build());
     assertThat(response.getContent()).hasSize(5);
     assertThat(response.getTotalItems()).isEqualTo(6);
@@ -145,7 +146,7 @@ public class GitFullSyncEntityServiceImplTest extends GitSyncTestBase {
     assertThat(count).isEqualTo(0);
 
     count = gitFullSyncEntityService.count(
-        ACCOUNT, ORG, PROJECT, GitFullSyncEntityInfoFilterDTO.builder().entityType(EntityType.CONNECTORS).build());
+        ACCOUNT, ORG, PROJECT, GitFullSyncEntityInfoFilterDTO.builder().entityTypes(Arrays.asList(EntityType.CONNECTORS).build());
     assertThat(count).isEqualTo(6);
 
     count = gitFullSyncEntityService.count(
@@ -155,7 +156,7 @@ public class GitFullSyncEntityServiceImplTest extends GitSyncTestBase {
     count = gitFullSyncEntityService.count(ACCOUNT, ORG, PROJECT,
         GitFullSyncEntityInfoFilterDTO.builder()
             .syncStatus(SyncStatus.SUCCESS)
-            .entityType(EntityType.INPUT_SETS)
+            .entityTypes(Arrays.asList(EntityType.INPUT_SETS))
             .build());
     assertThat(count).isEqualTo(6);
   }
