@@ -8,6 +8,8 @@
 package io.harness.ccm.commons.entities.anomaly;
 
 import java.util.List;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Value;
@@ -16,6 +18,7 @@ import lombok.experimental.FieldDefaults;
 @Value
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Schema(name = "PerspectiveAnomalyData", description = "This object contains the Anomalies associated with a perspective")
 public class PerspectiveAnomalyData {
   long timestamp;
   Integer anomalyCount;

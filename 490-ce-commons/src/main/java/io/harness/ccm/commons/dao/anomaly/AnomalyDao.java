@@ -36,6 +36,13 @@ public class AnomalyDao {
   @RetryOnException(retryCount = RETRY_COUNT, sleepDurationInMilliseconds = SLEEP_DURATION)
   public List<Anomalies> fetchAnomalies(@NonNull String accountId, @Nullable Condition condition,
       @NonNull List<OrderField<?>> orderFields, @NonNull Integer offset, @NonNull Integer limit) {
+    String query = dslContext.selectFrom(ANOMALIES)
+                       .where(ANOMALIES.ACCOUNTID.eq(accountId).and(firstNonNull(condition, DSL.noCondition())))
+                       .orderBy(orderFields)
+                       .offset(offset)
+                       .limit(limit)
+                       .toString();
+    log.info("Anomaly Query: {}", query);
     return dslContext.selectFrom(ANOMALIES)
         .where(ANOMALIES.ACCOUNTID.eq(accountId).and(firstNonNull(condition, DSL.noCondition())))
         .orderBy(orderFields)

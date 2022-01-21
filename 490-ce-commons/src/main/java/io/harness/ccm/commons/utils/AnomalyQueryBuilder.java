@@ -4,7 +4,6 @@ import static io.harness.ccm.commons.utils.TimeUtils.toOffsetDateTime;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.timescaledb.Tables.ANOMALIES;
 
-import com.sun.istack.internal.NotNull;
 import io.harness.ccm.commons.entities.CCMField;
 import io.harness.ccm.commons.entities.CCMFilter;
 import io.harness.ccm.commons.entities.CCMNumberFilter;
@@ -13,17 +12,19 @@ import io.harness.ccm.commons.entities.CCMSort;
 import io.harness.ccm.commons.entities.CCMStringFilter;
 import io.harness.exception.InvalidRequestException;
 import io.harness.timescaledb.tables.records.AnomaliesRecord;
+
+import com.sun.istack.internal.NotNull;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.jooq.Condition;
 import org.jooq.OrderField;
 import org.jooq.TableField;
 import org.jooq.impl.DSL;
 
-import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.List;
-
+@Slf4j
 public class AnomalyQueryBuilder {
-
   @NotNull
   public List<OrderField<?>> getOrderByFields(@NotNull List<CCMSort> sortList) {
     List<OrderField<?>> orderByFields = new ArrayList<>();
@@ -48,13 +49,13 @@ public class AnomalyQueryBuilder {
     Condition condition = DSL.noCondition();
 
     if (filter.getNumericFilters() != null) {
-      applyTimeFilters(filter.getNumericFilters(), condition);
-      applyNumericFilters(filter.getNumericFilters(), condition);
+      condition = applyTimeFilters(filter.getNumericFilters(), condition);
+      condition = applyNumericFilters(filter.getNumericFilters(), condition);
     }
 
     if (filter.getStringFilters() != null) {
       // Todo: Remove perspectiveId filter if present
-      applyStringFilters(filter.getStringFilters(), condition);
+      condition = applyStringFilters(filter.getStringFilters(), condition);
     }
 
     return condition;
@@ -65,7 +66,8 @@ public class AnomalyQueryBuilder {
     for (CCMNumberFilter filter : filters) {
       switch (filter.getField()) {
         case ANOMALY_DATE:
-          condition = constructCondition(ANOMALIES.ANOMALYTIME, filter.getValue().longValue(), filter.getOperator());
+          condition = condition.and(
+              constructCondition(ANOMALIES.ANOMALYTIME, filter.getValue().longValue(), filter.getOperator()));
       }
     }
     return condition;
@@ -76,7 +78,8 @@ public class AnomalyQueryBuilder {
     for (CCMNumberFilter filter : filters) {
       switch (filter.getField()) {
         case ACTUAL_COST:
-          condition = constructCondition(ANOMALIES.ACTUALCOST, filter.getValue().doubleValue(), filter.getOperator());
+          condition = condition.and(
+              constructCondition(ANOMALIES.ACTUALCOST, filter.getValue().doubleValue(), filter.getOperator()));
       }
     }
     return condition;
@@ -85,7 +88,8 @@ public class AnomalyQueryBuilder {
   @NotNull
   private Condition applyStringFilters(@NotNull List<CCMStringFilter> filters, Condition condition) {
     for (CCMStringFilter filter : filters) {
-      condition = constructCondition(getTableField(filter.getField()), filter.getValues(), filter.getOperator());
+      condition =
+          condition.and(constructCondition(getTableField(filter.getField()), filter.getValues(), filter.getOperator()));
     }
     return condition;
   }

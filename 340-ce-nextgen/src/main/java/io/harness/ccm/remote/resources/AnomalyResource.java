@@ -14,6 +14,7 @@ import io.harness.NGCommonEntityConstants;
 import io.harness.accesscontrol.AccountIdentifier;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.ccm.commons.entities.anomaly.AnomalyData;
+import io.harness.ccm.commons.entities.anomaly.AnomalyFeedback;
 import io.harness.ccm.commons.entities.anomaly.AnomalyQueryDTO;
 import io.harness.ccm.commons.entities.anomaly.PerspectiveAnomalyData;
 import io.harness.ccm.graphql.dto.perspectives.PerspectiveQueryDTO;
@@ -24,16 +25,27 @@ import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.security.annotations.NextGenManagerAuth;
 
+import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Timed;
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -69,11 +81,12 @@ public class AnomalyResource {
   public ResponseDTO<List<AnomalyData>>
   listAnomalies(@Parameter(required = true, description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
                     NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier @NotNull @Valid String accountId,
-      @RequestBody(required = true, description = "Anomaly Query") AnomalyQueryDTO anomalyQuery) {
+      @RequestBody(description = "Anomaly Query") AnomalyQueryDTO anomalyQuery) {
     return ResponseDTO.newResponse(anomalyService.listAnomalies(accountId, anomalyQuery));
   }
 
   @GET
+  @Path("perspective/{perspectiveId}")
   @Timed
   @LogAccountIdentifier
   @ExceptionMetered
@@ -89,9 +102,30 @@ public class AnomalyResource {
   public ResponseDTO<List<PerspectiveAnomalyData>>
   listPerspectiveAnomalies(@Parameter(required = true, description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
                                NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier @NotNull @Valid String accountId,
-      @Parameter(required = true, description = "Unique identifier for perspective") @QueryParam(
+      @Parameter(required = true, description = "Unique identifier for perspective") @PathParam(
           "perspectiveId") String perspectiveId,
       @RequestBody(required = true, description = "Perspective Query") PerspectiveQueryDTO perspectiveQueryDTO) {
     return ResponseDTO.newResponse(anomalyService.listPerspectiveAnomalies(accountId, perspectiveQueryDTO));
+  }
+
+  @PUT
+  @Path("{anomalyId}")
+  @Timed
+  @LogAccountIdentifier
+  @ExceptionMetered
+  @ApiOperation(value = "Report Anomaly Feedback", nickname = "reportAnomalyFeedback")
+  @Operation(operationId = "reportAnomalyFeedback", description = "Mark an anomaly as true/false anomaly",
+      summary = "Report Anomaly feedback",
+      responses =
+      {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "default",
+            description = "Report Anomaly Feedback", content = { @Content(mediaType = MediaType.APPLICATION_JSON) })
+      })
+  public ResponseDTO<Boolean>
+  listAnomalies(@Parameter(required = true, description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
+                    NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier @NotNull @Valid String accountId,
+      @Parameter(required = true, description = "Unique identifier for perspective") @PathParam("anomalyId")
+      String anomalyId, @RequestBody(required = true, description = "Feedback") AnomalyFeedback feedback) {
+    return ResponseDTO.newResponse(anomalyService.updateAnomalyFeedback(accountId, anomalyId, feedback));
   }
 }

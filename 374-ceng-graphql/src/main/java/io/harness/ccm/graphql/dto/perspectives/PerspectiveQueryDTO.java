@@ -10,6 +10,7 @@ package io.harness.ccm.graphql.dto.perspectives;
 import io.harness.ccm.views.graphql.QLCEViewFilterWrapper;
 import io.harness.ccm.views.graphql.QLCEViewGroupBy;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -19,6 +20,7 @@ import lombok.experimental.FieldDefaults;
 @Value
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Schema(name = "PerspectiveQueryDTO", description = "The query object for perspective cost anomalies")
 public class PerspectiveQueryDTO {
   List<QLCEViewFilterWrapper> filters;
   List<QLCEViewGroupBy> groupBy;

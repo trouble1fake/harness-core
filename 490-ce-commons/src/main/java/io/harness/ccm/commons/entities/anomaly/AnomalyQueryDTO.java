@@ -12,6 +12,8 @@ import io.harness.ccm.commons.entities.CCMGroupBy;
 import io.harness.ccm.commons.entities.CCMSort;
 
 import java.util.List;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Value;
@@ -20,6 +22,7 @@ import lombok.experimental.FieldDefaults;
 @Value
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Schema(name = "AnomalyQueryDTO", description = "The query object for cost anomalies")
 public class AnomalyQueryDTO {
   CCMFilter filter;
   List<CCMSort> orderBy;
