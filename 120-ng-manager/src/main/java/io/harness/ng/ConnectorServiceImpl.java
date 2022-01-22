@@ -391,6 +391,12 @@ public class ConnectorServiceImpl implements ConnectorService {
     }
   }
 
+  @Override
+  public boolean delete(String accountIdentifier, String orgIdentifier, String projectIdentifier,
+      String connectorIdentifier, ChangeType changeType) {
+    return delete(accountIdentifier, orgIdentifier, projectIdentifier, connectorIdentifier);
+  }
+
   private void deleteConnectorActivities(String accountIdentifier, String connectorFQN) {
     try {
       connectorActivityService.deleteAllActivities(accountIdentifier, connectorFQN);
@@ -692,5 +698,11 @@ public class ConnectorServiceImpl implements ConnectorService {
   @Override
   public ConnectorDTO fullSyncEntity(EntityDetailProtoDTO entityDetailProtoDTO) {
     return defaultConnectorService.fullSyncEntity(entityDetailProtoDTO);
+  }
+
+  @Override
+  public ConnectorResponseDTO updateGitFilePath(
+      ConnectorDTO connectorDTO, String accountIdentifier, String newFilePath) {
+    return defaultConnectorService.updateGitFilePath(connectorDTO, accountIdentifier, newFilePath);
   }
 }

@@ -32,6 +32,7 @@ import io.harness.engine.pms.data.PmsOutcomeService;
 import io.harness.engine.pms.data.PmsSweepingOutputService;
 import io.harness.engine.pms.execution.strategy.identity.IdentityNodeExecutionStrategy;
 import io.harness.engine.pms.execution.strategy.identity.IdentityNodeResumeHelper;
+import io.harness.engine.utils.PmsLevelUtils;
 import io.harness.execution.NodeExecution;
 import io.harness.plan.IdentityPlanNode;
 import io.harness.pms.contracts.advisers.AdviseType;
@@ -194,11 +195,6 @@ public class IdentityNodeExecutionStrategyTest extends OrchestrationTestBase {
     String planExecutionId = generateUuid();
     String nodeExecutionId = generateUuid();
     String originalNodeExecutionId = generateUuid();
-    Ambiance ambiance = Ambiance.newBuilder()
-                            .setPlanExecutionId(planExecutionId)
-                            .putAllSetupAbstractions(prepareInputArgs())
-                            .addLevels(Level.newBuilder().setRuntimeId(nodeExecutionId).build())
-                            .build();
     IdentityPlanNode planNode = IdentityPlanNode.builder()
                                     .name("Test Node")
                                     .uuid(generateUuid())
@@ -206,6 +202,12 @@ public class IdentityNodeExecutionStrategyTest extends OrchestrationTestBase {
                                     .originalNodeExecutionId(originalNodeExecutionId)
                                     .stepType(TEST_STEP_TYPE)
                                     .build();
+
+    Ambiance ambiance = Ambiance.newBuilder()
+                            .setPlanExecutionId(planExecutionId)
+                            .putAllSetupAbstractions(prepareInputArgs())
+                            .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecutionId, planNode))
+                            .build();
 
     AdviserResponse adviserResponse = AdviserResponse.newBuilder().setType(AdviseType.END_PLAN).build();
     NodeExecution nodeExecution = NodeExecution.builder()

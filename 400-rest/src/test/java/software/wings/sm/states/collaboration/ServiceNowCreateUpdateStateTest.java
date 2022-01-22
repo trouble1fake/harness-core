@@ -9,6 +9,7 @@ package software.wings.sm.states.collaboration;
 
 import static io.harness.rule.OwnerRule.AGORODETKI;
 import static io.harness.rule.OwnerRule.DESCRIPTION_VALUE;
+import static io.harness.rule.OwnerRule.HINGER;
 
 import static software.wings.beans.TaskType.SERVICENOW_ASYNC;
 import static software.wings.delegatetasks.servicenow.ServiceNowAction.CREATE;
@@ -35,10 +36,12 @@ import static org.mockito.Mockito.when;
 import io.harness.CategoryTest;
 import io.harness.beans.DelegateTask;
 import io.harness.beans.ExecutionStatus;
+import io.harness.beans.FeatureName;
 import io.harness.category.element.UnitTests;
 import io.harness.delegate.beans.DelegateTaskDetails;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.ServiceNowException;
+import io.harness.ff.FeatureFlagService;
 import io.harness.rule.Owner;
 
 import software.wings.api.ServiceNowExecutionData;
@@ -78,6 +81,7 @@ public class ServiceNowCreateUpdateStateTest extends CategoryTest {
   @Mock DelegateService delegateService;
   @Mock SweepingOutputService sweepingOutputService;
   @Mock StateExecutionService stateExecutionService;
+  @Mock FeatureFlagService featureFlagService;
   @InjectMocks ServiceNowCreateUpdateState serviceNowCreateUpdateState = new ServiceNowCreateUpdateState(STATE_NAME);
 
   @Before
@@ -100,6 +104,7 @@ public class ServiceNowCreateUpdateStateTest extends CategoryTest {
              ServiceNowConfig.builder().password(PASSWORD).build(), APP_ID, WORKFLOW_EXECUTION_ID))
         .thenReturn(Collections.emptyList());
     when(delegateService.queueTask(any(DelegateTask.class))).thenReturn(UUID);
+    when(featureFlagService.isEnabled(eq(FeatureName.HONOR_DELEGATE_SCOPING), anyString())).thenReturn(true);
   }
 
   @Test
@@ -194,5 +199,21 @@ public class ServiceNowCreateUpdateStateTest extends CategoryTest {
     params.setImportSetTableName(VARIABLE_NAME);
     params.setJsonBody("{\"key\": \"value\"}");
     return params;
+  }
+
+  @Test
+  @Owner(developers = HINGER)
+  @Category(UnitTests.class)
+  public void shouldQueueDelegateTaskWithCorrectSetupAbstractionsForEnvType() {
+    when(context.getEnvType()).thenReturn("PROD");
+    serviceNowCreateUpdateState.setServiceNowCreateUpdateParams(getParamsForAction(CREATE));
+    ExecutionResponse executionResponse = serviceNowCreateUpdateState.execute(context);
+
+    ArgumentCaptor<DelegateTask> delegateTaskArgumentCaptor = ArgumentCaptor.forClass(DelegateTask.class);
+    verify(delegateService).queueTask(delegateTaskArgumentCaptor.capture());
+    assertThat(delegateTaskArgumentCaptor.getValue())
+        .isNotNull()
+        .hasFieldOrPropertyWithValue("setupAbstractions.envType", "PROD");
+    verify(stateExecutionService).appendDelegateTaskDetails(eq(null), any(DelegateTaskDetails.class));
   }
 }

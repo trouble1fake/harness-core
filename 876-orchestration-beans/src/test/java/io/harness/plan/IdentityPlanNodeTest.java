@@ -45,7 +45,6 @@ public class IdentityPlanNodeTest {
                                                     .originalNodeExecutionId("originalNodeExecutionId")
                                                     .identifier("test")
                                                     .name("Test Node")
-                                                    .originalStepType(TEST_STEP_TYPE)
                                                     .stepType(PMS_IDENTITY)
                                                     .build();
     IdentityPlanNode identityPlanNodeActual =

@@ -14,12 +14,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum Risk {
-  NO_DATA(-2),
-  NO_ANALYSIS(-1),
-  HEALTHY(0),
-  OBSERVE(1),
-  NEED_ATTENTION(2),
-  UNHEALTHY(3);
+  NO_DATA(-2, "No Data"),
+  NO_ANALYSIS(-1, "No Analysis"),
+  HEALTHY(0, "Healthy"),
+  OBSERVE(1, "Observe"),
+  NEED_ATTENTION(2, "Need Attention"),
+  UNHEALTHY(3, "Unhealthy");
   private static final Map<Integer, Risk> INT_TO_RISK_MAP = new HashMap<>();
   private static final Map<Integer, Risk> INT_TO_RISK_MAP_FOR_DEPLOYMENT_LOG_ANALYSIS = new HashMap<>();
   private static final Map<Integer, Risk> INT_TO_RISK_MAP_FOR_DEPLOYMENT_TIMESERIES_ANALYSIS = new HashMap<>();
@@ -45,11 +45,16 @@ public enum Risk {
   }
 
   private final int value;
+  private final String displayName;
   public int getValue() {
     return value;
   }
-  Risk(int value) {
+  public String getDisplayName() {
+    return displayName;
+  }
+  Risk(int value, String displayName) {
     this.value = value;
+    this.displayName = displayName;
   }
 
   public static Risk valueOf(int risk) {

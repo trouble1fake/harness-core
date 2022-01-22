@@ -15,17 +15,20 @@ import io.harness.cdng.helm.NativeHelmRollbackOutcome.NativeHelmRollbackOutcomeB
 import io.harness.cdng.helm.beans.NativeHelmExecutionPassThroughData;
 import io.harness.cdng.helm.rollback.HelmRollbackStepParams;
 import io.harness.cdng.infra.beans.InfrastructureOutcome;
+import io.harness.cdng.instance.info.InstanceInfoService;
 import io.harness.cdng.manifest.steps.ManifestsOutcome;
 import io.harness.cdng.manifest.yaml.HelmChartManifestOutcome;
 import io.harness.cdng.manifest.yaml.ManifestOutcome;
 import io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants;
 import io.harness.container.ContainerInfo;
 import io.harness.data.structure.EmptyPredicate;
+import io.harness.delegate.beans.instancesync.mapper.K8sContainerToHelmServiceInstanceInfoMapper;
 import io.harness.delegate.beans.logstreaming.CommandUnitsProgress;
 import io.harness.delegate.task.helm.HelmCmdExecResponseNG;
 import io.harness.delegate.task.helm.HelmInstallCmdResponseNG;
 import io.harness.delegate.task.helm.HelmRollbackCommandRequestNG;
 import io.harness.delegate.task.helm.HelmRollbackCommandRequestNG.HelmRollbackCommandRequestNGBuilder;
+import io.harness.exception.ExceptionUtils;
 import io.harness.executions.steps.ExecutionNodeType;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.plancreator.steps.common.StepElementParameters;
@@ -66,6 +69,7 @@ public class HelmRollbackStep extends TaskExecutableWithRollbackAndRbac<HelmCmdE
   @Inject NativeHelmStepHelper nativeHelmStepHelper;
   @Inject private OutcomeService outcomeService;
   @Inject private ExecutionSweepingOutputService executionSweepingOutputService;
+  @Inject private InstanceInfoService instanceInfoService;
   @Inject private StepHelper stepHelper;
   @Inject CDFeatureFlagHelper cdFeatureFlagHelper;
 
@@ -84,7 +88,8 @@ public class HelmRollbackStep extends TaskExecutableWithRollbackAndRbac<HelmCmdE
           StepResponse.builder().unitProgressList(executionResponse.getCommandUnitsProgress().getUnitProgresses());
       stepResponse = generateStepResponse(ambiance, executionResponse, stepResponseBuilder);
     } catch (Exception e) {
-      log.error("Exception while handling step execution response", e);
+      log.error("Error while processing Helm Task response: {}", ExceptionUtils.getMessage(e), e);
+      throw e;
     } finally {
       stepHelper.sendRollbackTelemetryEvent(ambiance, stepResponse == null ? Status.FAILED : stepResponse.getStatus());
     }
@@ -112,6 +117,10 @@ public class HelmRollbackStep extends TaskExecutableWithRollbackAndRbac<HelmCmdE
       nativeHelmRollbackOutcomeBuilder.containerInfoList(containerInfoList);
       NativeHelmRollbackOutcome nativeHelmRollbackOutcome = nativeHelmRollbackOutcomeBuilder.build();
 
+      StepOutcome stepOutcome = instanceInfoService.saveServerInstancesIntoSweepingOutput(ambiance,
+          K8sContainerToHelmServiceInstanceInfoMapper.toServerInstanceInfoList(
+              response.getContainerInfoList(), response.getHelmChartInfo(), response.getHelmVersion()));
+
       executionSweepingOutputService.consume(ambiance, OutcomeExpressionConstants.HELM_ROLLBACK_OUTCOME,
           nativeHelmRollbackOutcome, StepOutcomeGroup.STEP.name());
       stepResponse = stepResponseBuilder.status(Status.SUCCEEDED)
@@ -119,6 +128,7 @@ public class HelmRollbackStep extends TaskExecutableWithRollbackAndRbac<HelmCmdE
                                           .name(OutcomeExpressionConstants.OUTPUT)
                                           .outcome(nativeHelmRollbackOutcome)
                                           .build())
+                         .stepOutcome(stepOutcome)
                          .build();
     }
 
@@ -147,6 +157,13 @@ public class HelmRollbackStep extends TaskExecutableWithRollbackAndRbac<HelmCmdE
     }
 
     NativeHelmDeployOutcome nativeHelmDeployOutcome = (NativeHelmDeployOutcome) helmDeployOptionalOutput.getOutput();
+    if (!nativeHelmDeployOutcome.isHasInstallUpgradeStarted()) {
+      return TaskRequest.newBuilder()
+          .setSkipTaskRequest(SkipTaskRequest.newBuilder()
+                                  .setMessage("Helm install/upgrade was not executed. Skipping rollback.")
+                                  .build())
+          .build();
+    }
     ManifestsOutcome manifestsOutcome = nativeHelmStepHelper.resolveManifestsOutcome(ambiance);
     ManifestOutcome manifestOutcome = nativeHelmStepHelper.getHelmSupportedManifestOutcome(manifestsOutcome.values());
     HelmChartManifestOutcome helmChartManifestOutcome = (HelmChartManifestOutcome) manifestOutcome;

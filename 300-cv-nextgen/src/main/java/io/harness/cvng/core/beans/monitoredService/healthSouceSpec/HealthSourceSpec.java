@@ -36,13 +36,14 @@ import org.hibernate.validator.constraints.NotEmpty;
       @JsonSubTypes.Type(value = DatadogMetricHealthSourceSpec.class, name = "DatadogMetrics"),
       @JsonSubTypes.Type(value = DatadogLogHealthSourceSpec.class, name = "DatadogLog"),
       @JsonSubTypes.Type(value = DynatraceHealthSourceSpec.class, name = "Dynatrace"),
+      @JsonSubTypes.Type(value = ErrorTrackingHealthSourceSpec.class, name = "ErrorTracking"),
       @JsonSubTypes.Type(value = CustomHealthSourceSpec.class, name = "CustomHealth")
 })
 public abstract class HealthSourceSpec {
   @NotEmpty @EntityIdentifier(allowScoped = true) String connectorRef;
   public abstract CVConfigUpdateResult getCVConfigUpdateResult(String accountId, String orgIdentifier,
-      String projectIdentifier, String environmentRef, String serviceRef, String identifier, String name,
-      List<CVConfig> existingCVConfigs, MetricPackService metricPackService);
+      String projectIdentifier, String environmentRef, String serviceRef, String monitoredServiceIdentifier,
+      String identifier, String name, List<CVConfig> existingCVConfigs, MetricPackService metricPackService);
   @JsonIgnore public abstract DataSourceType getType();
   public void validate() {}
 }

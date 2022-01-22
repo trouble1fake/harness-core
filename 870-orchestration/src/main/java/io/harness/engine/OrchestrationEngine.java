@@ -9,11 +9,9 @@ package io.harness.engine;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.pms.execution.strategy.NodeExecutionStrategy;
 import io.harness.engine.pms.execution.strategy.NodeExecutionStrategyFactory;
 import io.harness.engine.utils.OrchestrationUtils;
-import io.harness.execution.NodeExecution;
 import io.harness.execution.PmsNodeExecution;
 import io.harness.execution.PmsNodeExecutionMetadata;
 import io.harness.plan.Node;
@@ -22,7 +20,6 @@ import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.facilitators.FacilitatorResponseProto;
 import io.harness.pms.contracts.steps.io.StepResponseProto;
-import io.harness.pms.execution.utils.NodeProjectionUtils;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -41,7 +38,6 @@ import lombok.extern.slf4j.Slf4j;
 @OwnedBy(HarnessTeam.PIPELINE)
 @Singleton
 public class OrchestrationEngine {
-  @Inject private NodeExecutionService nodeExecutionService;
   @Inject private NodeExecutionStrategyFactory strategyFactory;
 
   public <T extends PmsNodeExecution> T triggerNode(Ambiance ambiance, Node node, PmsNodeExecutionMetadata metadata) {
@@ -67,13 +63,6 @@ public class OrchestrationEngine {
   public void resumeNodeExecution(Ambiance ambiance, Map<String, ByteString> response, boolean asyncError) {
     NodeExecutionStrategy strategy = strategyFactory.obtainStrategy(OrchestrationUtils.currentNodeType(ambiance));
     strategy.resumeNodeExecution(ambiance, response, asyncError);
-  }
-
-  @Deprecated
-  public void resumeNodeExecution(String nodeExecutionId, Map<String, ByteString> response, boolean asyncError) {
-    NodeExecution nodeExecution =
-        nodeExecutionService.getWithFieldsIncluded(nodeExecutionId, NodeProjectionUtils.withAmbiance);
-    resumeNodeExecution(nodeExecution.getAmbiance(), response, asyncError);
   }
 
   public void processAdviserResponse(Ambiance ambiance, AdviserResponse adviserResponse) {

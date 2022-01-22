@@ -11,8 +11,6 @@
           value: ${delegateCheckLocation}
         - name: HELM_DESIRED_VERSION
           value: ""
-        - name: USE_CDN
-          value: "${useCdn}"
         - name: CDN_URL
           value: ${cdnUrl}
         - name: JRE_VERSION
@@ -29,6 +27,8 @@
 <#macro immutable>
         - name: CLIENT_TOOLS_DOWNLOAD_DISABLED
           value: "true"
+        - name: LOG_STREAMING_SERVICE_URL
+          value: "${logStreamingServiceBaseUrl}"
 </#macro>
 <#macro cgSpecific>
         - name: DELEGATE_PROFILE

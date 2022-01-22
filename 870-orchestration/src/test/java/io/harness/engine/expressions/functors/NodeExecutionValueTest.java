@@ -7,7 +7,6 @@
 
 package io.harness.engine.expressions.functors;
 
-import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.rule.OwnerRule.ARCHIT;
 import static io.harness.rule.OwnerRule.GARVIT;
@@ -23,16 +22,18 @@ import io.harness.category.element.UnitTests;
 import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.expressions.NodeExecutionsCache;
 import io.harness.engine.pms.data.PmsOutcomeService;
+import io.harness.engine.utils.PmsLevelUtils;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.NodeExecution.NodeExecutionKeys;
+import io.harness.plan.PlanNode;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.ambiance.Level;
 import io.harness.pms.contracts.execution.Status;
-import io.harness.pms.contracts.plan.PlanNodeProto;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
+import io.harness.pms.data.stepparameters.PmsStepParameters;
 import io.harness.pms.execution.utils.AmbianceUtils;
-import io.harness.pms.sdk.core.steps.io.StepParameters;
+import io.harness.pms.execution.utils.NodeProjectionUtils;
 import io.harness.pms.serializer.recaster.RecastOrchestrationUtils;
 import io.harness.rule.Owner;
 import io.harness.utils.AmbianceTestUtils;
@@ -40,6 +41,7 @@ import io.harness.utils.steps.TestStepParameters;
 
 import com.google.common.collect.ImmutableMap;
 import java.util.Collections;
+import java.util.Map;
 import org.apache.commons.jexl3.JexlBuilder;
 import org.apache.commons.jexl3.JexlEngine;
 import org.apache.commons.logging.impl.NoOpLog;
@@ -62,6 +64,7 @@ public class NodeExecutionValueTest extends OrchestrationTestBase {
   private JexlEngine engine;
   private Ambiance ambiance;
   NodeExecution nodeExecution1;
+
   NodeExecution nodeExecution2;
   NodeExecution nodeExecution3;
   NodeExecution nodeExecution4;
@@ -83,80 +86,142 @@ public class NodeExecutionValueTest extends OrchestrationTestBase {
     engine = new JexlBuilder().logger(new NoOpLog()).create();
     ambiance = AmbianceTestUtils.buildAmbiance();
 
+    PlanNode node1 = preparePlanNode(false, "a");
+    Ambiance.Builder ambianceBuilder = Ambiance.newBuilder()
+                                           .setPlanExecutionId(generateUuid())
+                                           .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution1Id, node1));
     nodeExecution1 = NodeExecution.builder()
                          .uuid(nodeExecution1Id)
-                         .node(preparePlanNode(false, "a"))
+                         .ambiance(ambianceBuilder.build())
+                         .planNode(node1)
                          .resolvedStepParameters(prepareStepParameters("ao"))
                          .build();
-    nodeExecution2 = NodeExecution.builder()
-                         .uuid(nodeExecution2Id)
-                         .node(preparePlanNode(false, "b"))
-                         .resolvedStepParameters(prepareStepParameters("bo"))
-                         .parentId(nodeExecution1Id)
-                         .nextId(nodeExecution1Id)
-                         .build();
-    nodeExecution3 = NodeExecution.builder()
-                         .uuid(nodeExecution3Id)
-                         .node(preparePlanNode(true, "c"))
-                         .resolvedStepParameters(prepareStepParameters("co"))
-                         .parentId(nodeExecution1Id)
-                         .previousId(nodeExecution2Id)
-                         .build();
+
+    PlanNode node2 = preparePlanNode(false, "b");
+    nodeExecution2 =
+        NodeExecution.builder()
+            .uuid(nodeExecution2Id)
+            .ambiance(ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution2Id, node2)).build())
+            .planNode(node2)
+            .resolvedStepParameters(prepareStepParameters("bo"))
+            .parentId(nodeExecution1Id)
+            .nextId(nodeExecution1Id)
+            .build();
+
+    PlanNode node3 = preparePlanNode(true, "c");
+    nodeExecution3 =
+        NodeExecution.builder()
+            .uuid(nodeExecution3Id)
+            .ambiance(ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution3Id, node3)).build())
+            .planNode(node3)
+            .resolvedStepParameters(prepareStepParameters("co"))
+            .parentId(nodeExecution1Id)
+            .previousId(nodeExecution2Id)
+            .build();
+
+    PlanNode node4 = preparePlanNode(false, "d", "di1", "STAGE");
     nodeExecution4 = NodeExecution.builder()
                          .uuid(nodeExecution4Id)
-                         .node(preparePlanNode(false, "d", "di1", "STAGE"))
+                         .ambiance(ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution3Id, node3))
+                                       .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution4Id, node4))
+                                       .build())
+                         .planNode(node4)
                          .parentId(nodeExecution3Id)
                          .nextId(nodeExecution5Id)
                          .build();
+
+    PlanNode node5 = preparePlanNode(false, "d", "di2");
     nodeExecution5 = NodeExecution.builder()
                          .uuid(nodeExecution5Id)
-                         .node(preparePlanNode(false, "d", "di2"))
+                         .ambiance(ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution3Id, node3))
+                                       .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution5Id, node5))
+                                       .build())
+                         .planNode(node5)
                          .resolvedStepParameters(prepareStepParameters("do2"))
                          .parentId(nodeExecution3Id)
                          .previousId(nodeExecution4Id)
                          .build();
+
+    PlanNode node6 = preparePlanNode(false, "e");
     nodeExecution6 = NodeExecution.builder()
                          .uuid(nodeExecution6Id)
-                         .node(preparePlanNode(false, "e"))
+                         .ambiance(ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution3Id, node3))
+                                       .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution4Id, node4))
+                                       .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution6Id, node6))
+                                       .build())
+                         .planNode(node6)
                          .resolvedStepParameters(prepareStepParameters("eo"))
                          .parentId(nodeExecution4Id)
                          .build();
 
+    PlanNode node7 = preparePlanNode(false, "f");
     nodeExecution7 = NodeExecution.builder()
                          .uuid(nodeExecution7Id)
-                         .node(preparePlanNode(false, "f"))
+                         .ambiance(ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution3Id, node3))
+                                       .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution4Id, node4))
+                                       .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution6Id, node6))
+                                       .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution7Id, node7))
+                                       .build())
+                         .planNode(node7)
                          .resolvedStepParameters(prepareStepParameters("eo"))
                          .parentId(nodeExecution6Id)
                          .nextId(nodeExecution8Id)
                          .build();
 
+    PlanNode node8 = preparePlanNode(false, "g");
     nodeExecution8 = NodeExecution.builder()
                          .uuid(nodeExecution8Id)
-                         .node(preparePlanNode(false, "g"))
+                         .ambiance(ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution3Id, node3))
+                                       .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution4Id, node4))
+                                       .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution6Id, node6))
+                                       .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution8Id, node8))
+                                       .build())
+                         .planNode(node8)
                          .resolvedStepParameters(prepareStepParameters("eo"))
                          .parentId(nodeExecution6Id)
                          .previousId(nodeExecution7Id)
                          .build();
 
-    when(nodeExecutionService.get(nodeExecution1.getUuid())).thenReturn(nodeExecution1);
-    when(nodeExecutionService.get(nodeExecution2.getUuid())).thenReturn(nodeExecution2);
-    when(nodeExecutionService.get(nodeExecution3.getUuid())).thenReturn(nodeExecution3);
-    when(nodeExecutionService.get(nodeExecution4.getUuid())).thenReturn(nodeExecution4);
-    when(nodeExecutionService.get(nodeExecution5.getUuid())).thenReturn(nodeExecution5);
-    when(nodeExecutionService.get(nodeExecution6.getUuid())).thenReturn(nodeExecution6);
-    when(nodeExecutionService.get(nodeExecution7.getUuid())).thenReturn(nodeExecution7);
-    when(nodeExecutionService.get(nodeExecution8.getUuid())).thenReturn(nodeExecution8);
+    when(nodeExecutionService.getWithFieldsIncluded(
+             nodeExecution1.getUuid(), NodeProjectionUtils.fieldsForExpressionEngine))
+        .thenReturn(nodeExecution1);
+    when(nodeExecutionService.getWithFieldsIncluded(
+             nodeExecution2.getUuid(), NodeProjectionUtils.fieldsForExpressionEngine))
+        .thenReturn(nodeExecution2);
+    when(nodeExecutionService.getWithFieldsIncluded(
+             nodeExecution3.getUuid(), NodeProjectionUtils.fieldsForExpressionEngine))
+        .thenReturn(nodeExecution3);
+    when(nodeExecutionService.getWithFieldsIncluded(
+             nodeExecution4.getUuid(), NodeProjectionUtils.fieldsForExpressionEngine))
+        .thenReturn(nodeExecution4);
+    when(nodeExecutionService.getWithFieldsIncluded(
+             nodeExecution5.getUuid(), NodeProjectionUtils.fieldsForExpressionEngine))
+        .thenReturn(nodeExecution5);
+    when(nodeExecutionService.getWithFieldsIncluded(
+             nodeExecution6.getUuid(), NodeProjectionUtils.fieldsForExpressionEngine))
+        .thenReturn(nodeExecution6);
+    when(nodeExecutionService.getWithFieldsIncluded(
+             nodeExecution7.getUuid(), NodeProjectionUtils.fieldsForExpressionEngine))
+        .thenReturn(nodeExecution7);
+    when(nodeExecutionService.getWithFieldsIncluded(
+             nodeExecution8.getUuid(), NodeProjectionUtils.fieldsForExpressionEngine))
+        .thenReturn(nodeExecution8);
 
     String planExecutionId = ambiance.getPlanExecutionId();
-    when(nodeExecutionService.fetchChildrenNodeExecutions(planExecutionId, null))
+    when(nodeExecutionService.fetchChildrenNodeExecutions(
+             planExecutionId, null, NodeProjectionUtils.fieldsForExpressionEngine))
         .thenReturn(Collections.singletonList(nodeExecution1));
-    when(nodeExecutionService.fetchChildrenNodeExecutions(planExecutionId, nodeExecution1.getUuid()))
+    when(nodeExecutionService.fetchChildrenNodeExecutions(
+             planExecutionId, nodeExecution1.getUuid(), NodeProjectionUtils.fieldsForExpressionEngine))
         .thenReturn(asList(nodeExecution2, nodeExecution3));
-    when(nodeExecutionService.fetchChildrenNodeExecutions(planExecutionId, nodeExecution3.getUuid()))
+    when(nodeExecutionService.fetchChildrenNodeExecutions(
+             planExecutionId, nodeExecution3.getUuid(), NodeProjectionUtils.fieldsForExpressionEngine))
         .thenReturn(asList(nodeExecution4, nodeExecution5));
-    when(nodeExecutionService.fetchChildrenNodeExecutions(planExecutionId, nodeExecution4.getUuid()))
+    when(nodeExecutionService.fetchChildrenNodeExecutions(
+             planExecutionId, nodeExecution4.getUuid(), NodeProjectionUtils.fieldsForExpressionEngine))
         .thenReturn(Collections.singletonList(nodeExecution6));
-    when(nodeExecutionService.fetchChildrenNodeExecutions(planExecutionId, nodeExecution6.getUuid()))
+    when(nodeExecutionService.fetchChildrenNodeExecutions(
+             planExecutionId, nodeExecution6.getUuid(), NodeProjectionUtils.fieldsForExpressionEngine))
         .thenReturn(asList(nodeExecution7, nodeExecution8));
   }
 
@@ -218,7 +283,8 @@ public class NodeExecutionValueTest extends OrchestrationTestBase {
             .groupAliases(ImmutableMap.of("stage", "STAGE"))
             .build();
 
-    when(nodeExecutionService.findAllChildren(ambiance.getPlanExecutionId(), nodeExecution4.getUuid(), false))
+    when(nodeExecutionService.findAllChildren(ambiance.getPlanExecutionId(), nodeExecution4.getUuid(), false,
+             NodeProjectionUtils.fieldsForExpressionEngine))
         .thenReturn(asList(nodeExecution8, nodeExecution7, nodeExecution6));
 
     Reflect.on(nodeExecution4).set(NodeExecutionKeys.status, Status.RUNNING);
@@ -255,32 +321,28 @@ public class NodeExecutionValueTest extends OrchestrationTestBase {
     assertThat(engine.getProperty(nodeExecutionMap, "a.d[0].e.param")).isEqualTo("eo");
   }
 
-  private PlanNodeProto preparePlanNode(boolean skipExpressionChain, String identifier) {
+  private PlanNode preparePlanNode(boolean skipExpressionChain, String identifier) {
     return preparePlanNode(skipExpressionChain, identifier, identifier + "i");
   }
 
-  private PlanNodeProto preparePlanNode(boolean skipExpressionChain, String identifier, String paramValue) {
+  private PlanNode preparePlanNode(boolean skipExpressionChain, String identifier, String paramValue) {
     return preparePlanNode(skipExpressionChain, identifier, paramValue, null);
   }
 
-  private PlanNodeProto preparePlanNode(
+  private PlanNode preparePlanNode(
       boolean skipExpressionChain, String identifier, String paramValue, String groupName) {
-    PlanNodeProto.Builder builder =
-        PlanNodeProto.newBuilder()
-            .setUuid(generateUuid())
-            .setName(identifier + "n")
-            .setStepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-            .setIdentifier(identifier)
-            .setSkipExpressionChain(skipExpressionChain)
-            .setStepParameters(RecastOrchestrationUtils.toJson(prepareStepParameters(paramValue)));
-
-    if (!isEmpty(groupName)) {
-      builder.setGroup(groupName);
-    }
-    return builder.build();
+    return PlanNode.builder()
+        .uuid(generateUuid())
+        .group(groupName)
+        .name(identifier + "n")
+        .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+        .identifier(identifier)
+        .skipExpressionChain(skipExpressionChain)
+        .stepParameters(PmsStepParameters.parse(RecastOrchestrationUtils.toJson(prepareStepParameters(paramValue))))
+        .build();
   }
 
-  private StepParameters prepareStepParameters(String paramValue) {
-    return TestStepParameters.builder().param(paramValue).build();
+  private Map<String, Object> prepareStepParameters(String paramValue) {
+    return RecastOrchestrationUtils.toMap(TestStepParameters.builder().param(paramValue).build());
   }
 }

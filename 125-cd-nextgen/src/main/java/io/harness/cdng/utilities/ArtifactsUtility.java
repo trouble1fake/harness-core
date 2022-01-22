@@ -1,8 +1,8 @@
 /*
- * Copyright 2022 Harness Inc. All rights reserved.
- * Use of this source code is governed by the PolyForm Free Trial 1.0.0 license
+ * Copyright 2021 Harness Inc. All rights reserved.
+ * Use of this source code is governed by the PolyForm Shield 1.0.0 license
  * that can be found in the licenses directory at the root of this repository, also available at
- * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
+ * https://polyformproject.org/wp-content/uploads/2020/06/PolyForm-Shield-1.0.0.txt.
  */
 
 package io.harness.cdng.utilities;
@@ -11,8 +11,8 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.visitor.YamlTypes;
 import io.harness.exception.InvalidRequestException;
-import io.harness.exception.YamlException;
 import io.harness.pms.contracts.plan.YamlUpdates;
+import io.harness.pms.plan.creation.PlanCreatorUtils;
 import io.harness.pms.yaml.YamlField;
 import io.harness.pms.yaml.YamlNode;
 import io.harness.pms.yaml.YamlUtils;
@@ -26,8 +26,7 @@ import lombok.experimental.UtilityClass;
 public class ArtifactsUtility {
   public JsonNode getArtifactsJsonNode() {
     String yamlField = "---\n"
-        + "primary:\n"
-        + "sidecars: []\n";
+        + "primary:\n";
     YamlField artifactsYamlField;
     try {
       String yamlFieldWithUuid = YamlUtils.injectUuid(yamlField);
@@ -38,7 +37,7 @@ public class ArtifactsUtility {
     return artifactsYamlField.getNode().getCurrJsonNode();
   }
 
-  public YamlField fetchArtifactYamlField(
+  public YamlField fetchArtifactYamlFieldAndSetYamlUpdates(
       YamlField serviceField, Boolean isUseFromStage, YamlUpdates.Builder yamlUpdates) {
     if (isUseFromStage == false) {
       return serviceField.getNode()
@@ -52,24 +51,15 @@ public class ArtifactsUtility {
 
     if (stageOverrideField == null) {
       YamlField stageOverridesYamlField = fetchOverridesYamlField(serviceField);
-      setYamlUpdate(stageOverridesYamlField, yamlUpdates);
+      PlanCreatorUtils.setYamlUpdate(stageOverridesYamlField, yamlUpdates);
       return stageOverridesYamlField.getNode().getField(YamlTypes.ARTIFACT_LIST_CONFIG);
     }
     if (stageOverrideField.getNode().getField(YamlTypes.ARTIFACT_LIST_CONFIG) == null) {
       YamlField artifactsYamlField = fetchArtifactYamlFieldUnderStageOverride(stageOverrideField);
-      setYamlUpdate(artifactsYamlField, yamlUpdates);
+      PlanCreatorUtils.setYamlUpdate(artifactsYamlField, yamlUpdates);
       return artifactsYamlField;
     }
     return stageOverrideField.getNode().getField(YamlTypes.ARTIFACT_LIST_CONFIG);
-  }
-
-  private static YamlUpdates.Builder setYamlUpdate(YamlField yamlField, YamlUpdates.Builder yamlUpdates) {
-    try {
-      return yamlUpdates.putFqnToYaml(yamlField.getYamlPath(), YamlUtils.writeYamlString(yamlField));
-    } catch (IOException e) {
-      throw new YamlException(
-          "Yaml created for yamlField at " + yamlField.getYamlPath() + " could not be converted into a yaml string");
-    }
   }
 
   private YamlField fetchArtifactYamlFieldUnderStageOverride(YamlField stageOverride) {

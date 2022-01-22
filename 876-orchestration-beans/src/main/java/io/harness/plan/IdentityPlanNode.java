@@ -10,7 +10,6 @@ package io.harness.plan;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.pms.contracts.steps.SkipType;
-import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.data.stepparameters.PmsStepParameters;
 
@@ -18,11 +17,13 @@ import javax.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Value;
 import lombok.experimental.FieldNameConstants;
+import org.springframework.data.annotation.TypeAlias;
 
 @OwnedBy(HarnessTeam.PIPELINE)
 @Value
 @Builder
 @FieldNameConstants(innerTypeName = "IdentityPlanNodeKeys")
+@TypeAlias("identityPlanNode")
 public class IdentityPlanNode implements Node {
   @NotNull String uuid;
   @NotNull String name;
@@ -32,7 +33,6 @@ public class IdentityPlanNode implements Node {
   String whenCondition;
   String skipCondition;
   @Builder.Default SkipType skipGraphType = SkipType.NOOP;
-  StepType originalStepType;
   String stageFqn;
   StepType stepType;
   String originalNodeExecutionId;
@@ -75,11 +75,6 @@ public class IdentityPlanNode implements Node {
     return this.skipGraphType;
   }
 
-  @Override
-  public StepCategory getStepCategory() {
-    return this.originalStepType.getStepCategory();
-  }
-
   public static IdentityPlanNode mapPlanNodeToIdentityNode(
       Node node, StepType stepType, String originalNodeExecutionUuid) {
     return IdentityPlanNode.builder()
@@ -91,9 +86,6 @@ public class IdentityPlanNode implements Node {
         .stepType(stepType)
         .isSkipExpressionChain(node.isSkipExpressionChain())
         .serviceName(node.getServiceName())
-        .originalStepType(node.getNodeType() == NodeType.IDENTITY_PLAN_NODE
-                ? ((IdentityPlanNode) node).getOriginalStepType()
-                : node.getStepType())
         .stageFqn(node.getStageFqn())
         .whenCondition(node.getWhenCondition())
         .originalNodeExecutionId(originalNodeExecutionUuid)

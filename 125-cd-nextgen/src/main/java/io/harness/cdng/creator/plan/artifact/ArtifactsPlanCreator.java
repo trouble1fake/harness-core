@@ -16,91 +16,51 @@ import io.harness.cdng.artifact.bean.yaml.ArtifactOverrideSets;
 import io.harness.cdng.artifact.bean.yaml.PrimaryArtifact;
 import io.harness.cdng.artifact.bean.yaml.SidecarArtifact;
 import io.harness.cdng.artifact.bean.yaml.SidecarArtifactWrapper;
-import io.harness.cdng.artifact.steps.ArtifactStep;
 import io.harness.cdng.artifact.steps.ArtifactStepParameters;
 import io.harness.cdng.artifact.steps.ArtifactStepParameters.ArtifactStepParametersBuilder;
 import io.harness.cdng.artifact.steps.ArtifactsStep;
-import io.harness.cdng.artifact.steps.SidecarsStep;
 import io.harness.cdng.creator.plan.PlanCreatorConstants;
 import io.harness.cdng.service.beans.ServiceConfig;
+import io.harness.cdng.utilities.PrimaryArtifactsUtility;
+import io.harness.cdng.utilities.SideCarsListArtifactsUtility;
 import io.harness.cdng.visitor.YamlTypes;
 import io.harness.data.structure.EmptyPredicate;
-import io.harness.data.structure.UUIDGenerator;
 import io.harness.exception.InvalidRequestException;
 import io.harness.pms.contracts.facilitators.FacilitatorObtainment;
 import io.harness.pms.contracts.facilitators.FacilitatorType;
+import io.harness.pms.contracts.plan.Dependency;
+import io.harness.pms.contracts.plan.YamlUpdates;
 import io.harness.pms.execution.OrchestrationFacilitatorType;
 import io.harness.pms.plan.creation.PlanCreatorUtils;
 import io.harness.pms.sdk.core.plan.PlanNode;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationContext;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationResponse;
-import io.harness.pms.sdk.core.plan.creation.creators.PartialPlanCreator;
+import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationResponse.PlanCreationResponseBuilder;
+import io.harness.pms.sdk.core.plan.creation.creators.ChildrenPlanCreator;
+import io.harness.pms.yaml.DependenciesUtils;
 import io.harness.pms.yaml.ParameterField;
+import io.harness.pms.yaml.YamlField;
 import io.harness.serializer.KryoSerializer;
 import io.harness.steps.fork.ForkStepParameters;
 
 import com.google.inject.Inject;
-import java.util.ArrayList;
+import com.google.protobuf.ByteString;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.Value;
 import lombok.experimental.FieldDefaults;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 
 @OwnedBy(HarnessTeam.CDC)
-public class ArtifactsPlanCreator implements PartialPlanCreator<ArtifactListConfig> {
+public class ArtifactsPlanCreator extends ChildrenPlanCreator<ArtifactListConfig> {
   @Inject KryoSerializer kryoSerializer;
-
-  private ImmutablePair<String, List<PlanNode>> createPlanForSidecarsNode(
-      String artifactListUuid, ArtifactList artifactList) {
-    List<PlanNode> planNodes = new ArrayList<>();
-    for (Map.Entry<String, ArtifactInfo> entry : artifactList.getSidecars().entrySet()) {
-      planNodes.add(createPlanForArtifactNode(entry.getKey(), entry.getValue()));
-    }
-
-    ForkStepParameters stepParameters =
-        ForkStepParameters.builder()
-            .parallelNodeIds(planNodes.stream().map(PlanNode::getUuid).collect(Collectors.toList()))
-            .build();
-    PlanNode sidecarsNode =
-        PlanNode.builder()
-            .uuid("sidecars-" + artifactListUuid)
-            .stepType(SidecarsStep.STEP_TYPE)
-            .name(PlanCreatorConstants.SIDECARS_NODE_NAME)
-            .identifier(YamlTypes.SIDECARS_ARTIFACT_CONFIG)
-            .stepParameters(stepParameters)
-            .facilitatorObtainment(
-                FacilitatorObtainment.newBuilder()
-                    .setType(FacilitatorType.newBuilder().setType(OrchestrationFacilitatorType.CHILDREN).build())
-                    .build())
-            .skipExpressionChain(false)
-            .build();
-    planNodes.add(sidecarsNode);
-    return ImmutablePair.of(sidecarsNode.getUuid(), planNodes);
-  }
-
-  private PlanNode createPlanForArtifactNode(String identifier, ArtifactInfo artifactInfo) {
-    return PlanNode.builder()
-        .uuid(UUIDGenerator.generateUuid())
-        .stepType(ArtifactStep.STEP_TYPE)
-        .name(PlanCreatorConstants.ARTIFACT_NODE_NAME)
-        .identifier(identifier)
-        .stepParameters(artifactInfo.getParams())
-        .facilitatorObtainment(
-            FacilitatorObtainment.newBuilder()
-                .setType(FacilitatorType.newBuilder().setType(OrchestrationFacilitatorType.TASK).build())
-                .build())
-        .skipExpressionChain(false)
-        .build();
-  }
 
   @Override
   public Class<ArtifactListConfig> getFieldClass() {
@@ -112,9 +72,20 @@ public class ArtifactsPlanCreator implements PartialPlanCreator<ArtifactListConf
     return Collections.singletonMap(YamlTypes.ARTIFACT_LIST_CONFIG, Collections.singleton(PlanCreatorUtils.ANY_TYPE));
   }
 
+  public Map<String, ByteString> prepareMetadataForPrimaryArtifactPlanCreator(
+      String primaryId, ArtifactStepParameters params) {
+    Map<String, ByteString> metadataDependency = new HashMap<>();
+    metadataDependency.put(YamlTypes.UUID, ByteString.copyFrom(kryoSerializer.asDeflatedBytes(primaryId)));
+    metadataDependency.put(
+        PlanCreatorConstants.PRIMARY_STEP_PARAMETERS, ByteString.copyFrom(kryoSerializer.asDeflatedBytes(params)));
+    return metadataDependency;
+  }
+
   @Override
-  public PlanCreationResponse createPlanForField(PlanCreationContext ctx, ArtifactListConfig artifactListDefault) {
-    // Fetching uuid and actualServiceConfig passed as Dependency from parent (ServicePlanCreator) plan creator
+  public LinkedHashMap<String, PlanCreationResponse> createPlanForChildrenNodes(
+      PlanCreationContext ctx, ArtifactListConfig config) {
+    LinkedHashMap<String, PlanCreationResponse> planCreationResponseMap = new LinkedHashMap<>();
+
     String artifactsId = (String) kryoSerializer.asInflatedObject(
         ctx.getDependency().getMetadataMap().get(YamlTypes.UUID).toByteArray());
     ServiceConfig serviceConfig = (ServiceConfig) kryoSerializer.asInflatedObject(
@@ -126,39 +97,98 @@ public class ArtifactsPlanCreator implements PartialPlanCreator<ArtifactListConf
     artifactListBuilder.addStageOverrides(serviceConfig);
     ArtifactList artifactList = artifactListBuilder.build();
     if (artifactList.getPrimary() == null && EmptyPredicate.isEmpty(artifactList.getSidecars())) {
-      return PlanCreationResponse.builder().build();
+      return planCreationResponseMap;
     }
 
-    List<PlanNode> planNodes = new ArrayList<>();
-    List<String> childrenIds = new ArrayList<>();
     if (artifactList.getPrimary() != null) {
-      PlanNode primaryNode = createPlanForArtifactNode(YamlTypes.PRIMARY_ARTIFACT, artifactList.getPrimary());
-      planNodes.add(primaryNode);
-      childrenIds.add(primaryNode.getUuid());
+      String primaryPlanNodeId = addDependenciesForPrimaryNode(
+          ctx.getCurrentField(), artifactList.getPrimary().getParams(), planCreationResponseMap);
     }
     if (EmptyPredicate.isNotEmpty(artifactList.getSidecars())) {
-      ImmutablePair<String, List<PlanNode>> pair = createPlanForSidecarsNode(artifactsId, artifactList);
-      planNodes.addAll(pair.getRight());
-      childrenIds.add(pair.getLeft());
+      addDependenciesForSideCarList(
+          ctx.getCurrentField(), artifactsId, artifactList.getSidecars(), planCreationResponseMap);
     }
+    return planCreationResponseMap;
+  }
 
-    ForkStepParameters stepParameters = ForkStepParameters.builder().parallelNodeIds(childrenIds).build();
-    PlanNode artifactsNode =
-        PlanNode.builder()
-            .uuid(artifactsId)
-            .stepType(ArtifactsStep.STEP_TYPE)
-            .name(PlanCreatorConstants.ARTIFACTS_NODE_NAME)
-            .identifier(YamlTypes.ARTIFACT_LIST_CONFIG)
-            .stepParameters(stepParameters)
-            .facilitatorObtainment(
-                FacilitatorObtainment.newBuilder()
-                    .setType(FacilitatorType.newBuilder().setType(OrchestrationFacilitatorType.CHILDREN).build())
-                    .build())
-            .skipExpressionChain(false)
-            .build();
-    planNodes.add(artifactsNode);
-    return PlanCreationResponse.builder()
-        .nodes(planNodes.stream().collect(Collectors.toMap(PlanNode::getUuid, Function.identity())))
+  public String addDependenciesForSideCarList(YamlField artifactField, String artifactsId,
+      Map<String, ArtifactInfo> sideCarsInfo, LinkedHashMap<String, PlanCreationResponse> planCreationResponseMap) {
+    YamlUpdates.Builder yamlUpdates = YamlUpdates.newBuilder();
+    YamlField sideCarsListYamlField =
+        SideCarsListArtifactsUtility.createSideCarsArtifactYamlFieldAndSetYamlUpdate(artifactField, yamlUpdates);
+
+    Map<String, ArtifactStepParameters> sideCarsParametersMap =
+        sideCarsInfo.entrySet().stream().collect(Collectors.toMap(e -> e.getKey(), k -> k.getValue().getParams()));
+    String sideCarsListPlanNodeId = "sidecars-" + artifactsId;
+    Map<String, ByteString> metadataDependency =
+        prepareMetadataForSideCarListArtifactPlanCreator(sideCarsListPlanNodeId, sideCarsParametersMap);
+
+    Map<String, YamlField> dependenciesMap = new HashMap<>();
+    dependenciesMap.put(sideCarsListPlanNodeId, sideCarsListYamlField);
+    PlanCreationResponseBuilder primaryPlanCreationResponse = PlanCreationResponse.builder().dependencies(
+        DependenciesUtils.toDependenciesProto(dependenciesMap)
+            .toBuilder()
+            .putDependencyMetadata(
+                sideCarsListPlanNodeId, Dependency.newBuilder().putAllMetadata(metadataDependency).build())
+            .build());
+    if (yamlUpdates.getFqnToYamlCount() > 0) {
+      primaryPlanCreationResponse.yamlUpdates(yamlUpdates.build());
+    }
+    planCreationResponseMap.put(sideCarsListPlanNodeId, primaryPlanCreationResponse.build());
+    return sideCarsListPlanNodeId;
+  }
+
+  private Map<String, ByteString> prepareMetadataForSideCarListArtifactPlanCreator(
+      String sideCarsListPlanNodeId, Map<String, ArtifactStepParameters> sideCarsParametersMap) {
+    Map<String, ByteString> metadataDependency = new HashMap<>();
+    metadataDependency.put(YamlTypes.UUID, ByteString.copyFrom(kryoSerializer.asDeflatedBytes(sideCarsListPlanNodeId)));
+    metadataDependency.put(PlanCreatorConstants.SIDECARS_PARAMETERS_MAP,
+        ByteString.copyFrom(kryoSerializer.asDeflatedBytes(sideCarsParametersMap)));
+    return metadataDependency;
+  }
+
+  public String addDependenciesForPrimaryNode(YamlField artifactField, ArtifactStepParameters artifactStepParameters,
+      LinkedHashMap<String, PlanCreationResponse> planCreationResponseMap) {
+    YamlUpdates.Builder yamlUpdates = YamlUpdates.newBuilder();
+    YamlField primaryYamlField =
+        PrimaryArtifactsUtility.createPrimaryArtifactYamlFieldAndSetYamlUpdate(artifactField, yamlUpdates);
+
+    String primaryId = primaryYamlField.getNode().getUuid();
+    Map<String, ByteString> metadataDependency =
+        prepareMetadataForPrimaryArtifactPlanCreator(primaryId, artifactStepParameters);
+
+    Map<String, YamlField> dependenciesMap = new HashMap<>();
+    dependenciesMap.put(primaryId, primaryYamlField);
+    PlanCreationResponseBuilder primaryPlanCreationResponse = PlanCreationResponse.builder().dependencies(
+        DependenciesUtils.toDependenciesProto(dependenciesMap)
+            .toBuilder()
+            .putDependencyMetadata(primaryId, Dependency.newBuilder().putAllMetadata(metadataDependency).build())
+            .build());
+    if (yamlUpdates.getFqnToYamlCount() > 0) {
+      primaryPlanCreationResponse.yamlUpdates(yamlUpdates.build());
+    }
+    planCreationResponseMap.put(primaryId, primaryPlanCreationResponse.build());
+    return primaryId;
+  }
+
+  @Override
+  public PlanNode createPlanForParentNode(
+      PlanCreationContext ctx, ArtifactListConfig config, List<String> childrenNodeIds) {
+    String artifactsId = (String) kryoSerializer.asInflatedObject(
+        ctx.getDependency().getMetadataMap().get(YamlTypes.UUID).toByteArray());
+
+    ForkStepParameters stepParameters = ForkStepParameters.builder().parallelNodeIds(childrenNodeIds).build();
+    return PlanNode.builder()
+        .uuid(artifactsId)
+        .stepType(ArtifactsStep.STEP_TYPE)
+        .name(PlanCreatorConstants.ARTIFACTS_NODE_NAME)
+        .identifier(YamlTypes.ARTIFACT_LIST_CONFIG)
+        .stepParameters(stepParameters)
+        .facilitatorObtainment(
+            FacilitatorObtainment.newBuilder()
+                .setType(FacilitatorType.newBuilder().setType(OrchestrationFacilitatorType.CHILDREN).build())
+                .build())
+        .skipExpressionChain(false)
         .build();
   }
 
@@ -269,7 +299,7 @@ public class ArtifactsPlanCreator implements PartialPlanCreator<ArtifactListConf
   }
 
   @Value
-  private static class ArtifactInfo {
+  public static class ArtifactInfo {
     ArtifactStepParameters params;
   }
 

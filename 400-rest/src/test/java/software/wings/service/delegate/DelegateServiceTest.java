@@ -132,6 +132,7 @@ import io.harness.delegate.beans.executioncapability.CapabilityType;
 import io.harness.delegate.beans.executioncapability.ExecutionCapability;
 import io.harness.delegate.beans.executioncapability.HttpConnectionExecutionCapability;
 import io.harness.delegate.beans.executioncapability.SelectorCapability;
+import io.harness.delegate.service.intfc.DelegateRingService;
 import io.harness.delegate.task.http.HttpTaskParameters;
 import io.harness.delegate.utils.DelegateEntityOwnerHelper;
 import io.harness.eventsframework.api.Producer;
@@ -262,6 +263,10 @@ public class DelegateServiceTest extends WingsBaseTest {
   private static final String LOCATION = "LOCATION";
   private static final String ANOTHER_LOCATION = "ANOTHER_LOCATION";
   private static final String UNIQUE_DELEGATE_NAME = "delegateNameUnique";
+  private static final String DELEGATE_IMAGE_TAG = "harness/delegate:latest";
+  private static final String UPGRADER_IMAGE_TAG = "harness/upgrader:latest";
+  private static final String UNIQUE_DELEGATE_NAME_ERROR_MESSAGE =
+      "Delegate with same name exists. Delegate name must be unique across account.";
 
   @Mock private WaitNotifyEngine waitNotifyEngine;
   @Mock private AccountService accountService;
@@ -283,6 +288,7 @@ public class DelegateServiceTest extends WingsBaseTest {
   @Mock private AuditServiceHelper auditServiceHelper;
   @Mock private DelegateGrpcConfig delegateGrpcConfig;
   @Mock private CapabilityService capabilityService;
+  @Mock private DelegateRingService delegateRingService;
   @Mock private DelegateSyncService delegateSyncService;
   @Mock private DelegateSelectionLogsService delegateSelectionLogsService;
   @Mock private DelegateInsightsService delegateInsightsService;
@@ -2111,6 +2117,8 @@ public class DelegateServiceTest extends WingsBaseTest {
     when(accountService.get(ACCOUNT_ID))
         .thenReturn(anAccount().withAccountKey("ACCOUNT_KEY").withUuid(ACCOUNT_ID).build());
     when(delegateTokenService.getTokenValue(ACCOUNT_ID, TOKEN_NAME)).thenReturn("ACCOUNT_KEY");
+    when(delegateRingService.getDelegateImageTag(ACCOUNT_ID)).thenReturn(DELEGATE_IMAGE_TAG);
+    when(delegateRingService.getUpgraderImageTag(ACCOUNT_ID)).thenReturn(UPGRADER_IMAGE_TAG);
     featureTestHelper.enableFeatureFlag(USE_IMMUTABLE_DELEGATE);
     File gzipFile = delegateService.downloadKubernetes(
         "https://localhost:9090", "https://localhost:7070", ACCOUNT_ID, "harness-delegate", "", TOKEN_NAME);
@@ -2195,7 +2203,7 @@ public class DelegateServiceTest extends WingsBaseTest {
   @Test
   @Owner(developers = MARKO)
   @Category(UnitTests.class)
-  public void testValidateKubernetesYamlWithoutConfigurationId() {
+  public void testValidateKubernetesYamlWithoutName() {
     String accountId = generateUuid();
     DelegateSetupDetails setupDetails = DelegateSetupDetails.builder().build();
 
@@ -2205,16 +2213,16 @@ public class DelegateServiceTest extends WingsBaseTest {
   }
 
   @Test
-  @Owner(developers = MARKO)
+  @Owner(developers = ARPIT)
   @Category(UnitTests.class)
-  public void testValidateKubernetesYamlWithoutName() {
+  public void testValidateKubernetesYamlWithUniqueName() {
     String accountId = generateUuid();
-    DelegateSetupDetails setupDetails = DelegateSetupDetails.builder().delegateConfigurationId("delConfigId").build();
-    when(delegateProfileService.get(accountId, "delConfigId")).thenReturn(DelegateProfile.builder().build());
+    DelegateSetupDetails setupDetails = DelegateSetupDetails.builder().name(DELEGATE_GROUP_NAME).build();
+    persistence.save(DelegateGroup.builder().accountId(accountId).name(DELEGATE_GROUP_NAME).ng(true).build());
 
     assertThatThrownBy(() -> delegateService.validateKubernetesYaml(accountId, setupDetails))
         .isInstanceOf(InvalidRequestException.class)
-        .hasMessage("Delegate Name must be provided.");
+        .hasMessage(UNIQUE_DELEGATE_NAME_ERROR_MESSAGE);
   }
 
   @Test
@@ -2489,6 +2497,8 @@ public class DelegateServiceTest extends WingsBaseTest {
             .delegateType(DelegateType.KUBERNETES)
             .build();
     when(delegateProfileService.get(ACCOUNT_ID, "delConfigId")).thenReturn(DelegateProfile.builder().build());
+    when(delegateRingService.getDelegateImageTag(ACCOUNT_ID)).thenReturn(DELEGATE_IMAGE_TAG);
+    when(delegateRingService.getUpgraderImageTag(ACCOUNT_ID)).thenReturn(UPGRADER_IMAGE_TAG);
     featureTestHelper.enableFeatureFlag(USE_IMMUTABLE_DELEGATE);
 
     File gzipFile = delegateService.generateKubernetesYaml(ACCOUNT_ID, setupDetails, "https://localhost:9090",
@@ -2521,6 +2531,8 @@ public class DelegateServiceTest extends WingsBaseTest {
     when(accountService.get(ACCOUNT_ID))
         .thenReturn(anAccount().withAccountKey("ACCOUNT_KEY").withUuid(ACCOUNT_ID).build());
     when(delegateProfileService.get(ACCOUNT_ID, "delConfigId")).thenReturn(DelegateProfile.builder().build());
+    when(delegateRingService.getDelegateImageTag(ACCOUNT_ID)).thenReturn(DELEGATE_IMAGE_TAG);
+    when(delegateRingService.getUpgraderImageTag(ACCOUNT_ID)).thenReturn(UPGRADER_IMAGE_TAG);
     featureTestHelper.enableFeatureFlag(USE_IMMUTABLE_DELEGATE);
     DelegateSetupDetails setupDetails =
         DelegateSetupDetails.builder()
@@ -2565,6 +2577,8 @@ public class DelegateServiceTest extends WingsBaseTest {
     when(accountService.get(ACCOUNT_ID))
         .thenReturn(anAccount().withAccountKey("ACCOUNT_KEY").withUuid(ACCOUNT_ID).build());
     when(delegateProfileService.get(ACCOUNT_ID, "delConfigId")).thenReturn(DelegateProfile.builder().build());
+    when(delegateRingService.getDelegateImageTag(ACCOUNT_ID)).thenReturn(DELEGATE_IMAGE_TAG);
+    when(delegateRingService.getUpgraderImageTag(ACCOUNT_ID)).thenReturn(UPGRADER_IMAGE_TAG);
     featureTestHelper.enableFeatureFlag(USE_IMMUTABLE_DELEGATE);
     DelegateSetupDetails setupDetails = DelegateSetupDetails.builder()
                                             .orgIdentifier("9S5HMP0xROugl3_QgO62rQO")
@@ -3652,8 +3666,7 @@ public class DelegateServiceTest extends WingsBaseTest {
                            -> delegateService.downloadNgDocker(
                                "https://localhost:9090", "https://localhost:7070", ACCOUNT_ID, setupDetails))
         .isInstanceOf(InvalidRequestException.class)
-        .hasMessage(
-            "Delegate with same name exists either in CG or NG. Delegate name must be unique across CG and NG.");
+        .hasMessage(UNIQUE_DELEGATE_NAME_ERROR_MESSAGE);
   }
 
   @Test
@@ -3729,8 +3742,7 @@ public class DelegateServiceTest extends WingsBaseTest {
         DelegateSetupDetails.builder().name(UNIQUE_DELEGATE_NAME).delegateType(DelegateType.DOCKER).build();
     assertThatThrownBy(() -> delegateService.validateDelegateSetupDetails(ACCOUNT_ID, setupDetails, DOCKER))
         .isInstanceOf(InvalidRequestException.class)
-        .hasMessage(
-            "Delegate with same name exists either in CG or NG. Delegate name must be unique across CG and NG.");
+        .hasMessage(UNIQUE_DELEGATE_NAME_ERROR_MESSAGE);
   }
 
   @Test
@@ -3763,8 +3775,7 @@ public class DelegateServiceTest extends WingsBaseTest {
                            -> delegateService.downloadScripts("https://localhost:9090", "https://localhost:7070",
                                ACCOUNT_ID, UNIQUE_DELEGATE_NAME, DELEGATE_PROFILE_ID, TOKEN_NAME))
         .isInstanceOf(InvalidRequestException.class)
-        .hasMessage(
-            "Delegate with same name exists either in CG or NG. Delegate name must be unique across CG and NG.");
+        .hasMessage(UNIQUE_DELEGATE_NAME_ERROR_MESSAGE);
   }
 
   @Test
@@ -3776,8 +3787,7 @@ public class DelegateServiceTest extends WingsBaseTest {
                            -> delegateService.downloadDocker("https://localhost:9090", "https://localhost:7070",
                                ACCOUNT_ID, UNIQUE_DELEGATE_NAME, DELEGATE_PROFILE_ID, TOKEN_NAME))
         .isInstanceOf(InvalidRequestException.class)
-        .hasMessage(
-            "Delegate with same name exists either in CG or NG. Delegate name must be unique across CG and NG.");
+        .hasMessage(UNIQUE_DELEGATE_NAME_ERROR_MESSAGE);
   }
 
   @Test
@@ -3789,8 +3799,7 @@ public class DelegateServiceTest extends WingsBaseTest {
                            -> delegateService.downloadKubernetes("https://localhost:9090", "https://localhost:7070",
                                ACCOUNT_ID, UNIQUE_DELEGATE_NAME, DELEGATE_PROFILE_ID, TOKEN_NAME))
         .isInstanceOf(InvalidRequestException.class)
-        .hasMessage(
-            "Delegate with same name exists either in CG or NG. Delegate name must be unique across CG and NG.");
+        .hasMessage(UNIQUE_DELEGATE_NAME_ERROR_MESSAGE);
   }
 
   @Test
@@ -3803,8 +3812,7 @@ public class DelegateServiceTest extends WingsBaseTest {
             -> delegateService.downloadCeKubernetesYaml("https://localhost:9090", "https://localhost:7070", ACCOUNT_ID,
                 UNIQUE_DELEGATE_NAME, DELEGATE_PROFILE_ID, TOKEN_NAME))
         .isInstanceOf(InvalidRequestException.class)
-        .hasMessage(
-            "Delegate with same name exists either in CG or NG. Delegate name must be unique across CG and NG.");
+        .hasMessage(UNIQUE_DELEGATE_NAME_ERROR_MESSAGE);
   }
 
   @Test
@@ -3816,8 +3824,7 @@ public class DelegateServiceTest extends WingsBaseTest {
                            -> delegateService.downloadECSDelegate("https://localhost:9090", "https://localhost:7070",
                                ACCOUNT_ID, false, HOST_NAME, UNIQUE_DELEGATE_NAME, DELEGATE_PROFILE_ID, TOKEN_NAME))
         .isInstanceOf(InvalidRequestException.class)
-        .hasMessage(
-            "Delegate with same name exists either in CG or NG. Delegate name must be unique across CG and NG.");
+        .hasMessage(UNIQUE_DELEGATE_NAME_ERROR_MESSAGE);
   }
 
   @Test
@@ -3830,8 +3837,7 @@ public class DelegateServiceTest extends WingsBaseTest {
             -> delegateService.downloadDelegateValuesYamlFile("https://localhost:9090", "https://localhost:7070",
                 ACCOUNT_ID, UNIQUE_DELEGATE_NAME, DELEGATE_PROFILE_ID, TOKEN_NAME))
         .isInstanceOf(InvalidRequestException.class)
-        .hasMessage(
-            "Delegate with same name exists either in CG or NG. Delegate name must be unique across CG and NG.");
+        .hasMessage(UNIQUE_DELEGATE_NAME_ERROR_MESSAGE);
   }
 
   @Test
@@ -3850,8 +3856,7 @@ public class DelegateServiceTest extends WingsBaseTest {
                            -> delegateService.generateKubernetesYamlNg(ACCOUNT_ID, setupDetails,
                                "https://localhost:9090", "https://localhost:7070", MediaType.MULTIPART_FORM_DATA_TYPE))
         .isInstanceOf(InvalidRequestException.class)
-        .hasMessage(
-            "Delegate with same name exists either in CG or NG. Delegate name must be unique across CG and NG.");
+        .hasMessage(UNIQUE_DELEGATE_NAME_ERROR_MESSAGE);
   }
 
   private CapabilityRequirement buildCapabilityRequirement() {

@@ -23,8 +23,9 @@ public enum DataSourceType {
   PROMETHEUS("Prometheus", VerificationType.TIME_SERIES, "prometheus"),
   DATADOG_METRICS("DatadogMetrics", VerificationType.TIME_SERIES, "prometheus"),
   DATADOG_LOG("DatadogLog", VerificationType.LOG, "splunk"),
-  CUSTOM_HEALTH("CustomHealth", VerificationType.TIME_SERIES, "prometheus"),
-  DYNATRACE("Dynatrace", VerificationType.TIME_SERIES, "prometheus");
+  DYNATRACE("Dynatrace", VerificationType.TIME_SERIES, "prometheus"),
+  ERROR_TRACKING("ErrorTracking", VerificationType.LOG, "error_tracking"),
+  CUSTOM_HEALTH("CustomHealth", VerificationType.TIME_SERIES, "prometheus");
 
   private String displayName;
   private VerificationType verificationType;
