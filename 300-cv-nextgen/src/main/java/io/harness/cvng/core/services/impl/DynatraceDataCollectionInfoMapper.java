@@ -25,6 +25,7 @@ public class DynatraceDataCollectionInfoMapper
             .metricPack(cvConfig.getMetricPack().toDTO())
             .groupName(cvConfig.getGroupName())
             .serviceId(cvConfig.getServiceEntityId())
+            .serviceMethodIds(cvConfig.getServiceMethodIds())
             .customMetrics(
                 CollectionUtils.emptyIfNull(cvConfig.getMetricInfos())
                     .stream()
@@ -59,6 +60,7 @@ public class DynatraceDataCollectionInfoMapper
     DynatraceDataCollectionInfo dynatraceDataCollectionInfo =
         DynatraceDataCollectionInfo.builder()
             .serviceId(baseCvConfig.getServiceName())
+            .serviceMethodIds(baseCvConfig.getServiceMethodIds())
             .metricPack(baseCvConfig.getMetricPack().toDTO())
             .groupName(baseCvConfig.getGroupName())
             .customMetrics(cvConfigs.stream()

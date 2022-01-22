@@ -3,18 +3,18 @@ category: Performance
 metrics:
   - name: Method Response time
     type: RESP_TIME
-    path: builtin:service.response.time
-    validationPath: builtin:service.response.time
+    path: builtin:service.keyRequest.response.time
+    validationPath: builtin:service.keyRequest.response.time
     included: true
-#  - name: Request Count total
-#    type: THROUGHPUT
-#    path: builtin:service.count.total
-#    validationPath: builtin:service.count.total
-#    included: true
+  - name: Request Count total
+    type: THROUGHPUT
+    path: builtin:service.keyRequest.count.total
+    validationPath: builtin:service.keyRequest.count.total
+    included: true
   - name: Number of server side errors
     type: ERROR
-    path: builtin:service.errors.server.count
-    validationPath: builtin:service.errors.server.count
+    path: builtin:service.keyRequest.errors.server.count
+    validationPath: builtin:service.keyRequest.errors.server.count
     included: true
 
 

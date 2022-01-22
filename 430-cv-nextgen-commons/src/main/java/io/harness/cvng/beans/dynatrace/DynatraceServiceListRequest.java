@@ -17,16 +17,16 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.FieldNameConstants;
 import lombok.experimental.SuperBuilder;
 
-@JsonTypeName("DYNATRACE_SERVICE_LIST")
+@JsonTypeName("DYNATRACE_SERVICE_LIST_REQUEST")
 @Data
 @SuperBuilder
 @NoArgsConstructor
 @OwnedBy(CV)
 @EqualsAndHashCode(callSuper = true)
 public class DynatraceServiceListRequest extends DynatraceRequest {
-  private static final List<String> FIELDS = Arrays.asList("lastSeenTms", "properties", "fromRelationships", "toRelationships");
+  private static final List<String> FIELDS = Collections.singletonList("toRelationships");
   private static final Long PAGE_SIZE = 500L;
-  private static final String ENTITY_SELECTOR = "type(\"SERVICE\")";
+  private static final String ENTITY_SELECTOR = "type(\"dt.entity.service\")";
 
   private static final String DSL =
       DataCollectionRequest.readDSL("dynatrace-service-list.datacollection", DynatraceServiceListRequest.class);

@@ -15,6 +15,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.apache.commons.collections4.CollectionUtils;
 
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+
 @Data
 @Builder
 @EqualsAndHashCode(callSuper = true)
@@ -23,25 +25,33 @@ public class DynatraceDataCollectionInfo extends TimeSeriesDataCollectionInfo<Dy
   public static final String METRIC_NAME_PARAM = "metricName";
   public static final String QUERY_SELECTOR_PARAM = "querySelector";
   public static final String GROUP_NAME_PARAM = "groupName";
-  public static final String ENTITY_ID_PARAM = "entityId";
+  public static final String ENTITY_ID_PARAM = "entitySelector";
   public static final String ENTITY_SELECTOR_PARAM = "entitySelector";
   public static final String METRICS_TO_VALIDATE_PARAM = "metricsToValidate";
 
   private String groupName;
   private String serviceId;
+  private List<String> serviceMethodIds;
   @Nullable private List<MetricCollectionInfo> customMetrics;
   @Nullable private MetricPackDTO metricPack;
 
   @Override
   public Map<String, Object> getDslEnvVariables(DynatraceConnectorDTO connectorConfigDTO) {
     Map<String, Object> dslEnvVariables = new HashMap<>();
-    dslEnvVariables.put(ENTITY_ID_PARAM, serviceId);
     dslEnvVariables.put("resolution", "1m");
     dslEnvVariables.put(GROUP_NAME_PARAM, groupName != null ? groupName : metricPack.getIdentifier());
     dslEnvVariables.put("host", isCollectHostData() ? DYNATRACE_SERVICE_INSTANCE_DEFAULT_PLACEHOLDER : null);
 
     List<Map<String, String>> metricsToValidate = new ArrayList<>();
     if (metricPack != null) {
+      // if collection is not for custom metric, we should filter by service methods
+      String serviceMethodsIdsParam;
+       if(isNotEmpty(serviceMethodIds)) {
+         serviceMethodsIdsParam = String.join(",", serviceMethodIds);
+       } else {
+         throw new IllegalArgumentException("Service methods IDs must be provided for Dynatrace data collection.");
+       }
+      dslEnvVariables.put(ENTITY_ID_PARAM, "type(\"dt.entity.service_method\"),entityId(".concat(serviceMethodsIdsParam).concat(")"));
       metricsToValidate = CollectionUtils.emptyIfNull(metricPack.getMetrics())
                               .stream()
                               .map(metricDefinitionDTO -> {
@@ -52,6 +62,7 @@ public class DynatraceDataCollectionInfo extends TimeSeriesDataCollectionInfo<Dy
                               })
                               .collect(Collectors.toList());
     } else if (customMetrics != null) {
+      dslEnvVariables.put(ENTITY_ID_PARAM, "type(\"dt.entity.service\"),entityId(".concat(serviceId).concat(")"));
       metricsToValidate = customMetrics.stream()
                               .map(metricDefinitionDTO -> {
                                 Map<String, String> metricMap = new HashMap<>();

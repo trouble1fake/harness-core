@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.FieldNameConstants;
 import lombok.experimental.SuperBuilder;
 
-@JsonTypeName("DYNATRACE_SERVICE_DETAILS")
+@JsonTypeName("DYNATRACE_SERVICE_DETAILS_REQUEST")
 @Data
 @SuperBuilder
 @NoArgsConstructor

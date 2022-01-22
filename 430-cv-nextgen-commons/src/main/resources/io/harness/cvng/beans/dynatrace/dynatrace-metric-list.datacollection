@@ -1,0 +1,22 @@
+Var metricsUrl = concat(Env:baseUrl, "api/v2/metrics")
+Var params = {}
+Var:params.put("pageSize", Env:pageSize)
+Var:params.put("metricSelector", Env:metricSelector)
+
+Var metricsResponse = sync-call(url=Var:metricsUrl, header=Env:commonHeaders, options=Var:params)
+Var nullObject = null
+Var responseList = []
+
+Var metrics = extract(Var:servicesResponse, $.metrics)
+foreach metric in Var:metrics {
+    Var metricMap = {}
+    Var metricId = extract(Var:metric, $.metricId)
+    Var displayName = extract(Var:metric, $.displayName)
+    Var unit = extract(Var:metric, $.unit)
+    Var:metricMap.put("metricId", Var:entityId)
+    Var:metricMap.put("displayName", Var:displayName)
+    Var:metricMap.put("unit", Var:unit)
+    Var:responseList.append(Var:serviceMap)
+}
+
+return Var:responseList

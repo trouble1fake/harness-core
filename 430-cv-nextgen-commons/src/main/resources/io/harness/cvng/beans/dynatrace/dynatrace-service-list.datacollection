@@ -19,13 +19,13 @@ foreach entity in Var:entities {
     Var:serviceMap.put("displayName", Var:displayName)
 
     Var toRelationships = extract(Var:entity, $.toRelationships)
-    Var serviceMethods = extract(Var:entity, $.isServiceMethodOfService)
+    Var serviceMethods = extract(Var:toRelationships, $.isServiceMethodOfService)
     if Var:serviceMethods != Var:nullObject {
       Var serviceMethodIds = []
       foreach serviceMethodId in Var:serviceMethods {
         Var methodId = extract(Var:serviceMethodId, $.id)
         Var methodType = extract(Var:serviceMethodId, $.type)
-        Var:serviceMethodIds.add(Var:methodId)
+        Var:serviceMethodIds.append(Var:methodId)
       }
       Var:serviceMap.put("serviceMethodIds", Var:serviceMethodIds)
     }
