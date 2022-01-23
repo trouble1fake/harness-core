@@ -28,11 +28,11 @@ import io.harness.engine.executions.plan.PlanExecutionService;
 import io.harness.exception.InvalidRequestException;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.PlanExecution;
+import io.harness.plan.PlanNode;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.ambiance.Level;
 import io.harness.pms.contracts.execution.ExecutionMode;
 import io.harness.pms.contracts.execution.Status;
-import io.harness.pms.contracts.plan.PlanNodeProto;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.repositories.ResourceRestraintInstanceRepository;
@@ -213,18 +213,19 @@ public class ResourceRestraintInstanceServiceImplTest extends OrchestrationSteps
     ResourceRestraintInstance instance = saveInstance(BLOCKED, OTHER);
 
     when(nodeExecutionService.getByPlanNodeUuid(any(), any()))
-        .thenReturn(NodeExecution.builder()
-                        .ambiance(ambiance)
-                        .node(PlanNodeProto.newBuilder()
-                                  .setUuid(generateUuid())
-                                  .setStepType(
-                                      StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                                  .setName("dummy")
-                                  .setIdentifier("dummy")
-                                  .build())
-                        .mode(ExecutionMode.SYNC)
-                        .status(Status.SUCCEEDED)
-                        .build());
+        .thenReturn(
+            NodeExecution.builder()
+                .ambiance(ambiance)
+                .planNode(
+                    PlanNode.builder()
+                        .uuid(generateUuid())
+                        .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+                        .name("dummy")
+                        .identifier("dummy")
+                        .build())
+                .mode(ExecutionMode.SYNC)
+                .status(Status.SUCCEEDED)
+                .build());
 
     boolean isUpdated = resourceRestraintInstanceService.updateActiveConstraintsForInstance(instance);
     assertThat(isUpdated).isTrue();

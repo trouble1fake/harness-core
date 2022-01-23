@@ -613,6 +613,7 @@ public class NativeHelmStepHelper extends CDStepHelper {
     }
     UnitProgressData unitProgressData =
         completeUnitProgressData(executionPassThroughData.getLastActiveUnitProgressData(), ambiance, e);
+
     FailureData failureData = FailureData.newBuilder()
                                   .addFailureTypes(FailureType.APPLICATION_FAILURE)
                                   .setLevel(Level.ERROR.name())

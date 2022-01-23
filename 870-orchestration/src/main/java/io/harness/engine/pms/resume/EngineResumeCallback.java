@@ -8,7 +8,6 @@
 package io.harness.engine.pms.resume;
 
 import static io.harness.annotations.dev.HarnessTeam.CDC;
-import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.engine.OrchestrationEngine;
@@ -30,7 +29,6 @@ public class EngineResumeCallback implements OldNotifyCallback {
   @Inject OrchestrationEngine orchestrationEngine;
   @Inject ResponseDataMapper responseDataMapper;
 
-  @Deprecated String nodeExecutionId;
   Ambiance ambiance;
 
   @Override
@@ -45,10 +43,6 @@ public class EngineResumeCallback implements OldNotifyCallback {
 
   private void notifyWithError(Map<String, ResponseData> response, boolean asyncError) {
     Map<String, ByteString> byteStringMap = responseDataMapper.toResponseDataProto(response);
-    if (isNotEmpty(nodeExecutionId)) {
-      orchestrationEngine.resumeNodeExecution(nodeExecutionId, byteStringMap, false);
-      return;
-    }
     orchestrationEngine.resumeNodeExecution(ambiance, byteStringMap, false);
   }
 }

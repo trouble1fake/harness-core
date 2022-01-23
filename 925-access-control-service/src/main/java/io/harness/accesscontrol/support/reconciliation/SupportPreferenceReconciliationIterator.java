@@ -18,6 +18,7 @@ import io.harness.accesscontrol.support.persistence.SupportPreferenceDBO;
 import io.harness.accesscontrol.support.persistence.SupportPreferenceDBO.SupportPreferenceDBOKeys;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.exception.InvalidRequestException;
 import io.harness.iterator.PersistenceIteratorFactory;
 import io.harness.mongo.iterator.MongoPersistenceIterator;
 import io.harness.mongo.iterator.MongoPersistenceIterator.Handler;
@@ -74,6 +75,13 @@ public class SupportPreferenceReconciliationIterator implements Handler<SupportP
 
   @Override
   public void handle(SupportPreferenceDBO entity) {
-    supportService.syncSupportPreferenceFromRemote(entity.getAccountIdentifier());
+    try {
+      supportService.syncSupportPreferenceFromRemote(entity.getAccountIdentifier());
+    } catch (InvalidRequestException e) {
+      boolean toBeDeleted = e.getMessage().equals("Account does not exist.");
+      if (toBeDeleted) {
+        supportService.deleteSupportPreferenceIfPresent(entity.getAccountIdentifier());
+      }
+    }
   }
 }

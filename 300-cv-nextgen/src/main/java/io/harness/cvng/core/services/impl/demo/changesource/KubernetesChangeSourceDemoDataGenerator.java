@@ -26,6 +26,10 @@ public class KubernetesChangeSourceDemoDataGenerator implements ChangeSourceDemo
   @Inject private Clock clock;
   @Override
   public List<ChangeEventDTO> generate(KubernetesChangeSource changeSource) {
+    return generate(changeSource, "default", changeSource.getServiceIdentifier());
+  }
+
+  public List<ChangeEventDTO> generate(KubernetesChangeSource changeSource, String namespace, String workload) {
     Instant time = DateTimeUtils.roundDownTo1MinBoundary(clock.instant());
     return Arrays.asList(
         ChangeEventDTO.builder()
@@ -93,7 +97,7 @@ public class KubernetesChangeSourceDemoDataGenerator implements ChangeSourceDemo
                         + "      securityContext: {}\n"
                         + "      terminationGracePeriodSeconds: 30\n"
                         + "status:\n"
-                        + "  replicas: 1\n")
+                        + "  replicas: 3\n")
                     .newYaml("apiVersion: apps/v1\n"
                         + "kind: ReplicaSet\n"
                         + "metadata:\n"
@@ -147,9 +151,9 @@ public class KubernetesChangeSourceDemoDataGenerator implements ChangeSourceDemo
                         + "      terminationGracePeriodSeconds: 30\n"
                         + "status:\n"
                         + "  observedGeneration: 1\n"
-                        + "  replicas: 2\n")
-                    .namespace("harness")
-                    .workload(changeSource.getServiceIdentifier())
+                        + "  replicas: 1\n")
+                    .namespace(namespace)
+                    .workload(workload)
                     .resourceType(KubernetesResourceType.ReplicaSet)
                     .timestamp(time)
                     .build())

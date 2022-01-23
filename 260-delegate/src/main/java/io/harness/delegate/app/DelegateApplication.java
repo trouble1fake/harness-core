@@ -134,7 +134,7 @@ public class DelegateApplication {
       injector.getInstance(PingPongClient.class).startAsync();
     }
     DelegateAgentService delegateService = injector.getInstance(DelegateAgentService.class);
-    delegateService.run(watched);
+    delegateService.run(watched, false);
 
     System.exit(0);
   }

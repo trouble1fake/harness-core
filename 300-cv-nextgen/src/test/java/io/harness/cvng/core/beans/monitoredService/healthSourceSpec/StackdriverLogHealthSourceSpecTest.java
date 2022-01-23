@@ -7,6 +7,7 @@
 
 package io.harness.cvng.core.beans.monitoredService.healthSourceSpec;
 
+import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.rule.OwnerRule.SOWMYA;
 
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
@@ -49,6 +50,7 @@ public class StackdriverLogHealthSourceSpecTest extends CvNextGenTestBase {
   String envIdentifier;
   String identifier;
   String name;
+  String monitoredServiceIdentifier;
   List<QueryDTO> queryDTOS;
   BuilderFactory builderFactory;
 
@@ -64,7 +66,7 @@ public class StackdriverLogHealthSourceSpecTest extends CvNextGenTestBase {
     envIdentifier = builderFactory.getContext().getEnvIdentifier();
     feature = "Application Monitoring";
     connectorIdentifier = "connectorRef";
-
+    monitoredServiceIdentifier = generateUuid();
     identifier = "identifier";
     name = "some-name";
     queryDTOS = Lists.newArrayList(QueryDTO.builder()
@@ -84,9 +86,9 @@ public class StackdriverLogHealthSourceSpecTest extends CvNextGenTestBase {
   @Owner(developers = SOWMYA)
   @Category(UnitTests.class)
   public void getCVConfigUpdateResult_whenNoConfigExist() {
-    CVConfigUpdateResult cvConfigUpdateResult =
-        stackdriverLogHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier,
-            envIdentifier, serviceIdentifier, identifier, name, Collections.emptyList(), metricPackService);
+    CVConfigUpdateResult cvConfigUpdateResult = stackdriverLogHealthSourceSpec.getCVConfigUpdateResult(accountId,
+        orgIdentifier, projectIdentifier, envIdentifier, serviceIdentifier, monitoredServiceIdentifier, identifier,
+        name, Collections.emptyList(), metricPackService);
     assertThat(cvConfigUpdateResult.getUpdated()).isEmpty();
     assertThat(cvConfigUpdateResult.getDeleted()).isEmpty();
     List<CVConfig> added = cvConfigUpdateResult.getAdded();
@@ -110,7 +112,8 @@ public class StackdriverLogHealthSourceSpecTest extends CvNextGenTestBase {
                                      .serviceInstanceIdentifier(randomAlphabetic(10))
                                      .build()));
     CVConfigUpdateResult result = stackdriverLogHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier,
-        projectIdentifier, envIdentifier, serviceIdentifier, identifier, name, cvConfigs, metricPackService);
+        projectIdentifier, envIdentifier, serviceIdentifier, monitoredServiceIdentifier, identifier, name, cvConfigs,
+        metricPackService);
     assertThat(result.getDeleted()).hasSize(1);
     StackdriverLogCVConfig stackdriverLogCVConfig = (StackdriverLogCVConfig) result.getDeleted().get(0);
     assertThat(stackdriverLogCVConfig.getCategory()).isEqualTo(CVMonitoringCategory.ERRORS);
@@ -128,7 +131,8 @@ public class StackdriverLogHealthSourceSpecTest extends CvNextGenTestBase {
                                      .serviceInstanceIdentifier(randomAlphabetic(10))
                                      .build()));
     CVConfigUpdateResult result = stackdriverLogHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier,
-        projectIdentifier, envIdentifier, serviceIdentifier, identifier, name, cvConfigs, metricPackService);
+        projectIdentifier, envIdentifier, serviceIdentifier, monitoredServiceIdentifier, identifier, name, cvConfigs,
+        metricPackService);
     assertThat(result.getAdded()).hasSize(1);
     StackdriverLogCVConfig stackdriverLogCVConfig = (StackdriverLogCVConfig) result.getAdded().get(0);
     assertCommon(stackdriverLogCVConfig);
@@ -147,7 +151,8 @@ public class StackdriverLogHealthSourceSpecTest extends CvNextGenTestBase {
                                      .serviceInstanceIdentifier(queryDTOS.get(0).getServiceInstanceIdentifier())
                                      .build()));
     CVConfigUpdateResult result = stackdriverLogHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier,
-        projectIdentifier, envIdentifier, serviceIdentifier, identifier, name, cvConfigs, metricPackService);
+        projectIdentifier, envIdentifier, serviceIdentifier, monitoredServiceIdentifier, identifier, name, cvConfigs,
+        metricPackService);
     assertThat(result.getUpdated()).hasSize(1);
     StackdriverLogCVConfig stackdriverLogCVConfig = (StackdriverLogCVConfig) result.getUpdated().get(0);
     assertCommon(stackdriverLogCVConfig);
@@ -177,6 +182,7 @@ public class StackdriverLogHealthSourceSpecTest extends CvNextGenTestBase {
     assertThat(cvConfig.getEnvIdentifier()).isEqualTo(envIdentifier);
     assertThat(cvConfig.getServiceIdentifier()).isEqualTo(serviceIdentifier);
     assertThat(cvConfig.getIdentifier()).isEqualTo(identifier);
+    assertThat(cvConfig.getMonitoredServiceIdentifier()).isEqualTo(monitoredServiceIdentifier);
     assertThat(cvConfig.getProductName()).isEqualTo(feature);
     assertThat(cvConfig.getMonitoringSourceName()).isEqualTo(name);
     assertThat(cvConfig.getQueryName()).isEqualTo(queryDTOS.get(0).getName());
@@ -193,6 +199,7 @@ public class StackdriverLogHealthSourceSpecTest extends CvNextGenTestBase {
         .query(queryDTO.getQuery())
         .connectorIdentifier(connectorIdentifier)
         .monitoringSourceName(name)
+        .monitoredServiceIdentifier(monitoredServiceIdentifier)
         .productName(feature)
         .identifier(identifier)
         .projectIdentifier(projectIdentifier)

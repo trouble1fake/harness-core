@@ -448,7 +448,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
 
   @Override
   @SuppressWarnings("unchecked")
-  public void run(boolean watched) {
+  public void run(final boolean watched, final boolean isServer) {
     try {
       accountId = delegateConfiguration.getAccountId();
       if (perpetualTaskWorker != null) {
@@ -713,18 +713,20 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         }
       }
 
-      synchronized (waiter) {
-        while (waiter.get()) {
-          waiter.wait();
+      if (!isServer) {
+        synchronized (waiter) {
+          while (waiter.get()) {
+            waiter.wait();
+          }
         }
-      }
 
-      messageService.closeData(DELEGATE_DASH + getProcessId());
-      messageService.closeChannel(DELEGATE, getProcessId());
+        messageService.closeData(DELEGATE_DASH + getProcessId());
+        messageService.closeChannel(DELEGATE, getProcessId());
 
-      if (upgradePending.get()) {
-        removeDelegateVersionFromCapsule();
-        cleanupOldDelegateVersionFromBackup();
+        if (upgradePending.get()) {
+          removeDelegateVersionFromCapsule();
+          cleanupOldDelegateVersionFromBackup();
+        }
       }
 
     } catch (InterruptedException e) {

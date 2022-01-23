@@ -20,4 +20,5 @@ import org.hibernate.validator.constraints.NotEmpty;
 public interface SupportPreferenceDao {
   Optional<SupportPreference> get(@NotEmpty String accountIdentifier);
   SupportPreference upsert(@NotNull @Valid SupportPreference supportPreference);
+  Optional<SupportPreference> deleteIfPresent(@NotEmpty String accountIdentifier);
 }

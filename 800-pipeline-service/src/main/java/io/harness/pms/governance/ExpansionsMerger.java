@@ -70,6 +70,8 @@ public class ExpansionsMerger {
         String[] fqnSplit = fqn.split(YamlNode.PATH_SEP);
         fqnSplit[fqnSplit.length - 1] = key;
         return String.join(YamlNode.PATH_SEP, fqnSplit);
+      case APPEND:
+        return String.join(YamlNode.PATH_SEP, fqn, key);
       default:
         throw new InvalidRequestException(placementStrategy.name() + " placement strategy not supported");
     }
