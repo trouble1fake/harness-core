@@ -8,6 +8,7 @@
 package io.harness.ng.core.api.impl;
 
 import static io.harness.annotations.dev.HarnessTeam.PL;
+import static io.harness.rule.OwnerRule.NISHANT;
 import static io.harness.rule.OwnerRule.PHOENIKX;
 
 import static io.github.benas.randombeans.api.EnhancedRandom.random;
@@ -274,6 +275,28 @@ public class SecretCrudServiceImplTest extends CategoryTest {
     when(ngSecretServiceV2.get(any(), any(), any(), any())).thenReturn(Optional.ofNullable(Secret.builder().build()));
     Optional<SecretResponseWrapper> secretResponseWrapper = secretCrudService.get("account", null, null, "identifier");
     assertThat(secretResponseWrapper).isPresent();
+    verify(ngSecretServiceV2).get(any(), any(), any(), any());
+  }
+
+  @Test
+  @Owner(developers = NISHANT)
+  @Category(UnitTests.class)
+  public void testGetForSecretRef() {
+    String secretRef = "SOME/PATH#value";
+    when(ngSecretServiceV2.get(any(), any(), any(), any()))
+        .thenReturn(Optional.ofNullable(Secret.builder()
+                                            .accountIdentifier("account")
+                                            .identifier("identifier")
+                                            .type(SecretType.SecretText)
+                                            .secretSpec(SecretTextSpec.builder().valueType(ValueType.Reference).build())
+                                            .build()));
+    when(encryptedDataService.get("account", null, null, "identifier"))
+        .thenReturn(NGEncryptedData.builder().path(secretRef).build());
+    Optional<SecretResponseWrapper> secretResponseWrapper = secretCrudService.get("account", null, null, "identifier");
+    assertThat(secretResponseWrapper).isPresent();
+    assertThat(secretResponseWrapper.get().getSecret().getSpec()).isInstanceOf(SecretTextSpecDTO.class);
+    SecretTextSpecDTO secretSpec = (SecretTextSpecDTO) secretResponseWrapper.get().getSecret().getSpec();
+    assertThat(secretSpec.getValue()).isEqualTo(secretRef);
     verify(ngSecretServiceV2).get(any(), any(), any(), any());
   }
 

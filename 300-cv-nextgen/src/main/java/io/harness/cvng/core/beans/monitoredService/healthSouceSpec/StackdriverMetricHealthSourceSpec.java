@@ -43,10 +43,10 @@ public class StackdriverMetricHealthSourceSpec extends HealthSourceSpec {
 
   @Override
   public CVConfigUpdateResult getCVConfigUpdateResult(String accountId, String orgIdentifier, String projectIdentifier,
-      String environmentRef, String serviceRef, String identifier, String name, List<CVConfig> existingCVConfigs,
-      MetricPackService metricPackService) {
-    List<StackdriverCVConfig> cvConfigsFromThisObj =
-        toCVConfigs(accountId, orgIdentifier, projectIdentifier, environmentRef, serviceRef, identifier, name);
+      String environmentRef, String serviceRef, String monitoredServiceIdentifier, String identifier, String name,
+      List<CVConfig> existingCVConfigs, MetricPackService metricPackService) {
+    List<StackdriverCVConfig> cvConfigsFromThisObj = toCVConfigs(accountId, orgIdentifier, projectIdentifier,
+        environmentRef, serviceRef, monitoredServiceIdentifier, identifier, name);
     Map<Key, StackdriverCVConfig> existingConfigMap = new HashMap<>();
 
     List<StackdriverCVConfig> existingSDCVConfigs = (List<StackdriverCVConfig>) (List<?>) existingCVConfigs;
@@ -84,7 +84,7 @@ public class StackdriverMetricHealthSourceSpec extends HealthSourceSpec {
   }
 
   private List<StackdriverCVConfig> toCVConfigs(String accountId, String orgIdentifier, String projectIdentifier,
-      String environmentRef, String serviceRef, String identifier, String name) {
+      String environmentRef, String serviceRef, String monitoredServiceIdentifier, String identifier, String name) {
     // group things under same service_env_category_dashboard into one config
     Map<Key, List<StackdriverDefinition>> keyToDefinitionMap = new HashMap<>();
 
@@ -114,6 +114,7 @@ public class StackdriverMetricHealthSourceSpec extends HealthSourceSpec {
                                          .category(key.getCategory())
                                          .dashboardName(key.getDashboardName())
                                          .dashboardPath(stackdriverDefinitions.get(0).getDashboardPath())
+                                         .monitoredServiceIdentifier(monitoredServiceIdentifier)
                                          .build();
       cvConfig.fromStackdriverDefinitions(stackdriverDefinitions, key.getCategory());
       cvConfigs.add(cvConfig);

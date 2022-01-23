@@ -13,6 +13,7 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.delegate.beans.TaskData.DEFAULT_SYNC_CALL_TIMEOUT;
 import static io.harness.eraro.ErrorCode.USER_NOT_AUTHORIZED;
 import static io.harness.exception.WingsException.USER;
+import static io.harness.expression.SecretString.SECRET_MASK;
 import static io.harness.ng.core.account.AuthenticationMechanism.LDAP;
 import static io.harness.ng.core.account.AuthenticationMechanism.OAUTH;
 import static io.harness.ng.core.account.AuthenticationMechanism.SAML;
@@ -148,6 +149,12 @@ public class SSOServiceImpl implements SSOService {
 
       if (isEmpty(displayName)) {
         displayName = settings.getDisplayName();
+      }
+      if (isNotEmpty(clientId) && isNotEmpty(clientSecret)
+          && SECRET_MASK.equals(String.valueOf(clientSecret))) { // suggests only clientId updated
+        // set the old cg secret ref
+        final String oldClientSecretRef = settings.getEncryptedClientSecret();
+        clientSecret = isNotEmpty(oldClientSecretRef) ? oldClientSecretRef.toCharArray() : clientSecret;
       }
 
       buildAndUploadSamlSettings(accountId, fileAsString, displayName, groupMembershipAttr, logoutUrl, entityIdentifier,
@@ -518,16 +525,6 @@ public class SSOServiceImpl implements SSOService {
       samlSettingsDeleted = ssoSettingService.deleteSamlSettings(samlSettings);
     }
     return samlSettingsDeleted;
-  }
-
-  private boolean deleteLdapSettings(String accountId, String targetAccountType) {
-    boolean ldapSettingsDeleted = true;
-    LdapSettings ldapSettings = ssoSettingService.getLdapSettingsByAccountId(accountId);
-    if (ldapSettings != null) {
-      log.info("Deleting LDAP SSO settings for accountId={} and targetAccountType={}", accountId, targetAccountType);
-      ldapSettingsDeleted = ssoSettingService.deleteLdapSettings(accountId) != null;
-    }
-    return ldapSettingsDeleted;
   }
 
   private void setOauthIfSetAfterSSODelete(String accountId) {

@@ -23,14 +23,18 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.pms.commons.events.PmsEventSender;
+import io.harness.engine.utils.PmsLevelUtils;
 import io.harness.execution.NodeExecution;
 import io.harness.interrupts.Interrupt;
+import io.harness.plan.PlanNode;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.interrupts.InterruptConfig;
 import io.harness.pms.contracts.interrupts.InterruptEvent;
 import io.harness.pms.contracts.interrupts.InterruptType;
-import io.harness.pms.contracts.plan.PlanNodeProto;
+import io.harness.pms.contracts.steps.StepCategory;
+import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.events.base.PmsEventCategory;
+import io.harness.pms.serializer.recaster.RecastOrchestrationUtils;
 import io.harness.rule.Owner;
 
 import com.google.inject.Inject;
@@ -61,12 +65,22 @@ public class RedisInterruptEventPublisherTest extends OrchestrationTestBase {
                               .interruptConfig(InterruptConfig.newBuilder().build())
                               .uuid(generateUuid())
                               .build();
-    NodeExecution nodeExecution = NodeExecution.builder()
-                                      .node(PlanNodeProto.newBuilder().setServiceName("serviceName").build())
-                                      .uuid(nodeExecutionId)
-                                      .ambiance(Ambiance.newBuilder().setPlanExecutionId(planExecutionId).build())
-                                      .resolvedStepParameters("{}")
-                                      .build();
+    PlanNode planNode = PlanNode.builder()
+                            .uuid(generateUuid())
+                            .identifier("DUMMY")
+                            .stepType(StepType.newBuilder().setType("STEP").setStepCategory(StepCategory.STEP).build())
+                            .serviceName("serviceName")
+                            .build();
+    NodeExecution nodeExecution =
+        NodeExecution.builder()
+            .planNode(planNode)
+            .uuid(nodeExecutionId)
+            .ambiance(Ambiance.newBuilder()
+                          .setPlanExecutionId(planExecutionId)
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecutionId, planNode))
+                          .build())
+            .resolvedStepParameters(RecastOrchestrationUtils.fromJson("{}"))
+            .build();
 
     when(nodeExecutionService.get(any())).thenReturn(nodeExecution);
     when(eventSender.sendEvent(any(), any(), any(), any())).thenReturn(null);

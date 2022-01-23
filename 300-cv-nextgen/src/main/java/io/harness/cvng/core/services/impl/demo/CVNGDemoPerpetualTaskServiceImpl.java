@@ -103,8 +103,7 @@ public class CVNGDemoPerpetualTaskServiceImpl implements CVNGDemoPerpetualTaskSe
     DemoTemplate demoTemplate;
     CVConfig cvConfig = getRelatedCvConfig(dataCollectionTask.getVerificationTaskId());
     // get activity for monitored service that finished in last 15 mins.
-    demoTemplate =
-        getDemoTemplate(dataCollectionTask.getVerificationTaskId(), isHighRiskTimeRange(cvConfig, dataCollectionTask));
+    demoTemplate = getDemoTemplate(cvConfig, isHighRiskTimeRange(cvConfig, dataCollectionTask));
     if (dataCollectionTask.getDataCollectionInfo().getVerificationType().equals(VerificationType.TIME_SERIES)) {
       timeSeriesRecordService.createDemoAnalysisData(dataCollectionTask.getAccountId(),
           dataCollectionTask.getVerificationTaskId(), dataCollectionTask.getDataCollectionWorkerId(), demoTemplate,
@@ -194,19 +193,15 @@ public class CVNGDemoPerpetualTaskServiceImpl implements CVNGDemoPerpetualTaskSe
     }
   }
 
-  private DemoTemplate getDemoTemplate(String verificationTaskId, boolean highRisk) {
-    VerificationTask verificationTask = verificationTaskService.get(verificationTaskId);
+  private DemoTemplate getDemoTemplate(CVConfig cvConfig, boolean highRisk) {
     String template = "default";
-    if (verificationTask.getTaskInfo().getTaskType() == VerificationTask.TaskType.LIVE_MONITORING) {
-      CVConfig cvConfig = cvConfigService.get(((LiveMonitoringInfo) verificationTask.getTaskInfo()).getCvConfigId());
-      // appd_template_demo_dev
-      Pattern identifierTemplatePattern = Pattern.compile(".*template_(.*)_dev");
-      Matcher matcher = identifierTemplatePattern.matcher(cvConfig.getFullyQualifiedIdentifier());
-      if (matcher.matches()) {
-        String templateSubstring = matcher.group(1);
-        if (isNotEmpty(templateSubstring)) {
-          template = templateSubstring;
-        }
+    // appd_template_demo_dev
+    Pattern identifierTemplatePattern = Pattern.compile(".*template_(.*)_dev");
+    Matcher matcher = identifierTemplatePattern.matcher(cvConfig.getFullyQualifiedIdentifier());
+    if (matcher.matches()) {
+      String templateSubstring = matcher.group(1);
+      if (isNotEmpty(templateSubstring)) {
+        template = templateSubstring;
       }
     }
     return DemoTemplate.builder().demoTemplateIdentifier(template).isHighRisk(highRisk).build();

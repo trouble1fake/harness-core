@@ -47,10 +47,10 @@ public class DatadogMetricHealthSourceSpec extends HealthSourceSpec {
 
   @Override
   public HealthSource.CVConfigUpdateResult getCVConfigUpdateResult(String accountId, String orgIdentifier,
-      String projectIdentifier, String environmentRef, String serviceRef, String identifier, String name,
-      List<CVConfig> existingCVConfigs, MetricPackService metricPackService) {
-    List<DatadogMetricCVConfig> cvConfigsFromThisObj =
-        toCVConfigs(accountId, orgIdentifier, projectIdentifier, environmentRef, serviceRef, identifier, name);
+      String projectIdentifier, String environmentRef, String serviceRef, String monitoredServiceIdentifier,
+      String identifier, String name, List<CVConfig> existingCVConfigs, MetricPackService metricPackService) {
+    List<DatadogMetricCVConfig> cvConfigsFromThisObj = toCVConfigs(accountId, orgIdentifier, projectIdentifier,
+        environmentRef, serviceRef, monitoredServiceIdentifier, identifier, name);
     Map<Key, DatadogMetricCVConfig> existingConfigMap = new HashMap<>();
 
     List<DatadogMetricCVConfig> existingSDCVConfigs = (List<DatadogMetricCVConfig>) (List<?>) existingCVConfigs;
@@ -88,7 +88,7 @@ public class DatadogMetricHealthSourceSpec extends HealthSourceSpec {
   }
 
   private List<DatadogMetricCVConfig> toCVConfigs(String accountId, String orgIdentifier, String projectIdentifier,
-      String environmentRef, String serviceRef, String identifier, String name) {
+      String environmentRef, String serviceRef, String monitoredServiceIdentifier, String identifier, String name) {
     // group things under same service_env_category_dashboard into one config
     Map<Key, List<DatadogMetricHealthDefinition>> keyToDefinitionMap = new HashMap<>();
 
@@ -120,6 +120,7 @@ public class DatadogMetricHealthSourceSpec extends HealthSourceSpec {
                                            .category(key.getCategory())
                                            .dashboardName(key.getDashboardName())
                                            .dashboardId(key.getDashboardId())
+                                           .monitoredServiceIdentifier(monitoredServiceIdentifier)
                                            .build();
       cvConfig.fromMetricDefinitions(datadogDefinitions, key.getCategory());
       cvConfigs.add(cvConfig);

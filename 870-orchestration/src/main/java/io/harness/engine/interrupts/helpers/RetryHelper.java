@@ -126,7 +126,7 @@ public class RetryHelper {
         .startTs(AmbianceUtils.getCurrentLevelStartTs(ambiance))
         .endTs(null)
         .initialWaitDuration(null)
-        .resolvedStepParameters((StepParameters) null)
+        .resolvedStepParameters(null)
         .notifyId(nodeExecution.getNotifyId())
         .parentId(nodeExecution.getParentId())
         .nextId(nodeExecution.getNextId())
@@ -141,6 +141,7 @@ public class RetryHelper {
         .timeoutDetails(null)
         .retryIds(retryIds)
         .oldRetry(false)
+        .originalNodeExecutionId(nodeExecution.getOriginalNodeExecutionId())
         .build();
   }
 }

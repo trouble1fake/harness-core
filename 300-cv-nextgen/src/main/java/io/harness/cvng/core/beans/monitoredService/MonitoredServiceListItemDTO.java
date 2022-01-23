@@ -27,6 +27,7 @@ public class MonitoredServiceListItemDTO {
   String identifier;
   String serviceRef;
   String environmentRef;
+  List<String> environmentRefList;
   String serviceName;
   String environmentName;
   MonitoredServiceType type;

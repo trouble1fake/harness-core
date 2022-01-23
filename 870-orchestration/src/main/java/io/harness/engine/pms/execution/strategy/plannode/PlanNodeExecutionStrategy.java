@@ -18,6 +18,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.engine.ExecutionCheck;
 import io.harness.engine.OrchestrationEngine;
 import io.harness.engine.executions.node.NodeExecutionService;
+import io.harness.engine.executions.plan.PlanService;
 import io.harness.engine.facilitation.FacilitationHelper;
 import io.harness.engine.facilitation.RunPreFacilitationChecker;
 import io.harness.engine.facilitation.SkipPreFacilitationChecker;
@@ -42,6 +43,7 @@ import io.harness.plan.PlanNode;
 import io.harness.pms.contracts.advisers.AdviseType;
 import io.harness.pms.contracts.advisers.AdviserResponse;
 import io.harness.pms.contracts.ambiance.Ambiance;
+import io.harness.pms.contracts.ambiance.Level;
 import io.harness.pms.contracts.execution.ExecutableResponse;
 import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.facilitators.FacilitatorResponseProto;
@@ -92,6 +94,7 @@ public class PlanNodeExecutionStrategy
   @Inject private WaitNotifyEngine waitNotifyEngine;
   @Inject private OrchestrationEngine orchestrationEngine;
   @Inject private PmsOutcomeService outcomeService;
+  @Inject private PlanService planService;
   @Inject @Named("EngineExecutorService") private ExecutorService executorService;
 
   @Override
@@ -198,28 +201,27 @@ public class PlanNodeExecutionStrategy
   }
 
   @Override
-  public void concludeExecution(Ambiance ambiance, Status status, EnumSet<Status> overrideStatusSet) {
-    String nodeExecutionId = Objects.requireNonNull(AmbianceUtils.obtainCurrentRuntimeId(ambiance));
-    NodeExecution nodeExecution =
-        nodeExecutionService.getWithFieldsIncluded(nodeExecutionId, NodeProjectionUtils.withStatusAndNode);
-    PlanNode node = nodeExecution.getNode();
+  public void concludeExecution(
+      Ambiance ambiance, Status toStatus, Status fromStatus, EnumSet<Status> overrideStatusSet) {
+    Level level = Objects.requireNonNull(AmbianceUtils.obtainCurrentLevel(ambiance));
+    PlanNode node = planService.fetchNode(ambiance.getPlanId(), level.getSetupId());
     if (isEmpty(node.getAdviserObtainments())) {
       NodeExecution updatedNodeExecution =
-          nodeExecutionService.updateStatusWithOps(nodeExecutionId, status, null, overrideStatusSet);
+          nodeExecutionService.updateStatusWithOps(level.getRuntimeId(), toStatus, null, overrideStatusSet);
       if (updatedNodeExecution == null) {
-        log.warn("Cannot conclude node execution. Status update failed To:{}", status);
+        log.warn("Cannot conclude node execution. Status update failed To:{}", toStatus);
         return;
       }
       endNodeExecution(updatedNodeExecution.getAmbiance());
       return;
     }
-    NodeExecution updatedNodeExecution = nodeExecutionService.updateStatusWithOps(nodeExecutionId, status,
+    NodeExecution updatedNodeExecution = nodeExecutionService.updateStatusWithOps(level.getRuntimeId(), toStatus,
         ops -> ops.set(NodeExecutionKeys.endTs, System.currentTimeMillis()), overrideStatusSet);
     if (updatedNodeExecution == null) {
-      log.warn("Cannot conclude node execution. Status update failed To:{}", status);
+      log.warn("Cannot conclude node execution. Status update failed To:{}", toStatus);
       return;
     }
-    nodeAdviseHelper.queueAdvisingEvent(updatedNodeExecution, nodeExecution.getStatus());
+    nodeAdviseHelper.queueAdvisingEvent(updatedNodeExecution, fromStatus);
   }
 
   @Override

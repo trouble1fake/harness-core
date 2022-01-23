@@ -11,12 +11,16 @@ import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.rule.OwnerRule.PRASHANT;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.when;
 
 import io.harness.OrchestrationTestBase;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.engine.OrchestrationEngine;
+import io.harness.engine.executions.plan.PlanService;
 import io.harness.execution.PlanExecution;
 import io.harness.execution.PlanExecutionMetadata;
 import io.harness.plan.Plan;
@@ -51,6 +55,7 @@ public class PlanExecutionStrategyTest extends OrchestrationTestBase {
 
   @Mock @Named("EngineExecutorService") ExecutorService executorService;
   @Mock OrchestrationEngine orchestrationEngine;
+  @Mock PlanService planService;
   @Inject @InjectMocks PlanExecutionStrategy executionStrategy;
 
   @Test
@@ -70,6 +75,7 @@ public class PlanExecutionStrategyTest extends OrchestrationTestBase {
                                 .stepType(DUMMY_STEP_TYPE)
                                 .identifier("dummy1")
                                 .build();
+    when(planService.fetchNode(any(), eq(DUMMY_NODE_1_ID))).thenReturn(startingNode);
     Plan plan = Plan.builder()
                     .planNode(startingNode)
                     .planNode(PlanNode.builder()

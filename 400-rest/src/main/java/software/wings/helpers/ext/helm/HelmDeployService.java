@@ -23,8 +23,6 @@ import software.wings.helpers.ext.helm.response.HelmReleaseHistoryCommandRespons
 
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 /**
  * Created by anubhaw on 4/1/18.
@@ -72,8 +70,7 @@ public interface HelmDeployService {
    */
   HelmReleaseHistoryCommandResponse releaseHistory(HelmReleaseHistoryCommandRequest helmCommandRequest);
 
-  HelmCommandResponse addPublicRepo(HelmCommandRequest commandRequest)
-      throws InterruptedException, IOException, TimeoutException;
+  HelmCommandResponse addPublicRepo(HelmCommandRequest commandRequest) throws Exception;
 
   /**
    * Render chart templates and return the output.
@@ -85,7 +82,7 @@ public interface HelmDeployService {
    * @return the helm release history command response
    */
   HelmCommandResponse renderHelmChart(HelmCommandRequest helmCommandRequest, String namespace, String chartLocation,
-      List<String> valueOverrides) throws InterruptedException, TimeoutException, IOException, ExecutionException;
+      List<String> valueOverrides) throws Exception;
 
   HelmCommandResponse ensureHelm3Installed(HelmCommandRequest commandRequest);
 

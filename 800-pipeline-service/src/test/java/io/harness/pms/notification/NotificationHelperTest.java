@@ -7,6 +7,7 @@
 
 package io.harness.pms.notification;
 
+import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.notification.PipelineEventType.STAGE_FAILED;
 import static io.harness.notification.PipelineEventType.STAGE_SUCCESS;
 import static io.harness.rule.OwnerRule.BRIJESH;
@@ -31,6 +32,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.engine.executions.plan.PlanExecutionMetadataService;
 import io.harness.engine.executions.plan.PlanExecutionService;
+import io.harness.engine.utils.PmsLevelUtils;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.NodeExecution.NodeExecutionBuilder;
 import io.harness.execution.PlanExecution;
@@ -195,19 +197,29 @@ public class NotificationHelperTest extends CategoryTest {
   @Owner(developers = BRIJESH)
   @Category(UnitTests.class)
   public void testGetEventTypeForStage() {
+    String planExecutionId = generateUuid();
     PlanNode pipelinePlanNode = PlanNode.builder()
+                                    .uuid(generateUuid())
                                     .stepType(StepType.newBuilder().setStepCategory(StepCategory.PIPELINE).build())
                                     .identifier("dummyIdentifier")
                                     .build();
     PlanNode stagePlanNode = PlanNode.builder()
+                                 .uuid(generateUuid())
                                  .stepType(StepType.newBuilder().setStepCategory(StepCategory.STAGE).build())
                                  .identifier("dummyIdentifier")
                                  .build();
+
+    Ambiance.Builder ambianceBuilder =
+        Ambiance.newBuilder()
+            .setPlanExecutionId(planExecutionId)
+            .addLevels(PmsLevelUtils.buildLevelFromNode(generateUuid(), pipelinePlanNode));
     NodeExecutionBuilder nodeExecutionBuilder =
-        NodeExecution.builder().planNode(pipelinePlanNode).status(Status.SUCCEEDED);
+        NodeExecution.builder().ambiance(ambianceBuilder.build()).status(Status.SUCCEEDED);
     assertEquals(notificationHelper.getEventTypeForStage(nodeExecutionBuilder.build()), Optional.empty());
-    nodeExecutionBuilder.planNode(stagePlanNode);
-    assertEquals(notificationHelper.getEventTypeForStage(nodeExecutionBuilder.build()), Optional.of(STAGE_SUCCESS));
+    ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(generateUuid(), stagePlanNode));
+    assertEquals(
+        notificationHelper.getEventTypeForStage(nodeExecutionBuilder.ambiance(ambianceBuilder.build()).build()),
+        Optional.of(STAGE_SUCCESS));
     nodeExecutionBuilder.status(Status.FAILED);
     assertEquals(notificationHelper.getEventTypeForStage(nodeExecutionBuilder.build()), Optional.of(STAGE_FAILED));
     nodeExecutionBuilder.status(Status.ABORTED);

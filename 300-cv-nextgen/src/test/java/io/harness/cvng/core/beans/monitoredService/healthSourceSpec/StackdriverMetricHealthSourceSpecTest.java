@@ -7,6 +7,7 @@
 
 package io.harness.cvng.core.beans.monitoredService.healthSourceSpec;
 
+import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.rule.OwnerRule.DEEPAK_CHHIKARA;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -43,6 +44,7 @@ public class StackdriverMetricHealthSourceSpecTest {
   String envIdentifier;
   String identifier;
   String name;
+  String monitoredServiceIdentifier;
   String metricName;
   BuilderFactory builderFactory;
   StackdriverMetricHealthSourceSpec stackdriverMetricHealthSourceSpec;
@@ -57,7 +59,7 @@ public class StackdriverMetricHealthSourceSpecTest {
     envIdentifier = builderFactory.getContext().getEnvIdentifier();
     connectorIdentifier = "connectorRef";
     metricName = "sampleMetric";
-
+    monitoredServiceIdentifier = generateUuid();
     identifier = "identifier";
     name = "some-name";
     stackdriverMetricHealthSourceSpec =
@@ -94,9 +96,9 @@ public class StackdriverMetricHealthSourceSpecTest {
             .build();
     stackdriverMetricHealthSourceSpec.setMetricDefinitions(Arrays.asList(metricDefinition));
 
-    HealthSource.CVConfigUpdateResult cvConfigUpdateResult =
-        stackdriverMetricHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier,
-            envIdentifier, serviceIdentifier, identifier, name, Collections.emptyList(), null);
+    HealthSource.CVConfigUpdateResult cvConfigUpdateResult = stackdriverMetricHealthSourceSpec.getCVConfigUpdateResult(
+        accountId, orgIdentifier, projectIdentifier, envIdentifier, serviceIdentifier, monitoredServiceIdentifier,
+        identifier, name, Collections.emptyList(), null);
     assertThat(cvConfigUpdateResult).isNotNull();
     assertThat(cvConfigUpdateResult.getAdded()).isNotEmpty();
     assertThat(cvConfigUpdateResult.getUpdated()).isEmpty();
@@ -150,9 +152,9 @@ public class StackdriverMetricHealthSourceSpecTest {
             .build();
     stackdriverMetricHealthSourceSpec.setMetricDefinitions(Arrays.asList(metricDefinition));
 
-    HealthSource.CVConfigUpdateResult cvConfigUpdateResult =
-        stackdriverMetricHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier,
-            envIdentifier, serviceIdentifier, identifier, name, Collections.emptyList(), null);
+    HealthSource.CVConfigUpdateResult cvConfigUpdateResult = stackdriverMetricHealthSourceSpec.getCVConfigUpdateResult(
+        accountId, orgIdentifier, projectIdentifier, envIdentifier, serviceIdentifier, monitoredServiceIdentifier,
+        identifier, name, Collections.emptyList(), null);
     assertThat(cvConfigUpdateResult).isNotNull();
     assertThat(cvConfigUpdateResult.getAdded()).isNotEmpty();
     assertThat(cvConfigUpdateResult.getUpdated()).isEmpty();

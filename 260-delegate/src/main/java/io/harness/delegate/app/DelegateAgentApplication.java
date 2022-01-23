@@ -13,6 +13,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 import io.harness.delegate.app.modules.DelegateAgentModule;
+import io.harness.delegate.app.resource.HealthResource;
 import io.harness.delegate.configuration.DelegateConfiguration;
 import io.harness.delegate.service.DelegateAgentService;
 import io.harness.event.client.EventPublisher;
@@ -86,13 +87,13 @@ public class DelegateAgentApplication extends Application<DelegateAgentConfig> {
     addShutdownHook(injector);
 
     registerHealthChecks(environment, injector);
-
+    registerResources(environment, injector);
     injector.getInstance(PingPongClient.class).startAsync();
 
     log.info("Starting Delegate");
     log.info("Process: {}", ManagementFactory.getRuntimeMXBean().getName());
 
-    injector.getInstance(DelegateAgentService.class).run(false);
+    injector.getInstance(DelegateAgentService.class).run(false, true);
   }
 
   @Override
@@ -148,5 +149,9 @@ public class DelegateAgentApplication extends Application<DelegateAgentConfig> {
 
     healthService.registerMonitor(injector.getInstance(HealthMonitor.class));
     environment.healthChecks().register("DelegateAgentApp", healthService);
+  }
+
+  private void registerResources(final Environment environment, final Injector injector) {
+    environment.jersey().register(injector.getInstance(HealthResource.class));
   }
 }

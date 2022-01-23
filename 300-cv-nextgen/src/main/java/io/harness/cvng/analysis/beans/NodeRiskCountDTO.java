@@ -7,8 +7,10 @@
 
 package io.harness.cvng.analysis.beans;
 
-import java.util.Map;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.util.List;
 import lombok.Builder;
+import lombok.Singular;
 import lombok.Value;
 
 @Value
@@ -16,5 +18,21 @@ import lombok.Value;
 public class NodeRiskCountDTO {
   private Integer totalNodeCount;
   private Integer anomalousNodeCount;
-  private Map<Risk, Integer> nodeCountByRiskStatusMap;
+  @Singular private List<RiskCount> riskCounts;
+
+  @Value
+  @Builder
+  public static class RiskCount {
+    Risk risk;
+    Integer count;
+
+    @JsonIgnore
+    public Risk getNodeRisk() {
+      return risk;
+    }
+
+    public String getDisplayName() {
+      return risk.getDisplayName();
+    }
+  }
 }

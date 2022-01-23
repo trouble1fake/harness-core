@@ -26,14 +26,14 @@ import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.executions.node.NodeExecutionUpdateFailedException;
 import io.harness.engine.interrupts.InterruptService;
 import io.harness.engine.pms.commons.events.PmsEventSender;
+import io.harness.engine.utils.PmsLevelUtils;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.NodeExecution.NodeExecutionBuilder;
+import io.harness.plan.PlanNode;
 import io.harness.pms.contracts.ambiance.Ambiance;
-import io.harness.pms.contracts.ambiance.Level;
 import io.harness.pms.contracts.execution.ExecutionMode;
 import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.facilitators.FacilitatorResponseProto;
-import io.harness.pms.contracts.plan.PlanNodeProto;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.utils.NodeProjectionUtils;
 import io.harness.pms.timeout.AbsoluteSdkTimeoutTrackerParameters;
@@ -67,24 +67,25 @@ public class NodeStartHelperTest extends OrchestrationTestBase {
     String planExecutionId = generateUuid();
     String nodeExecutionId = generateUuid();
     String planId = generateUuid();
+
+    PlanNode planNode = PlanNode.builder()
+                            .uuid(generateUuid())
+                            .identifier("DUMMY")
+                            .serviceName("CD")
+                            .stepType(StepType.newBuilder().setType("DUMMY_TYPE").build())
+                            .build();
+
     Ambiance ambiance = Ambiance.newBuilder()
                             .setPlanExecutionId(planExecutionId)
                             .setPlanId(planId)
-                            .addLevels(Level.newBuilder()
-                                           .setRuntimeId(nodeExecutionId)
-                                           .setStepType(StepType.newBuilder().setType("DUMMY_TYPE").build())
-                                           .build())
+                            .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecutionId, planNode))
                             .build();
-
     NodeExecution nodeExecution = NodeExecution.builder()
                                       .uuid(nodeExecutionId)
                                       .ambiance(ambiance)
                                       .status(Status.DISCONTINUING)
                                       .mode(ExecutionMode.TASK)
-                                      .node(PlanNodeProto.newBuilder()
-                                                .setUuid(generateUuid())
-                                                .setStepType(StepType.newBuilder().setType("DUMMY_TYPE").build())
-                                                .build())
+                                      .planNode(planNode)
                                       .startTs(System.currentTimeMillis())
                                       .build();
 
@@ -113,31 +114,33 @@ public class NodeStartHelperTest extends OrchestrationTestBase {
     String planExecutionId = generateUuid();
     String nodeExecutionId = generateUuid();
     String planId = generateUuid();
+
+    PlanNode planNode = PlanNode.builder()
+                            .uuid(generateUuid())
+                            .identifier("DUMMY")
+                            .serviceName("CD")
+                            .stepType(StepType.newBuilder().setType("DUMMY_TYPE").build())
+                            .timeoutObtainment(TimeoutObtainment.newBuilder()
+                                                   .setDimension(AbsoluteTimeoutTrackerFactory.DIMENSION)
+                                                   .setParameters(ByteString.copyFrom(kryoSerializer.asBytes(
+                                                       AbsoluteSdkTimeoutTrackerParameters.builder()
+                                                           .timeout(ParameterField.createValueField("30m"))
+                                                           .build())))
+                                                   .build())
+                            .build();
+
     Ambiance ambiance = Ambiance.newBuilder()
                             .setPlanExecutionId(planExecutionId)
                             .setPlanId(planId)
-                            .addLevels(Level.newBuilder()
-                                           .setRuntimeId(nodeExecutionId)
-                                           .setStepType(StepType.newBuilder().setType("DUMMY_TYPE").build())
-                                           .build())
+                            .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecutionId, planNode))
                             .build();
 
-    NodeExecutionBuilder builder =
-        NodeExecution.builder()
-            .uuid(nodeExecutionId)
-            .ambiance(ambiance)
-            .mode(ExecutionMode.TASK)
-            .node(PlanNodeProto.newBuilder()
-                      .setUuid(generateUuid())
-                      .setStepType(StepType.newBuilder().setType("DUMMY_TYPE").build())
-                      .addTimeoutObtainments(TimeoutObtainment.newBuilder()
-                                                 .setDimension(AbsoluteTimeoutTrackerFactory.DIMENSION)
-                                                 .setParameters(ByteString.copyFrom(kryoSerializer.asBytes(
-                                                     AbsoluteSdkTimeoutTrackerParameters.builder()
-                                                         .timeout(ParameterField.createValueField("30m"))
-                                                         .build()))))
-                      .build())
-            .startTs(System.currentTimeMillis());
+    NodeExecutionBuilder builder = NodeExecution.builder()
+                                       .uuid(nodeExecutionId)
+                                       .ambiance(ambiance)
+                                       .mode(ExecutionMode.TASK)
+                                       .planNode(planNode)
+                                       .startTs(System.currentTimeMillis());
 
     when(interruptService.checkInterruptsPreInvocation(planExecutionId, nodeExecutionId))
         .thenReturn(ExecutionCheck.builder().proceed(true).build());

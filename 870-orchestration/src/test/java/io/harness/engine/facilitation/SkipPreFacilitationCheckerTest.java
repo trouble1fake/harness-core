@@ -25,11 +25,11 @@ import io.harness.engine.OrchestrationEngine;
 import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.exception.InvalidRequestException;
 import io.harness.execution.NodeExecution;
+import io.harness.plan.PlanNode;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.ExecutionMode;
 import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.execution.skip.SkipInfo;
-import io.harness.pms.contracts.plan.PlanNodeProto;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.contracts.steps.io.StepResponseProto;
@@ -60,11 +60,12 @@ public class SkipPreFacilitationCheckerTest extends OrchestrationTestBase {
             .ambiance(Ambiance.newBuilder().setPlanExecutionId(generateUuid()).build())
             .status(Status.QUEUED)
             .mode(ExecutionMode.TASK)
-            .node(PlanNodeProto.newBuilder()
-                      .setUuid(generateUuid())
-                      .setStepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                      .setSkipCondition(skipCondition)
-                      .build())
+            .planNode(PlanNode.builder()
+                          .uuid(generateUuid())
+                          .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+                          .skipCondition(skipCondition)
+                          .serviceName("CD")
+                          .build())
             .startTs(System.currentTimeMillis())
             .build();
     nodeExecutionService.save(nodeExecution);
@@ -88,11 +89,12 @@ public class SkipPreFacilitationCheckerTest extends OrchestrationTestBase {
             .ambiance(ambiance)
             .status(Status.QUEUED)
             .mode(ExecutionMode.TASK)
-            .node(PlanNodeProto.newBuilder()
-                      .setUuid(generateUuid())
-                      .setStepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                      .setSkipCondition(skipCondition)
-                      .build())
+            .planNode(PlanNode.builder()
+                          .uuid(generateUuid())
+                          .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+                          .skipCondition(skipCondition)
+                          .serviceName("CD")
+                          .build())
             .startTs(System.currentTimeMillis())
             .build();
     nodeExecutionService.save(nodeExecution);
@@ -120,11 +122,12 @@ public class SkipPreFacilitationCheckerTest extends OrchestrationTestBase {
             .ambiance(Ambiance.newBuilder().setPlanExecutionId(generateUuid()).build())
             .status(Status.QUEUED)
             .mode(ExecutionMode.TASK)
-            .node(PlanNodeProto.newBuilder()
-                      .setUuid(generateUuid())
-                      .setStepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                      .setSkipCondition(skipCondition)
-                      .build())
+            .planNode(PlanNode.builder()
+                          .uuid(generateUuid())
+                          .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+                          .skipCondition(skipCondition)
+                          .serviceName("CD")
+                          .build())
             .startTs(System.currentTimeMillis())
             .build();
     nodeExecutionService.save(nodeExecution);
