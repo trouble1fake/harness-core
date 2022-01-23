@@ -26,7 +26,6 @@ import io.harness.persistence.UuidAccess;
 import io.harness.plan.IdentityPlanNode;
 import io.harness.plan.Node;
 import io.harness.plan.NodeType;
-import io.harness.plan.PlanNode;
 import io.harness.pms.contracts.advisers.AdviserResponse;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.ExecutableResponse;
@@ -35,10 +34,9 @@ import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.execution.failure.FailureInfo;
 import io.harness.pms.contracts.execution.run.NodeRunInfo;
 import io.harness.pms.contracts.execution.skip.SkipInfo;
-import io.harness.pms.contracts.plan.PlanNodeProto;
 import io.harness.pms.data.OrchestrationMap;
 import io.harness.pms.data.stepparameters.PmsStepParameters;
-import io.harness.pms.sdk.core.steps.io.StepParameters;
+import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.serializer.recaster.RecastOrchestrationUtils;
 import io.harness.pms.utils.OrchestrationMapBackwardCompatibilityUtils;
 import io.harness.timeout.TimeoutDetails;
@@ -82,7 +80,6 @@ public class NodeExecution implements PersistentEntity, UuidAccess, PmsNodeExecu
   // Immutable
   @Wither @Id @org.mongodb.morphia.annotations.Id String uuid;
   @NotNull Ambiance ambiance;
-  @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE) @NotNull @Deprecated PlanNodeProto node;
   @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE) Node planNode;
   @NotNull ExecutionMode mode;
   @Wither @FdIndex @CreatedDate Long createdAt;
@@ -111,7 +108,7 @@ public class NodeExecution implements PersistentEntity, UuidAccess, PmsNodeExecu
   @Wither @Version Long version;
 
   @Singular List<ExecutableResponse> executableResponses;
-  @Singular private List<InterruptEffect> interruptHistories;
+  @Singular List<InterruptEffect> interruptHistories;
   FailureInfo failureInfo;
   SkipInfo skipInfo;
   NodeRunInfo nodeRunInfo;
@@ -133,6 +130,9 @@ public class NodeExecution implements PersistentEntity, UuidAccess, PmsNodeExecu
   List<String> adviserTimeoutInstanceIds;
   TimeoutDetails adviserTimeoutDetails;
 
+  // If this is a retry node then this field is populated
+  String originalNodeExecutionId;
+
   public ExecutableResponse obtainLatestExecutableResponse() {
     if (isEmpty(executableResponses)) {
       return null;
@@ -142,12 +142,12 @@ public class NodeExecution implements PersistentEntity, UuidAccess, PmsNodeExecu
 
   @Override
   public String getNodeId() {
-    return getNode().getUuid();
+    return AmbianceUtils.obtainCurrentSetupId(ambiance);
   }
 
   @Override
   public NodeType getNodeType() {
-    return getNode().getNodeType();
+    return NodeType.valueOf(AmbianceUtils.obtainNodeType(ambiance));
   }
 
   @UtilityClass
@@ -156,55 +156,19 @@ public class NodeExecution implements PersistentEntity, UuidAccess, PmsNodeExecu
     public static final String planExecutionId = NodeExecutionKeys.ambiance + "."
         + "planExecutionId";
 
-    public static final String stepCategory = NodeExecutionKeys.node + "."
-        + "stepType"
-        + "."
-        + "stepCategory";
-
     public static final String planNodeId = NodeExecutionKeys.planNode + "."
-        + "uuid";
-
-    public static final String nodeId = NodeExecutionKeys.node + "."
         + "uuid";
 
     public static final String planNodeIdentifier = NodeExecutionKeys.planNode + "."
         + "identifier";
+
     public static final String planNodeStepCategory = NodeExecutionKeys.planNode + "."
         + "stepType"
         + "."
         + "stepCategory";
 
-    public static final String IdentityNodeStepCategory = NodeExecutionKeys.planNode + "."
-        + "originalStepType"
-        + "."
-        + "stepCategory";
-
-    public static final String nodeIdentifier = NodeExecutionKeys.node + "."
-        + "identifier";
     public static final String stageFqn = NodeExecutionKeys.planNode + "."
         + "stageFqn";
-  }
-
-  public static class NodeExecutionBuilder {
-    public NodeExecutionBuilder resolvedStepParameters(StepParameters stepParameters) {
-      this.resolvedStepParameters = RecastOrchestrationUtils.toMap(stepParameters);
-      return this;
-    }
-
-    public NodeExecutionBuilder resolvedStepParameters(String jsonString) {
-      this.resolvedStepParameters = RecastOrchestrationUtils.fromJson(jsonString);
-      return this;
-    }
-
-    public NodeExecutionBuilder resolvedStepInputs(String jsonString) {
-      this.resolvedStepInputs = RecastOrchestrationUtils.fromJson(jsonString);
-      return this;
-    }
-
-    public NodeExecutionBuilder node(PlanNodeProto planNodeProto) {
-      this.planNode = PlanNode.fromPlanNodeProto(planNodeProto);
-      return this;
-    }
   }
 
   public static List<MongoIndex> mongoIndexes() {
@@ -254,16 +218,6 @@ public class NodeExecution implements PersistentEntity, UuidAccess, PmsNodeExecu
                  .field(NodeExecutionKeys.oldRetry)
                  .build())
         .add(CompoundMongoIndex.builder()
-                 .name("planExecutionId_step_category_idx")
-                 .field(NodeExecutionKeys.planExecutionId)
-                 .field(NodeExecutionKeys.stepCategory)
-                 .build())
-        .add(CompoundMongoIndex.builder()
-                 .name("planExecutionId_nodeIdentifier_idx")
-                 .field(NodeExecutionKeys.planExecutionId)
-                 .field(NodeExecutionKeys.nodeIdentifier)
-                 .build())
-        .add(CompoundMongoIndex.builder()
                  .name("planExecutionId_stepCategory_planNodeIdentifier_idx")
                  .field(NodeExecutionKeys.planExecutionId)
                  .field(NodeExecutionKeys.planNodeStepCategory)
@@ -279,14 +233,15 @@ public class NodeExecution implements PersistentEntity, UuidAccess, PmsNodeExecu
   }
 
   public ByteString getResolvedStepParametersBytes() {
-    if (this.getNode().getNodeType().equals(NodeType.IDENTITY_PLAN_NODE)) {
-      IdentityStepParameters build =
-          IdentityStepParameters.builder()
-              .originalNodeExecutionId(((IdentityPlanNode) this.getNode()).getOriginalNodeExecutionId())
-              .build();
+    if (this.getNodeType().equals(NodeType.IDENTITY_PLAN_NODE)) {
+      String originalExId = originalNodeExecutionId;
+      if (originalExId == null) {
+        originalExId = ((IdentityPlanNode) this.getNode()).getOriginalNodeExecutionId();
+      }
+      // TODO: Remove this after one month
+      IdentityStepParameters build = IdentityStepParameters.builder().originalNodeExecutionId(originalExId).build();
       return ByteString.copyFromUtf8(emptyIfNull(RecastOrchestrationUtils.toJson(build)));
     }
-
     String resolvedStepParams = RecastOrchestrationUtils.toJson(this.getResolvedStepParameters());
     return ByteString.copyFromUtf8(emptyIfNull(resolvedStepParams));
   }
@@ -304,9 +259,6 @@ public class NodeExecution implements PersistentEntity, UuidAccess, PmsNodeExecu
   }
 
   public <T extends Node> T getNode() {
-    if (planNode != null) {
-      return (T) planNode;
-    }
-    return (T) PlanNode.fromPlanNodeProto(node);
+    return (T) planNode;
   }
 }

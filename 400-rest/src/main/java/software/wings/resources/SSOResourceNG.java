@@ -8,6 +8,8 @@
 package software.wings.resources;
 
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+import static io.harness.expression.SecretString.SECRET_MASK;
 
 import static software.wings.security.PermissionAttribute.PermissionType.LOGGED_IN;
 
@@ -15,10 +17,15 @@ import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
+import io.harness.beans.EncryptedData;
+import io.harness.beans.SecretManagerConfig;
+import io.harness.beans.SecretText;
 import io.harness.eraro.ErrorCode;
+import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
 import io.harness.ng.core.account.AuthenticationMechanism;
 import io.harness.rest.RestResponse;
+import io.harness.secretmanagers.SecretManagerConfigService;
 import io.harness.security.annotations.NextGenManagerAuth;
 
 import software.wings.beans.sso.OauthSettings;
@@ -28,9 +35,11 @@ import software.wings.security.authentication.LoginTypeResponse.LoginTypeRespons
 import software.wings.security.authentication.SSOConfig;
 import software.wings.security.saml.SamlClientService;
 import software.wings.service.intfc.SSOService;
+import software.wings.service.intfc.security.SecretManager;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
 import java.io.InputStream;
@@ -63,6 +72,10 @@ public class SSOResourceNG {
     this.ssoService = ssoService;
   }
   @Inject private SamlClientService samlClientService;
+  @Inject private SecretManagerConfigService secretManagerConfigService;
+  @Inject private SecretManager secretManager;
+
+  static final String CLIENT_SECRET_NAME_PREFIX = "ClientSecret-NamePrefix-";
 
   @GET
   @Path("get-access-management")
@@ -112,9 +125,10 @@ public class SSOResourceNG {
       @FormDataParam("entityIdentifier") String entityIdentifier,
       @FormDataParam("samlProviderType") String samlProviderType, @FormDataParam("clientId") String clientId,
       @FormDataParam("clientSecret") String clientSecret) {
+    final String clientSecretRef = getCGSecretManagerRefForClientSecret(accountId, true, clientId, clientSecret);
     return new RestResponse<>(ssoService.uploadSamlConfiguration(accountId, uploadedInputStream, displayName,
         groupMembershipAttr, authorizationEnabled, logoutUrl, entityIdentifier, samlProviderType, clientId,
-        isEmpty(clientSecret) ? null : clientSecret.toCharArray()));
+        isEmpty(clientSecretRef) ? null : clientSecretRef.toCharArray()));
   }
 
   @PUT
@@ -129,9 +143,10 @@ public class SSOResourceNG {
       @FormDataParam("entityIdentifier") String entityIdentifier,
       @FormDataParam("samlProviderType") String samlProviderType, @FormDataParam("clientId") String clientId,
       @FormDataParam("clientSecret") String clientSecret) {
+    final String clientSecretRef = getCGSecretManagerRefForClientSecret(accountId, false, clientId, clientSecret);
     return new RestResponse<>(ssoService.updateSamlConfiguration(accountId, uploadedInputStream, displayName,
         groupMembershipAttr, authorizationEnabled, logoutUrl, entityIdentifier, samlProviderType, clientId,
-        isEmpty(clientSecret) ? null : clientSecret.toCharArray()));
+        isEmpty(clientSecretRef) ? null : clientSecretRef.toCharArray()));
   }
 
   @DELETE
@@ -153,5 +168,54 @@ public class SSOResourceNG {
     } catch (Exception e) {
       throw new WingsException(ErrorCode.INVALID_SAML_CONFIGURATION);
     }
+  }
+
+  @VisibleForTesting
+  String getCGSecretManagerRefForClientSecret(
+      final String accountId, final boolean isCreateCall, final String clientId, final String clientSecret) {
+    final String validationErrorMsg = "Both clientId and clientSecret needs to be provided together for SAML setting";
+    if (isCreateCall) {
+      if (isNotEmpty(clientId) && isEmpty(clientSecret) || isEmpty(clientId) && isNotEmpty(clientSecret)) {
+        throw new InvalidRequestException(validationErrorMsg, WingsException.USER);
+      }
+    }
+    if (isEmpty(clientSecret)) {
+      return null;
+    }
+    if (!isCreateCall && isNotEmpty(clientId) && SECRET_MASK.equals(clientSecret)) {
+      return clientSecret;
+    } else if (!isCreateCall && isEmpty(clientId) && isNotEmpty(clientSecret)) {
+      throw new InvalidRequestException(validationErrorMsg, WingsException.USER);
+    }
+    return handleSecretRefCreateOrUpdate(accountId, clientSecret, isCreateCall);
+  }
+
+  private String handleSecretRefCreateOrUpdate(
+      final String accountId, final String clientSecret, final boolean isCreateCall) {
+    SecretManagerConfig secretManagerConfig = secretManagerConfigService.getDefaultSecretManager(accountId);
+    final String secretName = CLIENT_SECRET_NAME_PREFIX + accountId;
+    EncryptedData secretByNameData = secretManager.getSecretByName(accountId, secretName);
+    String cgSecretRefId = null;
+    if (null != secretByNameData) {
+      cgSecretRefId = secretByNameData.getUuid();
+    }
+    final SecretText secretText =
+        buildSecretTextForClientSecret(clientSecret, secretName, secretManagerConfig.getUuid());
+    if (!isCreateCall || isNotEmpty(cgSecretRefId)) {
+      secretManager.updateSecretText(accountId, cgSecretRefId, secretText, true);
+      return cgSecretRefId;
+    } else {
+      return secretManager.saveSecretText(accountId, secretText, true);
+    }
+  }
+
+  private SecretText buildSecretTextForClientSecret(
+      final String clientSecret, final String secretName, final String managerConfigUuid) {
+    SecretText secretText = new SecretText();
+    secretText.setValue(clientSecret);
+    secretText.setName(secretName);
+    secretText.setScopedToAccount(true);
+    secretText.setKmsId(managerConfigUuid);
+    return secretText;
   }
 }

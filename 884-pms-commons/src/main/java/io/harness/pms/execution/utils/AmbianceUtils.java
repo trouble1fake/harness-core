@@ -82,7 +82,12 @@ public class AmbianceUtils {
 
   public static String obtainCurrentSetupId(Ambiance ambiance) {
     Level level = obtainCurrentLevel(ambiance);
-    return level == null || isEmpty(level.getRuntimeId()) ? null : level.getSetupId();
+    return level == null || isEmpty(level.getSetupId()) ? null : level.getSetupId();
+  }
+
+  public static String obtainNodeType(Ambiance ambiance) {
+    Level level = obtainCurrentLevel(ambiance);
+    return level == null || isEmpty(level.getNodeType()) ? null : level.getNodeType();
   }
 
   public static Level obtainCurrentLevel(Ambiance ambiance) {

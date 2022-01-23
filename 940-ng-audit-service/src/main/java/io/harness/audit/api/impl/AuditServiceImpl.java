@@ -8,6 +8,7 @@
 package io.harness.audit.api.impl;
 
 import static io.harness.annotations.dev.HarnessTeam.PL;
+import static io.harness.audit.ResourceTypeConstants.ROLE_ASSIGNMENT;
 import static io.harness.audit.mapper.AuditEventMapper.fromDTO;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.springdata.TransactionUtils.DEFAULT_TRANSACTION_RETRY_POLICY;
@@ -169,6 +170,8 @@ public class AuditServiceImpl implements AuditService {
     if (isNotEmpty(auditFilterPropertiesDTO.getPrincipals())) {
       criteriaList.add(getPrincipalCriteria(auditFilterPropertiesDTO.getPrincipals()));
     }
+    // Temporary filter, to hide audits of resource type ROLE_ASSIGNMENT
+    criteriaList.add(Criteria.where(AuditEventKeys.RESOURCE_TYPE_KEY).ne(ROLE_ASSIGNMENT));
     criteriaList.add(
         Criteria.where(AuditEventKeys.timestamp)
             .gte(Instant.ofEpochMilli(

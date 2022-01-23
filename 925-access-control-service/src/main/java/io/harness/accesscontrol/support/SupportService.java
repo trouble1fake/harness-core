@@ -10,11 +10,14 @@ package io.harness.accesscontrol.support;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 
+import java.util.Optional;
 import java.util.Set;
+import org.hibernate.validator.constraints.NotEmpty;
 
 @OwnedBy(HarnessTeam.PL)
 public interface SupportService {
-  SupportPreference fetchSupportPreference(String accountIdentifier);
-  SupportPreference syncSupportPreferenceFromRemote(String accountIdentifier);
+  SupportPreference fetchSupportPreference(@NotEmpty String accountIdentifier);
+  SupportPreference syncSupportPreferenceFromRemote(@NotEmpty String accountIdentifier);
+  Optional<SupportPreference> deleteSupportPreferenceIfPresent(@NotEmpty String accountIdentifier);
   Set<String> fetchSupportUsers();
 }

@@ -18,6 +18,7 @@ import io.harness.engine.OrchestrationEngine;
 import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.executions.plan.PlanService;
 import io.harness.engine.pms.resume.EngineResumeCallback;
+import io.harness.engine.utils.OrchestrationUtils;
 import io.harness.engine.utils.PmsLevelUtils;
 import io.harness.exception.InvalidRequestException;
 import io.harness.execution.NodeExecution;
@@ -58,10 +59,7 @@ public class SpawnChildRequestProcessor implements SdkResponseProcessor {
     log.info("For Child Executable starting Child NodeExecution with id: {}", childNodeExecution.getUuid());
 
     // Attach a Callback to the parent for the child
-    EngineResumeCallback callback = EngineResumeCallback.builder()
-                                        .nodeExecutionId(SdkResponseEventUtils.getNodeExecutionId(event))
-                                        .ambiance(event.getAmbiance())
-                                        .build();
+    EngineResumeCallback callback = EngineResumeCallback.builder().ambiance(event.getAmbiance()).build();
     waitNotifyEngine.waitForAllOn(publisherName, callback, childNodeExecution.getUuid());
 
     // Update the parent with executable response
@@ -92,6 +90,7 @@ public class SpawnChildRequestProcessor implements SdkResponseProcessor {
                                          .notifyId(childInstanceId)
                                          .parentId(nodeExecution.getUuid())
                                          .startTs(AmbianceUtils.getCurrentLevelStartTs(clonedAmbiance))
+                                         .originalNodeExecutionId(OrchestrationUtils.getOriginalNodeExecutionId(node))
                                          .build());
   }
 

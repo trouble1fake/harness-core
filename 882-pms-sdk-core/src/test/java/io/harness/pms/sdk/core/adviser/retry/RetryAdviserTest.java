@@ -8,6 +8,7 @@
 package io.harness.pms.sdk.core.adviser.retry;
 
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
+import static io.harness.eraro.ErrorCode.GENERAL_ERROR;
 import static io.harness.rule.OwnerRule.PRASHANT;
 import static io.harness.rule.OwnerRule.SAHIL;
 
@@ -26,6 +27,7 @@ import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.ambiance.Level;
 import io.harness.pms.contracts.commons.RepairActionCode;
 import io.harness.pms.contracts.execution.Status;
+import io.harness.pms.contracts.execution.failure.FailureData;
 import io.harness.pms.contracts.execution.failure.FailureInfo;
 import io.harness.pms.contracts.execution.failure.FailureType;
 import io.harness.pms.contracts.steps.StepCategory;
@@ -41,6 +43,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.protobuf.Duration;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import org.assertj.core.util.Lists;
@@ -261,6 +264,30 @@ public class RetryAdviserTest extends PmsSdkCoreTestBase {
                                      .build();
     canAdvise = retryAdviser.canAdvise(appFailEvent);
     assertThat(canAdvise).isFalse();
+  }
+
+  @Test
+  @Owner(developers = PRASHANT)
+  @Category(UnitTests.class)
+  public void shouldTestFetAllFailureTypes() {
+    AdvisingEvent advisingEvent =
+        AdvisingEvent.builder()
+            .ambiance(ambiance)
+            .toStatus(Status.FAILED)
+            .adviserParameters(kryoSerializer.asBytes(getRetryParams(RepairActionCode.IGNORE)))
+            .failureInfo(FailureInfo.newBuilder()
+                             .addAllFailureTypes(Collections.singletonList(FailureType.APPLICATION_FAILURE))
+                             .addFailureData(FailureData.newBuilder()
+                                                 .addFailureTypes(FailureType.TIMEOUT_FAILURE)
+                                                 .setLevel(io.harness.eraro.Level.ERROR.name())
+                                                 .setCode(GENERAL_ERROR.name())
+                                                 .setMessage("Some Exception Message")
+                                                 .build())
+                             .build())
+            .build();
+    List<FailureType> allFailureTypes = retryAdviser.getAllFailureTypes(advisingEvent);
+    assertThat(allFailureTypes).hasSize(2);
+    assertThat(allFailureTypes).containsExactlyInAnyOrder(FailureType.APPLICATION_FAILURE, FailureType.TIMEOUT_FAILURE);
   }
 
   private static io.harness.pms.sdk.core.adviser.retry.RetryAdviserParameters getRetryParams(

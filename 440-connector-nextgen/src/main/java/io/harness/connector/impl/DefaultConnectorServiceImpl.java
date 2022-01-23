@@ -527,6 +527,23 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
     return ConnectorDTO.builder().connectorInfo(connectorInfoDTO).build();
   }
 
+  @Override
+  public ConnectorResponseDTO updateGitFilePath(
+      ConnectorDTO connectorDTO, String accountIdentifier, String newFilePath) {
+    Criteria criteria = Criteria.where(ConnectorKeys.accountIdentifier)
+                            .is(accountIdentifier)
+                            .and(ConnectorKeys.orgIdentifier)
+                            .is(connectorDTO.getConnectorInfo().getOrgIdentifier())
+                            .and(ConnectorKeys.projectIdentifier)
+                            .is(connectorDTO.getConnectorInfo().getProjectIdentifier())
+                            .and(ConnectorKeys.identifier)
+                            .is(connectorDTO.getConnectorInfo().getIdentifier());
+
+    Update update = new Update().set(ConnectorKeys.filePath, newFilePath);
+    return getResponse(accountIdentifier, connectorDTO.getConnectorInfo().getOrgIdentifier(),
+        connectorDTO.getConnectorInfo().getProjectIdentifier(), connectorRepository.update(criteria, update));
+  }
+
   private void deleteTheExistingReferences(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, String identifier) {
     GitEntityInfo oldGitEntityInfo = GitContextHelper.getGitEntityInfo();
@@ -578,6 +595,11 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
   @Override
   public boolean delete(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, String connectorIdentifier) {
+    return delete(accountIdentifier, orgIdentifier, projectIdentifier, connectorIdentifier, ChangeType.DELETE);
+  }
+
+  public boolean delete(String accountIdentifier, String orgIdentifier, String projectIdentifier,
+      String connectorIdentifier, ChangeType changeType) {
     Optional<Connector> existingConnectorOptional =
         getInternal(accountIdentifier, orgIdentifier, projectIdentifier, connectorIdentifier);
     if (!existingConnectorOptional.isPresent()) {
@@ -597,7 +619,7 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
               new ConnectorDeleteEvent(accountIdentifier, connectorMapper.writeDTO(existingConnector).getConnector()));
     }
 
-    connectorRepository.save(existingConnector, null, ChangeType.DELETE, supplier);
+    connectorRepository.save(existingConnector, null, changeType, supplier);
 
     return true;
   }
@@ -774,11 +796,10 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
       }
       return validationFailureBuilder.build();
     } catch (WingsException wingsException) {
-      log.error("An error occurred while validating the Connector ", wingsException);
-      // handle flows which are registered to error handling framework
+      // handle flows which are registered to error handlng framework
       throw wingsException;
     } catch (Exception ex) {
-      log.error("An error occurred while validating the Connector {}",
+      log.info("Encountered Error while validating the connector {}",
           String.format(CONNECTOR_STRING, connectorInfo.getIdentifier(), accountIdentifier,
               connectorInfo.getOrgIdentifier(), connectorInfo.getProjectIdentifier()),
           ex);

@@ -22,6 +22,7 @@ public class TransactionMetricInfo {
   private String connectorName;
   private DataSourceType dataSourceType;
   private SortedSet<DeploymentTimeSeriesAnalysisDTO.HostData> nodes;
+  private NodeRiskCountDTO nodeRiskCountDTO;
 
   @Value
   @Builder
