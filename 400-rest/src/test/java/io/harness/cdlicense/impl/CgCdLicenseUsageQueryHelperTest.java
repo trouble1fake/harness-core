@@ -11,6 +11,8 @@ import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import io.harness.CategoryTest;
@@ -89,6 +91,7 @@ public class CgCdLicenseUsageQueryHelperTest extends CategoryTest {
         () -> cgCdLicenseUsageQueryHelper.fetchDistinctSvcIdUsedInDeployments(accountIdentifier, timePeriod))
         .isInstanceOf(CgLicenseUsageException.class)
         .hasMessageContaining("MAX RETRY FAILURE : Failed to fetch serviceIds within interval");
+    verify(preparedStatement, times(4)).executeQuery();
   }
 
   @Test

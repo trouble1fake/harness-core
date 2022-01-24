@@ -58,6 +58,8 @@ import io.harness.beans.PageRequest;
 import io.harness.beans.PageRequest.PageRequestBuilder;
 import io.harness.beans.PageResponse;
 import io.harness.category.element.UnitTests;
+import io.harness.cdlicense.bean.CgActiveServicesUsageInfo;
+import io.harness.cdlicense.bean.CgServiceUsage;
 import io.harness.cdlicense.impl.CgCdLicenseUsageService;
 import io.harness.cvng.beans.ServiceGuardLimitDTO;
 import io.harness.data.structure.UUIDGenerator;
@@ -247,6 +249,14 @@ public class AccountServiceTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void testGetAccountDetails() {
     when(configuration.getDeploymentClusterName()).thenReturn(CLUSTER_NAME);
+    CgActiveServicesUsageInfo cgActiveServicesUsageInfo =
+        CgActiveServicesUsageInfo.builder()
+            .serviceLicenseConsumed(1)
+            .servicesConsumed(1)
+            .activeServiceUsage(asList(
+                CgServiceUsage.builder().name("svc1").serviceId("svcId").instanceCount(1).licensesUsed(1).build()))
+            .build();
+    when(cgCdLicenseUsageService.getActiveServiceLicenseUsage(anyString())).thenReturn(cgActiveServicesUsageInfo);
     Account account = setUpDataForTestingSetAccountStatusInternal(AccountType.PAID);
     AccountDetails details = accountService.getAccountDetails(account.getUuid());
     assertThat(details.getCluster()).isEqualTo(CLUSTER_NAME);
@@ -254,6 +264,7 @@ public class AccountServiceTest extends WingsBaseTest {
     assertThat(details.getDefaultExperience()).isEqualTo(DefaultExperience.NG);
     assertThat(details.isCreatedFromNG()).isEqualTo(false);
     assertThat(details.getLicenseInfo().getAccountType()).isEqualTo(AccountType.PAID);
+    assertThat(details.getActiveServicesUsageInfo()).isSameAs(cgActiveServicesUsageInfo);
   }
 
   @Test

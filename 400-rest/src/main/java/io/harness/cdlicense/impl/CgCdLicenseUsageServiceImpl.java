@@ -79,9 +79,6 @@ public class CgCdLicenseUsageServiceImpl implements CgCdLicenseUsageService {
   }
 
   private long computeServiceLicenseUsed(long instanceCount) {
-    if (instanceCount == 0) {
-      return 1L;
-    }
-    return (instanceCount + CG_LICENSE_INSTANCE_LIMIT - 1) / CG_LICENSE_INSTANCE_LIMIT;
+    return instanceCount == 0L ? 1L : (instanceCount + CG_LICENSE_INSTANCE_LIMIT - 1) / CG_LICENSE_INSTANCE_LIMIT;
   }
 }

@@ -30,8 +30,8 @@ import lombok.experimental.FieldDefaults;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(NON_NULL)
 public class CgServiceUsage {
-  private String name;
-  private String serviceId;
-  private long licensesUsed;
-  private long instanceCount;
+  String name;
+  String serviceId;
+  long licensesUsed;
+  long instanceCount;
 }

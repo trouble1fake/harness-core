@@ -101,7 +101,7 @@ public class CgCdLicenseUsageQueryHelper {
         fetchStatement.setInt(4, timePeriod);
 
         ResultSet resultSet = fetchStatement.executeQuery();
-        serviceUsageMap = processResultSetToCreateServiceUsageMap(resultSet);
+        serviceUsageMap = fetchServiceUsageDetails(resultSet);
         successfulOperation = true;
       } catch (SQLException exception) {
         if (retry >= MAX_RETRY) {
@@ -116,7 +116,7 @@ public class CgCdLicenseUsageQueryHelper {
     return serviceUsageMap;
   }
 
-  private Map<String, CgServiceUsage> processResultSetToCreateServiceUsageMap(ResultSet resultSet) throws SQLException {
+  private Map<String, CgServiceUsage> fetchServiceUsageDetails(ResultSet resultSet) throws SQLException {
     Map<String, CgServiceUsage> serviceUsageMap = new HashMap<>();
     while (resultSet != null && resultSet.next()) {
       String svcId = resultSet.getString(1);
