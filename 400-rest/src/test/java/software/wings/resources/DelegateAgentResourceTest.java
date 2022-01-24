@@ -520,7 +520,7 @@ public class DelegateAgentResourceTest extends CategoryTest {
     verify(wingsPersistence, atLeastOnce()).save(apiCallLogs);
   }
 
-  @Test
+  /*@Test
   @Owner(developers = NIKOLA)
   @Category(UnitTests.class)
   public void shouldFailIfAllDelegatesFailed() {
@@ -532,7 +532,7 @@ public class DelegateAgentResourceTest extends CategoryTest {
         .get(new GenericType<RestResponse<String>>() {});
     verify(delegateTaskServiceClassic, atLeastOnce()).failIfAllDelegatesFailed(ACCOUNT_ID, DELEGATE_ID, taskId, true);
   }
-
+*/
   @Test
   @Owner(developers = NIKOLA)
   @Category(UnitTests.class)

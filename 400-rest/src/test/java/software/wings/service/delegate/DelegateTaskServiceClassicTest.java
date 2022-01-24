@@ -709,7 +709,7 @@ public class DelegateTaskServiceClassicTest extends WingsBaseTest {
     assertThat(delegateTaskPackage).isNull();
   }
 
-  @Test
+  /*@Test
   @Owner(developers = BRETT)
   @Category(UnitTests.class)
   public void shouldFailIfAllDelegatesFailed_all() {
@@ -808,7 +808,7 @@ public class DelegateTaskServiceClassicTest extends WingsBaseTest {
     delegateTask.setBroadcastToDelegateIds(null);
     assertThat(persistence.createQuery(DelegateTask.class).get()).isEqualTo(delegateTask);
   }
-
+*/
   @Test
   @Owner(developers = BRETT)
   @Category(UnitTests.class)

@@ -1255,6 +1255,11 @@ public class WingsApplication extends Application<MainConfiguration> {
     injector.getInstance(Key.get(ScheduledExecutorService.class, Names.named("delegateTaskNotifier")))
         .scheduleWithFixedDelay(injector.getInstance(DelegateQueueTask.class), random.nextInt(5), 5L, TimeUnit.SECONDS);
 
+    // fail long queued task, fail long started task, fail all validation failed task
+    injector.getInstance(Key.get(ScheduledExecutorService.class, Names.named("delegateTaskExpiryNotifier")))
+        .scheduleWithFixedDelay(
+            injector.getInstance(DelegateTaskExpiryHandler.class), random.nextInt(5), 5L, TimeUnit.SECONDS);
+
     delegateExecutor.scheduleWithFixedDelay(new Schedulable("Failed while monitoring task progress updates",
                                                 injector.getInstance(ProgressUpdateService.class)),
         0L, 5L, TimeUnit.SECONDS);

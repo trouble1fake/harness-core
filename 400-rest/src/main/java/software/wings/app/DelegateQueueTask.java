@@ -97,10 +97,6 @@ public class DelegateQueueTask implements Runnable {
     }
 
     try {
-      if (configurationController.isPrimary()) {
-        markTimedOutTasksAsFailed();
-        markLongQueuedTasksAsFailed();
-      }
       rebroadcastUnassignedTasks();
     } catch (WingsException exception) {
       ExceptionLogger.logProcessedMessages(exception, MANAGER, log);
@@ -109,132 +105,6 @@ public class DelegateQueueTask implements Runnable {
     }
   }
 
-  private static final FindOptions expiryLimit = new FindOptions().limit(100);
-
-  private void markTimedOutTasksAsFailed() {
-    List<Key<DelegateTask>> longRunningTimedOutTaskKeys = persistence.createQuery(DelegateTask.class, excludeAuthority)
-                                                              .filter(DelegateTaskKeys.status, STARTED)
-                                                              .field(DelegateTaskKeys.expiry)
-                                                              .lessThan(currentTimeMillis())
-                                                              .asKeyList(expiryLimit);
-
-    if (!longRunningTimedOutTaskKeys.isEmpty()) {
-      List<String> keyList = longRunningTimedOutTaskKeys.stream().map(key -> key.getId().toString()).collect(toList());
-      log.info("Marking following timed out tasks as failed [{}]", keyList);
-      endTasks(keyList);
-    }
-  }
-
-  private AtomicInteger clustering = new AtomicInteger(1);
-
-  private void markLongQueuedTasksAsFailed() {
-    // Find tasks which have been queued for too long
-    Query<DelegateTask> query = persistence.createQuery(DelegateTask.class, excludeAuthority)
-                                    .field(DelegateTaskKeys.status)
-                                    .in(asList(QUEUED, PARKED, ABORTED))
-                                    .field(DelegateTaskKeys.expiry)
-                                    .lessThan(currentTimeMillis());
-
-    // We usually pick from the top, but if we have full bucket we maybe slowing down
-    // lets randomize a bit to increase the distribution
-    int clusteringValue = clustering.get();
-    if (clusteringValue > 1) {
-      query.field(DelegateTaskKeys.createdAt).mod(clusteringValue, random.nextInt(clusteringValue));
-    }
-
-    List<Key<DelegateTask>> longQueuedTaskKeys = query.asKeyList(expiryLimit);
-    clustering.set(longQueuedTaskKeys.size() == expiryLimit.getLimit() ? Math.min(16, clusteringValue * 2)
-                                                                       : Math.max(1, clusteringValue / 2));
-
-    if (!longQueuedTaskKeys.isEmpty()) {
-      List<String> keyList = longQueuedTaskKeys.stream().map(key -> key.getId().toString()).collect(toList());
-      log.info("Marking following long queued tasks as failed [{}]", keyList);
-      endTasks(keyList);
-    }
-  }
-
-  @VisibleForTesting
-  public void endTasks(List<String> taskIds) {
-    Map<String, DelegateTask> delegateTasks = new HashMap<>();
-    Map<String, String> taskWaitIds = new HashMap<>();
-    List<DelegateTask> tasksToExpire = new ArrayList<>();
-    List<String> taskIdsToExpire = new ArrayList<>();
-    try {
-      List<DelegateTask> tasks = persistence.createQuery(DelegateTask.class, excludeAuthority)
-                                     .field(DelegateTaskKeys.uuid)
-                                     .in(taskIds)
-                                     .asList();
-
-      for (DelegateTask task : tasks) {
-        if (shouldExpireTask(task)) {
-          tasksToExpire.add(task);
-          taskIdsToExpire.add(task.getUuid());
-          delegateMetricsService.recordDelegateTaskMetrics(task, DELEGATE_TASK_EXPIRED);
-        }
-      }
-
-      delegateTasks.putAll(tasksToExpire.stream().collect(toMap(DelegateTask::getUuid, identity())));
-      taskWaitIds.putAll(tasksToExpire.stream()
-                             .filter(task -> isNotEmpty(task.getWaitId()))
-                             .collect(toMap(DelegateTask::getUuid, DelegateTask::getWaitId)));
-    } catch (Exception e1) {
-      log.error("Failed to deserialize {} tasks. Trying individually...", taskIds.size(), e1);
-      for (String taskId : taskIds) {
-        try {
-          DelegateTask task =
-              persistence.createQuery(DelegateTask.class, excludeAuthority).filter(DelegateTaskKeys.uuid, taskId).get();
-          if (shouldExpireTask(task)) {
-            taskIdsToExpire.add(taskId);
-            delegateTasks.put(taskId, task);
-            delegateMetricsService.recordDelegateTaskMetrics(task, DELEGATE_TASK_EXPIRED);
-            if (isNotEmpty(task.getWaitId())) {
-              taskWaitIds.put(taskId, task.getWaitId());
-            }
-          }
-        } catch (Exception e2) {
-          log.error("Could not deserialize task {}. Trying again with only waitId field.", taskId, e2);
-          taskIdsToExpire.add(taskId);
-          try {
-            String waitId = persistence.createQuery(DelegateTask.class, excludeAuthority)
-                                .filter(DelegateTaskKeys.uuid, taskId)
-                                .project(DelegateTaskKeys.waitId, true)
-                                .get()
-                                .getWaitId();
-            if (isNotEmpty(waitId)) {
-              taskWaitIds.put(taskId, waitId);
-            }
-          } catch (Exception e3) {
-            log.error(
-                "Could not deserialize task {} with waitId only, giving up. Task will be deleted but notify not called.",
-                taskId, e3);
-          }
-        }
-      }
-    }
-
-    boolean deleted = persistence.deleteOnServer(
-        persistence.createQuery(DelegateTask.class, excludeAuthority).field(DelegateTaskKeys.uuid).in(taskIdsToExpire));
-
-    if (deleted) {
-      taskIdsToExpire.forEach(taskId -> {
-        if (taskWaitIds.containsKey(taskId)) {
-          String errorMessage = delegateTasks.containsKey(taskId)
-              ? assignDelegateService.getActiveDelegateAssignmentErrorMessage(EXPIRED, delegateTasks.get(taskId))
-              : "Unable to determine proper error as delegate task could not be deserialized.";
-          log.info("Marking task as failed - {}: {}", taskId, errorMessage);
-
-          if (delegateTasks.get(taskId) != null) {
-            delegateTaskService.handleResponse(delegateTasks.get(taskId), null,
-                DelegateTaskResponse.builder()
-                    .accountId(delegateTasks.get(taskId).getAccountId())
-                    .responseCode(DelegateTaskResponse.ResponseCode.FAILED)
-                    .response(ErrorNotifyResponseData.builder().errorMessage(errorMessage).build())
-                    .build());
-          }
-        }
-      });
-    }
-  }
 
   @VisibleForTesting
   protected void rebroadcastUnassignedTasks() {
@@ -317,7 +187,5 @@ public class DelegateQueueTask implements Runnable {
     }
   }
 
-  private boolean shouldExpireTask(DelegateTask task) {
-    return !task.isForceExecute();
-  }
+
 }
