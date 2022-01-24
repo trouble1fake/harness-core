@@ -50,6 +50,7 @@ public class JsonExpansionServiceTest extends CategoryTest {
     doReturn(new NoOpExpansionHandler()).when(expansionHandlerRegistry).obtain("connectorRef");
     doReturn(new NoOpExpansionHandler()).when(expansionHandlerRegistry).obtain("serviceRef");
     doReturn(new NoOpExpansionHandler()).when(expansionHandlerRegistry).obtain("serviceRef");
+    doReturn(new NoOpExpansionHandler()).when(expansionHandlerRegistry).obtain("stage/spec");
     InvalidRequestException invalidRequestException = new InvalidRequestException("Not present");
     when(expansionHandlerRegistry.obtain("fqn")).thenThrow(invalidRequestException);
     doReturn(invalidRequestException).when(exceptionManager).processException(invalidRequestException);
@@ -61,31 +62,43 @@ public class JsonExpansionServiceTest extends CategoryTest {
   public void testExpand() {
     ExpansionRequestProto req1 = ExpansionRequestProto.newBuilder()
                                      .setFqn("fqn/connectorRef")
+                                     .setKey("connectorRef")
                                      .setValue(ByteString.copyFromUtf8("value1"))
                                      .build();
     ExpansionRequestProto req2 = ExpansionRequestProto.newBuilder()
                                      .setFqn("fqn/connectorRef")
+                                     .setKey("connectorRef")
                                      .setValue(ByteString.copyFromUtf8("value2"))
                                      .build();
-    ExpansionRequestBatch requestBatch =
-        ExpansionRequestBatch.newBuilder().addExpansionRequestProto(req1).addExpansionRequestProto(req2).build();
+    ExpansionRequestProto req3 = ExpansionRequestProto.newBuilder()
+                                     .setFqn("fqn/stage/spec")
+                                     .setKey("stage/spec")
+                                     .setValue(ByteString.copyFromUtf8("value2"))
+                                     .build();
+    ExpansionRequestBatch requestBatch = ExpansionRequestBatch.newBuilder()
+                                             .addExpansionRequestProto(req1)
+                                             .addExpansionRequestProto(req2)
+                                             .addExpansionRequestProto(req3)
+                                             .build();
     DummyStreamObserver<ExpansionResponseBatch> responseObserver = new DummyStreamObserver<>();
 
     jsonExpansionService.expand(requestBatch, responseObserver);
     assertThat(responseObserver.getExpansionResponseBatch()).isNotNull();
     List<ExpansionResponseProto> responseProtoList =
         responseObserver.getExpansionResponseBatch().getExpansionResponseProtoList();
-    assertThat(responseProtoList).hasSize(2);
+    assertThat(responseProtoList).hasSize(3);
     assertThat(responseProtoList.get(0).getSuccess()).isTrue();
     assertThat(responseProtoList.get(1).getSuccess()).isTrue();
+    assertThat(responseProtoList.get(2).getSuccess()).isTrue();
 
-    ExpansionRequestProto req3 = ExpansionRequestProto.newBuilder()
+    ExpansionRequestProto req4 = ExpansionRequestProto.newBuilder()
                                      .setFqn("connectorRef/fqn")
+                                     .setKey("fqn")
                                      .setValue(ByteString.copyFromUtf8("value3"))
                                      .build();
 
     ExpansionRequestBatch requestBatch2 =
-        ExpansionRequestBatch.newBuilder().addExpansionRequestProto(req3).addExpansionRequestProto(req1).build();
+        ExpansionRequestBatch.newBuilder().addExpansionRequestProto(req4).addExpansionRequestProto(req1).build();
     DummyStreamObserver<ExpansionResponseBatch> responseObserver2 = new DummyStreamObserver<>();
     jsonExpansionService.expand(requestBatch2, responseObserver2);
     List<ExpansionResponseProto> responseProtoList2 =
