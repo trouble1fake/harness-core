@@ -194,13 +194,14 @@ import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Names;
-import com.sun.istack.internal.NotNull;
 import graphql.GraphQL;
 import graphql.schema.DataFetcher;
 import java.util.Collections;
 import java.util.Set;
 import org.dataloader.MappedBatchLoader;
 import org.hibernate.validator.constraints.NotBlank;
+
+import javax.validation.constraints.NotNull;
 
 /**
  * Created a new module as part of code review comment

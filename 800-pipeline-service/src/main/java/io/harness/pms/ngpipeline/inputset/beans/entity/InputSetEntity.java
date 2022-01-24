@@ -31,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.github.reinert.jjschema.SchemaIgnore;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.Builder;

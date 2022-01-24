@@ -6,6 +6,24 @@
 
 set -x
 
+#java -version
+#
+#echo "Updating java"
+#
+#curl -OL https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jdk_x64_linux_hotspot_11.0.14_9.tar.gz
+#tar -xzf OpenJDK11U-jdk_x64_linux_hotspot_11.0.14_9.tar.gz
+#
+#export JAVA_HOME=/opt/harness/jdk-11.0.14+9
+#export PATH=$JAVA_HOME:$PATH
+#export PATH=$JAVA_HOME/bin:$PATH
+#
+#echo $JAVA_HOME
+#echo $PATH
+#
+#echo "Updated java"
+
+java -version
+
 if [[ -v "{hostname}" ]]; then
    export HOSTNAME=$(hostname)
 fi
@@ -30,7 +48,7 @@ else
     export GC_PARAMS=" -XX:+UseG1GC -XX:InitiatingHeapOccupancyPercent=40 -XX:MaxGCPauseMillis=1000 -Dfile.encoding=UTF-8"
 fi
 
-export JAVA_OPTS="-Xmx${MEMORY} -XX:+HeapDumpOnOutOfMemoryError -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:mygclogfilename.gc $GC_PARAMS $JAVA_ADVANCED_FLAGS"
+export JAVA_OPTS="-Xmx${MEMORY} -XX:+HeapDumpOnOutOfMemoryError -Xloggc:mygclogfilename.gc $GC_PARAMS $JAVA_ADVANCED_FLAGS"
 
 if [[ "${ENABLE_APPDYNAMICS}" == "true" ]]; then
     mkdir /opt/harness/AppServerAgent-1.8-21.11.2.33305 && unzip AppServerAgent-1.8-21.11.2.33305.zip -d /opt/harness/AppServerAgent-1.8-21.11.2.33305
@@ -40,7 +58,7 @@ if [[ "${ENABLE_APPDYNAMICS}" == "true" ]]; then
     echo "Using Appdynamics java agent"
 fi
 
-JAVA_OPTS=$JAVA_OPTS" -Xbootclasspath/p:/opt/harness/alpn-boot-8.1.13.v20181017.jar"
+#JAVA_OPTS=$JAVA_OPTS" -Xbootclasspath/p:/opt/harness/alpn-boot-8.1.13.v20181017.jar"
 
 if [[ "${DEPLOY_MODE}" == "KUBERNETES" || "${DEPLOY_MODE}" == "KUBERNETES_ONPREM" || "${DEPLOY_VERSION}" == "COMMUNITY" ]]; then
     java $JAVA_OPTS -jar $CAPSULE_JAR $COMMAND /opt/harness/config.yml

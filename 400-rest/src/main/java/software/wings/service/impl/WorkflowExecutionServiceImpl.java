@@ -339,7 +339,7 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import com.mongodb.ReadPreference;
-import com.sun.istack.internal.NotNull;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -366,6 +366,7 @@ import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import javax.validation.constraints.NotNull;
 import javax.validation.executable.ValidateOnExecution;
 import lombok.Data;
 import lombok.NoArgsConstructor;
