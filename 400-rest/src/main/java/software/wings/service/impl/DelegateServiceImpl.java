@@ -1474,17 +1474,10 @@ public class DelegateServiceImpl implements DelegateService {
     return "harness/upgrader:latest";
   }
 
-  private String getAccountSecret(final TemplateParameters inquiry, final boolean useNgToken) {
+  private String getAccountSecret(final TemplateParameters inquiry) {
     final Account account = accountService.get(inquiry.getAccountId());
     if (isNotBlank(inquiry.getDelegateTokenName())) {
-      if (useNgToken) {
-        return delegateNgTokenService.getDelegateTokenValue(inquiry.getAccountId(),
-            DelegateEntityOwnerHelper.buildOwner(
-                inquiry.getDelegateOrgIdentifier(), inquiry.getDelegateProjectIdentifier()),
-            inquiry.getDelegateTokenName());
-      } else {
-        return delegateTokenService.getTokenValue(inquiry.getAccountId(), inquiry.getDelegateTokenName());
-      }
+      return delegateTokenService.getTokenValue(inquiry.getAccountId(), inquiry.getDelegateTokenName());
     } else {
       return account.getAccountKey();
     }

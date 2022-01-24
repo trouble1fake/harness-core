@@ -7,24 +7,8 @@
 
 package io.harness.delegate.authenticator;
 
-import static io.harness.annotations.dev.HarnessTeam.DEL;
-import static io.harness.rule.OwnerRule.ANUBHAW;
-import static io.harness.rule.OwnerRule.BRETT;
-import static io.harness.rule.OwnerRule.LUCAS;
-import static io.harness.rule.OwnerRule.MARKO;
-import static io.harness.rule.OwnerRule.UJJAWAL;
-
-import static software.wings.utils.WingsTestConstants.ACCOUNT1_ID;
-import static software.wings.utils.WingsTestConstants.ACCOUNT_ID;
-
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
-
+import com.github.benmanes.caffeine.cache.LoadingCache;
+import com.google.inject.Inject;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
@@ -39,15 +23,6 @@ import io.harness.ff.FeatureFlagService;
 import io.harness.persistence.HPersistence;
 import io.harness.rule.Owner;
 import io.harness.security.TokenGenerator;
-
-import software.wings.WingsBaseTest;
-import software.wings.beans.Service;
-
-import com.github.benmanes.caffeine.cache.LoadingCache;
-import com.google.inject.Inject;
-import java.security.NoSuchAlgorithmException;
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.junit.Before;
@@ -58,6 +33,28 @@ import org.mockito.Mock;
 import org.mongodb.morphia.query.FieldEnd;
 import org.mongodb.morphia.query.MorphiaIterator;
 import org.mongodb.morphia.query.Query;
+import software.wings.WingsBaseTest;
+import software.wings.beans.Service;
+
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import java.security.NoSuchAlgorithmException;
+
+import static io.harness.annotations.dev.HarnessTeam.DEL;
+import static io.harness.rule.OwnerRule.ANUBHAW;
+import static io.harness.rule.OwnerRule.BRETT;
+import static io.harness.rule.OwnerRule.LUCAS;
+import static io.harness.rule.OwnerRule.MARKO;
+import static io.harness.rule.OwnerRule.UJJAWAL;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
+import static software.wings.utils.WingsTestConstants.ACCOUNT1_ID;
+import static software.wings.utils.WingsTestConstants.ACCOUNT_ID;
 
 @OwnedBy(DEL)
 @TargetModule(HarnessModule._420_DELEGATE_SERVICE)
@@ -158,47 +155,6 @@ public class DelegateTokenAuthenticatorImplTest extends WingsBaseTest {
   }
 
   @Test
-  @Owner(developers = LUCAS)
-  @Category(UnitTests.class)
-  public void shouldValidateDelegateToken_FailToDecrypt() {
-    DelegateToken delegateTokenActive = DelegateToken.builder()
-                                            .accountId(ACCOUNT_ID)
-                                            .name("TokenName")
-                                            .value("InvalidTokenValue")
-                                            .status(DelegateTokenStatus.ACTIVE)
-                                            .build();
-    createPersistenceMocksForDelegateToken(delegateTokenActive);
-
-    TokenGenerator tokenGenerator = new TokenGenerator(ACCOUNT_ID, accountKey);
-
-    Query mockQueryNg = mock(Query.class);
-    FieldEnd<Service> fieldEndNg = mock(FieldEnd.class);
-
-    MorphiaIterator<DelegateNgToken, DelegateNgToken> morphiaIteratorNg = mock(MorphiaIterator.class);
-
-    doReturn(mockQueryNg).when(persistence).createQuery(DelegateNgToken.class);
-    doReturn(fieldEndNg).when(mockQueryNg).field(anyString());
-    doReturn(mockQueryNg).when(fieldEndNg).equal(any());
-
-    when(morphiaIteratorNg.hasNext()).thenReturn(true).thenReturn(false);
-
-    DelegateNgToken delegateTokenNg = DelegateNgToken.builder()
-                                          .accountId(ACCOUNT_ID)
-                                          .name("TokenName")
-                                          .value(accountKey)
-                                          .status(DelegateTokenStatus.ACTIVE)
-                                          .build();
-
-    when(morphiaIteratorNg.next()).thenReturn(delegateTokenNg);
-    when(mockQueryNg.fetch()).thenReturn(morphiaIteratorNg);
-
-    TokenGenerator tokenGeneratorNg = new TokenGenerator(ACCOUNT_ID, accountKey);
-
-    delegateTokenAuthenticator.validateDelegateToken(
-        ACCOUNT_ID, tokenGeneratorNg.getToken("https", "localhost", 9090, "hostname"));
-  }
-
-  @Test
   @Owner(developers = UJJAWAL)
   @Category(UnitTests.class)
   public void shouldNotValidateDelegateToken() {
@@ -275,7 +231,6 @@ public class DelegateTokenAuthenticatorImplTest extends WingsBaseTest {
     MorphiaIterator<DelegateToken, DelegateToken> morphiaIterator = mock(MorphiaIterator.class);
 
     doReturn(mockQuery).when(persistence).createQuery(DelegateToken.class);
-    doReturn(mockQuery).when(persistence).createQuery(DelegateNgToken.class);
     doReturn(fieldEnd).when(mockQuery).field(anyString());
     doReturn(mockQuery).when(fieldEnd).equal(any());
 
