@@ -25,12 +25,14 @@ import lombok.EqualsAndHashCode;
 public class SecretTextSpec extends SecretSpec {
   private String secretManagerIdentifier;
   private ValueType valueType;
+  private String value;
 
   @Override
   public SecretSpecDTO toDTO() {
     return SecretTextSpecDTO.builder()
         .secretManagerIdentifier(getSecretManagerIdentifier())
         .valueType(getValueType())
+        .value(value)
         .build();
   }
 }

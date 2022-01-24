@@ -10,6 +10,7 @@ package software.wings.sm.states.azure.appservice;
 import static io.harness.beans.ExecutionStatus.SKIPPED;
 import static io.harness.beans.ExecutionStatus.SUCCESS;
 import static io.harness.rule.OwnerRule.ANIL;
+import static io.harness.rule.OwnerRule.JELENA;
 
 import static software.wings.api.InstanceElement.Builder.anInstanceElement;
 import static software.wings.beans.TaskType.AZURE_APP_SERVICE_TASK;
@@ -46,8 +47,12 @@ import software.wings.beans.AzureConfig;
 import software.wings.beans.AzureWebAppInfrastructureMapping;
 import software.wings.beans.Environment;
 import software.wings.beans.Service;
+import software.wings.beans.SettingAttribute;
 import software.wings.beans.artifact.Artifact;
+import software.wings.beans.artifact.ArtifactStreamAttributes;
+import software.wings.beans.artifact.ArtifactStreamType;
 import software.wings.beans.command.CommandUnit;
+import software.wings.beans.config.ArtifactoryConfig;
 import software.wings.service.impl.servicetemplates.ServiceTemplateHelper;
 import software.wings.service.intfc.ActivityService;
 import software.wings.service.intfc.DelegateService;
@@ -61,12 +66,16 @@ import software.wings.sm.states.azure.appservices.AzureAppServiceSlotSetupContex
 import software.wings.sm.states.azure.appservices.AzureAppServiceSlotSetupExecutionData;
 import software.wings.sm.states.azure.appservices.AzureAppServiceStateData;
 import software.wings.sm.states.azure.appservices.AzureWebAppSlotRollback;
+import software.wings.sm.states.azure.appservices.manifest.AzureAppServiceManifestUtils;
+import software.wings.sm.states.azure.artifact.ArtifactConnectorMapper;
 
 import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -79,6 +88,7 @@ public class AzureWebAppSlotRollbackTest extends WingsBaseTest {
   @Mock protected transient DelegateService delegateService;
   @Mock protected transient AzureVMSSStateHelper azureVMSSStateHelper;
   @Mock protected transient AzureSweepingOutputServiceHelper azureSweepingOutputServiceHelper;
+  @Mock protected AzureAppServiceManifestUtils azureAppServiceManifestUtils;
   @Mock protected ActivityService activityService;
   @Mock protected StateExecutionService stateExecutionService;
   @Spy @InjectMocks private ServiceTemplateHelper serviceTemplateHelper;
@@ -139,6 +149,36 @@ public class AzureWebAppSlotRollbackTest extends WingsBaseTest {
     ExecutionResponse executionResponse = state.handleAsyncResponse(context, responseMap);
     assertThat(executionResponse).isNotNull();
     assertThat(executionResponse.getExecutionStatus()).isEqualTo(SUCCESS);
+  }
+
+  @Test
+  @Owner(developers = JELENA)
+  @Category(UnitTests.class)
+  public void testRollbackAppServiceConfiguration() {
+    String serviceId = "serviceId";
+    String appId = "appId";
+    String workflowId = "workflowId";
+    String stateExecutionInstanceId = "stateExecutionInstanceId";
+
+    Activity rollbackActivity = Activity.builder()
+                                    .appId(appId)
+                                    .workflowExecutionId(workflowId)
+                                    .stateExecutionInstanceId(stateExecutionInstanceId)
+                                    .build();
+
+    ExecutionContextImpl mockContext = initializeMockSetup(true, true);
+    ExecutionContextImpl rollbackContext = initializeMockSetup(true, true);
+    doReturn(serviceId).when(azureVMSSStateHelper).getServiceId(mockContext);
+    doReturn(true).when(azureVMSSStateHelper).isWebAppNonContainerDeployment(mockContext);
+    doReturn(Optional.of(rollbackActivity))
+        .when(azureVMSSStateHelper)
+        .getWebAppRollbackActivity(mockContext, serviceId);
+    doReturn(rollbackContext)
+        .when(azureVMSSStateHelper)
+        .getExecutionContext(appId, workflowId, stateExecutionInstanceId);
+
+    ExecutionResponse response = state.execute(mockContext);
+    verifyStateExecutionData(response);
   }
 
   @NotNull
@@ -240,6 +280,7 @@ public class AzureWebAppSlotRollbackTest extends WingsBaseTest {
         .when(azureVMSSStateHelper)
         .createAndSaveActivity(any(), any(), anyString(), anyString(), any(), anyListOf(CommandUnit.class));
     doReturn(managerExecutionLogCallback).when(azureVMSSStateHelper).getExecutionLogCallback(activity);
+    doReturn(Optional.empty()).when(azureVMSSStateHelper).getUserDataSpecification(mockContext);
     doReturn(appServiceStateData).when(azureVMSSStateHelper).populateAzureAppServiceData(eq(mockContext));
     doReturn("service-template-id").when(serviceTemplateHelper).fetchServiceTemplateId(any());
     doReturn(delegateResult).when(delegateService).queueTask(any());
@@ -252,6 +293,35 @@ public class AzureWebAppSlotRollbackTest extends WingsBaseTest {
     if (!isSuccess) {
       doThrow(Exception.class).when(delegateService).queueTask(any());
     }
+
+    doReturn(Optional.of(artifact)).when(azureVMSSStateHelper).getArtifactForRollback(any());
+
+    String accountId = "accountId";
+    ArtifactoryConfig artifactoryConfig = ArtifactoryConfig.builder()
+                                              .encryptedPassword("secret")
+                                              .artifactoryUrl("artifactory-url")
+                                              .username("username")
+                                              .accountId(accountId)
+                                              .build();
+    SettingAttribute serverSetting = SettingAttribute.Builder.aSettingAttribute().withValue(artifactoryConfig).build();
+
+    ArtifactStreamAttributes artifactStreamAttributes = ArtifactStreamAttributes.builder().build();
+    artifactStreamAttributes.setArtifactStreamType(ArtifactStreamType.ARTIFACTORY.name());
+    artifactStreamAttributes.setServerSetting(serverSetting);
+    Map<String, String> metadata = new HashMap<>();
+    metadata.put("buildNo", "artifact-builder-number");
+    metadata.put("url", "artifact-job-name/random-guid/artifact-name");
+    artifactStreamAttributes.setMetadata(metadata);
+    artifactStreamAttributes.setJobName("artifact-job-name");
+
+    ArtifactConnectorMapper artifactConnectorMapper =
+        ArtifactConnectorMapper.getArtifactConnectorMapper(artifact, artifactStreamAttributes);
+    doReturn(artifactConnectorMapper).when(azureVMSSStateHelper).getConnectorMapper(mockContext, artifact);
+
+    doReturn(Collections.singletonList(EncryptedDataDetail.builder().build()))
+        .when(azureVMSSStateHelper)
+        .getEncryptedDataDetails(mockContext, artifactoryConfig);
+
     return mockContext;
   }
 

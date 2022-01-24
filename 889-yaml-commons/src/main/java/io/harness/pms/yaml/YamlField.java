@@ -72,11 +72,6 @@ public class YamlField {
     return node.getYamlPath();
   }
 
-  public static YamlField fromYamlPath(String yaml, String path) throws IOException {
-    YamlNode node = YamlNode.fromYamlPath(yaml, path);
-    return node == null ? null : new YamlField(node);
-  }
-
   public YamlField fromYamlPath(String path) throws IOException {
     YamlNode node = YamlNode.fromYamlPath(this, path);
     return node == null ? null : new YamlField(node);

@@ -53,6 +53,7 @@ spec:
       labels:
         harness.io/name: ${delegateName}
     spec:
+      terminationGracePeriodSeconds: 600
       containers:
       - image: ${delegateDockerImage}
         imagePullPolicy: Always
@@ -69,17 +70,17 @@ spec:
             cpu: "${delegateRequestsCpu}"
             memory: "${delegateRequestsRam}Mi"
         readinessProbe:
-          exec:
-            command:
-              - echo
-              - 'Its ready'
+          httpGet:
+            path: /api/health
+            port: 3460
+            scheme: HTTP
           initialDelaySeconds: 20
           periodSeconds: 10
         livenessProbe:
-          exec:
-            command:
-              - echo
-              - 'Its alive'
+          httpGet:
+            path: /api/health
+            port: 3460
+            scheme: HTTP
           initialDelaySeconds: 240
           periodSeconds: 10
           failureThreshold: 2

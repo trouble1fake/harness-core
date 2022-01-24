@@ -108,7 +108,7 @@ public class GraphGenerationServiceImpl implements GraphGenerationService {
             processedNodeExecutionIds.add(nodeExecutionId);
             NodeExecution nodeExecution = nodeExecutionService.get(nodeExecutionId);
             if (OrchestrationUtils.isStageNode(nodeExecution)
-                && nodeExecution.getNode().getNodeType() == NodeType.IDENTITY_PLAN_NODE
+                && nodeExecution.getNodeType() == NodeType.IDENTITY_PLAN_NODE
                 && StatusUtils.isFinalStatus(nodeExecution.getStatus())) {
               pmsExecutionSummaryService.updateStageOfIdentityType(planExecutionId, executionSummaryUpdate);
             } else {

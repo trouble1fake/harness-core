@@ -18,6 +18,7 @@ import io.harness.plancreator.stages.parallel.ParallelStageElementConfig;
 import io.harness.plancreator.stages.stage.StageElementConfig;
 import io.harness.plancreator.steps.ParallelStepElementConfig;
 import io.harness.plancreator.steps.StepElementConfig;
+import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.helpers.PmsFeatureFlagHelper;
 import io.harness.yaml.schema.SchemaGeneratorUtils;
 import io.harness.yaml.schema.YamlSchemaGenerator;
@@ -130,7 +131,9 @@ public class PmsYamlSchemaHelper {
         partialSchemaDTO.getNodeName(), (ObjectNode) partialSchemaDTO.getSchema(), partialSchemaDTO.getNamespace());
 
     mergePipelineStepsIntoStage(stageDefinitionsNode, pipelineSteps, partialSchemaDTO);
-    mergeStageElementConfig(stageElementConfig, subtypeClassMap);
+    if (!partialSchemaDTO.isSkipStageSchema()) {
+      mergeStageElementConfig(stageElementConfig, subtypeClassMap);
+    }
 
     pipelineDefinitions.set(partialSchemaDTO.getNamespace(), stageDefinitionsNode.get(partialSchemaDTO.getNamespace()));
   }
@@ -225,5 +228,14 @@ public class PmsYamlSchemaHelper {
       }
     }
     return enabledFeatureFlags;
+  }
+
+  public void processStageSchema(List<YamlSchemaWithDetails> allSchemaDetails, ObjectNode pipelineDefinitions) {
+    List<YamlSchemaWithDetails> stageSchemaWithDetails =
+        allSchemaDetails.stream()
+            .filter(o -> o.getYamlSchemaMetadata().getYamlGroup().getGroup().equals(StepCategory.STAGE.name()))
+            .collect(Collectors.toList());
+    YamlSchemaUtils.addOneOfInStageElementWrapperConfig(pipelineDefinitions, stageSchemaWithDetails);
+    YamlSchemaTransientHelper.removeV2StagesFromStageElementConfig(pipelineDefinitions.get(STAGE_ELEMENT_CONFIG));
   }
 }

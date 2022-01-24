@@ -73,6 +73,7 @@ public class JsonExpander {
                                                       .map(request
                                                           -> ExpansionRequestProto.newBuilder()
                                                                  .setFqn(request.getFqn())
+                                                                 .setKey(request.getKey())
                                                                  .setValue(convertToByteString(request.getFieldValue()))
                                                                  .build())
                                                       .collect(Collectors.toList());

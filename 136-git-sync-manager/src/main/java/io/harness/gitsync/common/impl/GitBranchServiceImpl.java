@@ -147,7 +147,7 @@ public class GitBranchServiceImpl implements GitBranchService {
     try {
       gitBranchesRepository.save(gitBranch);
     } catch (DuplicateKeyException duplicateKeyException) {
-      log.error("The branch {} in repo {} is already saved", gitBranch.getBranchName(), gitBranch.getRepoURL());
+      // log.error("The branch {} in repo {} is already saved", gitBranch.getBranchName(), gitBranch.getRepoURL());
     }
   }
 
@@ -213,6 +213,13 @@ public class GitBranchServiceImpl implements GitBranchService {
                                   .is(repoUrl)
                                   .and(GitBranchKeys.branchName)
                                   .is(branchName);
+    return gitBranchesRepository.delete(criteria);
+  }
+
+  @Override
+  public DeleteResult deleteAll(String accountIdentifier, String repoUrl) {
+    final Criteria criteria =
+        Criteria.where(GitBranchKeys.accountIdentifier).is(accountIdentifier).and(GitBranchKeys.repoURL).is(repoUrl);
     return gitBranchesRepository.delete(criteria);
   }
 }

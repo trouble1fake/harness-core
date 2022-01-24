@@ -19,7 +19,8 @@ import org.apache.commons.lang3.tuple.Pair;
 public interface HealthSourceService {
   String DELIMITER = "/";
   void create(String accountId, String orgIdentifier, String projectIdentifier, String environmentRef,
-      String serviceRef, String nameSpaceIdentifier, Set<HealthSource> healthSources, boolean enabled);
+      String serviceRef, String monitoredServiceIdentifier, String nameSpaceIdentifier, Set<HealthSource> healthSources,
+      boolean enabled);
   void checkIfAlreadyPresent(String accountId, String orgIdentifier, String projectIdentifier,
       String nameSpaceIdentifier, Set<HealthSource> healthSources);
   Set<HealthSource> get(String accountId, String orgIdentifier, String projectIdentifier, String nameSpaceIdentifier,
@@ -27,7 +28,7 @@ public interface HealthSourceService {
   void delete(String accountId, String orgIdentifier, String projectIdentifier, String nameSpaceIdentifier,
       List<String> identifiers);
   void update(String accountId, String orgIdentifier, String projectIdentifier, String environmentRef,
-      String serviceRef, String nameSpaceIdentifier, Set<HealthSource> healthSource);
+      String serviceRef, String monitoredServiceIdentifier, String nameSpaceIdentifier, Set<HealthSource> healthSource);
   static String getNameSpacedIdentifier(String nameSpace, String identifier) {
     return nameSpace + DELIMITER + identifier;
   }

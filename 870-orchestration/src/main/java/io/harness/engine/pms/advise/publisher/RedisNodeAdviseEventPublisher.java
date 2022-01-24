@@ -11,7 +11,6 @@ import static io.harness.data.structure.UUIDGenerator.generateUuid;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.pms.commons.events.PmsEventSender;
 import io.harness.execution.NodeExecution;
 import io.harness.interrupts.InterruptEffect;
@@ -25,14 +24,10 @@ import java.util.List;
 
 @OwnedBy(HarnessTeam.PIPELINE)
 public class RedisNodeAdviseEventPublisher implements NodeAdviseEventPublisher {
-  @Inject NodeExecutionService nodeExecutionService;
   @Inject private PmsEventSender eventSender;
 
   @Override
-  public String publishEvent(String nodeExecutionId, Status fromStatus) {
-    NodeExecution nodeExecution = nodeExecutionService.get(nodeExecutionId);
-    PlanNode planNode = nodeExecution.getNode();
-    String serviceName = planNode.getServiceName();
+  public String publishEvent(NodeExecution nodeExecution, PlanNode planNode, Status fromStatus) {
     AdviseEvent adviseEvent =
         AdviseEvent.newBuilder()
             .setAmbiance(nodeExecution.getAmbiance())
@@ -45,8 +40,8 @@ public class RedisNodeAdviseEventPublisher implements NodeAdviseEventPublisher {
             .setFromStatus(fromStatus)
             .build();
 
-    return eventSender.sendEvent(
-        nodeExecution.getAmbiance(), adviseEvent.toByteString(), PmsEventCategory.NODE_ADVISE, serviceName, true);
+    return eventSender.sendEvent(nodeExecution.getAmbiance(), adviseEvent.toByteString(), PmsEventCategory.NODE_ADVISE,
+        nodeExecution.module(), true);
   }
 
   private boolean isPreviousAdviserExpired(List<InterruptEffect> interruptHistories) {

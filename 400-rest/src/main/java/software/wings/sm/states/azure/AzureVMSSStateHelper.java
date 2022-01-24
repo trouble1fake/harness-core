@@ -8,6 +8,7 @@
 package software.wings.sm.states.azure;
 
 import static io.harness.azure.model.AzureConstants.STEADY_STATE_TIMEOUT_REGEX;
+import static io.harness.beans.ExecutionStatus.SUCCESS;
 import static io.harness.beans.OrchestrationWorkflowType.BLUE_GREEN;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
@@ -47,7 +48,8 @@ import io.harness.delegate.task.azure.response.AzureVMInstanceData;
 import io.harness.delegate.task.azure.response.AzureVMSSTaskExecutionResponse;
 import io.harness.deployment.InstanceDetails;
 import io.harness.encryption.Scope;
-import io.harness.encryption.SecretRefData;
+import io.harness.encryption.SecretRefHelper;
+import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ff.FeatureFlagService;
 import io.harness.logging.CommandExecutionStatus;
@@ -79,18 +81,22 @@ import software.wings.beans.command.CommandUnit;
 import software.wings.beans.command.CommandUnitDetails;
 import software.wings.beans.container.UserDataSpecification;
 import software.wings.service.intfc.ActivityService;
+import software.wings.service.intfc.ArtifactService;
 import software.wings.service.intfc.ArtifactStreamService;
 import software.wings.service.intfc.InfrastructureMappingService;
 import software.wings.service.intfc.LogService;
 import software.wings.service.intfc.ServiceResourceService;
 import software.wings.service.intfc.SettingsService;
+import software.wings.service.intfc.WorkflowExecutionService;
 import software.wings.service.intfc.security.SecretManager;
 import software.wings.sm.ExecutionContext;
 import software.wings.sm.InstanceStatusSummary;
+import software.wings.sm.StateMachineExecutor;
 import software.wings.sm.WorkflowStandardParams;
 import software.wings.sm.states.ManagerExecutionLogCallback;
 import software.wings.sm.states.azure.appservices.AzureAppServiceStateData;
-import software.wings.sm.states.azure.artifact.ArtifactStreamMapper;
+import software.wings.sm.states.azure.artifact.ArtifactConnectorMapper;
+import software.wings.utils.ArtifactType;
 import software.wings.utils.ServiceVersionConvention;
 
 import com.google.common.primitives.Ints;
@@ -98,6 +104,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -125,6 +132,9 @@ public class AzureVMSSStateHelper {
   @Inject private ArtifactStreamService artifactStreamService;
   @Inject private LogService logService;
   @Inject private FeatureFlagService featureFlagService;
+  @Inject private StateMachineExecutor stateMachineExecutor;
+  @Inject private WorkflowExecutionService workflowExecutionService;
+  @Inject private ArtifactService artifactService;
 
   public boolean isBlueGreenWorkflow(ExecutionContext context) {
     return BLUE_GREEN == context.getOrchestrationWorkflowType();
@@ -183,9 +193,85 @@ public class AzureVMSSStateHelper {
     return serviceResourceService.getWithDetails(appId, serviceId);
   }
 
-  private String getServiceId(ExecutionContext context) {
+  public String getServiceId(ExecutionContext context) {
     PhaseElement phaseElement = context.getContextElement(ContextElementType.PARAM, PhaseElement.PHASE_PARAM);
     return phaseElement.getServiceElement().getUuid();
+  }
+
+  public Artifact getWebAppNonContainerArtifact(ExecutionContext context, boolean isRollback) {
+    if (!isWebAppNonContainerDeployment(context)) {
+      return null;
+    }
+    String serviceId = getServiceId(context);
+
+    if (isRollback) {
+      return getArtifactForRollback(context, serviceId)
+          .orElseThrow(
+              () -> new InvalidArgumentsException(format("Not found artifact for rollback, serviceId: %s", serviceId)));
+    }
+
+    return getArtifact((DeploymentExecutionContext) context, serviceId);
+  }
+
+  public Optional<Artifact> getArtifactForRollback(ExecutionContext context) {
+    return getArtifactForRollback(context, getServiceId(context));
+  }
+
+  public Optional<Artifact> getArtifactForRollback(ExecutionContext context, String serviceId) {
+    if (workflowExecutionService.checkIfOnDemand(context.getAppId(), context.getWorkflowExecutionId())) {
+      return serviceResourceService.findArtifactForOnDemandWorkflow(
+          context.getAppId(), context.getWorkflowExecutionId());
+    }
+
+    Optional<Activity> rollbackActivity = getWebAppRollbackActivity(context, serviceId);
+    return rollbackActivity.map(activity -> artifactService.getWithSource(activity.getArtifactId()));
+  }
+
+  // - get all activities that not belong to the current execution id by app id, workflow id and service id,
+  // - groups activities by workflowExecutionId,
+  // - find pre-previous workflow execution,
+  // - get activity for rollback if exists or activity for slot setup status
+  public Optional<Activity> getWebAppRollbackActivity(ExecutionContext context, String serviceId) {
+    List<Activity> rollbackActivitiesForService = activityService.getRollbackActivitiesForService(
+        context.getAppId(), serviceId, context.getWorkflowId(), context.getWorkflowExecutionId());
+
+    if (rollbackActivitiesForService.isEmpty()) {
+      return Optional.empty();
+    }
+
+    LinkedHashMap<String, List<Activity>> groupActivitiesByWFExecutions = rollbackActivitiesForService.stream().collect(
+        Collectors.groupingBy(Activity::getWorkflowExecutionId, LinkedHashMap::new, Collectors.toList()));
+
+    Optional<List<Activity>> foundActivitiesForPrePreviousExecution =
+        groupActivitiesByWFExecutions.values().stream().skip(1).findFirst();
+    return foundActivitiesForPrePreviousExecution.flatMap(this::getAzureWebAppSlotSetupActivity);
+  }
+
+  private Optional<Activity> getAzureWebAppSlotSetupActivity(List<Activity> activities) {
+    Optional<Activity> webappSlotRollbackActivity =
+        activities.stream()
+            .filter(activity -> activity.getCommandName().equals("AZURE_WEBAPP_SLOT_ROLLBACK"))
+            .findAny();
+    if (webappSlotRollbackActivity.isPresent() && webappSlotRollbackActivity.get().getStatus().equals(SUCCESS)) {
+      return webappSlotRollbackActivity;
+    } else {
+      return activities.stream()
+          .filter(activity
+              -> activity.getCommandName().equals("AZURE_WEBAPP_SLOT_SETUP") && activity.getStatus().equals(SUCCESS))
+          .findAny();
+    }
+  }
+
+  public boolean isWebAppNonContainerDeployment(ExecutionContext context) {
+    Service service = getServiceByAppId(context, context.getAppId());
+    ArtifactType artifactType = service.getArtifactType();
+    return ArtifactType.WAR.equals(artifactType) || ArtifactType.ZIP.equals(artifactType)
+        || ArtifactType.NUGET.equals(artifactType);
+  }
+
+  public ExecutionContext getExecutionContext(
+      String appId, String workflowExecutionId, String stateExecutionInstanceId) {
+    return stateMachineExecutor.getExecutionContext(appId, workflowExecutionId, stateExecutionInstanceId);
   }
 
   public Application getApplication(ExecutionContext context) {
@@ -405,12 +491,12 @@ public class AzureVMSSStateHelper {
   }
 
   public ExecutionStatus getExecutionStatus(AzureVMSSTaskExecutionResponse executionResponse) {
-    return executionResponse.getCommandExecutionStatus() == CommandExecutionStatus.SUCCESS ? ExecutionStatus.SUCCESS
+    return executionResponse.getCommandExecutionStatus() == CommandExecutionStatus.SUCCESS ? SUCCESS
                                                                                            : ExecutionStatus.FAILED;
   }
 
   public ExecutionStatus getAppServiceExecutionStatus(AzureTaskExecutionResponse executionResponse) {
-    return executionResponse.getCommandExecutionStatus() == CommandExecutionStatus.SUCCESS ? ExecutionStatus.SUCCESS
+    return executionResponse.getCommandExecutionStatus() == CommandExecutionStatus.SUCCESS ? SUCCESS
                                                                                            : ExecutionStatus.FAILED;
   }
 
@@ -441,7 +527,7 @@ public class AzureVMSSStateHelper {
   public AzureConfigDTO createAzureConfigDTO(AzureConfig azureConfig) {
     return AzureConfigDTO.builder()
         .clientId(azureConfig.getClientId())
-        .key(new SecretRefData(azureConfig.getEncryptedKey(), Scope.ACCOUNT, null))
+        .key(SecretRefHelper.createSecretRef(azureConfig.getEncryptedKey(), Scope.ACCOUNT, null))
         .tenantId(azureConfig.getTenantId())
         .azureEnvironmentType(azureConfig.getAzureEnvironmentType())
         .build();
@@ -462,7 +548,7 @@ public class AzureVMSSStateHelper {
     return AzureVMAuthDTO.builder()
         .userName(userName)
         .azureVmAuthType(AzureVMAuthType.valueOf(vmssAuthType.name()))
-        .secretRef(new SecretRefData(secretRefIdentifier, Scope.ACCOUNT, null))
+        .secretRef(SecretRefHelper.createSecretRef(secretRefIdentifier, Scope.ACCOUNT, null))
         .build();
   }
 
@@ -573,7 +659,7 @@ public class AzureVMSSStateHelper {
         .build();
   }
 
-  public ArtifactStreamMapper getConnectorMapper(ExecutionContext context, Artifact artifact) {
+  public ArtifactConnectorMapper getConnectorMapper(ExecutionContext context, Artifact artifact) {
     String artifactStreamId = artifact.getArtifactStreamId();
     ArtifactStream artifactStream = getArtifactStream(artifactStreamId);
     ArtifactStreamAttributes artifactStreamAttributes =
@@ -587,7 +673,7 @@ public class AzureVMSSStateHelper {
     artifactStreamAttributes.setMetadataOnly(onlyMetaForArtifactType(artifactStream));
     artifactStreamAttributes.setArtifactStreamType(artifactStream.getArtifactStreamType());
     artifactStreamAttributes.setArtifactType(service.getArtifactType());
-    return ArtifactStreamMapper.getArtifactStreamMapper(artifact, artifactStreamAttributes);
+    return ArtifactConnectorMapper.getArtifactConnectorMapper(artifact, artifactStreamAttributes);
   }
 
   private boolean onlyMetaForArtifactType(ArtifactStream artifactStream) {
