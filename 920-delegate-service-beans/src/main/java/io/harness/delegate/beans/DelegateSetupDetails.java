@@ -40,5 +40,4 @@ public class DelegateSetupDetails implements YamlDTO {
   private Set<String> tags;
 
   @NotNull private String delegateType;
-  private String tokenName;
 }

@@ -7,7 +7,6 @@
 
 package io.harness.service.impl;
 
-import static io.harness.data.encoding.EncodingUtils.decodeBase64ToString;
 import static io.harness.data.encoding.EncodingUtils.encodeBase64;
 
 import io.harness.annotations.dev.HarnessTeam;
@@ -62,7 +61,7 @@ public class DelegateNgTokenServiceImpl implements DelegateNgTokenService {
                                         .status(DelegateTokenStatus.ACTIVE)
                                         .value(encodeBase64(Misc.generateSecretKey()))
                                         .build();
-    if (!matchNameTokenQuery(accountId, owner, name).asList().isEmpty()) {
+    if (!createTokenQuery(accountId, owner, name).asList().isEmpty()) {
       throw new InvalidRequestException("Token with given name already exists for given account, org and project");
     }
     persistence.save(delegateToken);
@@ -72,7 +71,7 @@ public class DelegateNgTokenServiceImpl implements DelegateNgTokenService {
 
   @Override
   public DelegateTokenDetails revokeDelegateToken(String accountId, DelegateEntityOwner owner, String tokenName) {
-    Query<DelegateNgToken> filterQuery = matchNameTokenQuery(accountId, owner, tokenName);
+    Query<DelegateNgToken> filterQuery = createTokenQuery(accountId, owner, tokenName);
     validateTokenToBeRevoked(filterQuery.get());
     UpdateOperations<DelegateNgToken> updateOperations =
         persistence.createUpdateOperations(DelegateNgToken.class)
@@ -89,7 +88,7 @@ public class DelegateNgTokenServiceImpl implements DelegateNgTokenService {
   @Override
   public List<DelegateTokenDetails> getDelegateTokens(
       String accountId, DelegateEntityOwner owner, DelegateTokenStatus status) {
-    Query<DelegateNgToken> query = nameStartsWithTokenQuery(accountId, owner, null);
+    Query<DelegateNgToken> query = createTokenQuery(accountId, owner, null);
     if (null != status) {
       query = query.field(DelegateNgTokenKeys.status).equal(status);
     }
@@ -97,39 +96,12 @@ public class DelegateNgTokenServiceImpl implements DelegateNgTokenService {
     return queryResult.stream().map(token -> getDelegateTokenDetails(token, false)).collect(Collectors.toList());
   }
 
-  @Override
-  public DelegateTokenDetails getDelegateToken(String accountId, DelegateEntityOwner owner, String name) {
-    Query<DelegateNgToken> query = matchNameTokenQuery(accountId, owner, name);
-    List<DelegateNgToken> queryResult = query.asList();
-    return queryResult.stream().map(token -> getDelegateTokenDetails(token, false)).findFirst().orElse(null);
-  }
-
-  @Override
-  public String getDelegateTokenValue(String accountId, DelegateEntityOwner owner, String name) {
-    Query<DelegateNgToken> query = matchNameTokenQuery(accountId, owner, name);
-    List<DelegateNgToken> queryResult = query.asList();
-    DelegateTokenDetails delegateTokenDetails =
-        queryResult.stream().map(token -> getDelegateTokenDetails(token, true)).findFirst().orElse(null);
-    return delegateTokenDetails != null ? delegateTokenDetails.getValue() : null;
-  }
-
-  private Query<DelegateNgToken> nameStartsWithTokenQuery(
-      String accountId, DelegateEntityOwner owner, String tokenName) {
+  private Query<DelegateNgToken> createTokenQuery(String accountId, DelegateEntityOwner owner, String tokenName) {
     Query<DelegateNgToken> query =
         persistence.createQuery(DelegateNgToken.class).field(DelegateNgTokenKeys.accountId).equal(accountId);
     query = query.field(DelegateNgTokenKeys.owner).equal(owner);
     if (!StringUtils.isEmpty(tokenName)) {
       query = query.field(DelegateNgTokenKeys.name).startsWith(tokenName);
-    }
-    return query;
-  }
-
-  private Query<DelegateNgToken> matchNameTokenQuery(String accountId, DelegateEntityOwner owner, String tokenName) {
-    Query<DelegateNgToken> query =
-        persistence.createQuery(DelegateNgToken.class).field(DelegateNgTokenKeys.accountId).equal(accountId);
-    query = query.field(DelegateNgTokenKeys.owner).equal(owner);
-    if (!StringUtils.isEmpty(tokenName)) {
-      query = query.field(DelegateNgTokenKeys.name).equal(tokenName);
     }
     return query;
   }
@@ -145,7 +117,7 @@ public class DelegateNgTokenServiceImpl implements DelegateNgTokenService {
         .status(delegateToken.getStatus());
 
     if (includeTokenValue) {
-      delegateTokenDetailsBuilder.value(decodeBase64ToString(delegateToken.getValue()));
+      delegateTokenDetailsBuilder.value(delegateToken.getValue());
     }
 
     return delegateTokenDetailsBuilder.build();
