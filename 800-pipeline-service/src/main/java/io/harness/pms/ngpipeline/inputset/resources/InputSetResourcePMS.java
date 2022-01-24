@@ -352,8 +352,7 @@ public class InputSetResourcePMS {
     InputSetErrorWrapperDTOPMS errorWrapperDTO = validateAndMergeHelper.validateInputSet(
         accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, yaml, pipelineBranch, pipelineRepoID);
     if (errorWrapperDTO != null) {
-      return ResponseDTO.newResponse(PMSInputSetElementMapper.toInputSetResponseDTOPMS(
-          accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, yaml, errorWrapperDTO));
+      throw new InvalidInputSetException("Exception in updating the Input Set", errorWrapperDTO);
     }
 
     InputSetEntity entity = PMSInputSetElementMapper.toInputSetEntity(
