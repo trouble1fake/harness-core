@@ -11,8 +11,6 @@ import io.harness.delegate.beans.logstreaming.ILogStreamingTaskClient;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 public interface HelmDeployServiceNG {
   void setLogStreamingClient(ILogStreamingTaskClient iLogStreamingTaskClient);
@@ -24,7 +22,7 @@ public interface HelmDeployServiceNG {
    * @param commandRequest       the command request
    * @return the helm command response
    */
-  HelmCommandResponseNG rollback(HelmRollbackCommandRequestNG commandRequest);
+  HelmCommandResponseNG rollback(HelmRollbackCommandRequestNG commandRequest) throws Exception;
 
   /**
    * Ensure helm cli and tiller installed helm command response.
@@ -60,7 +58,7 @@ public interface HelmDeployServiceNG {
    * @return the helm release history command response
    */
   HelmCommandResponseNG renderHelmChart(HelmCommandRequestNG helmCommandRequest, String namespace, String chartLocation,
-      List<String> valueOverrides) throws InterruptedException, TimeoutException, IOException, ExecutionException;
+      List<String> valueOverrides) throws Exception;
 
   HelmCommandResponseNG ensureHelm3Installed(HelmCommandRequestNG commandRequest);
 

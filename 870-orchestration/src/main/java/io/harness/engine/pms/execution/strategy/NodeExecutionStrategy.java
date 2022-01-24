@@ -47,7 +47,8 @@ public interface NodeExecutionStrategy<T extends Node, N extends PmsNodeExecutio
     throw new UnsupportedOperationException("Start execution node Supported for plan");
   }
 
-  default void concludeExecution(Ambiance ambiance, Status status, EnumSet<Status> overrideStatus) {
+  default void concludeExecution(
+      Ambiance ambiance, Status toStatus, Status fromStatus, EnumSet<Status> overrideStatus) {
     throw new UnsupportedOperationException("Start execution node Supported for plan");
   }
 

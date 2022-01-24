@@ -31,6 +31,7 @@ import io.harness.ng.beans.PageResponse;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @OwnedBy(HarnessTeam.CV)
@@ -41,6 +42,9 @@ public interface ActivityService {
   @Deprecated String register(Activity activity);
 
   void updateActivityStatus(Activity activity);
+
+  Optional<Activity> getAnyDemoKubernetesEvent(
+      ServiceEnvironmentParams serviceEnvironmentParams, Instant startTime, Instant endTime);
 
   Activity getActivityFromDTO(ActivityDTO activityDTO);
 

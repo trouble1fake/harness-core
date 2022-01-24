@@ -25,6 +25,7 @@ import io.harness.engine.interrupts.InterruptManager;
 import io.harness.engine.interrupts.InterruptPackage;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.PlanExecution;
+import io.harness.plan.PlanNode;
 import io.harness.pms.contracts.advisers.AdviseType;
 import io.harness.pms.contracts.advisers.AdviserResponse;
 import io.harness.pms.contracts.advisers.EndPlanAdvise;
@@ -35,7 +36,6 @@ import io.harness.pms.contracts.interrupts.AdviserIssuer;
 import io.harness.pms.contracts.interrupts.InterruptConfig;
 import io.harness.pms.contracts.interrupts.InterruptType;
 import io.harness.pms.contracts.interrupts.IssuedBy;
-import io.harness.pms.contracts.plan.PlanNodeProto;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.rule.Owner;
@@ -78,12 +78,13 @@ public class EndPlanAdviserResponseHandlerTest extends OrchestrationTestBase {
         NodeExecution.builder()
             .uuid(NODE_EXECUTION_ID)
             .ambiance(ambiance)
-            .node(PlanNodeProto.newBuilder()
-                      .setUuid(NODE_SETUP_ID)
-                      .setName("DUMMY")
-                      .setIdentifier("dummy")
-                      .setStepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                      .build())
+            .planNode(PlanNode.builder()
+                          .uuid(NODE_SETUP_ID)
+                          .name("DUMMY")
+                          .identifier("dummy")
+                          .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+                          .serviceName("CD")
+                          .build())
             .startTs(System.currentTimeMillis())
             .status(Status.FAILED)
             .build();

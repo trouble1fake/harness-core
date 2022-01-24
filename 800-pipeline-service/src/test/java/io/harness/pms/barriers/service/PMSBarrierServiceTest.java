@@ -22,12 +22,15 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.engine.executions.node.NodeExecutionService;
+import io.harness.engine.utils.PmsLevelUtils;
 import io.harness.exception.InvalidRequestException;
 import io.harness.execution.NodeExecution;
+import io.harness.plan.PlanNode;
 import io.harness.pms.barriers.beans.BarrierExecutionInfo;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.Status;
-import io.harness.pms.contracts.plan.PlanNodeProto;
+import io.harness.pms.contracts.steps.StepCategory;
+import io.harness.pms.contracts.steps.StepType;
 import io.harness.repositories.TimeoutInstanceRepository;
 import io.harness.rule.Owner;
 import io.harness.steps.barriers.beans.BarrierExecutionInstance;
@@ -66,12 +69,22 @@ public class PMSBarrierServiceTest extends PipelineServiceTestBase {
   @Category(UnitTests.class)
   public void shouldTestGetBarrierExecutionInfoList() {
     String nodeRuntimeId = generateUuid();
-    Ambiance ambiance = Ambiance.newBuilder().setPlanExecutionId(generateUuid()).build();
+    PlanNode planNode =
+        PlanNode.builder()
+            .uuid(generateUuid())
+            .identifier(generateUuid())
+            .name("stage")
+            .stepType(StepType.newBuilder().setStepCategory(StepCategory.STAGE).setType("STAGE").build())
+            .build();
+    Ambiance ambiance = Ambiance.newBuilder()
+                            .setPlanExecutionId(generateUuid())
+                            .addLevels(PmsLevelUtils.buildLevelFromNode(nodeRuntimeId, planNode))
+                            .build();
     NodeExecution stageNode = NodeExecution.builder()
                                   .uuid("stageNode")
                                   .status(Status.RUNNING)
                                   .parentId(generateUuid())
-                                  .node(PlanNodeProto.newBuilder().setIdentifier(generateUuid()).build())
+                                  .planNode(planNode)
                                   .ambiance(ambiance)
                                   .version(1L)
                                   .build();
@@ -83,12 +96,11 @@ public class PMSBarrierServiceTest extends PipelineServiceTestBase {
             .barrierState(STANDING)
             .identifier(generateUuid())
             .planExecutionId(ambiance.getPlanExecutionId())
-            .setupInfo(BarrierSetupInfo.builder()
-                           .stages(Sets.newSet(StageDetail.builder()
-                                                   .name(stageNode.getNode().getName())
-                                                   .identifier(stageNode.getNode().getIdentifier())
-                                                   .build()))
-                           .build())
+            .setupInfo(
+                BarrierSetupInfo.builder()
+                    .stages(Sets.newSet(
+                        StageDetail.builder().name(planNode.getName()).identifier(planNode.getIdentifier()).build()))
+                    .build())
             .positionInfo(BarrierPositionInfo.builder()
                               .barrierPositionList(
                                   Lists.newArrayList(BarrierPosition.builder().stepRuntimeId(nodeRuntimeId).build()))
@@ -116,10 +128,8 @@ public class PMSBarrierServiceTest extends PipelineServiceTestBase {
     assertThat(barrierExecutionInfo.getStartedAt()).isEqualTo(0);
     assertThat(barrierExecutionInfo.isStarted()).isFalse();
     assertThat(barrierExecutionInfo.getStages())
-        .containsExactlyInAnyOrder(StageDetail.builder()
-                                       .identifier(stageNode.getNode().getIdentifier())
-                                       .name(stageNode.getNode().getName())
-                                       .build());
+        .containsExactlyInAnyOrder(
+            StageDetail.builder().identifier(planNode.getIdentifier()).name(planNode.getName()).build());
     assertThat(barrierExecutionInfo.getTimeoutIn()).isEqualTo(0);
   }
 

@@ -14,6 +14,7 @@ import static io.harness.persistence.HQuery.excludeAuthority;
 import io.harness.connector.ConnectorInfoDTO;
 import io.harness.cvng.activity.beans.DeploymentActivityResultDTO.TimeSeriesAnalysisSummary;
 import io.harness.cvng.analysis.beans.DeploymentTimeSeriesAnalysisDTO;
+import io.harness.cvng.analysis.beans.NodeRiskCountDTO;
 import io.harness.cvng.analysis.beans.Risk;
 import io.harness.cvng.analysis.beans.TransactionMetricInfo;
 import io.harness.cvng.analysis.beans.TransactionMetricInfoSummaryPageDTO;
@@ -46,6 +47,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -58,7 +60,6 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import org.apache.commons.lang3.StringUtils;
 import org.mongodb.morphia.query.Sort;
 
 public class DeploymentTimeSeriesAnalysisServiceImpl implements DeploymentTimeSeriesAnalysisService {
@@ -101,6 +102,13 @@ public class DeploymentTimeSeriesAnalysisServiceImpl implements DeploymentTimeSe
                       || transactionMetricInfo.getTransactionMetric().getTransactionName().toLowerCase().contains(
                           deploymentTimeSeriesAnalysisFilter.getFilter().toLowerCase()))
               .collect(Collectors.toList());
+    }
+    if (deploymentTimeSeriesAnalysisFilter.filterByTransactionNames()) {
+      transactionMetricInfoList = transactionMetricInfoList.stream()
+                                      .filter(transactionMetricInfo
+                                          -> deploymentTimeSeriesAnalysisFilter.getTransactionNames().contains(
+                                              transactionMetricInfo.getTransactionMetric().getTransactionName()))
+                                      .collect(Collectors.toList());
     }
 
     return TransactionMetricInfoSummaryPageDTO.builder()
@@ -231,7 +239,7 @@ public class DeploymentTimeSeriesAnalysisServiceImpl implements DeploymentTimeSe
           .stream()
           .filter(transactionMetricHostData
               -> filterAnomalousMetrics(transactionMetricHostData,
-                  deploymentTimeSeriesAnalysisFilter.filterByHostName(),
+                  deploymentTimeSeriesAnalysisFilter.filterByHostNames(),
                   deploymentTimeSeriesAnalysisFilter.isAnomalous()))
           .forEach(transactionMetricHostData -> {
             Map<Risk, Integer> nodeCountByRiskStatusMap = new HashMap<>();
@@ -239,7 +247,7 @@ public class DeploymentTimeSeriesAnalysisServiceImpl implements DeploymentTimeSe
             transactionMetricHostData.getHostData()
                 .stream()
                 .filter(hostData
-                    -> filterHostData(hostData, deploymentTimeSeriesAnalysisFilter.getHostName(),
+                    -> filterHostData(hostData, deploymentTimeSeriesAnalysisFilter.getHostNames(),
                         deploymentTimeSeriesAnalysisFilter.isAnomalous()))
                 .forEach(hostData -> {
                   nodeDataSet.add(hostData);
@@ -252,7 +260,7 @@ public class DeploymentTimeSeriesAnalysisServiceImpl implements DeploymentTimeSe
                     .connectorName(connectorName)
                     .dataSourceType(dataSourceType)
                     .nodes(nodeDataSet)
-                    .nodeCountByRiskStatusMap(nodeCountByRiskStatusMap)
+                    .nodeRiskCountDTO(getNodeRiskCountDTO(nodeCountByRiskStatusMap))
                     .build();
             if (isNotEmpty(nodeDataSet)) {
               transactionMetricInfoSet.add(transactionMetricInfo);
@@ -266,12 +274,30 @@ public class DeploymentTimeSeriesAnalysisServiceImpl implements DeploymentTimeSe
     return transactionMetricInfoList;
   }
 
+  private NodeRiskCountDTO getNodeRiskCountDTO(Map<Risk, Integer> nodeCountByRiskStatusMap) {
+    int totalNodeCount = 0;
+    for (int val : nodeCountByRiskStatusMap.values()) {
+      totalNodeCount += val;
+    }
+    return NodeRiskCountDTO.builder()
+        .totalNodeCount(totalNodeCount)
+        .anomalousNodeCount(totalNodeCount - nodeCountByRiskStatusMap.getOrDefault(Risk.HEALTHY, 0))
+        .riskCounts(Arrays.stream(Risk.values())
+                        .map(risk
+                            -> NodeRiskCountDTO.RiskCount.builder()
+                                   .risk(risk)
+                                   .count(nodeCountByRiskStatusMap.getOrDefault(risk, 0))
+                                   .build())
+                        .collect(Collectors.toList()))
+        .build();
+  }
+
   private boolean filterHostData(
-      DeploymentTimeSeriesAnalysisDTO.HostData hostData, String hostName, boolean anomalousMetricsOnly) {
-    if (StringUtils.isBlank(hostName)) {
+      DeploymentTimeSeriesAnalysisDTO.HostData hostData, List<String> hostNames, boolean anomalousMetricsOnly) {
+    if (isEmpty(hostNames)) {
       return true;
     } else if (hostData.getHostName().isPresent()) {
-      return hostName.equals(hostData.getHostName().get()) && (!anomalousMetricsOnly || hostData.isAnomalous());
+      return hostNames.contains(hostData.getHostName().get()) && (!anomalousMetricsOnly || hostData.isAnomalous());
     } else {
       return false;
     }

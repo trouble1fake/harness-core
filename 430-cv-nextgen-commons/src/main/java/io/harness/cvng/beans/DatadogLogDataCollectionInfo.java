@@ -7,8 +7,6 @@
 
 package io.harness.cvng.beans;
 
-import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
-
 import io.harness.cvng.beans.datadog.DatadogLogDefinition;
 import io.harness.delegate.beans.connector.datadog.DatadogConnectorDTO;
 import io.harness.delegate.beans.cvng.datadog.DatadogUtils;
@@ -31,11 +29,7 @@ public class DatadogLogDataCollectionInfo extends LogDataCollectionInfo<DatadogC
   public Map<String, Object> getDslEnvVariables(DatadogConnectorDTO connectorConfigDTO) {
     Map<String, Object> dslEnvVariables = new HashMap<>();
     dslEnvVariables.put("query", logDefinition.getQuery());
-    String indexesParam = null;
-    if (isNotEmpty(logDefinition.getIndexes())) {
-      indexesParam = String.join(",", logDefinition.getIndexes());
-    }
-    dslEnvVariables.put("indexes", indexesParam);
+    dslEnvVariables.put("indexes", logDefinition.getIndexes());
     dslEnvVariables.put("limit", LOG_MAX_LIMIT);
     dslEnvVariables.put("serviceInstanceIdentifier", logDefinition.getServiceInstanceIdentifier());
     return dslEnvVariables;

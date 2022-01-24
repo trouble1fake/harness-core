@@ -13,8 +13,11 @@ import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.pms.commons.events.PmsEventSender;
 import io.harness.execution.NodeExecution;
 import io.harness.plan.PlanNode;
+import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.facilitators.FacilitatorEvent;
 import io.harness.pms.events.base.PmsEventCategory;
+import io.harness.pms.execution.utils.AmbianceUtils;
+import io.harness.pms.execution.utils.NodeProjectionUtils;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -25,21 +28,21 @@ public class RedisFacilitateEventPublisher implements FacilitateEventPublisher {
   @Inject private PmsEventSender eventSender;
 
   @Override
-  public String publishEvent(String nodeExecutionId) {
-    NodeExecution nodeExecution = nodeExecutionService.get(nodeExecutionId);
-    PlanNode planNode = nodeExecution.getNode();
+  public String publishEvent(Ambiance ambiance, PlanNode node) {
+    String nodeExecutionId = AmbianceUtils.obtainCurrentRuntimeId(ambiance);
+    NodeExecution nodeExecution =
+        nodeExecutionService.getWithFieldsIncluded(nodeExecutionId, NodeProjectionUtils.forFacilitation);
     FacilitatorEvent event = FacilitatorEvent.newBuilder()
                                  .setNodeExecutionId(nodeExecutionId)
-                                 .setAmbiance(nodeExecution.getAmbiance())
+                                 .setAmbiance(ambiance)
                                  .setStepParameters(nodeExecution.getResolvedStepParametersBytes())
-                                 .setStepType(planNode.getStepType())
+                                 .setStepType(node.getStepType())
                                  .setNotifyId(generateUuid())
-                                 .addAllRefObjects(planNode.getRefObjects())
-                                 .addAllFacilitatorObtainments(planNode.getFacilitatorObtainments())
+                                 .addAllRefObjects(node.getRefObjects())
+                                 .addAllFacilitatorObtainments(node.getFacilitatorObtainments())
                                  .build();
 
-    String serviceName = planNode.getServiceName();
     return eventSender.sendEvent(
-        nodeExecution.getAmbiance(), event.toByteString(), PmsEventCategory.FACILITATOR_EVENT, serviceName, true);
+        ambiance, event.toByteString(), PmsEventCategory.FACILITATOR_EVENT, nodeExecution.module(), true);
   }
 }

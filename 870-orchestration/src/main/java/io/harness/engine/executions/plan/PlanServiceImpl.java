@@ -13,16 +13,24 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.InvalidRequestException;
 import io.harness.plan.Node;
+import io.harness.plan.NodeEntity;
 import io.harness.plan.Plan;
 import io.harness.plan.PlanNode;
+import io.harness.repositories.NodeEntityRepository;
 import io.harness.repositories.PlanRepository;
+import io.harness.springdata.TransactionHelper;
 
 import com.google.inject.Inject;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @OwnedBy(HarnessTeam.PIPELINE)
 public class PlanServiceImpl implements PlanService {
   @Inject private PlanRepository planRepository;
+  @Inject private NodeEntityRepository nodeEntityRepository;
+  @Inject private TransactionHelper transactionHelper;
 
   @Override
   public Plan fetchPlan(String planId) {
@@ -40,11 +48,21 @@ public class PlanServiceImpl implements PlanService {
 
   @Override
   public Plan save(Plan plan) {
-    return planRepository.save(plan);
+    return transactionHelper.performTransaction(() -> {
+      List<NodeEntity> nodeEntities =
+          plan.getPlanNodes().stream().map(pn -> NodeEntity.fromNode(pn, plan.getUuid())).collect(Collectors.toList());
+      nodeEntityRepository.saveAll(nodeEntities);
+      return planRepository.save(plan.withPlanNodes(new ArrayList<>()));
+    });
   }
 
   @Override
   public Node fetchNode(String planId, String nodeId) {
+    Optional<NodeEntity> nodeEntity = nodeEntityRepository.findById(nodeId);
+    if (nodeEntity.isPresent()) {
+      return nodeEntity.get().getNode();
+    }
+
     Plan plan = fetchPlan(planId);
     if (isNotEmpty(plan.getPlanNodes())) {
       return plan.fetchPlanNode(nodeId);

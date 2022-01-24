@@ -78,7 +78,8 @@ public class AzureSecretHelper {
 
   public void decryptAzureAppServiceTaskParameters(AzureAppServiceTaskParameters azureAppServiceTaskParameters) {
     if (AzureAppServiceTaskType.SLOT_SETUP == azureAppServiceTaskParameters.getCommandType()
-        && azureAppServiceTaskParameters instanceof AzureWebAppSlotSetupParameters) {
+        && azureAppServiceTaskParameters instanceof AzureWebAppSlotSetupParameters
+        && ((AzureWebAppSlotSetupParameters) azureAppServiceTaskParameters).getAzureRegistryType() != null) {
       decryptAzureWebAppSlotSetupParameters((AzureWebAppSlotSetupParameters) azureAppServiceTaskParameters);
     }
 
@@ -133,11 +134,13 @@ public class AzureSecretHelper {
   private void encryptAzureWebAppSlotSetupResponseParams(
       AzureWebAppSlotSetupResponse azureTaskResponse, final String accountId) {
     AzureAppServicePreDeploymentData preDeploymentData = azureTaskResponse.getPreDeploymentData();
-    encryptSettings(preDeploymentData.getAppSettingsToRemove(), accountId);
-    encryptSettings(preDeploymentData.getAppSettingsToAdd(), accountId);
-    encryptSettings(preDeploymentData.getConnStringsToRemove(), accountId);
-    encryptSettings(preDeploymentData.getConnStringsToAdd(), accountId);
-    encryptSettings(preDeploymentData.getDockerSettingsToAdd(), accountId);
+    if (preDeploymentData != null) {
+      encryptSettings(preDeploymentData.getAppSettingsToRemove(), accountId);
+      encryptSettings(preDeploymentData.getAppSettingsToAdd(), accountId);
+      encryptSettings(preDeploymentData.getConnStringsToRemove(), accountId);
+      encryptSettings(preDeploymentData.getConnStringsToAdd(), accountId);
+      encryptSettings(preDeploymentData.getDockerSettingsToAdd(), accountId);
+    }
   }
 
   private <T extends AzureAppServiceSettingDTO> void encryptSettings(Map<String, T> settings, final String accountId) {
@@ -166,7 +169,7 @@ public class AzureSecretHelper {
     SettingValue settingValue = artifactStreamAttributes.getServerSetting().getValue();
     List<EncryptedDataDetail> artifactServerEncryptedDataDetails =
         artifactStreamAttributes.getArtifactServerEncryptedDataDetails();
-    secretDecryptionService.decrypt((EncryptableSetting) settingValue, artifactServerEncryptedDataDetails);
+    secretDecryptionService.decrypt((EncryptableSetting) settingValue, artifactServerEncryptedDataDetails, false);
     return artifactStreamAttributes;
   }
 }

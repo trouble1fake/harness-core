@@ -47,7 +47,8 @@ public interface SdkNodeExecutionService {
 
   void handleAdviserResponse(Ambiance ambiance, @NonNull String notifyId, AdviserResponse adviserResponse);
 
-  void handleEventError(NodeExecutionEventType eventType, String eventNotifyId, FailureInfo failureInfo);
+  void handleEventError(
+      NodeExecutionEventType eventType, Ambiance ambiance, String eventNotifyId, FailureInfo failureInfo);
 
   void spawnChild(Ambiance ambiance, SpawnChildRequest spawnChildRequest);
 

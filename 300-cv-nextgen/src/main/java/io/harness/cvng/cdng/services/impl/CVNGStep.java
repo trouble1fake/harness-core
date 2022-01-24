@@ -10,7 +10,6 @@ package io.harness.cvng.cdng.services.impl;
 import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.cvng.activity.entities.Activity;
 import io.harness.cvng.activity.entities.DeploymentActivity;
 import io.harness.cvng.activity.services.api.ActivityService;
 import io.harness.cvng.beans.activity.ActivityStatusDTO;
@@ -24,8 +23,10 @@ import io.harness.cvng.cdng.entities.CVNGStepTask.CVNGStepTaskBuilder;
 import io.harness.cvng.cdng.services.api.CVNGStepTaskService;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceDTO;
 import io.harness.cvng.core.beans.params.ServiceEnvironmentParams;
+import io.harness.cvng.core.beans.sidekick.DemoActivitySideKickData;
 import io.harness.cvng.core.entities.CVConfig;
 import io.harness.cvng.core.services.api.FeatureFlagService;
+import io.harness.cvng.core.services.api.SideKickService;
 import io.harness.cvng.core.services.api.monitoredService.HealthSourceService;
 import io.harness.cvng.core.services.api.monitoredService.MonitoredServiceService;
 import io.harness.cvng.verificationjob.entities.VerificationJob;
@@ -88,6 +89,7 @@ public class CVNGStep implements AsyncExecutable<CVNGStepParameter> {
   @Inject private MonitoredServiceService monitoredServiceService;
   @Inject private FeatureFlagService featureFlagService;
   @Inject private VerificationJobInstanceService verificationJobInstanceService;
+  @Inject private SideKickService sideKickService;
 
   @Override
   public AsyncExecutableResponse executeAsync(Ambiance ambiance, CVNGStepParameter stepParameters,
@@ -128,90 +130,50 @@ public class CVNGStep implements AsyncExecutable<CVNGStepParameter> {
       cvngStepTaskService.create(cvngStepTask);
       return AsyncExecutableResponse.newBuilder().addCallbackIds(cvngStepTaskBuilder.build().getCallbackId()).build();
     } else {
-      String callbackId;
-      if (!featureFlagService.isFeatureFlagEnabled(accountId, "CVNG_VERIFY_STEP_TO_SINGLE_ACTIVITY")) {
-        callbackId = callBackIdFromActivity(serviceEnvironmentParams, ambiance, stepParameters, monitoredServiceDTO);
+      String verificationJobInstanceId;
+      DeploymentActivity activity = getDeploymentActivity(
+          stepParameters, serviceEnvironmentParams, monitoredServiceDTO, ambiance, deploymentStartTime);
+      boolean isDemoEnabled = isDemoEnabled(accountId, ambiance);
+      boolean shouldFailVerification = false;
+      if (isDemoEnabled) {
+        shouldFailVerification = shouldFailVerification(ambiance, stepParameters.getSensitivity());
+        VerificationJobInstance verificationJobInstance =
+            getVerificationJobInstanceForDemo(AmbianceUtils.obtainCurrentLevel(ambiance).getIdentifier(),
+                stepParameters, serviceEnvironmentParams, monitoredServiceDTO, deploymentStartTime,
+                shouldFailVerification(ambiance, stepParameters.getSensitivity())
+                    ? ActivityVerificationStatus.VERIFICATION_FAILED
+                    : ActivityVerificationStatus.VERIFICATION_PASSED);
+        activity.setDemoActivity(true);
+        verificationJobInstanceId =
+            verificationJobInstanceService.createDemoInstances(Arrays.asList(verificationJobInstance)).get(0);
       } else {
-        String verificationJobInstanceId;
-        DeploymentActivity activity = getDeploymentActivity(
-            stepParameters, serviceEnvironmentParams, monitoredServiceDTO, ambiance, deploymentStartTime);
-        if (isDemoEnabled(accountId, ambiance)) {
-          VerificationJobInstance verificationJobInstance =
-              getVerificationJobInstanceForDemo(AmbianceUtils.obtainCurrentLevel(ambiance).getIdentifier(),
-                  stepParameters, serviceEnvironmentParams, monitoredServiceDTO, deploymentStartTime,
-                  shouldFailVerification(ambiance, stepParameters.getSensitivity())
-                      ? ActivityVerificationStatus.VERIFICATION_FAILED
-                      : ActivityVerificationStatus.VERIFICATION_PASSED);
-          activity.setDemoActivity(true);
-          verificationJobInstanceId =
-              verificationJobInstanceService.createDemoInstances(Arrays.asList(verificationJobInstance)).get(0);
-        } else {
-          VerificationJobInstance verificationJobInstance =
-              getVerificationJobInstanceBuilder(AmbianceUtils.obtainCurrentLevel(ambiance).getIdentifier(),
-                  stepParameters, serviceEnvironmentParams, monitoredServiceDTO, deploymentStartTime)
-                  .build();
-          verificationJobInstanceId = verificationJobInstanceService.create(verificationJobInstance);
-        }
-        activity.setVerificationJobInstanceIds(Arrays.asList(verificationJobInstanceId));
-        String activityId = activityService.upsert(activity);
-        CVNGStepTask cvngStepTask = CVNGStepTask.builder()
-                                        .accountId(serviceEnvironmentParams.getAccountIdentifier())
-                                        .orgIdentifier(serviceEnvironmentParams.getOrgIdentifier())
-                                        .projectIdentifier(serviceEnvironmentParams.getProjectIdentifier())
-                                        .serviceIdentifier(serviceEnvironmentParams.getServiceIdentifier())
-                                        .environmentIdentifier(serviceEnvironmentParams.getEnvironmentIdentifier())
-                                        .status(CVNGStepTask.Status.IN_PROGRESS)
-                                        .deploymentStartTime(deploymentStartTime)
-                                        .activityId(activityId)
-                                        .callbackId(verificationJobInstanceId)
-                                        .verificationJobInstanceId(verificationJobInstanceId)
-                                        .build();
-        cvngStepTaskService.create(cvngStepTask);
-        callbackId = verificationJobInstanceId;
+        VerificationJobInstanceBuilder verificationJobInstanceBuilder =
+            getVerificationJobInstanceBuilder(AmbianceUtils.obtainCurrentLevel(ambiance).getIdentifier(),
+                stepParameters, serviceEnvironmentParams, monitoredServiceDTO, deploymentStartTime);
+        activity.fillInVerificationJobInstanceDetails(verificationJobInstanceBuilder);
+        verificationJobInstanceId = verificationJobInstanceService.create(verificationJobInstanceBuilder.build());
       }
-      return AsyncExecutableResponse.newBuilder().addCallbackIds(callbackId).build();
+      activity.setVerificationJobInstanceIds(Arrays.asList(verificationJobInstanceId));
+      String activityId = activityService.upsert(activity);
+      CVNGStepTask cvngStepTask = CVNGStepTask.builder()
+                                      .accountId(serviceEnvironmentParams.getAccountIdentifier())
+                                      .orgIdentifier(serviceEnvironmentParams.getOrgIdentifier())
+                                      .projectIdentifier(serviceEnvironmentParams.getProjectIdentifier())
+                                      .serviceIdentifier(serviceEnvironmentParams.getServiceIdentifier())
+                                      .environmentIdentifier(serviceEnvironmentParams.getEnvironmentIdentifier())
+                                      .status(CVNGStepTask.Status.IN_PROGRESS)
+                                      .deploymentStartTime(deploymentStartTime)
+                                      .activityId(activityId)
+                                      .callbackId(verificationJobInstanceId)
+                                      .verificationJobInstanceId(verificationJobInstanceId)
+                                      .build();
+      cvngStepTaskService.create(cvngStepTask);
+      if (isDemoEnabled && !shouldFailVerification) {
+        sideKickService.schedule(DemoActivitySideKickData.builder().deploymentActivityId(activityId).build(),
+            activity.getActivityStartTime().plus(Duration.ofMinutes(10)));
+      }
+      return AsyncExecutableResponse.newBuilder().addCallbackIds(verificationJobInstanceId).build();
     }
-  }
-
-  private String callBackIdFromActivity(ServiceEnvironmentParams serviceEnvironmentParams, Ambiance ambiance,
-      CVNGStepParameter stepParameters, MonitoredServiceDTO monitoredServiceDTO) {
-    DeploymentActivity deploymentActivity =
-        getDeploymentActivity(stepParameters, serviceEnvironmentParams, monitoredServiceDTO, ambiance,
-            Instant.ofEpochMilli(
-                AmbianceUtils.getStageLevelFromAmbiance(ambiance)
-                    .orElseThrow(() -> new IllegalStateException("verify step needs to be part of a stage."))
-                    .getStartTs()));
-    String activityUuid;
-    if (isDemoEnabled(AmbianceUtils.getAccountId(ambiance), ambiance)) {
-      deploymentActivity.setVerificationStartTime(
-          deploymentActivity.getVerificationStartTime().minus(Duration.ofMinutes(15)).toEpochMilli());
-      deploymentActivity.setActivityStartTime(deploymentActivity.getActivityStartTime().minus(Duration.ofMinutes(15)));
-      activityUuid = activityService.createActivityForDemo(deploymentActivity,
-          shouldFailVerification(ambiance, stepParameters.getSensitivity())
-              ? ActivityVerificationStatus.VERIFICATION_FAILED
-              : ActivityVerificationStatus.VERIFICATION_PASSED);
-    } else {
-      activityUuid = activityService.register(deploymentActivity);
-    }
-    Activity activity = activityService.get(activityUuid);
-    CVNGStepTaskBuilder cvngStepTaskBuilder = CVNGStepTask.builder();
-    cvngStepTaskBuilder.activityId(activityUuid)
-        .callbackId(activityUuid)
-        .verificationJobInstanceId(activity.getVerificationJobInstanceIds().get(0));
-    CVNGStepTask cvngStepTask =
-        cvngStepTaskBuilder.accountId(serviceEnvironmentParams.getAccountIdentifier())
-            .orgIdentifier(serviceEnvironmentParams.getOrgIdentifier())
-            .projectIdentifier(serviceEnvironmentParams.getProjectIdentifier())
-            .serviceIdentifier(serviceEnvironmentParams.getServiceIdentifier())
-            .environmentIdentifier(serviceEnvironmentParams.getEnvironmentIdentifier())
-            .status(CVNGStepTask.Status.IN_PROGRESS)
-            .deploymentStartTime(Instant.ofEpochMilli(
-                AmbianceUtils.getStageLevelFromAmbiance(ambiance)
-                    .orElseThrow(() -> new IllegalStateException("verify step needs to be part of a stage."))
-                    .getStartTs()))
-            .build();
-    cvngStepTaskService.create(cvngStepTask);
-    return cvngStepTask.getCallbackId();
   }
 
   private boolean isDemoEnabled(String accountId, Ambiance ambiance) {

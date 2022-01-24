@@ -7,7 +7,7 @@
 
 package io.harness.plan;
 
-import static io.harness.annotations.dev.HarnessTeam.CDC;
+import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
 
 import io.harness.ModuleType;
@@ -56,7 +56,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
  * With this approach we can crate iterators over these and perform the migrations
  */
 
-@OwnedBy(CDC)
+@OwnedBy(PIPELINE)
 @Value
 @Builder
 @FieldNameConstants(innerTypeName = "PlanKeys")
@@ -69,7 +69,7 @@ public class Plan implements PersistentEntity, Node {
 
   @Default @Wither @Id @org.mongodb.morphia.annotations.Id String uuid = generateUuid();
   @Singular @Deprecated List<PlanNodeProto> nodes;
-  @Singular List<Node> planNodes;
+  @Wither @Singular List<Node> planNodes;
 
   @NotNull String startingNodeId;
 
@@ -145,6 +145,11 @@ public class Plan implements PersistentEntity, Node {
   @Override
   public PmsStepParameters getStepParameters() {
     return null;
+  }
+
+  @Override
+  public boolean isSkipUnresolvedExpressionsCheck() {
+    return true;
   }
 
   @Override

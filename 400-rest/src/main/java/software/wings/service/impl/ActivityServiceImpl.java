@@ -63,6 +63,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 import org.mongodb.morphia.mapping.Mapper;
 import org.mongodb.morphia.query.FindOptions;
 import org.mongodb.morphia.query.Query;
+import org.mongodb.morphia.query.Sort;
 import org.mongodb.morphia.query.UpdateOperations;
 
 /**
@@ -233,6 +234,22 @@ public class ActivityServiceImpl implements ActivityService {
         .filter(ActivityKeys.appId, appId)
         .filter(ActivityKeys.serviceId, serviceId)
         .get();
+  }
+
+  @Override
+  public List<Activity> getRollbackActivitiesForService(
+      String appId, String serviceId, String workflowId, String workflowExecutionId) {
+    FindOptions findOptions = new FindOptions();
+    return wingsPersistence.createQuery(Activity.class)
+        .filter(ActivityKeys.appId, appId)
+        .filter(ActivityKeys.serviceId, serviceId)
+        .filter(ActivityKeys.workflowId, workflowId)
+        .field(ActivityKeys.workflowExecutionId)
+        .notEqual(workflowExecutionId)
+        .field(ActivityKeys.artifactId)
+        .exists()
+        .order(Sort.descending(ActivityKeys.createdAt))
+        .asList(findOptions);
   }
 
   @Override

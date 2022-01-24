@@ -476,6 +476,17 @@ public class ActivityServiceImpl implements ActivityService {
         .lessThan(endTime)
         .asList();
   }
+  @Override
+  public Optional<Activity> getAnyDemoKubernetesEvent(
+      ServiceEnvironmentParams serviceEnvironmentParams, Instant startTime, Instant endTime) {
+    return Optional.ofNullable(createQuery(serviceEnvironmentParams)
+                                   .filter(ActivityKeys.type, ActivityType.KUBERNETES)
+                                   .field(ActivityKeys.activityStartTime)
+                                   .greaterThanOrEq(startTime)
+                                   .field(ActivityKeys.activityStartTime)
+                                   .lessThan(endTime)
+                                   .get());
+  }
 
   private List<String> getVerificationJobInstanceId(String activityId) {
     Preconditions.checkNotNull(activityId);

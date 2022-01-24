@@ -46,4 +46,5 @@ public interface EntityTypeConstants {
   String JIRA_APPROVAL = "JiraApproval";
   String HARNESS_APPROVAL = "HarnessApproval";
   String BARRIER = "Barrier";
+  String Verify = "Verify";
 }
