@@ -22,7 +22,6 @@ import io.harness.yaml.schema.beans.YamlSchemaRootClass;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import lombok.experimental.UtilityClass;
-import org.springframework.core.convert.converter.Converter;
 
 @UtilityClass
 @OwnedBy(DX)
@@ -37,10 +36,8 @@ public class ConnectorNextGenRegistrars {
           .addAll(SMCoreRegistrars.kryoRegistrars)
           .addAll(DelegateAgentBeansRegistrars.kryoRegistrars)
           .add(ConnectorNextGenKryoRegistrar.class)
-          .addAll(PmsCommonsModuleRegistrars.kryoRegistrars)
           .addAll(GitSyncSdkRegistrar.kryoRegistrars)
           .addAll(NGAuditCommonsRegistrars.kryoRegistrars)
-          .addAll(PmsSdkCoreModuleRegistrars.kryoRegistrars)
           .addAll(DelegateTaskRegistrars.kryoRegistrars)
           .addAll(LicenseBeanRegistrar.kryoRegistrars)
           .build();
@@ -55,18 +52,10 @@ public class ConnectorNextGenRegistrars {
           .addAll(SMCoreRegistrars.morphiaRegistrars)
           .add(ConnectorMorphiaClassesRegistrar.class)
           .addAll(ConnectorBeansRegistrars.morphiaRegistrars)
-          .add(PmsSdkCoreMorphiaRegistrar.class)
-          .addAll(PmsCommonsModuleRegistrars.morphiaRegistrars)
           .addAll(GitSyncSdkRegistrar.morphiaRegistrars)
           .addAll(NGAuditCommonsRegistrars.morphiaRegistrars)
           .addAll(OutboxEventRegistrars.morphiaRegistrars)
-          .addAll(PmsSdkCoreModuleRegistrars.morphiaRegistrars)
           .addAll(DelegateTaskRegistrars.morphiaRegistrars)
-          .build();
-
-  public static final ImmutableList<Class<? extends Converter<?, ?>>> springConverters =
-      ImmutableList.<Class<? extends Converter<?, ?>>>builder()
-          .addAll(PmsSdkCoreModuleRegistrars.springConverters)
           .build();
 
   public static final ImmutableList<YamlSchemaRootClass> yamlSchemaRegistrars =
