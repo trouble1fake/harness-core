@@ -58,8 +58,9 @@ public class DemoActivitySideKickExecutor implements SideKickExecutor<DemoActivi
         monitoredService.getDependencies()
             .stream()
             .filter(serviceDependency
-                -> serviceDependency.getDependencyMetadata().getType()
-                    == ServiceDependencyMetadata.DependencyMetadataType.KUBERNETES)
+                -> serviceDependency.getDependencyMetadata() != null
+                    && serviceDependency.getDependencyMetadata().getType()
+                        == ServiceDependencyMetadata.DependencyMetadataType.KUBERNETES)
             .findAny();
     if (serviceDependencyDTO.isPresent()) {
       MonitoredService kubernetesMonitoredService = monitoredServiceService.getMonitoredService(

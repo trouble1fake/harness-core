@@ -41,6 +41,7 @@ import io.harness.persistence.HPersistence;
 import com.google.inject.Inject;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -81,12 +82,13 @@ public class CVNGDemoPerpetualTaskServiceImpl implements CVNGDemoPerpetualTaskSe
         dataCollectionTaskResultBuilder.status(DataCollectionExecutionStatus.SUCCESS);
       } catch (Exception e) {
         dataCollectionTaskResultBuilder.status(DataCollectionExecutionStatus.FAILED)
-            .stacktrace(e.getStackTrace().toString())
+            .stacktrace(Arrays.toString(e.getStackTrace()))
             .exception(e.getMessage());
         log.warn("Demo data perpetual task failed for verificationTaskId"
-            + dataCollectionTask.get().getVerificationTaskId() + "  for time frame: "
-            + dataCollectionTask.get().getStartTime() + " to " + dataCollectionTask.get().getEndTime()
-            + " with exception: " + e.getMessage() + ": stacktrace:" + e.getStackTrace());
+                + dataCollectionTask.get().getVerificationTaskId()
+                + "  for time frame: " + dataCollectionTask.get().getStartTime() + " to "
+                + dataCollectionTask.get().getEndTime() + " with exception: " + e.getMessage() + ": stacktrace: {}",
+            e);
         throw e;
       } finally {
         dataCollectionTaskService.updateTaskStatus(dataCollectionTaskResultBuilder.build());
@@ -166,8 +168,9 @@ public class CVNGDemoPerpetualTaskServiceImpl implements CVNGDemoPerpetualTaskSe
         monitoredService.getDependencies()
             .stream()
             .filter(serviceDependency
-                -> serviceDependency.getDependencyMetadata().getType()
-                    == ServiceDependencyMetadata.DependencyMetadataType.KUBERNETES)
+                -> serviceDependency.getDependencyMetadata() != null
+                    && serviceDependency.getDependencyMetadata().getType()
+                        == ServiceDependencyMetadata.DependencyMetadataType.KUBERNETES)
             .findAny();
     if (serviceDependencyDTO.isPresent()) {
       MonitoredService kubernetesMonitoredService = monitoredServiceService.getMonitoredService(
