@@ -34,11 +34,11 @@ import org.mongodb.morphia.query.UpdateOperations;
 
 @Data
 @SuperBuilder
-@FieldNameConstants(innerTypeName = "CustomHealthCVConfigKeys")
+@FieldNameConstants(innerTypeName = "CustomHealthMetricCVConfigKeys")
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class CustomHealthCVConfig extends MetricCVConfig {
+public class CustomHealthMetricCVConfig extends MetricCVConfig {
   String groupName;
   List<CustomHealthMetricDefinition> metricDefinitions;
 
@@ -49,13 +49,13 @@ public class CustomHealthCVConfig extends MetricCVConfig {
 
   @Override
   public DataSourceType getType() {
-    return DataSourceType.CUSTOM_HEALTH;
+    return DataSourceType.CUSTOM_HEALTH_METRIC;
   }
 
   @Override
   protected void validateParams() {
-    checkNotNull(groupName, generateErrorMessageFromParam(CustomHealthCVConfigKeys.groupName));
-    checkNotNull(metricDefinitions, generateErrorMessageFromParam(CustomHealthCVConfigKeys.metricDefinitions));
+    checkNotNull(groupName, generateErrorMessageFromParam(CustomHealthMetricCVConfigKeys.groupName));
+    checkNotNull(metricDefinitions, generateErrorMessageFromParam(CustomHealthMetricCVConfigKeys.metricDefinitions));
     Set<String> uniqueMetricDefinitionsNames = new HashSet<>();
 
     for (int metricDefinitionIndex = 0; metricDefinitionIndex < metricDefinitions.size(); metricDefinitionIndex++) {
@@ -113,7 +113,7 @@ public class CustomHealthCVConfig extends MetricCVConfig {
     MetricPack metricPack = MetricPack.builder()
                                 .category(riskProfile.getCategory())
                                 .accountId(getAccountId())
-                                .dataSourceType(DataSourceType.CUSTOM_HEALTH)
+                                .dataSourceType(DataSourceType.CUSTOM_HEALTH_METRIC)
                                 .projectIdentifier(getProjectIdentifier())
                                 .identifier(CVNextGenConstants.CUSTOM_PACK_IDENTIFIER)
                                 .build();
@@ -129,13 +129,13 @@ public class CustomHealthCVConfig extends MetricCVConfig {
   }
 
   public static class CustomHealthCVConfigUpdatableEntity
-      extends MetricCVConfigUpdatableEntity<CustomHealthCVConfig, CustomHealthCVConfig> {
+      extends MetricCVConfigUpdatableEntity<CustomHealthMetricCVConfig, CustomHealthMetricCVConfig> {
     @Override
-    public void setUpdateOperations(
-        UpdateOperations<CustomHealthCVConfig> updateOperations, CustomHealthCVConfig customHealthCVConfig) {
+    public void setUpdateOperations(UpdateOperations<CustomHealthMetricCVConfig> updateOperations,
+        CustomHealthMetricCVConfig customHealthCVConfig) {
       setCommonOperations(updateOperations, customHealthCVConfig);
-      updateOperations.set(CustomHealthCVConfigKeys.groupName, customHealthCVConfig.getGroupName())
-          .set(CustomHealthCVConfigKeys.metricDefinitions, customHealthCVConfig.getMetricDefinitions());
+      updateOperations.set(CustomHealthMetricCVConfigKeys.groupName, customHealthCVConfig.getGroupName())
+          .set(CustomHealthMetricCVConfigKeys.metricDefinitions, customHealthCVConfig.getMetricDefinitions());
     }
   }
 

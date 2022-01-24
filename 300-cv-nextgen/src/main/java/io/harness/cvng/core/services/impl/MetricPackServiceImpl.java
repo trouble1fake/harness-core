@@ -249,7 +249,7 @@ public class MetricPackServiceImpl implements MetricPackService {
       case NEW_RELIC:
         yamlFileNames.addAll(NEWRELIC_METRICPACK_FILES);
         break;
-      case CUSTOM_HEALTH:
+      case CUSTOM_HEALTH_METRIC:
         yamlFileNames.addAll(CUSTOM_HEALTH_METRICPACK_FILES);
         break;
       default:
@@ -431,7 +431,7 @@ public class MetricPackServiceImpl implements MetricPackService {
       case NEW_RELIC:
         metricPack.setDataCollectionDsl(getNewRelicMetricPackDsl(metricPack));
         break;
-      case CUSTOM_HEALTH:
+      case CUSTOM_HEALTH_METRIC:
         metricPack.setDataCollectionDsl(CUSTOM_HEALTH_DSL);
         break;
       default:

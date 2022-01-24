@@ -13,6 +13,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.harness.CategoryTest;
 import io.harness.category.element.UnitTests;
+import io.harness.cvng.core.beans.CustomHealthDefinition;
 import io.harness.cvng.core.beans.CustomHealthMetricDefinition;
 import io.harness.cvng.core.beans.HealthSourceMetricDefinition;
 import io.harness.cvng.core.beans.HealthSourceQueryType;
@@ -30,7 +31,7 @@ import org.junit.experimental.categories.Category;
 
 public class CustomHealthCVConfigTest extends CategoryTest {
   List<CustomHealthMetricDefinition> metricDefinitions;
-  CustomHealthCVConfig customHealthCVConfig;
+  CustomHealthMetricCVConfig customHealthCVConfig;
   MetricResponseMapping responseMapping;
 
   @Before
@@ -43,19 +44,21 @@ public class CustomHealthCVConfigTest extends CategoryTest {
 
     CustomHealthMetricDefinition metricDefinition =
         CustomHealthMetricDefinition.builder()
-            .method(CustomHealthMethod.GET)
-            .queryType(HealthSourceQueryType.HOST_BASED)
+            .healthDefinition(CustomHealthDefinition.builder()
+                                  .method(CustomHealthMethod.GET)
+                                  .queryType(HealthSourceQueryType.HOST_BASED)
+                                  .urlPath("https://dd.com")
+                                  .build())
             .metricResponseMapping(responseMapping)
             .metricName("metric_1")
             .analysis(HealthSourceMetricDefinition.AnalysisDTO.builder().build())
             .riskProfile(RiskProfile.builder().build())
             .sli(HealthSourceMetricDefinition.SLIDTO.builder().build())
-            .urlPath("https://dd.com")
             .build();
 
     metricDefinitions.add(metricDefinition);
     customHealthCVConfig =
-        CustomHealthCVConfig.builder().groupName("group1").metricDefinitions(metricDefinitions).build();
+        CustomHealthMetricCVConfig.builder().groupName("group1").metricDefinitions(metricDefinitions).build();
   }
 
   @Test
@@ -76,7 +79,7 @@ public class CustomHealthCVConfigTest extends CategoryTest {
         HealthSourceMetricDefinition.AnalysisDTO.LiveMonitoringDTO.builder().enabled(true).build());
     assertThatThrownBy(customHealthCVConfig::validateParams)
         .isInstanceOf(InvalidRequestException.class)
-        .hasMessage("Host based queries can only be used for deployment verification.");
+        .hasMessage("Host based queries can only be used for continuous verification.");
   }
 
   @Test
@@ -85,7 +88,7 @@ public class CustomHealthCVConfigTest extends CategoryTest {
   public void testValidateParams_whenDeploymentVerificationIsTrueForServiceBasedQuery() {
     metricDefinitions.get(0).getAnalysis().setDeploymentVerification(
         HealthSourceMetricDefinition.AnalysisDTO.DeploymentVerificationDTO.builder().enabled(true).build());
-    metricDefinitions.get(0).setQueryType(HealthSourceQueryType.SERVICE_BASED);
+    metricDefinitions.get(0).getHealthDefinition().setQueryType(HealthSourceQueryType.SERVICE_BASED);
     assertThatThrownBy(customHealthCVConfig::validateParams)
         .isInstanceOf(InvalidRequestException.class)
         .hasMessage("Service based queries can only be used for live monitoring and service level indicators.");
@@ -95,10 +98,13 @@ public class CustomHealthCVConfigTest extends CategoryTest {
   @Owner(developers = ANJAN)
   @Category(UnitTests.class)
   public void testValidateParams_whenThereAreDuplicateMetricDefinitions() {
-    CustomHealthCVConfig.MetricDefinition metricDefinition =
-        CustomHealthCVConfig.MetricDefinition.builder()
-            .method(CustomHealthMethod.GET)
-            .queryType(HealthSourceQueryType.HOST_BASED)
+    CustomHealthMetricDefinition metricDefinition =
+        CustomHealthMetricDefinition.builder()
+            .healthDefinition(CustomHealthDefinition.builder()
+                                  .method(CustomHealthMethod.GET)
+                                  .queryType(HealthSourceQueryType.HOST_BASED)
+                                  .urlPath("https://dd.com")
+                                  .build())
             .metricResponseMapping(responseMapping)
             .metricName("metric_1")
             .analysis(
@@ -109,7 +115,6 @@ public class CustomHealthCVConfigTest extends CategoryTest {
                     .build())
             .riskProfile(RiskProfile.builder().build())
             .sli(HealthSourceMetricDefinition.SLIDTO.builder().enabled(false).build())
-            .urlPath("https://dd.com")
             .build();
     metricDefinitions.add(metricDefinition);
 

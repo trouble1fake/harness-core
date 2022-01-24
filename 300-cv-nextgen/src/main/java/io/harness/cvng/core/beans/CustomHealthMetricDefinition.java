@@ -11,6 +11,7 @@ import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.MetricRespons
 
 import lombok.AccessLevel;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.FieldNameConstants;
 import lombok.experimental.SuperBuilder;

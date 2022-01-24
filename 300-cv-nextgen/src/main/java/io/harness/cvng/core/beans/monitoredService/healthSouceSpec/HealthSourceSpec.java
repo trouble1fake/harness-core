@@ -36,7 +36,8 @@ import org.hibernate.validator.constraints.NotEmpty;
       @JsonSubTypes.Type(value = DatadogMetricHealthSourceSpec.class, name = "DatadogMetrics"),
       @JsonSubTypes.Type(value = DatadogLogHealthSourceSpec.class, name = "DatadogLog"),
       @JsonSubTypes.Type(value = ErrorTrackingHealthSourceSpec.class, name = "ErrorTracking"),
-      @JsonSubTypes.Type(value = CustomHealthSourceSpec.class, name = "CustomHealth")
+      @JsonSubTypes.Type(value = CustomHealthSourceMetricSpec.class, name = "CustomHealthMetric"),
+      @JsonSubTypes.Type(value = CustomHealthSourceLogSpec.class, name = "CustomHealthLog")
 })
 public abstract class HealthSourceSpec {
   @NotEmpty @EntityIdentifier(allowScoped = true) String connectorRef;

@@ -10,17 +10,11 @@ package io.harness.cvng.core.beans;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
-import lombok.experimental.FieldNameConstants;
 import lombok.experimental.SuperBuilder;
 
-@Data
 @SuperBuilder
+@Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@FieldNameConstants(innerTypeName = "CustomHealthLogDefinitionKeys")
-public class CustomHealthLogDefinition {
-  CustomHealthDefinition customHealthDefinition;
-  String queryValueJsonPath;
-  String timestampJsonPath;
-  String serviceInstanceJsonPath;
-  String timestampFormat;
+public class CustomHealthSpecMetricDefinition extends CustomHealthMetricDefinition {
+  String groupName;
 }

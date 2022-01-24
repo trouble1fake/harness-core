@@ -34,7 +34,7 @@ public enum MonitoredServiceDataSourceType {
           put(DataSourceType.SPLUNK, SPLUNK);
           put(DataSourceType.DATADOG_METRICS, DATADOG_METRICS);
           put(DataSourceType.DATADOG_LOG, DATADOG_LOG);
-          put(DataSourceType.CUSTOM_HEALTH, CUSTOM_HEALTH);
+          put(DataSourceType.CUSTOM_HEALTH_METRIC, CUSTOM_HEALTH);
           put(DataSourceType.ERROR_TRACKING, ERROR_TRACKING);
         }
       };
