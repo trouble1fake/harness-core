@@ -7,6 +7,7 @@
 
 package io.harness.cdng.provision.terraform;
 
+import com.google.inject.Inject;
 import io.harness.EntityType;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
@@ -14,12 +15,8 @@ import io.harness.beans.IdentifierRef;
 import io.harness.cdng.featureFlag.CDFeatureFlagHelper;
 import io.harness.common.ParameterFieldHelper;
 import io.harness.delegate.beans.TaskData;
-import io.harness.delegate.task.terraform.TFTaskType;
-import io.harness.delegate.task.terraform.TerraformCommand;
-import io.harness.delegate.task.terraform.TerraformCommandUnit;
-import io.harness.delegate.task.terraform.TerraformTaskNGParameters;
+import io.harness.delegate.task.terraform.*;
 import io.harness.delegate.task.terraform.TerraformTaskNGParameters.TerraformTaskNGParametersBuilder;
-import io.harness.delegate.task.terraform.TerraformTaskNGResponse;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
 import io.harness.executions.steps.ExecutionNodeType;
@@ -44,15 +41,13 @@ import io.harness.steps.StepHelper;
 import io.harness.steps.StepUtils;
 import io.harness.supplier.ThrowingSupplier;
 import io.harness.utils.IdentifierRefHelper;
-
+import lombok.extern.slf4j.Slf4j;
 import software.wings.beans.TaskType;
 
-import com.google.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @OwnedBy(HarnessTeam.CDP)
@@ -125,6 +120,8 @@ public class TerraformPlanStep extends TaskExecutableWithRollbackAndRbac<Terrafo
         .workspace(ParameterFieldHelper.getParameterFieldValue(configuration.getWorkspace()))
         .configFile(helper.getGitFetchFilesConfig(
             configuration.getConfigFiles().getStore().getSpec(), ambiance, TerraformStepHelper.TF_CONFIG_FILES))
+        .fileStoreConfigFiles(helper.getArtifactoryFetchFilesConfig(configuration.getConfigFiles().getStore().getSpec(),
+                ambiance, TerraformStepHelper.TF_CONFIG_FILES))
         .varFileInfos(helper.toTerraformVarFileInfo(configuration.getVarFiles(), ambiance))
         .backendConfig(helper.getBackendConfig(configuration.getBackendConfig()))
         .targets(ParameterFieldHelper.getParameterFieldValue(configuration.getTargets()))

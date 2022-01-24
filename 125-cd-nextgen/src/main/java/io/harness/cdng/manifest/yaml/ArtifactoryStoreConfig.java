@@ -23,8 +23,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Wither;
-import org.codehaus.jackson.annotate.JsonTypeName;
 import org.springframework.data.annotation.TypeAlias;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 import javax.validation.constraints.NotNull;
 import java.util.HashMap;
@@ -39,7 +39,7 @@ import static io.harness.annotations.dev.HarnessTeam.CDC;
 @JsonTypeName(ManifestStoreType.ARTIFACTORY)
 @SimpleVisitorHelper(helperClass = ConnectorRefExtractorHelper.class)
 @TypeAlias("artifactoryStore")
-@RecasterAlias("io.harness.cdng.manifest.yaml.ArtifactoryStoreConfig")
+@RecasterAlias("io.harness.cdng.manifest.yaml.ArtifactoryStore")
 
 public class ArtifactoryStoreConfig implements StoreConfig, Visitable, WithConnectorRef {
     @NotNull @Wither @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
@@ -90,7 +90,6 @@ public class ArtifactoryStoreConfig implements StoreConfig, Visitable, WithConne
                           connectorRef: foobar
      */
 
-
     @Override
     public String getKind() {
         return ManifestStoreType.ARTIFACTORY;
@@ -120,19 +119,19 @@ public class ArtifactoryStoreConfig implements StoreConfig, Visitable, WithConne
 
     @Override
     public StoreConfig applyOverrides(StoreConfig overrideConfig) {
-        ArtifactoryStoreConfig artifactoryStoreConfig = (ArtifactoryStoreConfig) overrideConfig;
+        ArtifactoryStoreConfig ArtifactoryStore = (ArtifactoryStoreConfig) overrideConfig;
         ArtifactoryStoreConfig resultantArtifactoryStore = this;
-        if (!ParameterField.isNull(artifactoryStoreConfig.getConnectorRef())) {
-            resultantArtifactoryStore = resultantArtifactoryStore.withConnectorRef(artifactoryStoreConfig.getConnectorRef());
+        if (!ParameterField.isNull(ArtifactoryStore.getConnectorRef())) {
+            resultantArtifactoryStore = resultantArtifactoryStore.withConnectorRef(ArtifactoryStore.getConnectorRef());
         }
-        if (!ParameterField.isNull(artifactoryStoreConfig.getArtifactName())){
-            resultantArtifactoryStore = resultantArtifactoryStore.withArtifactName(artifactoryStoreConfig.getArtifactName());
+        if (!ParameterField.isNull(ArtifactoryStore.getArtifactName())){
+            resultantArtifactoryStore = resultantArtifactoryStore.withArtifactName(ArtifactoryStore.getArtifactName());
         }
-        if (!ParameterField.isNull(artifactoryStoreConfig.getRepositoryPath())) {
-            resultantArtifactoryStore = resultantArtifactoryStore.withRepositoryPath(artifactoryStoreConfig.getRepositoryPath());
+        if (!ParameterField.isNull(ArtifactoryStore.getRepositoryPath())) {
+            resultantArtifactoryStore = resultantArtifactoryStore.withRepositoryPath(ArtifactoryStore.getRepositoryPath());
         }
-        if (!ParameterField.isNull(artifactoryStoreConfig.getVersion())){
-            resultantArtifactoryStore = resultantArtifactoryStore.withVersion(artifactoryStoreConfig.getVersion());
+        if (!ParameterField.isNull(ArtifactoryStore.getVersion())){
+            resultantArtifactoryStore = resultantArtifactoryStore.withVersion(ArtifactoryStore.getVersion());
         }
         return resultantArtifactoryStore;
     }
