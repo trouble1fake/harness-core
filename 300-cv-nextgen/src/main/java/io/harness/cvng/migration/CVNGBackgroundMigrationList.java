@@ -11,6 +11,8 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cvng.migration.list.AddDefaultFieldsToMonitoredService;
 import io.harness.cvng.migration.list.AddDeploymentMonitoringSourcePerpetualTask;
+import io.harness.cvng.migration.list.AddMonitoredServiceToCVConfigMigration;
+import io.harness.cvng.migration.list.AddMonitoredServiceToHeatMapMigration;
 import io.harness.cvng.migration.list.AddMonitoringSourcesToVerificationJobMigration;
 import io.harness.cvng.migration.list.AppDCustomMetricForExistingProjects;
 import io.harness.cvng.migration.list.CVNGBaseMigration;
@@ -81,6 +83,8 @@ public class CVNGBackgroundMigrationList {
         .add(Pair.of(28, DeleteSLISLOMigration.class))
         .add(Pair.of(29, NewRelicCustomPackForExistingProjects.class))
         .add(Pair.of(30, CustomHealthCustomPackForExistingProjects.class))
+        .add(Pair.of(31, AddMonitoredServiceToCVConfigMigration.class))
+        .add(Pair.of(32, AddMonitoredServiceToHeatMapMigration.class))
         .build();
   }
 }

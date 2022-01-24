@@ -47,6 +47,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -281,7 +282,13 @@ public class DeploymentTimeSeriesAnalysisServiceImpl implements DeploymentTimeSe
     return NodeRiskCountDTO.builder()
         .totalNodeCount(totalNodeCount)
         .anomalousNodeCount(totalNodeCount - nodeCountByRiskStatusMap.getOrDefault(Risk.HEALTHY, 0))
-        .nodeCountByRiskStatusMap(nodeCountByRiskStatusMap)
+        .riskCounts(Arrays.stream(Risk.values())
+                        .map(risk
+                            -> NodeRiskCountDTO.RiskCount.builder()
+                                   .risk(risk)
+                                   .count(nodeCountByRiskStatusMap.getOrDefault(risk, 0))
+                                   .build())
+                        .collect(Collectors.toList()))
         .build();
   }
 

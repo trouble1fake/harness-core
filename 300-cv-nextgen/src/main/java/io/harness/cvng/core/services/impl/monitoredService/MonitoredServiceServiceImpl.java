@@ -143,7 +143,7 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
     if (monitoredServiceDTO.getSources() != null && isNotEmpty(monitoredServiceDTO.getSources().getHealthSources())) {
       healthSourceService.create(accountId, monitoredServiceDTO.getOrgIdentifier(),
           monitoredServiceDTO.getProjectIdentifier(), monitoredServiceDTO.getEnvironmentRef(),
-          monitoredServiceDTO.getServiceRef(), monitoredServiceDTO.getIdentifier(),
+          monitoredServiceDTO.getServiceRef(), monitoredServiceDTO.getIdentifier(), monitoredServiceDTO.getIdentifier(),
           monitoredServiceDTO.getSources().getHealthSources(), getMonitoredServiceEnableStatus());
     }
     if (isNotEmpty(monitoredServiceDTO.getDependencies())) {
@@ -296,11 +296,12 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
     });
     healthSourceService.create(monitoredService.getAccountId(), monitoredServiceDTO.getOrgIdentifier(),
         monitoredServiceDTO.getProjectIdentifier(), monitoredService.getEnvironmentIdentifier(),
-        monitoredService.getServiceIdentifier(), monitoredServiceDTO.getIdentifier(), toBeCreatedHealthSources,
-        monitoredService.isEnabled());
+        monitoredService.getServiceIdentifier(), monitoredService.getIdentifier(), monitoredServiceDTO.getIdentifier(),
+        toBeCreatedHealthSources, monitoredService.isEnabled());
     healthSourceService.update(monitoredService.getAccountId(), monitoredServiceDTO.getOrgIdentifier(),
         monitoredServiceDTO.getProjectIdentifier(), monitoredService.getEnvironmentIdentifier(),
-        monitoredService.getServiceIdentifier(), monitoredServiceDTO.getIdentifier(), toBeUpdatedHealthSources);
+        monitoredService.getServiceIdentifier(), monitoredService.getIdentifier(), monitoredServiceDTO.getIdentifier(),
+        toBeUpdatedHealthSources);
   }
 
   @Override
@@ -915,6 +916,7 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
         .identifier(monitoredService.getIdentifier())
         .serviceRef(monitoredService.getServiceIdentifier())
         .environmentRef(monitoredService.getEnvironmentIdentifier())
+        .environmentRefList(monitoredService.getEnvironmentIdentifierList())
         .healthMonitoringEnabled(monitoredService.isEnabled())
         .tags(TagMapper.convertToMap(monitoredService.getTags()))
         .type(monitoredService.getType());

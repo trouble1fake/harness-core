@@ -27,11 +27,13 @@ import io.harness.category.element.UnitTests;
 import io.harness.engine.ExecutionEngineDispatcher;
 import io.harness.engine.OrchestrationEngine;
 import io.harness.engine.executions.node.NodeExecutionService;
+import io.harness.engine.executions.plan.PlanService;
 import io.harness.engine.pms.commons.events.PmsEventSender;
 import io.harness.engine.pms.data.PmsOutcomeService;
 import io.harness.engine.pms.data.PmsSweepingOutputService;
 import io.harness.engine.pms.execution.strategy.identity.IdentityNodeExecutionStrategy;
 import io.harness.engine.pms.execution.strategy.identity.IdentityNodeResumeHelper;
+import io.harness.engine.utils.PmsLevelUtils;
 import io.harness.execution.NodeExecution;
 import io.harness.plan.IdentityPlanNode;
 import io.harness.pms.contracts.advisers.AdviseType;
@@ -69,6 +71,7 @@ public class IdentityNodeExecutionStrategyTest extends OrchestrationTestBase {
   @Mock private PmsEventSender eventSender;
   @Mock @Named("EngineExecutorService") ExecutorService executorService;
   @Mock private NodeExecutionService nodeExecutionService;
+  @Mock private PlanService planService;
   @Mock private WaitNotifyEngine waitNotifyEngine;
   @Mock private PmsOutcomeService pmsOutcomeService;
   @Mock private PmsSweepingOutputService pmsSweepingOutputService;
@@ -120,11 +123,8 @@ public class IdentityNodeExecutionStrategyTest extends OrchestrationTestBase {
     String planExecutionId = generateUuid();
     String nodeExecutionId = generateUuid();
     String originalNodeExecutionId = generateUuid();
-    Ambiance ambiance = Ambiance.newBuilder()
-                            .setPlanExecutionId(planExecutionId)
-                            .putAllSetupAbstractions(prepareInputArgs())
-                            .addLevels(Level.newBuilder().setRuntimeId(nodeExecutionId).build())
-                            .build();
+    String planId = generateUuid();
+
     IdentityPlanNode planNode = IdentityPlanNode.builder()
                                     .name("Test Node")
                                     .uuid(generateUuid())
@@ -132,6 +132,13 @@ public class IdentityNodeExecutionStrategyTest extends OrchestrationTestBase {
                                     .originalNodeExecutionId(originalNodeExecutionId)
                                     .stepType(TEST_STEP_TYPE)
                                     .build();
+
+    Ambiance ambiance = Ambiance.newBuilder()
+                            .setPlanExecutionId(planExecutionId)
+                            .setPlanId(planId)
+                            .putAllSetupAbstractions(prepareInputArgs())
+                            .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecutionId, planNode))
+                            .build();
 
     AdviserResponse adviserResponse = AdviserResponse.newBuilder().setType(AdviseType.END_PLAN).build();
     NodeExecution nodeExecution = NodeExecution.builder()
@@ -150,7 +157,7 @@ public class IdentityNodeExecutionStrategyTest extends OrchestrationTestBase {
                                           .planNode(planNode)
                                           .status(Status.SKIPPED)
                                           .build();
-
+    when(planService.fetchNode(planId, planNode.getUuid())).thenReturn(planNode);
     when(nodeExecutionService.get(eq(nodeExecutionId))).thenReturn(nodeExecution);
     when(nodeExecutionService.get(eq(originalNodeExecutionId))).thenReturn(originalExecution);
     when(nodeExecutionService.update(eq(nodeExecutionId), any())).thenReturn(nodeExecution);
@@ -194,11 +201,6 @@ public class IdentityNodeExecutionStrategyTest extends OrchestrationTestBase {
     String planExecutionId = generateUuid();
     String nodeExecutionId = generateUuid();
     String originalNodeExecutionId = generateUuid();
-    Ambiance ambiance = Ambiance.newBuilder()
-                            .setPlanExecutionId(planExecutionId)
-                            .putAllSetupAbstractions(prepareInputArgs())
-                            .addLevels(Level.newBuilder().setRuntimeId(nodeExecutionId).build())
-                            .build();
     IdentityPlanNode planNode = IdentityPlanNode.builder()
                                     .name("Test Node")
                                     .uuid(generateUuid())
@@ -206,6 +208,12 @@ public class IdentityNodeExecutionStrategyTest extends OrchestrationTestBase {
                                     .originalNodeExecutionId(originalNodeExecutionId)
                                     .stepType(TEST_STEP_TYPE)
                                     .build();
+
+    Ambiance ambiance = Ambiance.newBuilder()
+                            .setPlanExecutionId(planExecutionId)
+                            .putAllSetupAbstractions(prepareInputArgs())
+                            .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecutionId, planNode))
+                            .build();
 
     AdviserResponse adviserResponse = AdviserResponse.newBuilder().setType(AdviseType.END_PLAN).build();
     NodeExecution nodeExecution = NodeExecution.builder()

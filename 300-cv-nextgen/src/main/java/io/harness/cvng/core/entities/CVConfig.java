@@ -88,8 +88,11 @@ public abstract class CVConfig
   @NotNull private String accountId;
   @NotNull @FdIndex private String connectorIdentifier;
 
-  @NotNull private String serviceIdentifier;
-  @NotNull private String envIdentifier;
+  @NotNull @Deprecated private String serviceIdentifier;
+  @NotNull @Deprecated private String envIdentifier;
+
+  private String monitoredServiceIdentifier;
+
   @NotNull private String projectIdentifier;
   @NotNull private String orgIdentifier;
   @NotNull private CVMonitoringCategory category;

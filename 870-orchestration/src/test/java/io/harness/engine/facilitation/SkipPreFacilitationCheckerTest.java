@@ -23,13 +23,14 @@ import io.harness.category.element.UnitTests;
 import io.harness.engine.ExecutionCheck;
 import io.harness.engine.OrchestrationEngine;
 import io.harness.engine.executions.node.NodeExecutionService;
+import io.harness.engine.utils.PmsLevelUtils;
 import io.harness.exception.InvalidRequestException;
 import io.harness.execution.NodeExecution;
+import io.harness.plan.PlanNode;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.ExecutionMode;
 import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.execution.skip.SkipInfo;
-import io.harness.pms.contracts.plan.PlanNodeProto;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.contracts.steps.io.StepResponseProto;
@@ -54,23 +55,30 @@ public class SkipPreFacilitationCheckerTest extends OrchestrationTestBase {
   @Category(UnitTests.class)
   public void performCheckWhenConditionFalse() {
     String skipCondition = "<+pipeline.name>==\"name\"";
-    NodeExecution nodeExecution =
-        NodeExecution.builder()
-            .uuid(generateUuid())
-            .ambiance(Ambiance.newBuilder().setPlanExecutionId(generateUuid()).build())
-            .status(Status.QUEUED)
-            .mode(ExecutionMode.TASK)
-            .node(PlanNodeProto.newBuilder()
-                      .setUuid(generateUuid())
-                      .setStepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                      .setSkipCondition(skipCondition)
-                      .build())
-            .startTs(System.currentTimeMillis())
-            .build();
+    String nodeExecutionId = generateUuid();
+    PlanNode planNode = PlanNode.builder()
+                            .uuid(generateUuid())
+                            .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+                            .skipCondition(skipCondition)
+                            .serviceName("CD")
+                            .identifier("DUMMY")
+                            .build();
+    Ambiance ambiance = Ambiance.newBuilder()
+                            .setPlanExecutionId(generateUuid())
+                            .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecutionId, planNode))
+                            .build();
+    NodeExecution nodeExecution = NodeExecution.builder()
+                                      .uuid(nodeExecutionId)
+                                      .ambiance(ambiance)
+                                      .status(Status.QUEUED)
+                                      .mode(ExecutionMode.TASK)
+                                      .planNode(planNode)
+                                      .startTs(System.currentTimeMillis())
+                                      .build();
     nodeExecutionService.save(nodeExecution);
 
     when(engineExpressionService.evaluateExpression(nodeExecution.getAmbiance(), skipCondition)).thenReturn(false);
-    ExecutionCheck check = checker.performCheck(nodeExecution);
+    ExecutionCheck check = checker.performCheck(ambiance, planNode);
     assertThat(check).isNotNull();
     assertThat(check.isProceed()).isTrue();
     verify(engine, times(0)).processStepResponse(any(), any());
@@ -81,24 +89,32 @@ public class SkipPreFacilitationCheckerTest extends OrchestrationTestBase {
   @Category(UnitTests.class)
   public void performCheckWhenConditionTrue() {
     String skipCondition = "<+pipeline.name>==\"name\"";
-    Ambiance ambiance = Ambiance.newBuilder().setPlanExecutionId(generateUuid()).build();
-    NodeExecution nodeExecution =
-        NodeExecution.builder()
-            .uuid(generateUuid())
-            .ambiance(ambiance)
-            .status(Status.QUEUED)
-            .mode(ExecutionMode.TASK)
-            .node(PlanNodeProto.newBuilder()
-                      .setUuid(generateUuid())
-                      .setStepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                      .setSkipCondition(skipCondition)
-                      .build())
-            .startTs(System.currentTimeMillis())
-            .build();
+    PlanNode planNode = PlanNode.builder()
+                            .uuid(generateUuid())
+                            .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+                            .skipCondition(skipCondition)
+                            .serviceName("CD")
+                            .identifier("DUMMY")
+                            .build();
+    String nodeExecutionId = generateUuid();
+
+    Ambiance ambiance = Ambiance.newBuilder()
+                            .setPlanExecutionId(generateUuid())
+                            .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecutionId, planNode))
+                            .build();
+
+    NodeExecution nodeExecution = NodeExecution.builder()
+                                      .uuid(nodeExecutionId)
+                                      .ambiance(ambiance)
+                                      .status(Status.QUEUED)
+                                      .mode(ExecutionMode.TASK)
+                                      .planNode(planNode)
+                                      .startTs(System.currentTimeMillis())
+                                      .build();
     nodeExecutionService.save(nodeExecution);
 
     when(engineExpressionService.evaluateExpression(nodeExecution.getAmbiance(), skipCondition)).thenReturn(true);
-    ExecutionCheck check = checker.performCheck(nodeExecution);
+    ExecutionCheck check = checker.performCheck(ambiance, planNode);
     assertThat(check).isNotNull();
     assertThat(check.isProceed()).isFalse();
     verify(engine, times(1))
@@ -114,25 +130,32 @@ public class SkipPreFacilitationCheckerTest extends OrchestrationTestBase {
   @Category(UnitTests.class)
   public void performCheckWhenConditionException() {
     String skipCondition = "<+pipeline.name>==\"name\"";
-    NodeExecution nodeExecution =
-        NodeExecution.builder()
-            .uuid(generateUuid())
-            .ambiance(Ambiance.newBuilder().setPlanExecutionId(generateUuid()).build())
-            .status(Status.QUEUED)
-            .mode(ExecutionMode.TASK)
-            .node(PlanNodeProto.newBuilder()
-                      .setUuid(generateUuid())
-                      .setStepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                      .setSkipCondition(skipCondition)
-                      .build())
-            .startTs(System.currentTimeMillis())
-            .build();
+    String nodeExecutionId = generateUuid();
+    PlanNode planNode = PlanNode.builder()
+                            .uuid(generateUuid())
+                            .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+                            .skipCondition(skipCondition)
+                            .serviceName("CD")
+                            .identifier("DUMMY")
+                            .build();
+    Ambiance ambiance = Ambiance.newBuilder()
+                            .setPlanExecutionId(generateUuid())
+                            .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecutionId, planNode))
+                            .build();
+    NodeExecution nodeExecution = NodeExecution.builder()
+                                      .uuid(nodeExecutionId)
+                                      .ambiance(ambiance)
+                                      .status(Status.QUEUED)
+                                      .mode(ExecutionMode.TASK)
+                                      .planNode(planNode)
+                                      .startTs(System.currentTimeMillis())
+                                      .build();
     nodeExecutionService.save(nodeExecution);
 
     InvalidRequestException testException = new InvalidRequestException("TestException");
     when(engineExpressionService.evaluateExpression(nodeExecution.getAmbiance(), skipCondition))
         .thenThrow(testException);
-    ExecutionCheck check = checker.performCheck(nodeExecution);
+    ExecutionCheck check = checker.performCheck(ambiance, planNode);
     assertThat(check).isNotNull();
     assertThat(check.isProceed()).isFalse();
     verify(engine, times(1)).handleError(nodeExecution.getAmbiance(), testException);

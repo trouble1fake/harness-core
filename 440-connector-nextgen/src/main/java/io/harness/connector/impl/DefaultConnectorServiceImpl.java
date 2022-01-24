@@ -595,6 +595,11 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
   @Override
   public boolean delete(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, String connectorIdentifier) {
+    return delete(accountIdentifier, orgIdentifier, projectIdentifier, connectorIdentifier, ChangeType.DELETE);
+  }
+
+  public boolean delete(String accountIdentifier, String orgIdentifier, String projectIdentifier,
+      String connectorIdentifier, ChangeType changeType) {
     Optional<Connector> existingConnectorOptional =
         getInternal(accountIdentifier, orgIdentifier, projectIdentifier, connectorIdentifier);
     if (!existingConnectorOptional.isPresent()) {
@@ -614,7 +619,7 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
               new ConnectorDeleteEvent(accountIdentifier, connectorMapper.writeDTO(existingConnector).getConnector()));
     }
 
-    connectorRepository.save(existingConnector, null, ChangeType.DELETE, supplier);
+    connectorRepository.save(existingConnector, null, changeType, supplier);
 
     return true;
   }
@@ -791,10 +796,11 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
       }
       return validationFailureBuilder.build();
     } catch (WingsException wingsException) {
-      // handle flows which are registered to error handlng framework
+      log.error("An error occurred while validating the Connector ", wingsException);
+      // handle flows which are registered to error handling framework
       throw wingsException;
     } catch (Exception ex) {
-      log.info("Encountered Error while validating the connector {}",
+      log.error("An error occurred while validating the Connector {}",
           String.format(CONNECTOR_STRING, connectorInfo.getIdentifier(), accountIdentifier,
               connectorInfo.getOrgIdentifier(), connectorInfo.getProjectIdentifier()),
           ex);

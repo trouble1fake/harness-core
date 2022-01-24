@@ -7,6 +7,7 @@
 
 package io.harness.cvng.core.beans.monitoredService.healthSourceSpec;
 
+import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.rule.OwnerRule.DEEPAK_CHHIKARA;
 import static io.harness.rule.OwnerRule.PRAVEEN;
 
@@ -48,6 +49,7 @@ public class PrometheusHealthSourceSpecTest extends CvNextGenTestBase {
   String envIdentifier;
   String identifier;
   String name;
+  String monitoredServiceIdentifier;
   BuilderFactory builderFactory;
   PrometheusHealthSourceSpec prometheusHealthSourceSpec;
 
@@ -60,7 +62,7 @@ public class PrometheusHealthSourceSpecTest extends CvNextGenTestBase {
     serviceIdentifier = builderFactory.getContext().getServiceIdentifier();
     envIdentifier = builderFactory.getContext().getEnvIdentifier();
     connectorIdentifier = "connectorRef";
-
+    monitoredServiceIdentifier = generateUuid();
     identifier = "identifier";
     name = "some-name";
     prometheusHealthSourceSpec = PrometheusHealthSourceSpec.builder().connectorRef(connectorIdentifier).build();
@@ -97,7 +99,7 @@ public class PrometheusHealthSourceSpecTest extends CvNextGenTestBase {
 
     CVConfigUpdateResult cvConfigUpdateResult =
         prometheusHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier, envIdentifier,
-            serviceIdentifier, identifier, name, Collections.emptyList(), null);
+            serviceIdentifier, monitoredServiceIdentifier, identifier, name, Collections.emptyList(), null);
     assertThat(cvConfigUpdateResult).isNotNull();
     assertThat(cvConfigUpdateResult.getAdded()).isNotEmpty();
     assertThat(cvConfigUpdateResult.getUpdated()).isEmpty();
@@ -109,6 +111,7 @@ public class PrometheusHealthSourceSpecTest extends CvNextGenTestBase {
     assertThat(cvConfig.getGroupName()).isEqualTo("myMetricGroupName");
     assertThat(cvConfig.getServiceIdentifier()).isEqualTo(serviceIdentifier);
     assertThat(cvConfig.getEnvIdentifier()).isEqualTo(envIdentifier);
+    assertThat(cvConfig.getMonitoredServiceIdentifier()).isEqualTo(monitoredServiceIdentifier);
     assertThat(cvConfig.getMetricInfoList().size()).isEqualTo(1);
     PrometheusCVConfig.MetricInfo metricInfo = cvConfig.getMetricInfoList().get(0);
     assertThat(metricInfo.getMetricName()).isEqualTo("sampleMetric");
@@ -174,7 +177,7 @@ public class PrometheusHealthSourceSpecTest extends CvNextGenTestBase {
     prometheusHealthSourceSpec.setMetricDefinitions(Arrays.asList(metricDefinition, metricDefinition2));
     CVConfigUpdateResult cvConfigUpdateResult =
         prometheusHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier, envIdentifier,
-            serviceIdentifier, identifier, name, Collections.emptyList(), null);
+            serviceIdentifier, monitoredServiceIdentifier, identifier, name, Collections.emptyList(), null);
     assertThat(cvConfigUpdateResult).isNotNull();
     assertThat(cvConfigUpdateResult.getAdded()).isNotEmpty();
     assertThat(cvConfigUpdateResult.getUpdated()).isEmpty();
@@ -186,6 +189,7 @@ public class PrometheusHealthSourceSpecTest extends CvNextGenTestBase {
     assertThat(cvConfig.getGroupName()).isEqualTo("myMetricGroupName");
     assertThat(cvConfig.getServiceIdentifier()).isEqualTo(serviceIdentifier);
     assertThat(cvConfig.getEnvIdentifier()).isEqualTo(envIdentifier);
+    assertThat(cvConfig.getMonitoredServiceIdentifier()).isEqualTo(monitoredServiceIdentifier);
     assertThat(cvConfig.getCategory().name()).isEqualTo(CVMonitoringCategory.PERFORMANCE.name());
     assertThat(cvConfig.getMetricInfoList().size()).isEqualTo(2);
     PrometheusCVConfig.MetricInfo metricInfo = cvConfig.getMetricInfoList().get(0);
@@ -238,7 +242,7 @@ public class PrometheusHealthSourceSpecTest extends CvNextGenTestBase {
 
     CVConfigUpdateResult cvConfigUpdateResult =
         prometheusHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier, envIdentifier,
-            serviceIdentifier, identifier, name, Arrays.asList(createCVConfig()), null);
+            serviceIdentifier, monitoredServiceIdentifier, identifier, name, Arrays.asList(createCVConfig()), null);
 
     assertThat(cvConfigUpdateResult).isNotNull();
     assertThat(cvConfigUpdateResult.getAdded()).isEmpty();
@@ -279,7 +283,7 @@ public class PrometheusHealthSourceSpecTest extends CvNextGenTestBase {
 
     CVConfigUpdateResult cvConfigUpdateResult =
         prometheusHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier, envIdentifier,
-            serviceIdentifier, identifier, name, Arrays.asList(createCVConfig()), null);
+            serviceIdentifier, monitoredServiceIdentifier, identifier, name, Arrays.asList(createCVConfig()), null);
 
     assertThat(cvConfigUpdateResult).isNotNull();
     assertThat(cvConfigUpdateResult.getAdded()).isNotEmpty();
@@ -327,7 +331,7 @@ public class PrometheusHealthSourceSpecTest extends CvNextGenTestBase {
 
     CVConfigUpdateResult cvConfigUpdateResult =
         prometheusHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier, envIdentifier,
-            serviceIdentifier, identifier, name, Collections.emptyList(), null);
+            serviceIdentifier, monitoredServiceIdentifier, identifier, name, Collections.emptyList(), null);
     assertThat(cvConfigUpdateResult).isNotNull();
     assertThat(cvConfigUpdateResult.getAdded()).isNotEmpty();
     assertThat(cvConfigUpdateResult.getUpdated()).isEmpty();
@@ -339,6 +343,7 @@ public class PrometheusHealthSourceSpecTest extends CvNextGenTestBase {
     assertThat(cvConfig.getGroupName()).isEqualTo("myMetricGroupName");
     assertThat(cvConfig.getServiceIdentifier()).isEqualTo(serviceIdentifier);
     assertThat(cvConfig.getEnvIdentifier()).isEqualTo(envIdentifier);
+    assertThat(cvConfig.getMonitoredServiceIdentifier()).isEqualTo(monitoredServiceIdentifier);
     assertThat(cvConfig.getMetricInfoList().size()).isEqualTo(1);
     PrometheusCVConfig.MetricInfo metricInfo = cvConfig.getMetricInfoList().get(0);
     assertThat(metricInfo.getMetricName()).isEqualTo("sampleMetric");
@@ -394,7 +399,7 @@ public class PrometheusHealthSourceSpecTest extends CvNextGenTestBase {
 
     CVConfigUpdateResult cvConfigUpdateResult =
         prometheusHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier, envIdentifier,
-            serviceIdentifier, identifier, name, Collections.emptyList(), null);
+            serviceIdentifier, monitoredServiceIdentifier, identifier, name, Collections.emptyList(), null);
     assertThat(cvConfigUpdateResult).isNotNull();
     assertThat(cvConfigUpdateResult.getAdded()).isNotEmpty();
     assertThat(cvConfigUpdateResult.getUpdated()).isEmpty();
@@ -424,6 +429,9 @@ public class PrometheusHealthSourceSpecTest extends CvNextGenTestBase {
   }
 
   private PrometheusCVConfig createCVConfig() {
-    return builderFactory.prometheusCVConfigBuilder().groupName("groupName").build();
+    return (PrometheusCVConfig) builderFactory.prometheusCVConfigBuilder()
+        .groupName("groupName")
+        .monitoredServiceIdentifier(monitoredServiceIdentifier)
+        .build();
   }
 }

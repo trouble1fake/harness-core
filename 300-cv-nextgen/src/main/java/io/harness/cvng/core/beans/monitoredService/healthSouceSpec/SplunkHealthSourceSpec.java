@@ -72,11 +72,11 @@ public class SplunkHealthSourceSpec extends HealthSourceSpec {
 
   @Override
   public HealthSource.CVConfigUpdateResult getCVConfigUpdateResult(String accountId, String orgIdentifier,
-      String projectIdentifier, String environmentRef, String serviceRef, String identifier, String name,
-      List<CVConfig> existingCVConfigs, MetricPackService metricPackService) {
+      String projectIdentifier, String environmentRef, String serviceRef, String monitoredServiceIdentifier,
+      String identifier, String name, List<CVConfig> existingCVConfigs, MetricPackService metricPackService) {
     Map<Key, SplunkCVConfig> existingConfigMap = getExistingCVConfigMap(existingCVConfigs);
-    Map<Key, SplunkCVConfig> currentConfigMap = getCurrentCVConfigMap(
-        accountId, orgIdentifier, projectIdentifier, environmentRef, serviceRef, identifier, name);
+    Map<Key, SplunkCVConfig> currentConfigMap = getCurrentCVConfigMap(accountId, orgIdentifier, projectIdentifier,
+        environmentRef, serviceRef, monitoredServiceIdentifier, identifier, name);
 
     Set<Key> deleted = Sets.difference(existingConfigMap.keySet(), currentConfigMap.keySet());
     Set<Key> added = Sets.difference(currentConfigMap.keySet(), existingConfigMap.keySet());
@@ -126,7 +126,8 @@ public class SplunkHealthSourceSpec extends HealthSourceSpec {
   }
 
   private Map<Key, SplunkCVConfig> getCurrentCVConfigMap(String accountId, String orgIdentifier,
-      String projectIdentifier, String environmentRef, String serviceRef, String identifier, String name) {
+      String projectIdentifier, String environmentRef, String serviceRef, String monitoredServiceIdentifier,
+      String identifier, String name) {
     return queries.stream()
         .map(queryDTO
             -> SplunkCVConfig.builder()
@@ -143,6 +144,7 @@ public class SplunkHealthSourceSpec extends HealthSourceSpec {
                    .query(queryDTO.getQuery())
                    .serviceInstanceIdentifier(queryDTO.getServiceInstanceIdentifier())
                    .category(CVMonitoringCategory.ERRORS)
+                   .monitoredServiceIdentifier(monitoredServiceIdentifier)
                    .build())
         .collect(Collectors.toMap(this::getKeyFromCVConfig, cvConfig -> cvConfig));
   }
