@@ -23,7 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -34,7 +33,6 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FeatureFlag;
 import io.harness.beans.FeatureName;
 import io.harness.category.element.UnitTests;
-import io.harness.delegate.beans.DelegateTokenDetails;
 import io.harness.ff.FeatureFlagService;
 import io.harness.limits.checker.rate.UsageBucket;
 import io.harness.ng.core.NGAccountAccess;
@@ -45,7 +43,6 @@ import io.harness.persistence.HPersistence;
 import io.harness.persistence.PersistentEntity;
 import io.harness.rule.Owner;
 import io.harness.scheduler.PersistentScheduler;
-import io.harness.service.intfc.DelegateNgTokenService;
 
 import software.wings.WingsBaseTest;
 import software.wings.beans.Account;
@@ -88,7 +85,6 @@ public class DeleteAccountHelperTest extends WingsBaseTest {
   @Inject private Morphia morphia;
   @Inject FeatureFlagService featureFlagService;
   @Inject private HPersistence persistence;
-  @Mock private DelegateNgTokenService delegateNgTokenService;
 
   private final String appId = UUID.randomUUID().toString();
   private static final String GROUP_NAME = "GROUP_NAME";
@@ -315,15 +311,12 @@ public class DeleteAccountHelperTest extends WingsBaseTest {
         .thenReturn(Collections.singletonList(perpetualTaskRecord));
     doReturn(entitiesRemainingForDeletion).when(deleteAccountHelperSpy).deleteAllEntities(ACCOUNT_ID);
     when(licenseService.updateAccountLicense(anyString(), any())).thenReturn(true);
-    when(delegateNgTokenService.revokeDelegateToken(any(), any(), any())).thenReturn(mock(DelegateTokenDetails.class));
     persistence.save(account);
 
     deleteAccountHelperSpy.deleteAccount(ACCOUNT_ID);
 
     verify(persistentScheduler, times(1)).deleteAllQuartzJobsForAccount(ACCOUNT_ID);
     verify(perpetualTaskService, times(1)).deleteAllTasksForAccount(ACCOUNT_ID);
-    verify(delegateNgTokenService, times(1))
-        .revokeDelegateToken(ACCOUNT_ID, null, DelegateNgTokenService.DEFAULT_TOKEN_NAME);
   }
 
   @Test
@@ -342,7 +335,6 @@ public class DeleteAccountHelperTest extends WingsBaseTest {
         .thenReturn(Collections.singletonList(perpetualTaskRecord));
     when(licenseService.updateAccountLicense(anyString(), any())).thenReturn(true);
     persistence.save(account);
-    when(delegateNgTokenService.revokeDelegateToken(any(), any(), any())).thenReturn(mock(DelegateTokenDetails.class));
 
     deleteAccountHelperSpy.deleteAccount(ACCOUNT_ID);
 
@@ -351,8 +343,6 @@ public class DeleteAccountHelperTest extends WingsBaseTest {
 
     assertThat(deletedEntities.size()).isEqualTo(1);
     assertThat(deletedEntities.get(0).getEntityId()).isEqualTo(ACCOUNT_ID);
-    verify(delegateNgTokenService, times(1))
-        .revokeDelegateToken(ACCOUNT_ID, null, DelegateNgTokenService.DEFAULT_TOKEN_NAME);
   }
 
   @Test
