@@ -51,7 +51,7 @@ public class ServiceEntityManagementServiceImpl implements ServiceEntityManageme
   }
 
   @Override
-  public void checkThatTheOrganizationTProjectExists(
+  public void checkThatTheOrganizationAndProjectExists(
       String orgIdentifier, String projectIdentifier, String accountIdentifier) {
     if (isNotEmpty(orgIdentifier)) {
       final Optional<Organization> organization = organizationService.get(accountIdentifier, orgIdentifier);
