@@ -45,7 +45,6 @@ public class CustomHealthSourceSpecLogTransformer
               .queryValueJsonPath(customHealthLogDefinition.getQueryValueJsonPath())
               .timestampJsonPath(customHealthLogDefinition.getTimestampJsonPath())
               .serviceInstanceJsonPath(customHealthLogDefinition.getServiceInstanceJsonPath())
-              .groupName(cvConfig.getGroupName())
               .queryName(cvConfig.getQueryName())
               .build();
       logSpec.getLogDefinitions().add(specLogDefinition);

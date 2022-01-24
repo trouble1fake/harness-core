@@ -8,7 +8,6 @@
 package io.harness.cvng.core.beans.monitoredService.healthSouceSpec;
 
 import io.harness.cvng.beans.DataSourceType;
-import io.harness.cvng.core.beans.CustomHealthDefinition;
 import io.harness.cvng.core.beans.CustomHealthLogDefinition;
 import io.harness.cvng.core.beans.CustomHealthSpecLogDefinition;
 import io.harness.cvng.core.beans.monitoredService.HealthSource;
@@ -43,19 +42,19 @@ public class CustomHealthSourceLogSpec extends HealthSourceSpec {
   @Data
   @Builder
   public static class Key {
-    String groupName;
+    CustomHealthLogDefinition logDefinition;
     String query;
   }
 
   @Override
   public HealthSource.CVConfigUpdateResult getCVConfigUpdateResult(String accountId, String orgIdentifier,
-      String projectIdentifier, String environmentRef, String serviceRef, String identifier, String name,
-      List<CVConfig> existingCVConfigs, MetricPackService metricPackService) {
+      String projectIdentifier, String environmentRef, String serviceRef, String monitoredServiceIdentifier,
+      String identifier, String name, List<CVConfig> existingCVConfigs, MetricPackService metricPackService) {
     List<CustomHealthLogCVConfig> existingDBCVConfigs = (List<CustomHealthLogCVConfig>) (List<?>) existingCVConfigs;
     Map<Key, CustomHealthLogCVConfig> existingConfigs = new HashMap<>();
     existingDBCVConfigs.forEach(config
         -> existingConfigs.put(
-            Key.builder().groupName(config.getGroupName()).query(config.getQuery()).build(), config));
+            Key.builder().logDefinition(config.getQueryDefinition()).query(config.getQuery()).build(), config));
 
     Map<Key, CustomHealthLogCVConfig> currentCVConfigs =
         getCVConfigs(accountId, orgIdentifier, projectIdentifier, environmentRef, serviceRef, identifier, name);
@@ -80,10 +79,9 @@ public class CustomHealthSourceLogSpec extends HealthSourceSpec {
       String projectIdentifier, String environmentRef, String serviceRef, String identifier, String name) {
     Map<Key, CustomHealthLogCVConfig> cvConfigMap = new HashMap<>();
     logDefinitions.forEach(logDefinition -> {
-      String groupName = logDefinition.getGroupName();
       String query = logDefinition.getCustomHealthDefinition().getRequestBody();
 
-      Key cvConfigKey = Key.builder().query(query).groupName(groupName).build();
+      Key cvConfigKey = Key.builder().query(query).logDefinition(logDefinition).build();
       CustomHealthLogCVConfig existingCvConfig = cvConfigMap.get(cvConfigKey);
 
       if (existingCvConfig != null) {

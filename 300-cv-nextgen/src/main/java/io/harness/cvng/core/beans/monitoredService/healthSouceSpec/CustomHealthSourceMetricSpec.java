@@ -52,14 +52,9 @@ public class CustomHealthSourceMetricSpec extends MetricHealthSourceSpec {
   }
 
   @Override
-  public DataSourceType getType() {
-    return DataSourceType.CUSTOM_HEALTH_METRIC;
-  }
-
-  @Override
   public HealthSource.CVConfigUpdateResult getCVConfigUpdateResult(String accountId, String orgIdentifier,
-      String projectIdentifier, String environmentRef, String serviceRef, String identifier, String name,
-      List<CVConfig> existingCVConfigs, MetricPackService metricPackService) {
+      String projectIdentifier, String environmentRef, String serviceRef, String monitoredServiceIdentifier,
+      String identifier, String name, List<CVConfig> existingCVConfigs, MetricPackService metricPackService) {
     List<CustomHealthMetricCVConfig> existingDBCVConfigs =
         (List<CustomHealthMetricCVConfig>) (List<?>) existingCVConfigs;
     Map<Key, CustomHealthMetricCVConfig> existingConfigs = new HashMap<>();
@@ -83,6 +78,11 @@ public class CustomHealthSourceMetricSpec extends MetricHealthSourceSpec {
         .updated(updatedConfigs)
         .added(added.stream().map(currentCVConfigs::get).collect(Collectors.toList()))
         .build();
+  }
+
+  @Override
+  public DataSourceType getType() {
+    return DataSourceType.CUSTOM_HEALTH_METRIC;
   }
 
   public Map<Key, CustomHealthMetricCVConfig> getCVConfigs(String accountId, String orgIdentifier,

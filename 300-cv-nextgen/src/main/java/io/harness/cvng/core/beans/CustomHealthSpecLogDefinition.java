@@ -16,6 +16,5 @@ import lombok.experimental.SuperBuilder;
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CustomHealthSpecLogDefinition extends CustomHealthLogDefinition {
-  String groupName;
   String queryName;
 }
