@@ -20,6 +20,8 @@ import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
+import okhttp3.MediaType;
+import okhttp3.ResponseBody;
 import org.apache.commons.lang3.StringUtils;
 import retrofit2.Call;
 import retrofit2.Response;
@@ -71,7 +73,10 @@ public class NGRestUtils {
     try {
       Response<ResponseDTO<T>> response = request.execute();
       if (response.isSuccessful()) {
-        return response.body().getData();
+        if (response.body() != null) {
+          return response.body().getData();
+        }
+        return (T) Response.success(null);
       } else {
         log.error("Error Response received: {}", response);
         String errorMessage = "";
