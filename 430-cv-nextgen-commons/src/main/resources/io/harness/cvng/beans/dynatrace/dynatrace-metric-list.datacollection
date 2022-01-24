@@ -7,16 +7,16 @@ Var metricsResponse = sync-call(url=Var:metricsUrl, header=Env:commonHeaders, op
 Var nullObject = null
 Var responseList = []
 
-Var metrics = extract(Var:servicesResponse, $.metrics)
+Var metrics = extract(Var:metricsResponse, $.metrics)
 foreach metric in Var:metrics {
     Var metricMap = {}
     Var metricId = extract(Var:metric, $.metricId)
     Var displayName = extract(Var:metric, $.displayName)
     Var unit = extract(Var:metric, $.unit)
-    Var:metricMap.put("metricId", Var:entityId)
+    Var:metricMap.put("metricId", Var:metricId)
     Var:metricMap.put("displayName", Var:displayName)
     Var:metricMap.put("unit", Var:unit)
-    Var:responseList.append(Var:serviceMap)
+    Var:responseList.append(Var:metricMap)
 }
 
 return Var:responseList

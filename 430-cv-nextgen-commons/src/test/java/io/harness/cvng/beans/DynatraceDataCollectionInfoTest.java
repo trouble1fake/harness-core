@@ -31,7 +31,11 @@ public class DynatraceDataCollectionInfoTest extends CategoryTest {
 
   @Before
   public void setup() throws IOException {
-    classUnderTest = DynatraceDataCollectionInfo.builder().serviceId(SERVICE_ID).groupName(GROUP_NAME).build();
+    classUnderTest = DynatraceDataCollectionInfo.builder()
+                         .serviceMethodIds(Arrays.asList("SERVICE_METHOD_1", "SERVICE_METHOD_2"))
+                         .serviceId(SERVICE_ID)
+                         .groupName(GROUP_NAME)
+                         .build();
   }
 
   @Test
@@ -47,7 +51,8 @@ public class DynatraceDataCollectionInfoTest extends CategoryTest {
     Map<String, Object> metricPackMetricsEnvVariables =
         classUnderTest.getDslEnvVariables(DynatraceConnectorDTO.builder().build());
 
-    assertThat(metricPackMetricsEnvVariables.get(ENTITY_ID_PARAM)).isEqualTo(SERVICE_ID);
+    String serviceMethodsIdsParam = "\"SERVICE_METHOD_1\",\"SERVICE_METHOD_2\"";
+    assertThat(metricPackMetricsEnvVariables.get(ENTITY_ID_PARAM)).isEqualTo("type(\"dt.entity.service_method\"),entityId(".concat(serviceMethodsIdsParam).concat(")"));
     assertThat(metricPackMetricsEnvVariables.get(GROUP_NAME_PARAM)).isEqualTo(GROUP_NAME);
     List<Map<String, String>> metricsToValidate =
         (List<Map<String, String>>) metricPackMetricsEnvVariables.get(METRICS_TO_VALIDATE_PARAM);
@@ -76,7 +81,7 @@ public class DynatraceDataCollectionInfoTest extends CategoryTest {
     Map<String, Object> metricPackMetricsEnvVariables =
         classUnderTest.getDslEnvVariables(DynatraceConnectorDTO.builder().build());
 
-    assertThat(metricPackMetricsEnvVariables.get(ENTITY_ID_PARAM)).isEqualTo(SERVICE_ID);
+    assertThat(metricPackMetricsEnvVariables.get(ENTITY_ID_PARAM)).isEqualTo("type(\"dt.entity.service\"),entityId(".concat(SERVICE_ID).concat(")"));
     assertThat(metricPackMetricsEnvVariables.get(GROUP_NAME_PARAM)).isEqualTo(GROUP_NAME);
     List<Map<String, String>> metricsToValidate =
         (List<Map<String, String>>) metricPackMetricsEnvVariables.get(METRICS_TO_VALIDATE_PARAM);

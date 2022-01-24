@@ -7,6 +7,7 @@ import io.harness.cvng.core.beans.TimeSeriesSampleDTO;
 import io.harness.cvng.core.beans.dynatrace.DynatraceMetricDTO;
 import io.harness.cvng.core.beans.dynatrace.DynatraceSampleDataRequestDTO;
 import io.harness.cvng.core.beans.dynatrace.DynatraceServiceDTO;
+import io.harness.cvng.core.beans.dynatrace.DynatraceValidateDataRequestDTO;
 import io.harness.cvng.core.beans.params.ProjectParams;
 import io.harness.cvng.core.services.api.DynatraceService;
 import io.harness.ng.core.dto.ErrorDTO;
@@ -110,14 +111,14 @@ public class DynatraceResource {
       @QueryParam("accountId") @NotNull String accountId, @QueryParam("orgIdentifier") @NotNull String orgIdentifier,
       @QueryParam("projectIdentifier") @NotNull String projectIdentifier,
       @QueryParam("connectorIdentifier") @NotNull String connectorIdentifier,
-      @QueryParam("serviceId") @NotNull String serviceId, @QueryParam("tracingId") @NotNull String tracingId,
-      @NotNull @Valid @Body List<MetricPackDTO> metricPacks) {
+      @QueryParam("tracingId") @NotNull String tracingId,
+      @NotNull @Valid @Body DynatraceValidateDataRequestDTO validateDataRequestDTO) {
     return ResponseDTO.newResponse(dynatraceService.validateData(ProjectParams.builder()
                                                                      .projectIdentifier(projectIdentifier)
                                                                      .orgIdentifier(orgIdentifier)
                                                                      .accountIdentifier(accountId)
                                                                      .build(),
-        connectorIdentifier, serviceId, metricPacks, tracingId));
+        connectorIdentifier, validateDataRequestDTO.getServiceMethodsIds(), validateDataRequestDTO.getMetricPacks(), tracingId));
   }
 
   @POST

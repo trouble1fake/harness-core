@@ -45,13 +45,15 @@ public class DynatraceDataCollectionInfo extends TimeSeriesDataCollectionInfo<Dy
     List<Map<String, String>> metricsToValidate = new ArrayList<>();
     if (metricPack != null) {
       // if collection is not for custom metric, we should filter by service methods
-      String serviceMethodsIdsParam;
-       if(isNotEmpty(serviceMethodIds)) {
-         serviceMethodsIdsParam = String.join(",", serviceMethodIds);
-       } else {
-         throw new IllegalArgumentException("Service methods IDs must be provided for Dynatrace data collection.");
-       }
-      dslEnvVariables.put(ENTITY_ID_PARAM, "type(\"dt.entity.service_method\"),entityId(".concat(serviceMethodsIdsParam).concat(")"));
+        String serviceMethodsIdsParam;
+        if (isNotEmpty(serviceMethodIds)) {
+            serviceMethodsIdsParam = serviceMethodIds.stream()
+                    .map(serviceMethodId -> "\"".concat(serviceMethodId).concat("\""))
+                    .reduce((prev, next) -> prev.concat(",").concat(next)).orElse(null);
+            dslEnvVariables.put(ENTITY_ID_PARAM, "type(\"dt.entity.service_method\"),entityId(".concat(serviceMethodsIdsParam).concat(")"));
+        } else {
+            throw new IllegalArgumentException("Service methods IDs must be provided for Dynatrace data collection.");
+        }
       metricsToValidate = CollectionUtils.emptyIfNull(metricPack.getMetrics())
                               .stream()
                               .map(metricDefinitionDTO -> {

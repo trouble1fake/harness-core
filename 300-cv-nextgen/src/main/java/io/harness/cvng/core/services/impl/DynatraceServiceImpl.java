@@ -34,7 +34,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class DynatraceServiceImpl implements DynatraceService {
+public class DynatraceServiceImpl
+    implements DynatraceService, DataCollectionRequestResultExtractor<DynatraceConnectorDTO> {
   @Inject private OnboardingService onboardingService;
 
   @Override
@@ -50,19 +51,20 @@ public class DynatraceServiceImpl implements DynatraceService {
             .build();
 
     Type type = new TypeToken<List<DynatraceServiceDTO>>() {}.getType();
-    List<DynatraceServiceDTO> services = performRequestAndGetDataResult(request, type, projectParams, connectorIdentifier, tracingId);
+    List<DynatraceServiceDTO> services =
+        performRequestAndGetDataResult(request, onboardingService, type, projectParams, connectorIdentifier, tracingId);
     return services.stream().filter(service -> service.getServiceMethodIds() != null).collect(Collectors.toList());
   }
 
   @Override
-  public List<DynatraceMetricDTO> getAllMetrics(ProjectParams projectParams, String connectorIdentifier, String tracingId) {
+  public List<DynatraceMetricDTO> getAllMetrics(
+      ProjectParams projectParams, String connectorIdentifier, String tracingId) {
     DataCollectionRequest<DynatraceConnectorDTO> request =
-            DynatraceMetricListRequest.builder()
-                    .type(DataCollectionRequestType.DYNATRACE_METRIC_LIST_REQUEST)
-                    .build();
+        DynatraceMetricListRequest.builder().type(DataCollectionRequestType.DYNATRACE_METRIC_LIST_REQUEST).build();
 
     Type type = new TypeToken<List<DynatraceMetricDTO>>() {}.getType();
-    return performRequestAndGetDataResult(request, type, projectParams, connectorIdentifier, tracingId);
+    return performRequestAndGetDataResult(
+        request, onboardingService, type, projectParams, connectorIdentifier, tracingId);
   }
 
   @Override
@@ -75,24 +77,25 @@ public class DynatraceServiceImpl implements DynatraceService {
             .build();
 
     Type type = new TypeToken<DynatraceServiceDTO>() {}.getType();
-    return performRequestAndGetDataResult(request, type, projectParams, connectorIdentifier, tracingId);
+    return performRequestAndGetDataResult(
+        request, onboardingService, type, projectParams, connectorIdentifier, tracingId);
   }
 
   @Override
   public Set<MetricPackValidationResponse> validateData(ProjectParams projectParams, String connectorIdentifier,
-      String serviceId, List<MetricPackDTO> metricPacks, String tracingId) {
+      List<String> serviceMethodsIds, List<MetricPackDTO> metricPacks, String tracingId) {
     Set<MetricPackValidationResponse> metricPackValidationResponses = new HashSet<>();
     metricPacks.forEach(metricPack -> {
       DataCollectionRequest<DynatraceConnectorDTO> request =
           DynatraceMetricPackValidationRequest.builder()
-              .serviceId(serviceId)
+              .serviceMethodsIds(serviceMethodsIds)
               .metricPack(metricPack)
               .type(DataCollectionRequestType.DYNATRACE_VALIDATION_REQUEST)
               .build();
 
       Type type = new TypeToken<List<MetricPackValidationResponse.MetricValidationResponse>>() {}.getType();
-      List<MetricPackValidationResponse.MetricValidationResponse> validationResponses =
-          performRequestAndGetDataResult(request, type, projectParams, connectorIdentifier, tracingId);
+      List<MetricPackValidationResponse.MetricValidationResponse> validationResponses = performRequestAndGetDataResult(
+          request, onboardingService, type, projectParams, connectorIdentifier, tracingId);
 
       MetricPackValidationResponse.MetricPackValidationResponseBuilder metricPackValidationResponseBuilder =
           MetricPackValidationResponse.builder()
@@ -110,19 +113,20 @@ public class DynatraceServiceImpl implements DynatraceService {
 
   @Override
   public List<TimeSeriesSampleDTO> fetchSampleData(ProjectParams projectParams, String connectorIdentifier,
-                                                          String serviceId, String metricSelector, String tracingId) {
+      String serviceId, String metricSelector, String tracingId) {
     Instant now = Instant.now();
     DataCollectionRequest<DynatraceConnectorDTO> request =
-            DynatraceSampleDataRequest.builder()
-                    .from(now.minus(Duration.ofMinutes(60)).toEpochMilli())
-                    .to(now.toEpochMilli())
-                    .serviceId(serviceId)
-                    .metricSelector(metricSelector)
-                    .type(DataCollectionRequestType.DYNATRACE_SAMPLE_DATA_REQUEST)
-                    .build();
+        DynatraceSampleDataRequest.builder()
+            .from(now.minus(Duration.ofMinutes(60)).toEpochMilli())
+            .to(now.toEpochMilli())
+            .serviceId(serviceId)
+            .metricSelector(metricSelector)
+            .type(DataCollectionRequestType.DYNATRACE_SAMPLE_DATA_REQUEST)
+            .build();
 
     Type type = new TypeToken<List<TimeSeriesSampleDTO>>() {}.getType();
-    return performRequestAndGetDataResult(request, type, projectParams, connectorIdentifier, tracingId);
+    return performRequestAndGetDataResult(
+        request, onboardingService, type, projectParams, connectorIdentifier, tracingId);
   }
 
   @Override
@@ -134,21 +138,5 @@ public class DynatraceServiceImpl implements DynatraceService {
                        .projectIdentifier(projectIdentifier)
                        .build(),
         connectorIdentifier, null, tracingId);
-  }
-
-  private <T> T performRequestAndGetDataResult(DataCollectionRequest<DynatraceConnectorDTO> dataCollectionRequest,
-      Type type, ProjectParams projectParams, String connectorIdentifier, String tracingId) {
-    OnboardingRequestDTO onboardingRequestDTO = OnboardingRequestDTO.builder()
-                                                    .dataCollectionRequest(dataCollectionRequest)
-                                                    .connectorIdentifier(connectorIdentifier)
-                                                    .accountId(projectParams.getAccountIdentifier())
-                                                    .orgIdentifier(projectParams.getOrgIdentifier())
-                                                    .projectIdentifier(projectParams.getProjectIdentifier())
-                                                    .tracingId(tracingId)
-                                                    .build();
-
-    OnboardingResponseDTO response =
-        onboardingService.getOnboardingResponse(projectParams.getAccountIdentifier(), onboardingRequestDTO);
-    return new Gson().fromJson(JsonUtils.asJson(response.getResult()), type);
   }
 }

@@ -10,7 +10,6 @@ Var nullObject = null
 Var responseList = []
 
 Var entities = extract(Var:servicesResponse, $.entities)
-print Var:entities
 foreach entity in Var:entities {
     Var serviceMap = {}
     Var entityId = extract(Var:entity, $.entityId)

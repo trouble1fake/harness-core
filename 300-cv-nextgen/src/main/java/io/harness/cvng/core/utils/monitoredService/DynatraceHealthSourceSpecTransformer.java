@@ -38,6 +38,7 @@ public class DynatraceHealthSourceSpecTransformer
                               .identifier(metricInfo.getIdentifier())
                               .metricName(metricInfo.getMetricName())
                               .metricSelector(metricInfo.getMetricSelector())
+                              .isManualQuery(metricInfo.isManualQuery())
                               .riskProfile(riskProfile)
                               .sli(HealthSourceMetricDefinition.SLIDTO.builder().enabled(metricInfo.getSli().isEnabled()).build())
                               .analysis(

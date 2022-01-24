@@ -38,6 +38,7 @@ public class DynatraceCollectionInfoMapperTest extends CvNextGenTestBase {
   private static final String MOCKED_METRIC_NAME = "testMetricName";
   private static final String MOCKED_METRIC_IDENTIFIER = "testMetricIdentifier";
   private static final String MOCKED_METRIC_SELECTOR = "builtin:service.response.time";
+  private static final String MOCKED_METRIC_PACK_DSL = "metric-pack-dsl";
 
   @Inject private DynatraceDataCollectionInfoMapper classUnderTest;
   private final BuilderFactory builderFactory = BuilderFactory.getDefault();
@@ -46,7 +47,7 @@ public class DynatraceCollectionInfoMapperTest extends CvNextGenTestBase {
   @Owner(developers = PAVIC)
   @Category(UnitTests.class)
   public void testToDataCollectionInfo() {
-    MetricPack metricPack = MetricPack.builder().dataCollectionDsl("metric-pack-dsl").build();
+    MetricPack metricPack = MetricPack.builder().dataCollectionDsl(MOCKED_METRIC_PACK_DSL).build();
     DynatraceMetricInfo metricInfo = DynatraceMetricInfo.builder()
                                          .metricName(MOCKED_METRIC_NAME)
                                          .identifier(MOCKED_METRIC_IDENTIFIER)
@@ -79,7 +80,7 @@ public class DynatraceCollectionInfoMapperTest extends CvNextGenTestBase {
   @Owner(developers = PAVIC)
   @Category(UnitTests.class)
   public void testToDataCollectionInfoWithTaskTypeFilter() {
-    MetricPack metricPack = MetricPack.builder().dataCollectionDsl("metric-pack-dsl").build();
+    MetricPack metricPack = MetricPack.builder().dataCollectionDsl(MOCKED_METRIC_PACK_DSL).build();
     DynatraceMetricInfo customMetricDefinition1 = DynatraceMetricInfo.builder()
                                                       .metricSelector(MOCKED_METRIC_SELECTOR)
                                                       .metricName(MOCKED_METRIC_NAME)
@@ -119,7 +120,6 @@ public class DynatraceCollectionInfoMapperTest extends CvNextGenTestBase {
   @Category(UnitTests.class)
   public void testToDataCollectionInfoForSLI() {
     DynatraceDataCollectionInfo collectionInfoResult = getSLIDynatraceCollectionResult(MOCKED_METRIC_IDENTIFIER);
-
     assertThat(collectionInfoResult).isNotNull();
     assertThat(collectionInfoResult.getCustomMetrics().size()).isEqualTo(1);
     collectionInfoResult.getCustomMetrics().forEach(metricInfoToCheck -> {
@@ -142,7 +142,7 @@ public class DynatraceCollectionInfoMapperTest extends CvNextGenTestBase {
   private DynatraceDataCollectionInfo getSLIDynatraceCollectionResult(String metricIdentifier) {
     MetricPack metricPack = MetricPack.builder()
                                 .identifier(CVNextGenConstants.CUSTOM_PACK_IDENTIFIER)
-                                .dataCollectionDsl("metric-pack-dsl")
+                                .dataCollectionDsl(MOCKED_METRIC_PACK_DSL)
                                 .build();
     DynatraceMetricInfo metricInfo = DynatraceMetricInfo.builder()
                                          .metricName(MOCKED_METRIC_NAME)
@@ -154,12 +154,11 @@ public class DynatraceCollectionInfoMapperTest extends CvNextGenTestBase {
         ThresholdServiceLevelIndicator.builder().metric1(metricIdentifier).build();
 
     DynatraceCVConfig dynatraceCVConfig = builderFactory.dynatraceCVConfigBuilder()
-                                              .metricInfos(Arrays.asList(metricInfo))
+                                              .metricInfos(Collections.singletonList(metricInfo))
                                               .serviceEntityId(MOCKED_SERVICE_ENTITY_NAME)
                                               .serviceName(MOCKED_SERVICE_ENTITY_NAME)
                                               .build();
     dynatraceCVConfig.setMetricPack(metricPack);
-
     return classUnderTest.toDataCollectionInfo(Collections.singletonList(dynatraceCVConfig), serviceLevelIndicator);
   }
 }

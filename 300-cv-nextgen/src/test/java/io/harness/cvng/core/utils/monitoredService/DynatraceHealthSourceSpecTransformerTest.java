@@ -71,7 +71,8 @@ public class DynatraceHealthSourceSpecTransformerTest extends CvNextGenTestBase 
     assertThat(dynatraceMetricDefinition.getIdentifier()).isEqualTo(MOCKED_METRIC_NAME);
     assertThat(dynatraceMetricDefinition.getMetricName()).isEqualTo(MOCKED_METRIC_NAME);
     assertThat(dynatraceMetricDefinition.getMetricSelector()).isEqualTo(MOCKED_QUERY_SELECTOR);
-    assertThat(dynatraceMetricDefinition.getRiskProfile().getCategory()).isEqualTo(CVMonitoringCategory.ERRORS);
+      assertThat(dynatraceMetricDefinition.isManualQuery()).isEqualTo(true);
+      assertThat(dynatraceMetricDefinition.getRiskProfile().getCategory()).isEqualTo(CVMonitoringCategory.ERRORS);
     assertThat(dynatraceMetricDefinition.getRiskProfile().getMetricType()).isEqualTo(TimeSeriesMetricType.RESP_TIME);
   }
 
@@ -92,6 +93,7 @@ public class DynatraceHealthSourceSpecTransformerTest extends CvNextGenTestBase 
                                                             .identifier(MOCKED_METRIC_NAME)
                                                             .metricType(TimeSeriesMetricType.RESP_TIME)
                                                             .metricSelector(MOCKED_QUERY_SELECTOR)
+                                                            .isManualQuery(true)
                                                             .build())
                                                  .collect(Collectors.toList()));
     cvConfigs.add(cvConfigWithPerformancePack);

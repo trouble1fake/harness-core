@@ -1,5 +1,6 @@
 package io.harness.cvng.core.beans.monitoredService.healthSouceSpec;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.harness.cvng.beans.CVMonitoringCategory;
 import io.harness.cvng.beans.DataSourceType;
 import io.harness.cvng.core.beans.HealthSourceMetricDefinition;
@@ -57,14 +58,14 @@ public class DynatraceHealthSourceSpec extends HealthSourceSpec {
 
   @Override
   public HealthSource.CVConfigUpdateResult getCVConfigUpdateResult(String accountId, String orgIdentifier,
-      String projectIdentifier, String environmentRef, String serviceRef, String identifier, String name,
-      List<CVConfig> existingCVConfigs, MetricPackService metricPackService) {
+      String projectIdentifier, String environmentRef, String serviceRef, String monitoredServiceIdentifier,
+      String identifier, String name, List<CVConfig> existingCVConfigs, MetricPackService metricPackService) {
     List<DynatraceCVConfig> cvConfigsFromThisObj = toCVConfigs(ProjectParams.builder()
                                                                    .accountIdentifier(accountId)
                                                                    .orgIdentifier(orgIdentifier)
                                                                    .projectIdentifier(projectIdentifier)
                                                                    .build(),
-        environmentRef, serviceRef, identifier, name, metricPackService);
+        environmentRef, serviceRef, identifier, name, monitoredServiceIdentifier, metricPackService);
     Map<Key, DynatraceCVConfig> existingConfigMap = new HashMap<>();
     List<DynatraceCVConfig> existingDynatraceCVConfig = (List<DynatraceCVConfig>) (List<?>) existingCVConfigs;
     for (DynatraceCVConfig dynatraceCVConfig : existingDynatraceCVConfig) {
@@ -90,7 +91,7 @@ public class DynatraceHealthSourceSpec extends HealthSourceSpec {
   }
 
   private List<DynatraceCVConfig> toCVConfigs(ProjectParams projectParams, String environmentRef, String serviceRef,
-      String identifier, String name, MetricPackService metricPackService) {
+      String identifier, String name, String monitoredServiceIdentifier, MetricPackService metricPackService) {
     List<DynatraceCVConfig> cvConfigs = new ArrayList<>();
     // map metric packs to cvConfigs
     CollectionUtils.emptyIfNull(metricPacks).forEach(metricPack -> {
@@ -101,6 +102,7 @@ public class DynatraceHealthSourceSpec extends HealthSourceSpec {
                                        .orgIdentifier(projectParams.getOrgIdentifier())
                                        .projectIdentifier(projectParams.getProjectIdentifier())
                                        .identifier(identifier)
+                                       .monitoredServiceIdentifier(monitoredServiceIdentifier)
                                        .connectorIdentifier(getConnectorRef())
                                        .monitoringSourceName(name)
                                        .productName(feature)
@@ -128,6 +130,7 @@ public class DynatraceHealthSourceSpec extends HealthSourceSpec {
                                    .orgIdentifier(projectParams.getOrgIdentifier())
                                    .projectIdentifier(projectParams.getProjectIdentifier())
                                    .identifier(identifier)
+                                   .monitoredServiceIdentifier(monitoredServiceIdentifier)
                                    .connectorIdentifier(getConnectorRef())
                                    .monitoringSourceName(name)
                                    .productName(feature)
@@ -170,6 +173,11 @@ public class DynatraceHealthSourceSpec extends HealthSourceSpec {
   public static class DynatraceMetricDefinition extends HealthSourceMetricDefinition {
     String groupName;
     String metricSelector;
+    @JsonProperty(value = "isManualQuery")
+    public boolean isManualQuery() {
+      return isManualQuery;
+    }
+    boolean isManualQuery;
   }
 
   @Value

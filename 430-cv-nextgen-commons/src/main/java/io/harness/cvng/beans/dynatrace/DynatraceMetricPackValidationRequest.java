@@ -47,7 +47,7 @@ public class DynatraceMetricPackValidationRequest extends DynatraceRequest {
       serviceMethodsIdsParam = serviceMethodsIds.stream()
               .map(serviceMethodId -> "\"".concat(serviceMethodId).concat("\""))
               .reduce((prev, next) -> prev.concat(",").concat(next)).orElse(null);
-      commonEnvVariables.put("entitySelector", "type(\"dt.entity.service\"),entityId(".concat(serviceMethodsIdsParam).concat(")"));
+      commonEnvVariables.put("entitySelector", "type(\"dt.entity.service_method\"),entityId(".concat(serviceMethodsIdsParam).concat(")"));
     } else {
       throw new IllegalArgumentException("Service methods IDs must be provided for Dynatrace data collection.");
     }

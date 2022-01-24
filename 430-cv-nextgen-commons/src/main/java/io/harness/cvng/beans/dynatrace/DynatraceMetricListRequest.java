@@ -22,7 +22,7 @@ import static io.harness.annotations.dev.HarnessTeam.CV;
 @EqualsAndHashCode(callSuper = true)
 public class DynatraceMetricListRequest extends DynatraceRequest {
   private static final Long PAGE_SIZE = 500L;
-  private static final String DEFAULT_METRIC_SELECTOR = "builtin.service.*";
+  private static final String DEFAULT_METRIC_SELECTOR = "builtin:service.*";
 
   private static final String DSL =
       DataCollectionRequest.readDSL("dynatrace-metric-list.datacollection", DynatraceMetricListRequest.class);
