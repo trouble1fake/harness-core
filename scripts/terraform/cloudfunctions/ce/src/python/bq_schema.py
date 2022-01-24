@@ -107,6 +107,11 @@ aws_cur_table_schema = [
         "type": "STRING"
     },
     {
+        "mode": "NULLABLE",
+        "name": "amortisedCost",
+        "type": "FLOAT"
+    },
+    {
         "fields": [
             {
                 "mode": "NULLABLE",
