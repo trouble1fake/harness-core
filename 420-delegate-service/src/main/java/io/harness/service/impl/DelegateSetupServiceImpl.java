@@ -87,16 +87,14 @@ public class DelegateSetupServiceImpl implements DelegateSetupService {
 
   @Override
   public DelegateGroupListing listDelegateGroupDetails(String accountId, String orgId, String projectId) {
-    final List<DelegateGroupDetails> delegateGroupDetails =
-        getDelegateGroupDetails(accountId, orgId, projectId, false, null);
+    final List<DelegateGroupDetails> delegateGroupDetails = getDelegateGroupDetails(accountId, orgId, projectId, false);
 
     return DelegateGroupListing.builder().delegateGroupDetails(delegateGroupDetails).build();
   }
 
   @Override
   public DelegateGroupListing listDelegateGroupDetailsUpTheHierarchy(String accountId, String orgId, String projectId) {
-    final List<DelegateGroupDetails> delegateGroupDetails =
-        getDelegateGroupDetails(accountId, orgId, projectId, true, null);
+    final List<DelegateGroupDetails> delegateGroupDetails = getDelegateGroupDetails(accountId, orgId, projectId, true);
 
     return DelegateGroupListing.builder().delegateGroupDetails(delegateGroupDetails).build();
   }
@@ -330,28 +328,21 @@ public class DelegateSetupServiceImpl implements DelegateSetupService {
     return buildDelegateGroupDetails(accountId, updatedDelegateGroup, null, delegateGroupId);
   }
 
-  private List<DelegateGroupDetails> getDelegateGroupDetails(final String accountId, final String orgId,
-      final String projectId, final boolean upTheHierarchy, String delegateTokenName) {
+  private List<DelegateGroupDetails> getDelegateGroupDetails(
+      final String accountId, final String orgId, final String projectId, final boolean upTheHierarchy) {
     final Query<DelegateGroup> query = createDelegateGroupsQuery(accountId, orgId, projectId, upTheHierarchy);
 
     final List<String> delegateGroupIds = query.asKeyList().stream().map(key -> (String) key.getId()).collect(toList());
 
-    Query<Delegate> delegateQuery = persistence.createQuery(Delegate.class)
-                                        .filter(DelegateKeys.accountId, accountId)
-                                        .field(DelegateKeys.delegateGroupId)
-                                        .in(delegateGroupIds);
-
-    if (isNotEmpty(delegateTokenName)) {
-      delegateQuery = delegateQuery.filter(DelegateKeys.delegateTokenName, delegateTokenName);
-    }
-
-    final Map<String, List<Delegate>> delegatesByGroup =
-        delegateQuery.asList().stream().collect(groupingBy(Delegate::getDelegateGroupId));
+    final Map<String, List<Delegate>> delegatesByGroup = persistence.createQuery(Delegate.class)
+                                                             .filter(DelegateKeys.accountId, accountId)
+                                                             .field(DelegateKeys.delegateGroupId)
+                                                             .in(delegateGroupIds)
+                                                             .asList()
+                                                             .stream()
+                                                             .collect(groupingBy(Delegate::getDelegateGroupId));
 
     return delegateGroupIds.stream()
-        .filter(delegateGroupId
-            -> isEmpty(delegateTokenName)
-                || (delegatesByGroup.get(delegateGroupId) != null && !delegatesByGroup.get(delegateGroupId).isEmpty()))
         .map(delegateGroupId -> {
           DelegateGroup delegateGroup = delegateCache.getDelegateGroup(accountId, delegateGroupId);
           return buildDelegateGroupDetails(
@@ -469,14 +460,6 @@ public class DelegateSetupServiceImpl implements DelegateSetupService {
             .sorted(new DelegateGroupDetailsComparator())
             .collect(toList());
     return DelegateGroupListing.builder().delegateGroupDetails(delegateGroupDetails).build();
-  }
-
-  @Override
-  public DelegateGroupListing listDelegateGroupDetails(
-      String accountId, String orgId, String projectId, String delegateTokenName) {
-    return DelegateGroupListing.builder()
-        .delegateGroupDetails(getDelegateGroupDetails(accountId, orgId, projectId, false, delegateTokenName))
-        .build();
   }
 
   private List<String> getDelegateGroupIds(String accountId, String orgId, String projectId,

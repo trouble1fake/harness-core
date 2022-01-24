@@ -196,12 +196,13 @@ public interface DelegateService extends OwnedByAccount {
 
   String createDelegateGroup(String accountId, DelegateSetupDetails delegateSetupDetails);
 
-  void validateDockerSetupDetailsNg(String accountId, DelegateSetupDetails delegateSetupDetails, String delegateType);
+  File generateKubernetesYamlUsingNgToken(String accountId, DelegateSetupDetails delegateSetupDetails,
+      String managerHost, String verificationServiceUrl, MediaType fileFormat) throws IOException;
 
-  File generateKubernetesYamlNg(String accountId, DelegateSetupDetails delegateSetupDetails, String managerHost,
-      String verificationServiceUrl, MediaType fileFormat) throws IOException;
+  DelegateSetupDetails validateKubernetesYamlUsingNgToken(String accountId, DelegateSetupDetails delegateSetupDetails);
 
-  DelegateSetupDetails validateKubernetesYamlNg(String accountId, DelegateSetupDetails delegateSetupDetails);
+  void validateDockerSetupDetailsUsingNgToken(
+      String accountId, DelegateSetupDetails delegateSetupDetails, String delegateType);
 
   long getCountOfRegisteredDelegates(String accountId);
 

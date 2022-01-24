@@ -1494,55 +1494,6 @@ public class DelegateServiceImplTest extends WingsBaseTest {
     return delegateIds;
   }
 
-  private List<String> setUpDelegatesWithoutProfile() {
-    List<String> delegateIds = new ArrayList<>();
-
-    Delegate delegate1 = Delegate.builder()
-                             .accountId(ACCOUNT_ID)
-                             .version(VERSION)
-                             .lastHeartBeat(System.currentTimeMillis())
-                             .profileError(true)
-                             .build();
-
-    Delegate delegate2 = Delegate.builder()
-                             .accountId(ACCOUNT_ID)
-                             .version(VERSION)
-                             .lastHeartBeat(System.currentTimeMillis())
-                             .profileError(false)
-                             .build();
-
-    Delegate delegate3 = Delegate.builder()
-                             .accountId(ACCOUNT_ID)
-                             .version(VERSION)
-                             .lastHeartBeat(System.currentTimeMillis())
-                             .profileError(false)
-                             .build();
-
-    Delegate delegate4 = Delegate.builder()
-                             .accountId(ACCOUNT_ID)
-                             .version(VERSION)
-                             .lastHeartBeat(System.currentTimeMillis())
-                             .profileError(false)
-                             .build();
-
-    String delegateId_1 = persistence.save(delegate1);
-    String delegateId_2 = persistence.save(delegate2);
-    String delegateId_3 = persistence.save(delegate3);
-    String delegateId_4 = persistence.save(delegate4);
-
-    when(delegateCache.get(ACCOUNT_ID, delegateId_1, true)).thenReturn(delegate1);
-    when(delegateCache.get(ACCOUNT_ID, delegateId_2, true)).thenReturn(delegate2);
-    when(delegateCache.get(ACCOUNT_ID, delegateId_3, true)).thenReturn(delegate3);
-    when(delegateCache.get(ACCOUNT_ID, delegateId_4, true)).thenReturn(delegate4);
-
-    delegateIds.add(delegateId_1);
-    delegateIds.add(delegateId_2);
-    delegateIds.add(delegateId_3);
-    delegateIds.add(delegateId_4);
-
-    return delegateIds;
-  }
-
   private DelegateGroup setUpDefaultDelegateGroupForTests() {
     DelegateGroup delegateGroup = DelegateGroup.builder()
                                       .name(TEST_DELEGATE_GROUP_NAME)

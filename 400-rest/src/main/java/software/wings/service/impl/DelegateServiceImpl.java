@@ -598,16 +598,22 @@ public class DelegateServiceImpl implements DelegateService {
   }
 
   @Override
-  public DelegateSetupDetails validateKubernetesYamlNg(String accountId, DelegateSetupDetails delegateSetupDetails) {
+  public DelegateSetupDetails validateKubernetesYamlUsingNgToken(
+      String accountId, DelegateSetupDetails delegateSetupDetails) {
     validateKubernetesSetupDetails(accountId, delegateSetupDetails);
-    if (hasToken(delegateSetupDetails)) {
-      validateDelegateToken(accountId, delegateSetupDetails);
-    }
+    validateDelegateToken(accountId, delegateSetupDetails);
     return delegateSetupDetails;
   }
 
+  @Override
+  public void validateDockerSetupDetailsUsingNgToken(
+      String accountId, DelegateSetupDetails delegateSetupDetails, String delegateType) {
+    validateDockerSetupDetails(accountId, delegateSetupDetails, delegateType);
+    validateDelegateToken(accountId, delegateSetupDetails);
+  }
+
   private void validateDelegateToken(String accountId, DelegateSetupDetails delegateSetupDetails) {
-    if (isBlank(delegateSetupDetails.getTokenName())) {
+    if (isEmpty(delegateSetupDetails.getTokenName())) {
       throw new InvalidRequestException("Token name must be specified.", USER);
     }
     DelegateTokenDetails delegateTokenDetails = delegateNgTokenService.getDelegateToken(accountId,
@@ -886,7 +892,6 @@ public class DelegateServiceImpl implements DelegateService {
     setUnset(updateOperations, DelegateKeys.proxy, delegate.isProxy());
     setUnset(updateOperations, DelegateKeys.ceEnabled, delegate.isCeEnabled());
     setUnset(updateOperations, DelegateKeys.supportedTaskTypes, delegate.getSupportedTaskTypes());
-    setUnset(updateOperations, DelegateKeys.delegateTokenName, delegate.getDelegateTokenName());
     return updateOperations;
   }
 
@@ -1357,10 +1362,6 @@ public class DelegateServiceImpl implements DelegateService {
 
       boolean versionCheckEnabled = hasVersionCheckDisabled(templateParameters.getAccountId());
       params.put("versionCheckDisabled", String.valueOf(versionCheckEnabled));
-
-      if (isNotBlank(templateParameters.getDelegateTokenName())) {
-        params.put("delegateTokenName", templateParameters.getDelegateTokenName());
-      }
 
       params.put("isImmutable",
           String.valueOf(featureFlagService.isEnabled(USE_IMMUTABLE_DELEGATE, templateParameters.getAccountId())));
@@ -2378,24 +2379,6 @@ public class DelegateServiceImpl implements DelegateService {
       log.warn("No delegate configuration (profile) with id {} exists: {}", delegateProfileId, e);
     }
 
-    String delegateTokenName = delegateParams.getDelegateTokenName();
-    if (!isBlank(delegateTokenName)) {
-      try {
-        validateDelegateToken(delegateParams.getAccountId(),
-            DelegateSetupDetails.builder()
-                .orgIdentifier(delegateParams.getOrgIdentifier())
-                .projectIdentifier(delegateParams.getProjectIdentifier())
-                .tokenName(delegateParams.getDelegateTokenName())
-                .build());
-      } catch (InvalidRequestException e) {
-        log.warn(
-            "Delegate Token with name {} can not be found, or is revoked, for accountId {}, orgId {} and projectId {}",
-            delegateParams.getDelegateTokenName(), delegateParams.getAccountId(), delegateParams.getOrgIdentifier(),
-            delegateParams.getProjectIdentifier());
-        delegateTokenName = EMPTY;
-      }
-    }
-
     final Delegate delegate = Delegate.builder()
                                   .uuid(delegateParams.getDelegateId())
                                   .accountId(delegateParams.getAccountId())
@@ -2421,7 +2404,6 @@ public class DelegateServiceImpl implements DelegateService {
                                   .sampleDelegate(delegateParams.isSampleDelegate())
                                   .currentlyExecutingDelegateTasks(delegateParams.getCurrentlyExecutingDelegateTasks())
                                   .ceEnabled(delegateParams.isCeEnabled())
-                                  .delegateTokenName(delegateTokenName)
                                   .build();
 
     if (ECS.equals(delegateParams.getDelegateType())) {
@@ -3766,19 +3748,7 @@ public class DelegateServiceImpl implements DelegateService {
   }
 
   @Override
-  public void validateDockerSetupDetailsNg(
-      String accountId, DelegateSetupDetails delegateSetupDetails, String delegateType) {
-    validateDelegateSetupDetails(accountId, delegateSetupDetails, delegateType);
-    if (hasToken(delegateSetupDetails)) {
-      validateDelegateToken(accountId, delegateSetupDetails);
-    }
-  }
-
-  private boolean hasToken(DelegateSetupDetails delegateSetupDetails) {
-    return delegateSetupDetails != null && isNotBlank(delegateSetupDetails.getTokenName());
-  }
-
-  public void validateDelegateSetupDetails(
+  public void validateDockerSetupDetails(
       String accountId, DelegateSetupDetails delegateSetupDetails, String delegateType) {
     if (delegateSetupDetails == null) {
       throw new InvalidRequestException("Delegate Setup Details must be provided.");
@@ -3797,7 +3767,22 @@ public class DelegateServiceImpl implements DelegateService {
   @Override
   public File downloadNgDocker(String managerHost, String verificationServiceUrl, String accountId,
       DelegateSetupDetails delegateSetupDetails) throws IOException {
-    validateDockerSetupDetailsNg(accountId, delegateSetupDetails, DOCKER);
+    validateDockerSetupDetails(accountId, delegateSetupDetails, DOCKER);
+
+    File composeYaml = File.createTempFile(HARNESS_NG_DELEGATE + "-docker-compose", YAML);
+
+    ImmutableMap<String, String> scriptParams = getScriptParametersForTemplate(
+        managerHost, verificationServiceUrl, accountId, delegateSetupDetails.getName(), delegateSetupDetails, false);
+
+    saveProcessedTemplate(scriptParams, composeYaml, HARNESS_NG_DELEGATE + "-docker-compose.yaml.ftl");
+
+    return composeYaml;
+  }
+
+  @Override
+  public File downloadNgDockerUsingToken(String managerHost, String verificationServiceUrl, String accountId,
+      DelegateSetupDetails delegateSetupDetails) throws IOException {
+    validateDockerSetupDetailsUsingNgToken(accountId, delegateSetupDetails, DOCKER);
 
     File composeYaml = File.createTempFile(HARNESS_NG_DELEGATE + "-docker-compose", YAML);
 
@@ -3821,9 +3806,9 @@ public class DelegateServiceImpl implements DelegateService {
   }
 
   @Override
-  public File generateKubernetesYamlNg(String accountId, DelegateSetupDetails delegateSetupDetails, String managerHost,
-      String verificationServiceUrl, MediaType fileFormat) throws IOException {
-    validateKubernetesYamlNg(accountId, delegateSetupDetails);
+  public File generateKubernetesYamlUsingNgToken(String accountId, DelegateSetupDetails delegateSetupDetails,
+      String managerHost, String verificationServiceUrl, MediaType fileFormat) throws IOException {
+    validateKubernetesYamlUsingNgToken(accountId, delegateSetupDetails);
     return generateKubernetesYamlFile(
         accountId, delegateSetupDetails, managerHost, verificationServiceUrl, fileFormat, true);
   }
@@ -3877,7 +3862,6 @@ public class DelegateServiceImpl implements DelegateService {
               .delegateNamespace(delegateSetupDetails.getK8sConfigDetails().getNamespace())
               .k8sPermissionsType(delegateSetupDetails.getK8sConfigDetails().getK8sPermissionType())
               .logStreamingServiceBaseUrl(mainConfiguration.getLogStreamingServiceConfig().getBaseUrl())
-              .delegateTokenName(delegateSetupDetails.getTokenName())
               .build(),
           useNgToken, true);
 

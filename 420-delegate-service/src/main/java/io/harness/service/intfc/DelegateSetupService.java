@@ -51,7 +51,4 @@ public interface DelegateSetupService {
 
   DelegateGroupListing listDelegateGroupDetailsV2(String accountId, String orgId, String projectId,
       String filterIdentifier, String searchTerm, DelegateFilterPropertiesDTO delegateFilterPropertiesDTO);
-
-  DelegateGroupListing listDelegateGroupDetails(
-      String accountId, String orgId, String projectId, String delegateTokenName);
 }
