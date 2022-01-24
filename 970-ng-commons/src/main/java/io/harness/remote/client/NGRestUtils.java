@@ -76,7 +76,7 @@ public class NGRestUtils {
         if (response.body() != null) {
           return response.body().getData();
         }
-        return (T) Response.success(null);
+        return null;
       } else {
         log.error("Error Response received: {}", response);
         String errorMessage = "";
