@@ -40,7 +40,7 @@ import java.util.List;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -66,7 +66,7 @@ import org.springframework.stereotype.Service;
 public class AnomalyResource {
   @Inject private AnomalyService anomalyService;
 
-  @GET
+  @POST
   @Timed
   @LogAccountIdentifier
   @ExceptionMetered
@@ -85,7 +85,7 @@ public class AnomalyResource {
     return ResponseDTO.newResponse(anomalyService.listAnomalies(accountId, anomalyQuery));
   }
 
-  @GET
+  @POST
   @Path("perspective/{perspectiveId}")
   @Timed
   @LogAccountIdentifier
@@ -109,7 +109,7 @@ public class AnomalyResource {
   }
 
   @PUT
-  @Path("{anomalyId}")
+  @Path("feedback")
   @Timed
   @LogAccountIdentifier
   @ExceptionMetered
@@ -124,8 +124,10 @@ public class AnomalyResource {
   public ResponseDTO<Boolean>
   listAnomalies(@Parameter(required = true, description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
                     NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier @NotNull @Valid String accountId,
-      @Parameter(required = true, description = "Unique identifier for perspective") @PathParam("anomalyId")
-      String anomalyId, @RequestBody(required = true, description = "Feedback") AnomalyFeedback feedback) {
+      @Parameter(required = true, description = "Unique identifier for perspective") @QueryParam("anomalyId")
+      String anomalyId, @RequestBody(required = true, description = "Feedback", content = {
+        @Content(mediaType = MediaType.TEXT_PLAIN)
+      }) AnomalyFeedback feedback) {
     return ResponseDTO.newResponse(anomalyService.updateAnomalyFeedback(accountId, anomalyId, feedback));
   }
 }

@@ -7,6 +7,7 @@
 
 package io.harness.ccm.service.impl;
 
+import io.harness.ccm.budget.utils.BudgetUtils;
 import io.harness.ccm.commons.dao.anomaly.AnomalyDao;
 import io.harness.ccm.commons.entities.anomaly.AnomalyData;
 import io.harness.ccm.commons.entities.anomaly.AnomalyFeedback;
@@ -19,6 +20,7 @@ import io.harness.timescaledb.tables.pojos.Anomalies;
 
 import com.google.inject.Inject;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +48,8 @@ public class AnomalyServiceImpl implements AnomalyService {
         anomalyQueryBuilder.getOrderByFields(anomalyQuery.getOrderBy()), anomalyQuery.getOffset(),
         anomalyQuery.getLimit());
 
+    log.info("Anomalies: {}", anomalies);
+
     List<AnomalyData> anomalyData = new ArrayList<>();
     anomalies.forEach(anomaly -> anomalyData.add(buildAnomalyData(anomaly)));
     return anomalyData;
@@ -55,7 +59,7 @@ public class AnomalyServiceImpl implements AnomalyService {
   public List<PerspectiveAnomalyData> listPerspectiveAnomalies(
       @NonNull String accountIdentifier, PerspectiveQueryDTO perspectiveQuery) {
     // Todo: Add perspective query to anomaly query mapping
-    return null;
+    return Collections.singletonList(buildDummyPerspectiveAnomalyData());
   }
 
   @Override
@@ -78,12 +82,24 @@ public class AnomalyServiceImpl implements AnomalyService {
         .build();
   }
 
+  private PerspectiveAnomalyData buildDummyPerspectiveAnomalyData() {
+    long anomalyTime = BudgetUtils.getStartOfCurrentDay() - 3 * BudgetUtils.ONE_DAY_MILLIS;
+    return PerspectiveAnomalyData.builder()
+        .timestamp(anomalyTime)
+        .anomalyCount(1)
+        .actualCost(137.22)
+        .differenceFromExpectedCost(120.21)
+        .associatedResources(Collections.singletonList("sample-ce-dev"))
+        .resourceType("cluster")
+        .build();
+  }
+
   private String getAnomalyRelativeTime(long anomalyTime) {
     return "";
   }
 
   private Double getAnomalyTrend(Double actualCost, Double expectedCost) {
-    return Math.round(((actualCost - expectedCost) / expectedCost) * 100D) / 100D;
+    return expectedCost != 0 ? Math.round(((actualCost - expectedCost) / expectedCost) * 100D) / 100D : 0;
   }
 
   private String getResourceName(Anomalies anomaly) {

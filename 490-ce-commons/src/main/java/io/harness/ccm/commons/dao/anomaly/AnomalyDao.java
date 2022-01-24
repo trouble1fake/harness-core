@@ -13,6 +13,7 @@ import static com.google.common.base.MoreObjects.firstNonNull;
 
 import io.harness.annotations.retry.RetryOnException;
 import io.harness.timescaledb.tables.pojos.Anomalies;
+import io.harness.timescaledb.tables.records.AnomaliesRecord;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -23,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.OrderField;
+import org.jooq.SelectFinalStep;
 import org.jooq.impl.DSL;
 
 @Slf4j
@@ -36,18 +38,13 @@ public class AnomalyDao {
   @RetryOnException(retryCount = RETRY_COUNT, sleepDurationInMilliseconds = SLEEP_DURATION)
   public List<Anomalies> fetchAnomalies(@NonNull String accountId, @Nullable Condition condition,
       @NonNull List<OrderField<?>> orderFields, @NonNull Integer offset, @NonNull Integer limit) {
-    String query = dslContext.selectFrom(ANOMALIES)
-                       .where(ANOMALIES.ACCOUNTID.eq(accountId).and(firstNonNull(condition, DSL.noCondition())))
-                       .orderBy(orderFields)
-                       .offset(offset)
-                       .limit(limit)
-                       .toString();
-    log.info("Anomaly Query: {}", query);
-    return dslContext.selectFrom(ANOMALIES)
-        .where(ANOMALIES.ACCOUNTID.eq(accountId).and(firstNonNull(condition, DSL.noCondition())))
-        .orderBy(orderFields)
-        .offset(offset)
-        .limit(limit)
-        .fetchInto(Anomalies.class);
+    SelectFinalStep<AnomaliesRecord> finalStep =
+        dslContext.selectFrom(ANOMALIES)
+            .where(ANOMALIES.ACCOUNTID.eq(accountId).and(firstNonNull(condition, DSL.noCondition())))
+            .orderBy(orderFields)
+            .offset(offset)
+            .limit(limit);
+    log.info("Anomaly Query: {}", finalStep.getQuery().toString());
+    return finalStep.fetchInto(Anomalies.class);
   }
 }
