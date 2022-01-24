@@ -34,7 +34,6 @@ import io.harness.pms.contracts.execution.ExecutionMode;
 import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.execution.failure.FailureInfo;
 import io.harness.pms.contracts.execution.run.NodeRunInfo;
-import io.harness.pms.contracts.execution.skip.SkipInfo;
 import io.harness.pms.contracts.steps.SkipType;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.data.OrchestrationMap;
@@ -46,7 +45,6 @@ import io.harness.timeout.TimeoutDetails;
 
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
-import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.Date;
 import java.util.List;
@@ -88,7 +86,6 @@ public class NodeExecution implements PersistentEntity, UuidAccess, PmsNodeExecu
   @Wither @FdIndex @CreatedDate Long createdAt;
   private Long startTs;
   private Long endTs;
-  private Duration initialWaitDuration;
   private Integer levelCount;
   @Builder.Default @FdTtlIndex Date validUntil = Date.from(OffsetDateTime.now().plusMonths(TTL_MONTHS).toInstant());
 
@@ -113,7 +110,6 @@ public class NodeExecution implements PersistentEntity, UuidAccess, PmsNodeExecu
   @Singular List<ExecutableResponse> executableResponses;
   @Singular List<InterruptEffect> interruptHistories;
   FailureInfo failureInfo;
-  SkipInfo skipInfo;
   NodeRunInfo nodeRunInfo;
 
   // Retries

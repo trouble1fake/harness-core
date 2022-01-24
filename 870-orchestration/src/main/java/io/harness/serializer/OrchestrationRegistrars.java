@@ -107,8 +107,6 @@ import io.harness.serializer.spring.converters.run.NodeRunInfoReadConverter;
 import io.harness.serializer.spring.converters.run.NodeRunInfoWriteConverter;
 import io.harness.serializer.spring.converters.sdk.SdkModuleInfoReadConverter;
 import io.harness.serializer.spring.converters.sdk.SdkModuleInfoWriteConverter;
-import io.harness.serializer.spring.converters.skip.SkipInfoReadConverter;
-import io.harness.serializer.spring.converters.skip.SkipInfoWriteConverter;
 import io.harness.serializer.spring.converters.stepdetails.PmsStepDetailsReadConverter;
 import io.harness.serializer.spring.converters.stepdetails.PmsStepDetailsWriteConverter;
 import io.harness.serializer.spring.converters.stepoutcomeref.StepOutcomeRefReadConverter;
@@ -213,11 +211,10 @@ public class OrchestrationRegistrars {
       LayoutNodeInfoWriteConverter.class, ExecutionTriggerInfoReadConverter.class,
       ExecutionTriggerInfoWriteConverter.class, TriggeredByReadConverter.class, TriggeredByWriteConverter.class,
       ExecutionMetadataReadConverter.class, ExecutionMetadataWriteConverter.class, TriggerPayloadReadConverter.class,
-      TriggerPayloadWriteConverter.class, SkipInfoReadConverter.class, SkipInfoWriteConverter.class,
-      TimeoutObtainmentReadConverter.class, TimeoutObtainmentWriteConverter.class, AdviserResponseReadConverter.class,
-      AdviserResponseWriteConverter.class, UnitProgressReadConverter.class, UnitProgressWriteConverter.class,
-      InterruptConfigReadConverter.class, InterruptConfigWriteConverter.class, NodeRunInfoReadConverter.class,
-      NodeRunInfoWriteConverter.class, ExecutionPrincipalInfoReadConverter.class,
+      TriggerPayloadWriteConverter.class, TimeoutObtainmentReadConverter.class, TimeoutObtainmentWriteConverter.class,
+      AdviserResponseReadConverter.class, AdviserResponseWriteConverter.class, UnitProgressReadConverter.class,
+      UnitProgressWriteConverter.class, InterruptConfigReadConverter.class, InterruptConfigWriteConverter.class,
+      NodeRunInfoReadConverter.class, NodeRunInfoWriteConverter.class, ExecutionPrincipalInfoReadConverter.class,
       ExecutionPrincipalInfoWriteConverter.class, InterruptEffectReadConverter.class,
       InterruptEffectWriteConverter.class, SdkModuleInfoReadConverter.class, SdkModuleInfoWriteConverter.class,
       ConsumerConfigReadConverter.class, ConsumerConfigWriteConverter.class, OrchestrationMapReadConverter.class,

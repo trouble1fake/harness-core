@@ -248,7 +248,6 @@ public class GraphStatusUpdateHelperTest extends OrchestrationVisualizationTestB
         .name(nodeExecution.name())
         .startTs(nodeExecution.getStartTs())
         .endTs(nodeExecution.getEndTs())
-        .initialWaitDuration(nodeExecution.getInitialWaitDuration())
         .lastUpdatedAt(nodeExecution.getLastUpdatedAt())
         .stepType(level.getStepType().getType())
         .status(SUCCEEDED)

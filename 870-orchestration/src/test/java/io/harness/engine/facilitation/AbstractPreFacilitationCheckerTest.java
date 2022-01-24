@@ -33,19 +33,13 @@ public class AbstractPreFacilitationCheckerTest extends OrchestrationTestBase {
   @Category(UnitTests.class)
   public void shouldTestCheck() {
     RunPreFacilitationChecker rChecker = spy(RunPreFacilitationChecker.class);
-    SkipPreFacilitationChecker sChecker = spy(SkipPreFacilitationChecker.class);
-    rChecker.setNextChecker(sChecker);
 
     doReturn(ExecutionCheck.builder().proceed(true).build())
         .when(rChecker)
-        .performCheck(any(Ambiance.class), any(Node.class));
-    doReturn(ExecutionCheck.builder().proceed(true).build())
-        .when(sChecker)
         .performCheck(any(Ambiance.class), any(Node.class));
 
     rChecker.check(any(Ambiance.class), any(Node.class));
 
     verify(rChecker).performCheck(any(Ambiance.class), any(Node.class));
-    verify(sChecker).performCheck(any(Ambiance.class), any(Node.class));
   }
 }

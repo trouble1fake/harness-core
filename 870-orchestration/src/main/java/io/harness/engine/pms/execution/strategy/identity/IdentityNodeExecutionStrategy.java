@@ -78,7 +78,6 @@ public class IdentityNodeExecutionStrategy
     setUnset(update, NodeExecutionKeys.resolvedInputs, originalExecution.getResolvedInputs());
     setUnset(update, NodeExecutionKeys.mode, originalExecution.getMode());
     setUnset(update, NodeExecutionKeys.nodeRunInfo, originalExecution.getNodeRunInfo());
-    setUnset(update, NodeExecutionKeys.skipInfo, originalExecution.getSkipInfo());
     setUnset(update, NodeExecutionKeys.failureInfo, originalExecution.getFailureInfo());
     setUnset(update, NodeExecutionKeys.progressData, originalExecution.getProgressData());
     setUnset(update, NodeExecutionKeys.adviserResponse, originalExecution.getAdviserResponse());

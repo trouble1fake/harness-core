@@ -65,10 +65,6 @@ public class ExecutionSummaryUpdateUtils {
           PipelineExecutionSummaryEntity.PlanExecutionSummaryKeys.layoutNodeMap + "." + stageUuid + ".failureInfoDTO",
           FailureInfoDTOConverter.toFailureInfoDTO(nodeExecution.getFailureInfo()));
     }
-    if (nodeExecution.getSkipInfo() != null) {
-      update.set(PipelineExecutionSummaryEntity.PlanExecutionSummaryKeys.layoutNodeMap + "." + stageUuid + ".skipInfo",
-          nodeExecution.getSkipInfo());
-    }
   }
 
   public static void addPipelineUpdateCriteria(Update update, String planExecutionId, NodeExecution nodeExecution) {
