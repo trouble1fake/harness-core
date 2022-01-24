@@ -264,9 +264,9 @@ public class ConnectorResource {
       @Body ConnectorFilterPropertiesDTO connectorListFilter, @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo,
       @Parameter(
           description =
-              "This when set to true along with GitSync enabled for the Connector, you can to get other Connectors too"
-              + " which are not from same repo - branch but different repo's default branch")
-      @QueryParam("getDistinctFromBranches") Boolean getDistinctFromBranches) {
+              "This when set to true along with GitSync enabled for the Connector, you can get one connector entity from each identifier. "
+              + "The connector entity can belong to any branch") @QueryParam("getDistinctFromBranches")
+      Boolean getDistinctFromBranches) {
     accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountIdentifier, orgIdentifier, projectIdentifier),
         Resource.of(ResourceTypes.CONNECTOR, null), VIEW_CONNECTOR_PERMISSION);
     return ResponseDTO.newResponse(getNGPageResponse(

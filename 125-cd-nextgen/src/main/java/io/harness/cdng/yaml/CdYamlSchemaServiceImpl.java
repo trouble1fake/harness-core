@@ -91,8 +91,14 @@ public class CdYamlSchemaServiceImpl implements CdYamlSchemaService {
   @Override
   public List<YamlSchemaWithDetails> getDeploymentStageYamlSchemaWithDetails(
       String accountIdentifier, String projectIdentifier, String orgIdentifier, Scope scope) {
-    return yamlSchemaProvider.getCrossFunctionalStepsSchemaDetails(projectIdentifier, orgIdentifier, scope,
+    List<YamlSchemaWithDetails> yamlSchemaWithDetailsList = yamlSchemaProvider.getCrossFunctionalStepsSchemaDetails(
+        projectIdentifier, orgIdentifier, scope,
         YamlSchemaUtils.getNodeEntityTypesByYamlGroup(yamlSchemaRootClasses, StepCategory.STEP.name()), ModuleType.CD);
+    yamlSchemaWithDetailsList.addAll(
+        yamlSchemaProvider.getCrossFunctionalStepsSchemaDetails(projectIdentifier, orgIdentifier, scope,
+            YamlSchemaUtils.getNodeEntityTypesByYamlGroup(yamlSchemaRootClasses, StepCategory.STAGE.name()),
+            ModuleType.CD));
+    return yamlSchemaWithDetailsList;
   }
 
   @Override

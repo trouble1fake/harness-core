@@ -27,6 +27,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import lombok.NonNull;
 import lombok.experimental.UtilityClass;
@@ -167,5 +168,10 @@ public class AmbianceUtils {
       }
     }
     return stageLevel;
+  }
+
+  public static boolean isRetry(Ambiance ambiance) {
+    Level level = Objects.requireNonNull(obtainCurrentLevel(ambiance));
+    return level.getRetryIndex() != 0;
   }
 }

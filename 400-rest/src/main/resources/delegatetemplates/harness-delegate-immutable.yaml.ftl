@@ -97,4 +97,4 @@ spec:
 
 ---
 
-<@upgrader.cronjob />
+<@upgrader.cronjob fullDelegateName=delegateName + "-" + kubernetesAccountLabel/>

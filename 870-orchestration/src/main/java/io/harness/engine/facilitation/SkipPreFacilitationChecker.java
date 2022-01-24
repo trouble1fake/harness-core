@@ -13,15 +13,17 @@ import io.harness.data.structure.EmptyPredicate;
 import io.harness.engine.ExecutionCheck;
 import io.harness.engine.OrchestrationEngine;
 import io.harness.engine.executions.node.NodeExecutionService;
-import io.harness.execution.NodeExecution;
 import io.harness.execution.NodeExecution.NodeExecutionKeys;
+import io.harness.plan.Node;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.execution.skip.SkipInfo;
 import io.harness.pms.contracts.steps.io.StepResponseProto;
+import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.expression.EngineExpressionService;
 
 import com.google.inject.Inject;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -32,26 +34,26 @@ public class SkipPreFacilitationChecker extends ExpressionEvalPreFacilitationChe
   @Inject private NodeExecutionService nodeExecutionService;
 
   @Override
-  protected ExecutionCheck performCheck(NodeExecution nodeExecution) {
+  protected ExecutionCheck performCheck(Ambiance ambiance, Node node) {
     log.info("Checking If Node should be Skipped");
-    Ambiance ambiance = nodeExecution.getAmbiance();
-    String skipCondition = nodeExecution.getNode().getSkipCondition();
+    String nodeExecutionId = Objects.requireNonNull(AmbianceUtils.obtainCurrentRuntimeId(ambiance));
+    String skipCondition = node.getSkipCondition();
     if (EmptyPredicate.isNotEmpty(skipCondition)) {
       try {
         boolean skipConditionValue = (Boolean) engineExpressionService.evaluateExpression(ambiance, skipCondition);
-        nodeExecutionService.updateV2(nodeExecution.getUuid(), ops -> {
+        nodeExecutionService.updateV2(nodeExecutionId, ops -> {
           ops.set(NodeExecutionKeys.skipInfo,
               SkipInfo.newBuilder().setEvaluatedCondition(skipConditionValue).setSkipCondition(skipCondition).build());
         });
         if (skipConditionValue) {
-          log.info(String.format("Skipping node: %s", nodeExecution.getUuid()));
+          log.info(String.format("Skipping node: %s", nodeExecutionId));
           StepResponseProto response =
               StepResponseProto.newBuilder()
                   .setStatus(Status.SKIPPED)
                   .setSkipInfo(
                       SkipInfo.newBuilder().setSkipCondition(skipCondition).setEvaluatedCondition(true).build())
                   .build();
-          orchestrationEngine.processStepResponse(nodeExecution.getAmbiance(), response);
+          orchestrationEngine.processStepResponse(ambiance, response);
           return ExecutionCheck.builder().proceed(false).reason("Skip Condition Evaluated to true").build();
         }
         return ExecutionCheck.builder().proceed(true).reason("Skip Condition Evaluated to false").build();

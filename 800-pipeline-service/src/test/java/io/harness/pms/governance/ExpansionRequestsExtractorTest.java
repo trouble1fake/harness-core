@@ -102,27 +102,32 @@ public class ExpansionRequestsExtractorTest extends CategoryTest {
         .contains(ExpansionRequest.builder()
                       .module(ModuleType.PMS)
                       .fqn("pipeline/stages/[0]/stage/spec/execution/steps/[1]/step/spec/connectorRef")
+                      .key("connectorRef")
                       .fieldValue(new TextNode("jira_basic"))
                       .build(),
             ExpansionRequest.builder()
                 .module(ModuleType.CD)
                 .fqn("pipeline/stages/[1]/stage/spec/serviceConfig/serviceRef")
+                .key("serviceRef")
                 .fieldValue(new TextNode("goodUpserteh"))
                 .build(),
             ExpansionRequest.builder()
                 .module(ModuleType.CD)
                 .fqn("pipeline/stages/[1]/stage/spec/infrastructure/infrastructureDefinition/spec/connectorRef")
                 .fieldValue(new TextNode("temp"))
+                .key("connectorRef")
                 .build(),
             ExpansionRequest.builder()
                 .module(ModuleType.CD)
                 .fqn("pipeline/stages/[1]/stage/spec/infrastructure/environmentRef")
+                .key("environmentRef")
                 .fieldValue(new TextNode("PR_ENV"))
                 .build(),
             ExpansionRequest.builder()
                 .module(ModuleType.CD)
                 .fqn(
                     "pipeline/stages/[1]/stage/spec/serviceConfig/serviceDefinition/spec/artifacts/primary/spec/connectorRef")
+                .key("connectorRef")
                 .fieldValue(new TextNode("nvh_docker"))
                 .build());
   }

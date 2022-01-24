@@ -21,6 +21,7 @@ import io.harness.interrupts.InterruptEffect;
 import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.interrupts.InterruptConfig;
 import io.harness.pms.contracts.interrupts.InterruptType;
+import io.harness.pms.execution.utils.NodeProjectionUtils;
 import io.harness.tasks.ResponseData;
 import io.harness.waiter.OldNotifyCallback;
 
@@ -36,14 +37,16 @@ public class FailureInterruptCallback implements OldNotifyCallback {
   @Inject private OrchestrationEngine orchestrationEngine;
 
   String nodeExecutionId;
+  Status originalStatus;
   String interruptId;
   InterruptConfig interruptConfig;
   InterruptType interruptType;
 
   @Builder
-  public FailureInterruptCallback(
-      String nodeExecutionId, String interruptId, InterruptConfig interruptConfig, InterruptType interruptType) {
+  public FailureInterruptCallback(String nodeExecutionId, Status originalStatus, String interruptId,
+      InterruptConfig interruptConfig, InterruptType interruptType) {
     this.nodeExecutionId = nodeExecutionId;
+    this.originalStatus = originalStatus;
     this.interruptId = interruptId;
     this.interruptConfig = interruptConfig;
     this.interruptType = interruptType;
@@ -52,6 +55,11 @@ public class FailureInterruptCallback implements OldNotifyCallback {
   @Override
   public void notify(Map<String, ResponseData> response) {
     try {
+      if (originalStatus == null) {
+        NodeExecution nodeExecution =
+            nodeExecutionService.getWithFieldsIncluded(nodeExecutionId, NodeProjectionUtils.withStatusAndMode);
+        originalStatus = nodeExecution.getStatus();
+      }
       NodeExecution updatedNodeExecution = nodeExecutionService.update(nodeExecutionId,
           ops
           -> ops.addToSet(NodeExecutionKeys.interruptHistories,
@@ -62,7 +70,7 @@ public class FailureInterruptCallback implements OldNotifyCallback {
                   .interruptConfig(interruptConfig)
                   .build()));
       orchestrationEngine.concludeNodeExecution(
-          updatedNodeExecution.getAmbiance(), Status.FAILED, EnumSet.noneOf(Status.class));
+          updatedNodeExecution.getAmbiance(), Status.FAILED, originalStatus, EnumSet.noneOf(Status.class));
     } catch (Exception ex) {
       interruptService.markProcessed(interruptId, PROCESSED_UNSUCCESSFULLY);
       throw ex;

@@ -23,6 +23,7 @@ import io.harness.pms.contracts.data.StepOutcomeRef;
 import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.steps.io.StepOutcomeProto;
 import io.harness.pms.contracts.steps.io.StepResponseProto;
+import io.harness.pms.execution.utils.AmbianceUtils;
 
 import com.google.inject.Inject;
 import java.util.ArrayList;
@@ -38,26 +39,26 @@ public class EndNodeExecutionHelper {
   @Inject private NodeExecutionService nodeExecutionService;
   @Inject private PlanNodeExecutionStrategy executionStrategy;
 
-  public void endNodeExecutionWithNoAdvisers(
-      @NonNull NodeExecution nodeExecution, @NonNull StepResponseProto stepResponse) {
-    NodeExecution updatedNodeExecution = processStepResponseWithNoAdvisers(nodeExecution, stepResponse);
+  public void endNodeExecutionWithNoAdvisers(@NonNull Ambiance ambiance, @NonNull StepResponseProto stepResponse) {
+    NodeExecution updatedNodeExecution = processStepResponseWithNoAdvisers(ambiance, stepResponse);
     if (updatedNodeExecution == null) {
-      log.warn("Cannot process step response for nodeExecution {}", nodeExecution.getUuid());
+      log.warn("Cannot process step response for nodeExecution {}", AmbianceUtils.obtainCurrentRuntimeId(ambiance));
       return;
     }
     executionStrategy.endNodeExecution(updatedNodeExecution.getAmbiance());
   }
 
-  private NodeExecution processStepResponseWithNoAdvisers(NodeExecution nodeExecution, StepResponseProto stepResponse) {
+  private NodeExecution processStepResponseWithNoAdvisers(Ambiance ambiance, StepResponseProto stepResponse) {
     // Start a transaction here
-    List<StepOutcomeRef> outcomeRefs = handleOutcomes(
-        nodeExecution.getAmbiance(), stepResponse.getStepOutcomesList(), stepResponse.getGraphOutcomesList());
+    List<StepOutcomeRef> outcomeRefs =
+        handleOutcomes(ambiance, stepResponse.getStepOutcomesList(), stepResponse.getGraphOutcomesList());
 
     // End transaction here
-    return nodeExecutionService.updateStatusWithOps(nodeExecution.getUuid(), stepResponse.getStatus(), ops -> {
-      setUnset(ops, NodeExecutionKeys.failureInfo, stepResponse.getFailureInfo());
-      setUnset(ops, NodeExecutionKeys.unitProgresses, stepResponse.getUnitProgressList());
-    }, EnumSet.noneOf(Status.class));
+    return nodeExecutionService.updateStatusWithOps(
+        AmbianceUtils.obtainCurrentRuntimeId(ambiance), stepResponse.getStatus(), ops -> {
+          setUnset(ops, NodeExecutionKeys.failureInfo, stepResponse.getFailureInfo());
+          setUnset(ops, NodeExecutionKeys.unitProgresses, stepResponse.getUnitProgressList());
+        }, EnumSet.noneOf(Status.class));
   }
 
   private List<StepOutcomeRef> handleOutcomes(
@@ -82,20 +83,18 @@ public class EndNodeExecutionHelper {
     return outcomeRefs;
   }
 
-  public NodeExecution handleStepResponsePreAdviser(NodeExecution nodeExecution, StepResponseProto stepResponse) {
+  public NodeExecution handleStepResponsePreAdviser(Ambiance ambiance, StepResponseProto stepResponse) {
     log.info("Handling Step response before calling advisers");
-    return processStepResponsePreAdvisers(nodeExecution, stepResponse);
+    return processStepResponsePreAdvisers(ambiance, stepResponse);
   }
 
-  private NodeExecution processStepResponsePreAdvisers(NodeExecution nodeExecution, StepResponseProto stepResponse) {
-    List<StepOutcomeRef> outcomeRefs = handleOutcomes(
-        nodeExecution.getAmbiance(), stepResponse.getStepOutcomesList(), stepResponse.getGraphOutcomesList());
+  private NodeExecution processStepResponsePreAdvisers(Ambiance ambiance, StepResponseProto stepResponse) {
+    handleOutcomes(ambiance, stepResponse.getStepOutcomesList(), stepResponse.getGraphOutcomesList());
 
-    log.info(
-        "Trying to update nodeExecution status from {} to {}", nodeExecution.getStatus(), stepResponse.getStatus());
-    return nodeExecutionService.updateStatusWithOps(nodeExecution.getUuid(), stepResponse.getStatus(), ops -> {
-      setUnset(ops, NodeExecutionKeys.failureInfo, stepResponse.getFailureInfo());
-      setUnset(ops, NodeExecutionKeys.unitProgresses, stepResponse.getUnitProgressList());
-    }, EnumSet.noneOf(Status.class));
+    return nodeExecutionService.updateStatusWithOps(
+        AmbianceUtils.obtainCurrentRuntimeId(ambiance), stepResponse.getStatus(), ops -> {
+          setUnset(ops, NodeExecutionKeys.failureInfo, stepResponse.getFailureInfo());
+          setUnset(ops, NodeExecutionKeys.unitProgresses, stepResponse.getUnitProgressList());
+        }, EnumSet.noneOf(Status.class));
   }
 }

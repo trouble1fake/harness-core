@@ -588,7 +588,7 @@ public class TimeSeriesRecordServiceImpl implements TimeSeriesRecordService {
               index = index % metricToRiskScore.get(fileName).size();
             }
             timeSeriesDataRecordGroupValue.setValue(demoTemplate.isHighRisk()
-                    ? (metricToRiskScore.get(fileName).get(index) + 1) * (new Random().nextInt(20) + 5)
+                    ? (metricToRiskScore.get(fileName).get(index) + 1) * (new Random().nextInt(20) + 11)
                     : metricToRiskScore.get(fileName).get(index));
           }
         }

@@ -729,7 +729,7 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
                    .get(0)
                    .getNodeRiskCountDTO()
                    .getRiskCounts()
-                   .get(2)
+                   .get(1)
                    .getCount())
         .isEqualTo(1);
     assertThat(transactionMetricInfoSummaryPageDTO.getPageResponse()
@@ -737,23 +737,23 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
                    .get(0)
                    .getNodeRiskCountDTO()
                    .getRiskCounts()
-                   .get(2)
-                   .getDisplayName())
-        .isEqualTo("Healthy");
-    assertThat(transactionMetricInfoSummaryPageDTO.getPageResponse()
-                   .getContent()
                    .get(0)
-                   .getNodeRiskCountDTO()
-                   .getRiskCounts()
-                   .get(5)
                    .getCount())
         .isEqualTo(2);
     assertThat(transactionMetricInfoSummaryPageDTO.getPageResponse()
                    .getContent()
+                   .get(0)
+                   .getNodeRiskCountDTO()
+                   .getRiskCounts()
+                   .get(1)
+                   .getDisplayName())
+        .isEqualTo("Healthy");
+    assertThat(transactionMetricInfoSummaryPageDTO.getPageResponse()
+                   .getContent()
                    .get(1)
                    .getNodeRiskCountDTO()
                    .getRiskCounts()
-                   .get(2)
+                   .get(0)
                    .getCount())
         .isEqualTo(1);
     assertThat(transactionMetricInfoSummaryPageDTO.getPageResponse()
@@ -761,7 +761,7 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
                    .get(1)
                    .getNodeRiskCountDTO()
                    .getRiskCounts()
-                   .get(5)
+                   .get(1)
                    .getCount())
         .isEqualTo(1);
     assertThat(transactionMetricInfoSummaryPageDTO.getPageResponse()
@@ -769,7 +769,7 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
                    .get(1)
                    .getNodeRiskCountDTO()
                    .getRiskCounts()
-                   .get(5)
+                   .get(0)
                    .getDisplayName())
         .isEqualTo("Unhealthy");
   }

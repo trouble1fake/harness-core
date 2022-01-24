@@ -56,7 +56,7 @@ public class NodeExecutionToExecutioNodeMapper {
     return ExecutionNode.builder()
         .uuid(nodeExecution.getUuid())
         .setupId(currentLevel.getSetupId())
-        .name(nodeExecution.getNode().getName())
+        .name(nodeExecution.name())
         .identifier(currentLevel.getIdentifier())
         .stepParameters(nodeExecution.getPmsStepParameters())
         .startTs(nodeExecution.getStartTs())

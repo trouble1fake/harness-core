@@ -75,9 +75,10 @@ public class OrchestrationEngine {
     strategy.handleError(ambiance, exception);
   }
 
-  public void concludeNodeExecution(Ambiance ambiance, Status status, EnumSet<Status> overrideStatusSet) {
+  public void concludeNodeExecution(
+      Ambiance ambiance, Status toStatus, Status fromStatus, EnumSet<Status> overrideStatusSet) {
     NodeExecutionStrategy strategy = strategyFactory.obtainStrategy(OrchestrationUtils.currentNodeType(ambiance));
-    strategy.concludeExecution(ambiance, status, overrideStatusSet);
+    strategy.concludeExecution(ambiance, toStatus, fromStatus, overrideStatusSet);
   }
 
   public void endNodeExecution(Ambiance ambiance) {

@@ -8,6 +8,7 @@
 package io.harness.engine.expressions.functors;
 
 import static io.harness.annotations.dev.HarnessTeam.CDC;
+import static io.harness.pms.execution.utils.AmbianceUtils.obtainCurrentLevel;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.engine.expressions.NodeExecutionsCache;
@@ -16,9 +17,11 @@ import io.harness.engine.pms.data.PmsSweepingOutputService;
 import io.harness.execution.NodeExecution;
 import io.harness.expression.LateBindingMap;
 import io.harness.pms.contracts.ambiance.Ambiance;
+import io.harness.pms.contracts.ambiance.Level;
 import io.harness.pms.execution.utils.AmbianceUtils;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -64,13 +67,13 @@ public class NodeExecutionAncestorFunctor extends LateBindingMap {
     if (nodeExecutionId == null) {
       return null;
     }
-
-    for (NodeExecution currNodeExecution = nodeExecutionsCache.fetch(nodeExecutionId); currNodeExecution != null;
-         currNodeExecution = nodeExecutionsCache.fetch(currNodeExecution.getParentId())) {
-      if (!currNodeExecution.getNode().isSkipExpressionChain()
-          && key.equals(currNodeExecution.getNode().getIdentifier())) {
+    NodeExecution currNodeExecution = nodeExecutionsCache.fetch(nodeExecutionId);
+    while (currNodeExecution != null) {
+      Level level = Objects.requireNonNull(obtainCurrentLevel(currNodeExecution.getAmbiance()));
+      if (!level.getSkipExpressionChain() && key.equals(level.getIdentifier())) {
         return currNodeExecution;
       }
+      currNodeExecution = nodeExecutionsCache.fetch(currNodeExecution.getParentId());
     }
     return null;
   }
@@ -81,11 +84,12 @@ public class NodeExecutionAncestorFunctor extends LateBindingMap {
       return null;
     }
 
-    for (NodeExecution currNodeExecution = nodeExecutionsCache.fetch(nodeExecutionId); currNodeExecution != null;
-         currNodeExecution = nodeExecutionsCache.fetch(currNodeExecution.getParentId())) {
-      if (groupName.equals(currNodeExecution.getNode().getGroup())) {
+    NodeExecution currNodeExecution = nodeExecutionsCache.fetch(nodeExecutionId);
+    while (currNodeExecution != null) {
+      if (groupName.equals(AmbianceUtils.getCurrentGroup(currNodeExecution.getAmbiance()))) {
         return currNodeExecution;
       }
+      currNodeExecution = nodeExecutionsCache.fetch(currNodeExecution.getParentId());
     }
     return null;
   }

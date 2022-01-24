@@ -15,9 +15,12 @@ import io.harness.azure.model.WebAppHostingOS;
 
 import com.microsoft.azure.management.appservice.DeploymentSlot;
 import com.microsoft.azure.management.appservice.WebApp;
+import com.microsoft.azure.management.appservice.implementation.SiteConfigResourceInner;
 import com.microsoft.azure.management.appservice.implementation.SiteInstanceInner;
 import com.microsoft.rest.ServiceCallback;
 import com.microsoft.rest.ServiceFuture;
+import java.io.File;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -325,4 +328,80 @@ public interface AzureWebClient {
    * @return
    */
   List<SiteInstanceInner> listInstanceIdentifiersSlot(AzureWebClientContext context, String slotName);
+
+  /**
+   * Deploying ZIP to deployment slot.
+   *
+   * @param context
+   * @param slotName
+   * @param file
+   */
+  void deployZipToSlot(AzureWebClientContext context, String slotName, File file);
+
+  /**
+   * Deploying ZIP async to deployment slot.
+   *
+   * @param context
+   * @param slotName
+   * @param file
+   * @return
+   */
+  Completable deployZipToSlotAsync(AzureWebClientContext context, String slotName, File file);
+
+  /**
+   * Deploying WAR to deployment slot.
+   *
+   * @param context
+   * @param slotName
+   * @param file
+   */
+  void deployWarToSlot(AzureWebClientContext context, String slotName, File file);
+
+  /**
+   * Deploying WAR async to deployment slot.
+   *
+   * @param context
+   * @param slotName
+   * @param file
+   * @return
+   */
+  Completable deployWarToSlotAsync(AzureWebClientContext context, String slotName, File file);
+
+  /**
+   * Stream deployment logs on slot.
+   *
+   * @param context
+   * @param slotName
+   * @return
+   */
+  InputStream streamDeploymentLogs(AzureWebClientContext context, String slotName);
+
+  /**
+   * Stream deployment logs on slot asynchronously.
+   *
+   * @param context
+   * @param slotName
+   * @return
+   */
+  Observable<String> streamDeploymentLogsAsync(AzureWebClientContext context, String slotName);
+
+  /**
+   * Update slot configuration with app command line script.
+   *
+   * @param context
+   * @param slotName
+   * @param startupCommand
+   * @return
+   */
+  SiteConfigResourceInner updateSlotConfigurationWithAppCommandLineScript(
+      AzureWebClientContext context, String slotName, String startupCommand);
+
+  /**
+   * Get deployment slot startup command.
+   *
+   * @param azureWebClientContext Azure Web client context
+   * @param slotName slot name
+   * @return startup command
+   */
+  String getDeploymentSlotStartupCommand(AzureWebClientContext azureWebClientContext, String slotName);
 }

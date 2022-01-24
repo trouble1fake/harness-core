@@ -104,8 +104,6 @@ import io.harness.exception.KubernetesTaskException;
 import io.harness.exception.KubernetesValuesException;
 import io.harness.exception.KubernetesYamlException;
 import io.harness.exception.NestedExceptionUtils;
-import io.harness.exception.UrlNotProvidedException;
-import io.harness.exception.UrlNotReachableException;
 import io.harness.exception.WingsException;
 import io.harness.exception.YamlException;
 import io.harness.filesystem.FileIo;
@@ -178,6 +176,7 @@ import io.kubernetes.client.openapi.models.V1Service;
 import io.kubernetes.client.openapi.models.V1ServicePort;
 import io.kubernetes.client.openapi.models.V1Status;
 import io.kubernetes.client.openapi.models.V1TokenReviewStatus;
+import io.kubernetes.client.openapi.models.VersionInfo;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -2513,14 +2512,13 @@ public class K8sTaskHelperBase {
       ConnectorConfigDTO connector, List<EncryptedDataDetail> encryptionDetailList) {
     KubernetesConfig kubernetesConfig = getKubernetesConfig(connector, encryptionDetailList);
     try {
-      kubernetesContainerService.validateMasterUrl(kubernetesConfig);
+      VersionInfo versionInfo = kubernetesContainerService.getVersion(kubernetesConfig);
+      log.debug(versionInfo.toString());
       return ConnectorValidationResult.builder().status(ConnectivityStatus.SUCCESS).build();
-    } catch (UrlNotProvidedException ex) {
+    } catch (Exception ex) {
+      log.error(K8sExceptionConstants.KUBERNETES_CLUSTER_CONNECTION_VALIDATION_FAILED, ex);
       throw NestedExceptionUtils.hintWithExplanationException(
-          K8sExceptionConstants.PROVIDE_MASTER_URL_HINT, K8sExceptionConstants.PROVIDE_MASTER_URL_EXPLANATION, ex);
-    } catch (UrlNotReachableException ex) {
-      throw NestedExceptionUtils.hintWithExplanationException(
-          K8sExceptionConstants.INCORRECT_MASTER_URL_HINT, K8sExceptionConstants.INCORRECT_MASTER_URL_EXPLANATION, ex);
+          K8sExceptionConstants.KUBERNETES_CLUSTER_CONNECTION_VALIDATION_FAILED, ex.getMessage(), ex);
     }
   }
 

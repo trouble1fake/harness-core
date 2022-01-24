@@ -146,7 +146,6 @@ public class PlanCreatorService extends PlanCreationServiceImplBase {
       log.error(message, ex);
       throw new InvalidRequestException(message);
     }
-
     dependenciesList.forEach(key -> completableFutures.supplyAsync(() -> {
       try {
         return createPlanForDependencyInternal(currentYaml, fullField.fromYamlPath(key.getValue()), ctx,

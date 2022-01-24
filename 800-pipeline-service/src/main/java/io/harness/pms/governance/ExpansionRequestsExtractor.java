@@ -89,6 +89,7 @@ public class ExpansionRequestsExtractor {
         ExpansionRequest request = ExpansionRequest.builder()
                                        .module(namespace.peek())
                                        .fqn(node.getYamlPath() + PATH_SEP + key)
+                                       .key(key)
                                        .fieldValue(value)
                                        .build();
         serviceCalls.add(request);
@@ -158,6 +159,7 @@ public class ExpansionRequestsExtractor {
         ExpansionRequest expansionRequest = ExpansionRequest.builder()
                                                 .module(e.getModule())
                                                 .fqn(yamlPath)
+                                                .key(localPath)
                                                 .fieldValue(currNode.getCurrJsonNode())
                                                 .build();
         serviceCalls.add(expansionRequest);

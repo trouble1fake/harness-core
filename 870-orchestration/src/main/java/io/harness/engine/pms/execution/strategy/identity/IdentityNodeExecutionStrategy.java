@@ -16,6 +16,7 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.engine.OrchestrationEngine;
 import io.harness.engine.executions.node.NodeExecutionService;
+import io.harness.engine.executions.plan.PlanService;
 import io.harness.engine.pms.advise.AdviseHandlerFactory;
 import io.harness.engine.pms.advise.AdviserResponseHandler;
 import io.harness.engine.pms.commons.events.PmsEventSender;
@@ -60,6 +61,7 @@ public class IdentityNodeExecutionStrategy
     implements NodeExecutionStrategy<IdentityPlanNode, NodeExecution, IdentityNodeExecutionMetadata> {
   @Inject private PmsEventSender eventSender;
   @Inject private NodeExecutionService nodeExecutionService;
+  @Inject private PlanService planService;
   @Inject private AdviseHandlerFactory adviseHandlerFactory;
   @Inject private WaitNotifyEngine waitNotifyEngine;
   @Inject private OrchestrationEngine orchestrationEngine;
@@ -109,6 +111,9 @@ public class IdentityNodeExecutionStrategy
             .unitProgresses(new ArrayList<>())
             .startTs(AmbianceUtils.getCurrentLevelStartTs(cloned))
             .originalNodeExecutionId(node.getOriginalNodeExecutionId())
+            .module(node.getServiceName())
+            .name(node.getName())
+            .skipGraphType(node.getSkipGraphType())
             .build();
     NodeExecution savedNodeExecution = nodeExecutionService.save(nodeExecution);
     // TODO: Should add to an execution queue rather than submitting straight to thread pool
@@ -119,8 +124,7 @@ public class IdentityNodeExecutionStrategy
   @Override
   public void startExecution(Ambiance ambiance) {
     String newNodeExecutionId = Objects.requireNonNull(AmbianceUtils.obtainCurrentRuntimeId(ambiance));
-    NodeExecution newNodeExecution = nodeExecutionService.get(AmbianceUtils.obtainCurrentRuntimeId(ambiance));
-    IdentityPlanNode node = newNodeExecution.getNode();
+    IdentityPlanNode node = planService.fetchNode(ambiance.getPlanId(), AmbianceUtils.obtainCurrentSetupId(ambiance));
     try (AutoLogContext ignore = AmbianceUtils.autoLogContext(ambiance)) {
       NodeExecution originalExecution = nodeExecutionService.get(node.getOriginalNodeExecutionId());
 
@@ -129,7 +133,7 @@ public class IdentityNodeExecutionStrategy
 
       // If Node is skipped then call the adviser response handler straight away
       if (originalExecution.getStatus() == Status.SKIPPED) {
-        newNodeExecution = nodeExecutionService.updateStatusWithUpdate(
+        NodeExecution newNodeExecution = nodeExecutionService.updateStatusWithUpdate(
             newNodeExecutionId, originalExecution.getStatus(), update, EnumSet.noneOf(Status.class));
         processAdviserResponse(ambiance, newNodeExecution.getAdviserResponse());
         return;
@@ -142,7 +146,7 @@ public class IdentityNodeExecutionStrategy
         return;
       }
 
-      newNodeExecution = nodeExecutionService.updateStatusWithUpdate(
+      NodeExecution newNodeExecution = nodeExecutionService.updateStatusWithUpdate(
           newNodeExecutionId, Status.RUNNING, update, EnumSet.noneOf(Status.class));
 
       // If not leaf node then we need to call the identity step

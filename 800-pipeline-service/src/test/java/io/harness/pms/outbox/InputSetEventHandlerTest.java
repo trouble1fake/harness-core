@@ -210,7 +210,7 @@ public class InputSetEventHandlerTest extends CategoryTest {
     assertEquals(pipelineIdentifier, auditEntry.getResource().getLabels().get("pipelineIdentifier"));
     assertEquals(auditEntry.getInsertId(), outboxEvent.getId());
     assertEquals(identifier, auditEntry.getResource().getIdentifier());
-    assertEquals(ModuleType.PMS, auditEntry.getModule());
+    assertEquals(ModuleType.CORE, auditEntry.getModule());
     assertEquals(outboxEvent.getCreatedAt().longValue(), auditEntry.getTimestamp());
   }
 }

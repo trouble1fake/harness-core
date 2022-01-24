@@ -19,6 +19,7 @@ import static software.wings.beans.TaskType.GIT_FETCH_FILES_TASK;
 import static software.wings.delegatetasks.GitFetchFilesTask.GIT_FETCH_FILES_TASK_ASYNC_TIMEOUT;
 import static software.wings.sm.states.azure.appservices.AzureAppServiceSlotSetupContextElement.SWEEPING_OUTPUT_APP_SERVICE;
 
+import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
@@ -31,6 +32,7 @@ import io.harness.beans.SweepingOutput;
 import io.harness.data.algorithm.HashGenerator;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.task.azure.AzureTaskExecutionResponse;
+import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
 import io.harness.ff.FeatureFlagService;
@@ -46,8 +48,10 @@ import software.wings.beans.GitFetchFilesTaskParams;
 import software.wings.beans.GitFileConfig;
 import software.wings.beans.TaskType;
 import software.wings.beans.appmanifest.ApplicationManifest;
+import software.wings.beans.artifact.Artifact;
 import software.wings.beans.command.CommandUnit;
 import software.wings.beans.command.CommandUnitDetails.CommandUnitType;
+import software.wings.beans.container.UserDataSpecification;
 import software.wings.service.impl.GitConfigHelperService;
 import software.wings.service.impl.GitFileConfigHelperService;
 import software.wings.service.impl.azure.manager.AzureTaskExecutionRequest;
@@ -76,7 +80,9 @@ import com.google.inject.Inject;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
@@ -95,6 +101,8 @@ public abstract class AbstractAzureAppServiceState extends State {
   @Inject private GitConfigHelperService gitConfigHelperService;
   @Inject private SecretManager secretManager;
   @Inject private FeatureFlagService featureFlagService;
+
+  @Setter protected String stepSkipMsg;
 
   public AbstractAzureAppServiceState(String name, StateType stateType) {
     super(name, stateType.name());
@@ -137,30 +145,53 @@ public abstract class AbstractAzureAppServiceState extends State {
       return ExecutionResponse.builder().executionStatus(SKIPPED).errorMessage(skipMessage()).build();
     }
     Activity activity;
+    Artifact artifact = azureVMSSStateHelper.getWebAppNonContainerArtifact(context, isRollback());
+    boolean isNonDocker = azureVMSSStateHelper.isWebAppNonContainerDeployment(context);
     if (supportRemoteManifest() && !isGitFetchDone(context)) {
-      Map<String, ApplicationManifest> appServiceConfigurationRemoteManifests =
-          azureAppServiceManifestUtils.getAppServiceConfigurationManifests(context);
+      Map<String, ApplicationManifest> appServiceConfigurationRemoteManifests = getAppServiceConfiguration(context);
       Map<String, ApplicationManifest> remoteManifest =
           azureAppServiceManifestUtils.filterOutRemoteManifest(appServiceConfigurationRemoteManifests);
       if (!isEmpty(remoteManifest)) {
         activity = azureVMSSStateHelper.createAndSaveActivity(
-            context, null, getStateType(), commandType(), commandUnitType(), commandUnits(true));
+            context, artifact, getStateType(), commandType(), commandUnitType(), commandUnits(isNonDocker, true));
         return executeRemoteGITFetchTask(context, activity, appServiceConfigurationRemoteManifests, remoteManifest);
       }
     }
     activity = azureVMSSStateHelper.createAndSaveActivity(
-        context, null, getStateType(), commandType(), commandUnitType(), commandUnits(false));
+        context, artifact, getStateType(), commandType(), commandUnitType(), commandUnits(isNonDocker, false));
 
+    return submitTask(context, activity.getUuid());
+  }
+
+  protected ExecutionResponse submitTask(ExecutionContext context, String activityId) {
     AzureAppServiceStateData azureAppServiceStateData = azureVMSSStateHelper.populateAzureAppServiceData(context);
-    AzureTaskExecutionRequest executionRequest = buildTaskExecutionRequest(context, azureAppServiceStateData, activity);
+    AzureTaskExecutionRequest executionRequest =
+        buildTaskExecutionRequest(context, azureAppServiceStateData, activityId);
     StateExecutionData stateExecutionData =
-        createAndEnqueueDelegateTask(activity, context, azureAppServiceStateData, executionRequest);
-    return successResponse(activity, stateExecutionData);
+        createAndEnqueueDelegateTask(activityId, context, azureAppServiceStateData, executionRequest);
+    return successResponse(activityId, stateExecutionData);
+  }
+
+  private Map<String, ApplicationManifest> getAppServiceConfiguration(ExecutionContext context) {
+    String serviceId = azureVMSSStateHelper.getServiceId(context);
+    if (azureVMSSStateHelper.isWebAppNonContainerDeployment(context) && isRollback()) {
+      Activity rollbackActivity =
+          azureVMSSStateHelper.getWebAppRollbackActivity(context, serviceId)
+              .orElseThrow(()
+                               -> new InvalidArgumentsException(
+                                   format("Not found activity for web app rollback, serviceId: %s", serviceId)));
+
+      ExecutionContext rollbackExecutionContext = azureVMSSStateHelper.getExecutionContext(rollbackActivity.getAppId(),
+          rollbackActivity.getWorkflowExecutionId(), rollbackActivity.getStateExecutionInstanceId());
+      return azureAppServiceManifestUtils.getAppServiceConfigurationManifests(rollbackExecutionContext);
+    }
+
+    return azureAppServiceManifestUtils.getAppServiceConfigurationManifests(context);
   }
 
   private ExecutionResponse executeRemoteGITFetchTask(ExecutionContext context, Activity activity,
-      Map<String, ApplicationManifest> remoteManifests,
-      Map<String, ApplicationManifest> appServiceConfigurationManifests) {
+      Map<String, ApplicationManifest> appServiceConfigurationManifests,
+      Map<String, ApplicationManifest> remoteManifests) {
     Map<String, GitFetchFilesConfig> filesConfigMap = new HashMap<>();
     remoteManifests.forEach(
         (key, value) -> filesConfigMap.put(key, createGitFetchFilesConfig(value.getGitFileConfig(), context)));
@@ -228,9 +259,9 @@ public abstract class AbstractAzureAppServiceState extends State {
     return false;
   }
 
-  private StateExecutionData createAndEnqueueDelegateTask(Activity activity, ExecutionContext context,
+  private StateExecutionData createAndEnqueueDelegateTask(String activityId, ExecutionContext context,
       AzureAppServiceStateData azureAppServiceStateData, AzureTaskExecutionRequest executionRequest) {
-    StateExecutionData stateExecutionData = buildPreStateExecutionData(activity, context, azureAppServiceStateData);
+    StateExecutionData stateExecutionData = buildPreStateExecutionData(activityId, context, azureAppServiceStateData);
     Application application = azureAppServiceStateData.getApplication();
     int expressionFunctorToken = HashGenerator.generateIntegerHash();
     AzureWebAppInfrastructureMapping infrastructureMapping = azureAppServiceStateData.getInfrastructureMapping();
@@ -241,7 +272,7 @@ public abstract class AbstractAzureAppServiceState extends State {
         DelegateTask.builder()
             .accountId(application.getAccountId())
             .setupAbstraction(Cd1SetupFields.APP_ID_FIELD, application.getUuid())
-            .waitId(activity.getUuid())
+            .waitId(activityId)
             .data(TaskData.builder()
                       .async(true)
                       .taskType(TaskType.AZURE_APP_SERVICE_TASK.name())
@@ -317,7 +348,7 @@ public abstract class AbstractAzureAppServiceState extends State {
 
   protected void emitAnyDataForExternalConsumption(
       ExecutionContext context, AzureTaskExecutionResponse executionResponse) {
-    log.info(String.format("Nothing to save for external consumption - [%s]", getName()));
+    log.info(format("Nothing to save for external consumption - [%s]", getName()));
   }
 
   protected boolean verifyIfContextElementExist(ExecutionContext context) {
@@ -337,15 +368,20 @@ public abstract class AbstractAzureAppServiceState extends State {
         context, SWEEPING_OUTPUT_APP_SERVICE);
   }
 
+  protected String fetchStartupCommand(ExecutionContext context) {
+    Optional<UserDataSpecification> userDataSpecification = azureVMSSStateHelper.getUserDataSpecification(context);
+    return userDataSpecification.map(UserDataSpecification::getData).orElse(null);
+  }
+
   protected abstract boolean supportRemoteManifest();
 
   protected abstract boolean shouldExecute(ExecutionContext context);
 
   protected abstract AzureTaskExecutionRequest buildTaskExecutionRequest(
-      ExecutionContext context, AzureAppServiceStateData azureAppServiceStateData, Activity activity);
+      ExecutionContext context, AzureAppServiceStateData azureAppServiceStateData, String activityId);
 
   protected abstract StateExecutionData buildPreStateExecutionData(
-      Activity activity, ExecutionContext context, AzureAppServiceStateData azureAppServiceStateData);
+      String activityId, ExecutionContext context, AzureAppServiceStateData azureAppServiceStateData);
 
   protected abstract StateExecutionData buildPostStateExecutionData(
       ExecutionContext context, AzureTaskExecutionResponse executionResponse, ExecutionStatus executionStatus);
@@ -354,7 +390,7 @@ public abstract class AbstractAzureAppServiceState extends State {
     return null;
   }
 
-  protected abstract List<CommandUnit> commandUnits(boolean isGitFetch);
+  protected abstract List<CommandUnit> commandUnits(boolean isNonDocker, boolean isGitFetch);
 
   @NotNull protected abstract CommandUnitType commandUnitType();
 
@@ -369,12 +405,12 @@ public abstract class AbstractAzureAppServiceState extends State {
     // Do nothing on abort
   }
 
-  private ExecutionResponse successResponse(Activity activity, StateExecutionData executionData) {
+  private ExecutionResponse successResponse(String activityId, StateExecutionData executionData) {
     return ExecutionResponse.builder()
         .async(true)
         .stateExecutionData(executionData)
         .executionStatus(ExecutionStatus.SUCCESS)
-        .correlationId(activity.getUuid())
+        .correlationId(activityId)
         .build();
   }
 

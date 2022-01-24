@@ -14,6 +14,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.pms.contracts.plan.ExpansionRequestType;
 import io.harness.pms.contracts.plan.JsonExpansionInfo;
+import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.sdk.PmsSdkInstance;
 import io.harness.pms.sdk.PmsSdkInstanceService;
 import io.harness.pms.yaml.YAMLFieldNameConstants;
@@ -81,6 +82,7 @@ public class ExpansionRequestsHelper {
           sdkInstance.getJsonExpansionInfo()
               .stream()
               .filter(info -> info.getExpansionType().equals(ExpansionRequestType.LOCAL_FQN))
+              .filter(info -> info.getStageType().getStepCategory().equals(StepCategory.STAGE))
               .collect(Collectors.toList());
       jsonExpansionInfo.forEach(info
           -> localFQNExpansionInfo.add(LocalFQNExpansionInfo.builder()

@@ -19,7 +19,8 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.engine.ExecutionCheck;
-import io.harness.execution.NodeExecution;
+import io.harness.plan.Node;
+import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.rule.Owner;
 
 import org.junit.Test;
@@ -35,12 +36,16 @@ public class AbstractPreFacilitationCheckerTest extends OrchestrationTestBase {
     SkipPreFacilitationChecker sChecker = spy(SkipPreFacilitationChecker.class);
     rChecker.setNextChecker(sChecker);
 
-    doReturn(ExecutionCheck.builder().proceed(true).build()).when(rChecker).performCheck(any(NodeExecution.class));
-    doReturn(ExecutionCheck.builder().proceed(true).build()).when(sChecker).performCheck(any(NodeExecution.class));
+    doReturn(ExecutionCheck.builder().proceed(true).build())
+        .when(rChecker)
+        .performCheck(any(Ambiance.class), any(Node.class));
+    doReturn(ExecutionCheck.builder().proceed(true).build())
+        .when(sChecker)
+        .performCheck(any(Ambiance.class), any(Node.class));
 
-    rChecker.check(any(NodeExecution.class));
+    rChecker.check(any(Ambiance.class), any(Node.class));
 
-    verify(rChecker).performCheck(any(NodeExecution.class));
-    verify(sChecker).performCheck(any(NodeExecution.class));
+    verify(rChecker).performCheck(any(Ambiance.class), any(Node.class));
+    verify(sChecker).performCheck(any(Ambiance.class), any(Node.class));
   }
 }
