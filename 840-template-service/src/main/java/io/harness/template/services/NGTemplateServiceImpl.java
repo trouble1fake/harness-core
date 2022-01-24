@@ -31,6 +31,8 @@ import io.harness.gitsync.helpers.GitContextHelper;
 import io.harness.gitsync.interceptor.GitEntityInfo;
 import io.harness.gitsync.persistance.GitSyncSdkService;
 import io.harness.gitsync.scm.EntityObjectIdUtils;
+import io.harness.gitsync.utils.GitEntityFilePath;
+import io.harness.gitsync.utils.GitSyncSdkUtils;
 import io.harness.grpc.utils.StringValueUtils;
 import io.harness.organization.remote.OrganizationClient;
 import io.harness.project.remote.ProjectClient;
@@ -553,7 +555,10 @@ public class NGTemplateServiceImpl implements NGTemplateService {
                             .and(TemplateEntityKeys.version)
                             .is(templateEntity.getVersionLabel());
 
-    Update update = new Update().set(TemplateEntityKeys.filePath, newFilePath);
+    GitEntityFilePath gitEntityFilePath = GitSyncSdkUtils.getRootFolderAndFilePath(newFilePath);
+    Update update = new Update()
+                        .set(TemplateEntityKeys.filePath, gitEntityFilePath.getFilePath())
+                        .set(TemplateEntityKeys.rootFolder, gitEntityFilePath.getRootFolder());
     return templateRepository.update(criteria, update);
   }
 
