@@ -585,7 +585,8 @@ public enum ErrorCode {
   GIT_SYNC_ERROR,
   TEMPLATE_EXCEPTION,
   ENTITY_REFERENCE_EXCEPTION,
-  INVALID_INPUT_SET;
+  INVALID_INPUT_SET,
+  INVALID_OVERLAY_INPUT_SET;
 
   private Status status = BAD_REQUEST;
   private String description;
