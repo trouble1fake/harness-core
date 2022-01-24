@@ -176,6 +176,8 @@ public class ServiceResourceV2 {
         ResourceScope.of(accountId, serviceRequestDTO.getOrgIdentifier(), serviceRequestDTO.getProjectIdentifier()),
         Resource.of(NGResourceType.SERVICE, null), SERVICE_CREATE_PERMISSION);
     ServiceEntity serviceEntity = ServiceElementMapper.toServiceEntity(accountId, serviceRequestDTO);
+    serviceEntityManagementService.checkThatTheOrganizationTProjectExists(
+        serviceEntity.getOrgIdentifier(), serviceEntity.getProjectIdentifier(), serviceEntity.getAccountId());
     ServiceEntity createdService = serviceEntityService.create(serviceEntity);
     return ResponseDTO.newResponse(
         createdService.getVersion().toString(), ServiceElementMapper.toResponseWrapper(createdService));
@@ -205,6 +207,9 @@ public class ServiceResourceV2 {
         serviceRequestDTOs.stream()
             .map(serviceRequestDTO -> ServiceElementMapper.toServiceEntity(accountId, serviceRequestDTO))
             .collect(Collectors.toList());
+    serviceEntities.forEach(serviceEntity
+        -> serviceEntityManagementService.checkThatTheOrganizationTProjectExists(
+            serviceEntity.getProjectIdentifier(), serviceEntity.getOrgIdentifier(), serviceEntity.getAccountId()));
     Page<ServiceEntity> createdServices = serviceEntityService.bulkCreate(accountId, serviceEntities);
     return ResponseDTO.newResponse(getNGPageResponse(createdServices.map(ServiceElementMapper::toResponseWrapper)));
   }
@@ -277,9 +282,11 @@ public class ServiceResourceV2 {
         Resource.of(NGResourceType.SERVICE, serviceRequestDTO.getIdentifier()), SERVICE_UPDATE_PERMISSION);
     ServiceEntity requestService = ServiceElementMapper.toServiceEntity(accountId, serviceRequestDTO);
     requestService.setVersion(isNumeric(ifMatch) ? parseLong(ifMatch) : null);
-    ServiceEntity upsertedService = serviceEntityService.upsert(requestService);
+    serviceEntityManagementService.checkThatTheOrganizationTProjectExists(
+        requestService.getOrgIdentifier(), requestService.getProjectIdentifier(), requestService.getAccountId());
+    ServiceEntity upsertService = serviceEntityService.upsert(requestService);
     return ResponseDTO.newResponse(
-        upsertedService.getVersion().toString(), ServiceElementMapper.toResponseWrapper(upsertedService));
+        upsertService.getVersion().toString(), ServiceElementMapper.toResponseWrapper(upsertService));
   }
 
   @GET
