@@ -11,6 +11,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
+	"github.com/cenkalti/backoff"
 
 	"fmt"
 	"io"
@@ -107,7 +108,7 @@ func (c *HTTPClient) SelectTests(org, project, pipeline, build, stage, step, rep
 func (c *HTTPClient) UploadCg(org, project, pipeline, build, stage, step, repo, sha, source, target string, timeMs int64, cg []byte) error {
 	path := fmt.Sprintf(cgEndpoint, c.AccountID, org, project, pipeline, build, stage, step, repo, sha, source, target, timeMs)
 	ctx := context.WithValue(context.Background(), "reqId", sha)
-	backoff := createBackoff(600 * time.Second)
+	backoff := createBackoff(45 * 60 * time.Second)
 	_, err := c.retry(ctx, c.Endpoint+path, "POST", &cg, nil, false, backoff)
 	return err
 }
