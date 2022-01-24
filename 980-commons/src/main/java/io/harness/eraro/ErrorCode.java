@@ -584,7 +584,8 @@ public enum ErrorCode {
   BUCKET_SERVER_ERROR,
   GIT_SYNC_ERROR,
   TEMPLATE_EXCEPTION,
-  ENTITY_REFERENCE_EXCEPTION;
+  ENTITY_REFERENCE_EXCEPTION,
+  INVALID_INPUT_SET;
 
   private Status status = BAD_REQUEST;
   private String description;
