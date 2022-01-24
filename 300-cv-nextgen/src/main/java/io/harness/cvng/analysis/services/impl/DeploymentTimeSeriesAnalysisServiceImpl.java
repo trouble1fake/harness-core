@@ -274,14 +274,17 @@ public class DeploymentTimeSeriesAnalysisServiceImpl implements DeploymentTimeSe
   }
 
   private NodeRiskCountDTO getNodeRiskCountDTO(Map<Risk, Integer> nodeCountByRiskStatusMap) {
-    int totalNodeCount = 0;
-    for (int val : nodeCountByRiskStatusMap.values()) {
-      totalNodeCount += val;
+    Integer totalNodeCount = 0;
+    List<NodeRiskCountDTO.RiskCount> riskCounts = new ArrayList<>();
+    for (Risk risk : nodeCountByRiskStatusMap.keySet()) {
+      totalNodeCount += nodeCountByRiskStatusMap.get(risk);
+      riskCounts.add(NodeRiskCountDTO.RiskCount.builder().risk(risk).count(nodeCountByRiskStatusMap.get(risk)).build());
     }
+    riskCounts.sort((r1, r2) -> Integer.compare(r2.getRisk().getValue(), r1.getRisk().getValue()));
     return NodeRiskCountDTO.builder()
         .totalNodeCount(totalNodeCount)
         .anomalousNodeCount(totalNodeCount - nodeCountByRiskStatusMap.getOrDefault(Risk.HEALTHY, 0))
-        .nodeCountByRiskStatusMap(nodeCountByRiskStatusMap)
+        .riskCounts(riskCounts)
         .build();
   }
 

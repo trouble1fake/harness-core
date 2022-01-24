@@ -18,20 +18,23 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.logging.LogCallback;
 
 import software.wings.delegatetasks.azure.AzureServiceCallBack;
+import software.wings.delegatetasks.azure.appservice.deployment.context.SlotDockerDeploymentVerifierContext;
+import software.wings.delegatetasks.azure.appservice.deployment.context.StatusVerifierContext;
+import software.wings.delegatetasks.azure.appservice.deployment.context.SwapSlotStatusVerifierContext;
 
 import com.microsoft.azure.management.appservice.DeploymentSlot;
 import java.util.Optional;
 
 @TargetModule(HarnessModule._930_DELEGATE_TASKS)
 public abstract class SlotStatusVerifier {
-  private final String slotName;
-  private final AzureWebClient azureWebClient;
-  private final AzureServiceCallBack restCallBack;
+  protected final String slotName;
+  protected final AzureWebClient azureWebClient;
+  protected final AzureServiceCallBack restCallBack;
   protected final LogCallback logCallback;
   protected final AzureWebClientContext azureWebClientContext;
 
   public enum SlotStatus { STOPPED, RUNNING }
-  public enum SlotStatusVerifierType { STOP_VERIFIER, START_VERIFIER, SWAP_VERIFIER }
+  public enum SlotStatusVerifierType { STOP_VERIFIER, START_VERIFIER, SWAP_VERIFIER, SLOT_DOCKER_DEPLOYMENT_VERIFIER }
 
   public SlotStatusVerifier(LogCallback logCallback, String slotName, AzureWebClient azureWebClient,
       AzureWebClientContext azureWebClientContext, AzureServiceCallBack restCallBack) {
@@ -57,6 +60,10 @@ public abstract class SlotStatusVerifier {
     return restCallBack.getErrorMessage();
   }
 
+  public void stopPolling() {
+    logCallback.saveExecutionLog("All operations is paused");
+  }
+
   public abstract String getSteadyState();
 
   protected DeploymentSlot getDeploymentSlot() {
@@ -77,6 +84,21 @@ public abstract class SlotStatusVerifier {
       case "SWAP_VERIFIER":
         return new SwapSlotStatusVerifier(
             logCallback, slotName, azureWebClient, azureMonitorClient, azureWebClientContext, restCallBack);
+      default:
+        throw new InvalidRequestException(String.format("No slot status verifier defined for - [%s]", verifierType));
+    }
+  }
+
+  public static SlotStatusVerifier getStatusVerifier(String verifierType, StatusVerifierContext context) {
+    switch (verifierType) {
+      case "STOP_VERIFIER":
+        return new StopSlotStatusVerifier(context);
+      case "START_VERIFIER":
+        return new StartSlotStatusVerifier(context);
+      case "SWAP_VERIFIER":
+        return new SwapSlotStatusVerifier((SwapSlotStatusVerifierContext) context);
+      case "SLOT_DOCKER_DEPLOYMENT_VERIFIER":
+        return new SlotDockerDeploymentVerifier((SlotDockerDeploymentVerifierContext) context);
       default:
         throw new InvalidRequestException(String.format("No slot status verifier defined for - [%s]", verifierType));
     }

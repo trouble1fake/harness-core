@@ -11,6 +11,7 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.executions.plan.PlanExecutionService;
+import io.harness.engine.executions.plan.PlanService;
 import io.harness.engine.expressions.functors.ExecutionSweepingOutputFunctor;
 import io.harness.engine.expressions.functors.NodeExecutionAncestorFunctor;
 import io.harness.engine.expressions.functors.NodeExecutionChildFunctor;
@@ -69,6 +70,7 @@ public class AmbianceExpressionEvaluator extends EngineExpressionEvaluator {
   @Inject private PmsSweepingOutputService pmsSweepingOutputService;
   @Inject private NodeExecutionService nodeExecutionService;
   @Inject private PlanExecutionService planExecutionService;
+  @Inject private PlanService planService;
   @Inject private InputSetValidatorFactory inputSetValidatorFactory;
 
   protected final Ambiance ambiance;
@@ -118,7 +120,7 @@ public class AmbianceExpressionEvaluator extends EngineExpressionEvaluator {
       return;
     }
 
-    nodeExecutionsCache = new NodeExecutionsCache(nodeExecutionService, ambiance);
+    nodeExecutionsCache = new NodeExecutionsCache(nodeExecutionService, planService, ambiance);
     // Access StepParameters and Outcomes of self and children.
     addToContext("child",
         NodeExecutionChildFunctor.builder()

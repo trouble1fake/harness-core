@@ -18,6 +18,7 @@ import static io.harness.azure.model.AzureConstants.UPDATE_DEPLOYMENT_SLOT_CONTA
 
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.TargetModule;
+import io.harness.azure.model.AzureConstants;
 
 import lombok.Getter;
 
@@ -27,6 +28,8 @@ public enum AppServiceDeploymentProgress {
   STOP_SLOT(STOP_DEPLOYMENT_SLOT),
   UPDATE_SLOT_CONFIGURATIONS(UPDATE_DEPLOYMENT_SLOT_CONFIGURATION_SETTINGS),
   UPDATE_SLOT_CONTAINER_SETTINGS(UPDATE_DEPLOYMENT_SLOT_CONTAINER_SETTINGS),
+  DEPLOY_DOCKER_IMAGE(AzureConstants.DEPLOY_DOCKER_IMAGE),
+  DEPLOY_ARTIFACT(AzureConstants.DEPLOY_ARTIFACT),
   START_SLOT(START_DEPLOYMENT_SLOT),
   UPDATE_TRAFFIC_PERCENT(SLOT_TRAFFIC_PERCENTAGE),
   SWAP_SLOT(SLOT_SWAP),

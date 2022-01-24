@@ -130,6 +130,7 @@ public class OwnerRule implements TestRule {
   public static final String NEMANJA = "nemanja.lukovic";
   public static final String NIKOLA = "nikola.obucina";
   public static final String NIKUNJ = "nikunj.badjatya";
+  public static final String NISHANT = "nishant.saini";
   public static final String PARNIAN = "parnian";
   public static final String PARDHA = "sripardha.chidella";
   public static final String PIYUSH = "piyush.patel";
@@ -292,6 +293,7 @@ public class OwnerRule implements TestRule {
           .put(NICOLAS, defaultUserInfo(NICOLAS).slack("U01C8MPQVQE").team(DEL).build())
           .put(NIKOLA, defaultUserInfo(NIKOLA).slack("U011CFJ4YDV").team(PL).build())
           .put(NIKUNJ, defaultUserInfo(NIKUNJ).slack("U019JUP10AF").team(CE).build())
+          .put(NISHANT, defaultUserInfo(NISHANT).slack("U02MBSJ8E79").team(PL).build())
           .put(PARNIAN, defaultUserInfo(PARNIAN).slack("U89A5MLQK").team(CV).build())
           .put(POOJA, defaultUserInfo(POOJA).slack("UDDA9L0D6").team(CDC).build())
           .put(PRANJAL, defaultUserInfo(PRANJAL).slack("UBV049Q5B").team(SWAT).build())

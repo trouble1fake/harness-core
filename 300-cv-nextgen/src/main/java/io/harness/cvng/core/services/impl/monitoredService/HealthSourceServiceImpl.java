@@ -47,10 +47,11 @@ public class HealthSourceServiceImpl implements HealthSourceService {
 
   @Override
   public void create(String accountId, String orgIdentifier, String projectIdentifier, String environmentRef,
-      String serviceRef, String nameSpaceIdentifier, Set<HealthSource> healthSources, boolean enabled) {
+      String serviceRef, String monitoredServiceIdentifier, String nameSpaceIdentifier, Set<HealthSource> healthSources,
+      boolean enabled) {
     healthSources.forEach(healthSource -> {
       CVConfigUpdateResult cvConfigUpdateResult = healthSource.getSpec().getCVConfigUpdateResult(accountId,
-          orgIdentifier, projectIdentifier, environmentRef, serviceRef,
+          orgIdentifier, projectIdentifier, environmentRef, serviceRef, monitoredServiceIdentifier,
           HealthSourceService.getNameSpacedIdentifier(nameSpaceIdentifier, healthSource.getIdentifier()),
           healthSource.getName(), Collections.emptyList(), metricPackService);
       boolean isDemoEnabledForAnyCVConfig = false;
@@ -109,12 +110,13 @@ public class HealthSourceServiceImpl implements HealthSourceService {
 
   @Override
   public void update(String accountId, String orgIdentifier, String projectIdentifier, String environmentRef,
-      String serviceRef, String nameSpaceIdentifier, Set<HealthSource> healthSources) {
+      String serviceRef, String monitoredServiceIdentifier, String nameSpaceIdentifier,
+      Set<HealthSource> healthSources) {
     healthSources.forEach(healthSource -> {
       List<CVConfig> saved = cvConfigService.list(accountId, orgIdentifier, projectIdentifier,
           HealthSourceService.getNameSpacedIdentifier(nameSpaceIdentifier, healthSource.getIdentifier()));
       CVConfigUpdateResult cvConfigUpdateResult = healthSource.getSpec().getCVConfigUpdateResult(accountId,
-          orgIdentifier, projectIdentifier, environmentRef, serviceRef,
+          orgIdentifier, projectIdentifier, environmentRef, serviceRef, monitoredServiceIdentifier,
           HealthSourceService.getNameSpacedIdentifier(nameSpaceIdentifier, healthSource.getIdentifier()),
           healthSource.getName(), saved, metricPackService);
       cvConfigUpdateResult.getDeleted().forEach(cvConfig -> cvConfigService.delete(cvConfig.getUuid()));

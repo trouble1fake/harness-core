@@ -12,15 +12,19 @@ import static io.harness.data.structure.EmptyPredicate.isEmpty;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.execution.NodeExecution;
+import io.harness.plan.IdentityPlanNode;
+import io.harness.plan.Node;
 import io.harness.plan.NodeType;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.ambiance.Level;
 import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.steps.StepCategory;
+import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.execution.utils.StatusUtils;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.experimental.UtilityClass;
 
@@ -42,11 +46,13 @@ public class OrchestrationUtils {
   }
 
   public static boolean isStageNode(NodeExecution nodeExecution) {
-    return nodeExecution.getNode().getStepCategory() == StepCategory.STAGE;
+    StepType currentStepType = Objects.requireNonNull(AmbianceUtils.getCurrentStepType(nodeExecution.getAmbiance()));
+    return currentStepType.getStepCategory() == StepCategory.STAGE;
   }
 
   public static boolean isPipelineNode(NodeExecution nodeExecution) {
-    return nodeExecution.getNode().getStepCategory() == StepCategory.PIPELINE;
+    StepType currentStepType = Objects.requireNonNull(AmbianceUtils.getCurrentStepType(nodeExecution.getAmbiance()));
+    return currentStepType.getStepCategory() == StepCategory.PIPELINE;
   }
 
   public static NodeType currentNodeType(Ambiance ambiance) {
@@ -59,5 +65,12 @@ public class OrchestrationUtils {
       return NodeType.PLAN_NODE;
     }
     return NodeType.valueOf(level.getNodeType());
+  }
+
+  public static String getOriginalNodeExecutionId(Node node) {
+    if (node.getNodeType() == NodeType.IDENTITY_PLAN_NODE) {
+      return ((IdentityPlanNode) node).getOriginalNodeExecutionId();
+    }
+    return null;
   }
 }

@@ -7,6 +7,7 @@
 
 package io.harness.pms.instrumentaion;
 
+import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.rule.OwnerRule.BRIJESH;
 
 import static junit.framework.TestCase.assertEquals;
@@ -24,6 +25,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.dto.FailureInfoDTO;
 import io.harness.engine.executions.node.NodeExecutionService;
+import io.harness.engine.utils.PmsLevelUtils;
 import io.harness.eraro.ResponseMessage;
 import io.harness.exception.FailureType;
 import io.harness.execution.NodeExecution;
@@ -31,10 +33,10 @@ import io.harness.ng.core.dto.AccountDTO;
 import io.harness.notification.PipelineEventType;
 import io.harness.notification.bean.NotificationRules;
 import io.harness.notification.bean.PipelineEvent;
+import io.harness.plan.PlanNode;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.plan.ExecutionMetadata;
 import io.harness.pms.contracts.plan.ExecutionTriggerInfo;
-import io.harness.pms.contracts.plan.PlanNodeProto;
 import io.harness.pms.contracts.plan.TriggerType;
 import io.harness.pms.contracts.plan.TriggeredBy;
 import io.harness.pms.contracts.steps.StepCategory;
@@ -82,22 +84,6 @@ public class InstrumentationPipelineEndEventHandlerTest extends CategoryTest {
   @Owner(developers = BRIJESH)
   @Category(UnitTests.class)
   public void testOnEnd() {
-    Ambiance ambiance =
-        Ambiance.newBuilder()
-            .setPlanExecutionId("planExecutionId")
-            .putSetupAbstractions(SetupAbstractionKeys.accountId, "accountId")
-            .putSetupAbstractions(SetupAbstractionKeys.orgIdentifier, "orgId")
-            .putSetupAbstractions(SetupAbstractionKeys.projectIdentifier, "projectId")
-            .setMetadata(ExecutionMetadata.newBuilder()
-                             .setTriggerInfo(ExecutionTriggerInfo.newBuilder()
-                                                 .setTriggeredBy(TriggeredBy.newBuilder()
-                                                                     .setIdentifier("admin")
-                                                                     .putExtraInfo("email", "admin@harness.io")
-                                                                     .build())
-                                                 .build())
-                             .build())
-            .build();
-
     PipelineExecutionSummaryEntity pipelineExecutionSummaryEntity =
         PipelineExecutionSummaryEntity.builder()
             .layoutNodeMap(
@@ -119,12 +105,31 @@ public class InstrumentationPipelineEndEventHandlerTest extends CategoryTest {
                 Collections.singletonList(PipelineEvent.builder().type(PipelineEventType.PIPELINE_END).build()))
             .build());
     Set<String> notificationMethods = Collections.singleton("slack");
-    List<NodeExecution> nodeExecutionList = Arrays.asList(
-        NodeExecution.builder()
-            .node(PlanNodeProto.newBuilder()
-                      .setStepType(StepType.newBuilder().setStepCategory(StepCategory.STEP).setType("Http").build())
-                      .build())
-            .build());
+    String nodeExecutionId = generateUuid();
+    PlanNode planNode = PlanNode.builder()
+                            .uuid(generateUuid())
+                            .identifier("http")
+                            .stepType(StepType.newBuilder().setStepCategory(StepCategory.STEP).setType("Http").build())
+                            .serviceName("CD")
+                            .build();
+    Ambiance ambiance =
+        Ambiance.newBuilder()
+            .setPlanExecutionId("planExecutionId")
+            .putSetupAbstractions(SetupAbstractionKeys.accountId, "accountId")
+            .putSetupAbstractions(SetupAbstractionKeys.orgIdentifier, "orgId")
+            .putSetupAbstractions(SetupAbstractionKeys.projectIdentifier, "projectId")
+            .setMetadata(ExecutionMetadata.newBuilder()
+                             .setTriggerInfo(ExecutionTriggerInfo.newBuilder()
+                                                 .setTriggeredBy(TriggeredBy.newBuilder()
+                                                                     .setIdentifier("admin")
+                                                                     .putExtraInfo("email", "admin@harness.io")
+                                                                     .build())
+                                                 .build())
+                             .build())
+            .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecutionId, planNode))
+            .build();
+    List<NodeExecution> nodeExecutionList =
+        Arrays.asList(NodeExecution.builder().ambiance(ambiance).planNode(planNode).build());
     doReturn(nodeExecutionList).when(nodeExecutionService).fetchNodeExecutions(any());
     doReturn(new HashSet() {
       { add("Http"); }

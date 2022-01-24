@@ -44,6 +44,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @StoreIn(DbAliases.PMS)
 @StoreIn(DbAliases.TEMPLATE)
 @StoreIn(DbAliases.CIMANAGER)
+@StoreIn(DbAliases.ACCESS_CONTROL)
+@StoreIn(DbAliases.RESOURCEGROUP)
 public class OutboxEvent {
   @Id @org.mongodb.morphia.annotations.Id String id;
 

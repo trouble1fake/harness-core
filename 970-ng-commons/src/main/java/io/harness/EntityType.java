@@ -72,6 +72,8 @@ public enum EntityType {
       EntityYamlRootNames.OVERLAY_INPUT_SET),
   @JsonProperty(EntityTypeConstants.CV_CONFIG)
   CV_CONFIG(ModuleType.CV, EntityTypeConstants.CV_CONFIG, IdentifierRef.class, EntityYamlRootNames.CV_CONFIG),
+  @JsonProperty(EntityTypeConstants.Verify)
+  VERIFY_STEP(ModuleType.CV, EntityTypeConstants.Verify, IdentifierRef.class, EntityYamlRootNames.VERIFY),
   @JsonProperty(EntityTypeConstants.DELEGATES)
   DELEGATES(ModuleType.CORE, EntityTypeConstants.DELEGATES, IdentifierRef.class, EntityYamlRootNames.DELEGATE),
   @JsonProperty(EntityTypeConstants.DELEGATE_CONFIGURATIONS)
