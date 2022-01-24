@@ -25,5 +25,4 @@ public class DelegateTokenDetails {
   private long createdAt;
   private DelegateTokenStatus status;
   private String value;
-  private String identifier;
 }

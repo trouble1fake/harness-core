@@ -19,7 +19,6 @@ import io.harness.mongo.index.MongoIndex;
 import io.harness.ng.DbAliases;
 import io.harness.persistence.CreatedAtAware;
 import io.harness.persistence.CreatedByAware;
-import io.harness.persistence.NameAndValueAccess;
 import io.harness.persistence.PersistentEntity;
 import io.harness.persistence.UuidAware;
 
@@ -41,7 +40,7 @@ import org.mongodb.morphia.annotations.Id;
 @FieldNameConstants(innerTypeName = "DelegateTokenKeys")
 @OwnedBy(HarnessTeam.DEL)
 @StoreIn(DbAliases.ALL)
-public class DelegateToken implements PersistentEntity, UuidAware, CreatedAtAware, CreatedByAware, NameAndValueAccess {
+public class DelegateToken implements PersistentEntity, UuidAware, CreatedAtAware, CreatedByAware {
   public static final Duration TTL = ofDays(30);
 
   public static List<MongoIndex> mongoIndexes() {

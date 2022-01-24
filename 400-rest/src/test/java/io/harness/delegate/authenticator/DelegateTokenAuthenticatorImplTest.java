@@ -13,7 +13,6 @@ import static io.harness.rule.OwnerRule.BRETT;
 import static io.harness.rule.OwnerRule.LUCAS;
 import static io.harness.rule.OwnerRule.MARKO;
 import static io.harness.rule.OwnerRule.UJJAWAL;
-import static io.harness.rule.OwnerRule.VLAD;
 
 import static software.wings.utils.WingsTestConstants.ACCOUNT1_ID;
 import static software.wings.utils.WingsTestConstants.ACCOUNT_ID;
@@ -30,7 +29,6 @@ import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.category.element.UnitTests;
-import io.harness.delegate.beans.DelegateNgToken;
 import io.harness.delegate.beans.DelegateToken;
 import io.harness.delegate.beans.DelegateTokenStatus;
 import io.harness.eraro.ErrorCode;
@@ -120,7 +118,6 @@ public class DelegateTokenAuthenticatorImplTest extends WingsBaseTest {
                                       .status(DelegateTokenStatus.REVOKED)
                                       .build();
     when(keyCache.get(ACCOUNT1_ID)).thenReturn("2f6b0987b6fb3370073c3d0505baee59");
-
     createPersistenceMocksForDelegateToken(null);
 
     TokenGenerator tokenGenerator = new TokenGenerator(ACCOUNT_ID, accountKey);
@@ -161,9 +158,9 @@ public class DelegateTokenAuthenticatorImplTest extends WingsBaseTest {
   }
 
   @Test
-  @Owner(developers = VLAD)
+  @Owner(developers = LUCAS)
   @Category(UnitTests.class)
-  public void shouldValidateDelegateToken_validateNgToken() {
+  public void shouldValidateDelegateToken_FailToDecrypt() {
     DelegateToken delegateTokenActive = DelegateToken.builder()
                                             .accountId(ACCOUNT_ID)
                                             .name("TokenName")
