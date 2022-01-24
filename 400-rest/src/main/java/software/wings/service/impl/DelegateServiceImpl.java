@@ -1181,10 +1181,8 @@ public class DelegateServiceImpl implements DelegateService {
         templateParameters.getManagerHost(), mainConfiguration.getDeployMode().name());
     final String delegateStorageUrl = getDelegateStorageUrl(cdnConfig, useCDN, delegateMetadataUrl);
     final String delegateCheckLocation = delegateMetadataUrl.substring(delegateMetadataUrl.lastIndexOf('/') + 1);
-
     String latestVersion = null;
     String delegateJarDownloadUrl = null;
-    
     try {
       if (mainConfiguration.getDeployMode() == DeployMode.KUBERNETES) {
         log.info("Multi-Version is enabled");
