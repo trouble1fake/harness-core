@@ -47,7 +47,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -289,14 +291,56 @@ public class GitFullSyncProcessorServiceImpl implements io.harness.gitsync.core.
             .filter(x -> !x.getSyncStatus().equals(GitFullSyncEntityInfo.SyncStatus.PUSHED.toString()))
             .collect(Collectors.groupingBy(GitFullSyncEntityInfo::getMicroservice));
     for (Map.Entry<String, List<GitFullSyncEntityInfo>> entry : filesGroupedByMsvc.entrySet()) {
+      Microservice microservice = Microservice.fromString(entry.getKey());
+      List<GitFullSyncEntityInfo> filesForThisMicroservice = entry.getValue();
+      if (microservice == Microservice.CORE) {
+        keepTheFullSyncConnectorAtTheLast(filesForThisMicroservice);
+      }
       FullSyncFilesGroupedByMsvc fullSyncFilesGroupedByMsvc = FullSyncFilesGroupedByMsvc.builder()
-                                                                  .microservice(Microservice.fromString(entry.getKey()))
-                                                                  .gitFullSyncEntityInfoList(entry.getValue())
+                                                                  .microservice(microservice)
+                                                                  .gitFullSyncEntityInfoList(filesForThisMicroservice)
                                                                   .build();
       filesGroupedByMicroservices.add(fullSyncFilesGroupedByMsvc);
     }
     filesGroupedByMicroservices.sort(Comparator.comparingInt(x -> microservicesProcessingOrder.indexOf(x)));
     return filesGroupedByMicroservices;
+  }
+
+  private void keepTheFullSyncConnectorAtTheLast(List<GitFullSyncEntityInfo> filesForThisMicroservice) {
+    // When we are doing the full sync of the entities, we do a get call of the full sync config connector.
+    // If the git connector itself is full synced before any entity then we won't be able to find this
+    // git connector in other repo and branch. Hence we are first syncing all other files and at last we are
+    // syncing this git connector.
+    if (isEmpty(filesForThisMicroservice)) {
+      return;
+    }
+    GitFullSyncEntityInfo gitFullSyncEntityInfo = filesForThisMicroservice.get(0);
+    String yamlGitConfigId = gitFullSyncEntityInfo.getYamlGitConfigId();
+    String accountIdentifier = gitFullSyncEntityInfo.getAccountIdentifier();
+    String orgIdentifier = gitFullSyncEntityInfo.getOrgIdentifier();
+    String projectIdentifier = gitFullSyncEntityInfo.getProjectIdentifier();
+
+    YamlGitConfigDTO yamlGitConfigDTO =
+        yamlGitConfigService.get(projectIdentifier, orgIdentifier, accountIdentifier, yamlGitConfigId);
+    String gitConnectorRef = yamlGitConfigDTO.getGitConnectorRef();
+    IdentifierRef identifierRef = IdentifierRefHelper.getIdentifierRef(
+        gitConnectorRef, accountIdentifier, orgIdentifier, projectIdentifier, null);
+
+    if (identifierRef.getScope() == Scope.ACCOUNT || identifierRef.getScope() == Scope.ORG) {
+      return;
+    }
+
+    final OptionalInt posOfConnectorFullSyncEntityOpt =
+        IntStream.range(0, filesForThisMicroservice.size())
+            .filter(x -> checkIfEntityMatchesTheConnector(filesForThisMicroservice.get(x), identifierRef))
+            .findFirst();
+
+    if (posOfConnectorFullSyncEntityOpt.isPresent()) {
+      final int positionOfConnectorFullSyncEntity = posOfConnectorFullSyncEntityOpt.getAsInt();
+      GitFullSyncEntityInfo connectorFullSyncEntity = filesForThisMicroservice.get(positionOfConnectorFullSyncEntity);
+      filesForThisMicroservice.remove(positionOfConnectorFullSyncEntity);
+      filesForThisMicroservice.add(connectorFullSyncEntity);
+    }
   }
 
   private void updateTheStatusOfJob(boolean processingFailed, GitFullSyncJob fullSyncJob) {
