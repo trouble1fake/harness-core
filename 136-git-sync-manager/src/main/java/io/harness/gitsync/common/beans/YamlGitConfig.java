@@ -67,6 +67,8 @@ public class YamlGitConfig implements PersistentEntity, UuidAware, CreatedAtAwar
   private String projectIdentifier;
   private String orgIdentifier;
   @NotEmpty String gitConnectorRef;
+  String gitConnectorsRepo;
+  String gitConnectorsBranch;
   @NotEmpty @FdIndex String repo;
   @NotEmpty String branch;
   @NotEmpty String webhookToken;

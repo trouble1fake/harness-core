@@ -129,13 +129,6 @@ public class YamlGitConfigServiceImpl implements YamlGitConfigService {
                              getYamlGitConfigNotFoundMessage(accountId, orgIdentifier, projectIdentifier, identifier)));
   }
 
-  @Override
-  public YamlGitConfigDTO getByFolderIdentifierAndIsEnabled(
-      String projectIdentifier, String orgIdentifier, String accountId, String folderId) {
-    // todo @deepak Implement this method when required
-    return null;
-  }
-
   private Optional<YamlGitConfig> getYamlGitConfigEntity(
       String accountId, String orgIdentifier, String projectIdentifier, String identifier) {
     return yamlGitConfigRepository.findByAccountIdAndOrgIdentifierAndProjectIdentifierAndIdentifier(
@@ -152,13 +145,6 @@ public class YamlGitConfigServiceImpl implements YamlGitConfigService {
         .stream()
         .map(YamlGitConfigMapper::toYamlGitConfigDTO)
         .collect(Collectors.toList());
-  }
-
-  private String findDefaultIfPresent(YamlGitConfigDTO yamlGitConfigDTO) {
-    if (yamlGitConfigDTO.getDefaultRootFolder() != null) {
-      return yamlGitConfigDTO.getDefaultRootFolder().getIdentifier();
-    }
-    return null;
   }
 
   @Override
@@ -400,6 +386,25 @@ public class YamlGitConfigServiceImpl implements YamlGitConfigService {
       deleteBranches(yamlGitConfigDTOS);
     }
     return isDeleted;
+  }
+
+  @Override
+  public void updateTheConnectorRepoAndBranch(YamlGitConfigDTO yamlGitConfigDTO, String repo, String branch) {
+    yamlGitConfigDTO.setGitConnectorsRepo(repo);
+    yamlGitConfigDTO.setGitConnectorsBranch(branch);
+    Optional<YamlGitConfig> existingYamlGitConfigDTO =
+        yamlGitConfigRepository.findByAccountIdAndOrgIdentifierAndProjectIdentifierAndIdentifier(
+            yamlGitConfigDTO.getAccountIdentifier(), yamlGitConfigDTO.getOrganizationIdentifier(),
+            yamlGitConfigDTO.getProjectIdentifier(), yamlGitConfigDTO.getIdentifier());
+    if (!existingYamlGitConfigDTO.isPresent()) {
+      throw new InvalidRequestException(getYamlGitConfigNotFoundMessage(yamlGitConfigDTO.getAccountIdentifier(),
+          yamlGitConfigDTO.getOrganizationIdentifier(), yamlGitConfigDTO.getProjectIdentifier(),
+          yamlGitConfigDTO.getIdentifier()));
+    }
+    YamlGitConfig yamlGitConfigToBeSaved = existingYamlGitConfigDTO.get();
+    yamlGitConfigToBeSaved.setGitConnectorsRepo(repo);
+    yamlGitConfigToBeSaved.setGitConnectorsBranch(branch);
+    yamlGitConfigRepository.save(yamlGitConfigToBeSaved);
   }
 
   public Optional<ConnectorInfoDTO> getGitConnector(IdentifierRef identifierRef) {
