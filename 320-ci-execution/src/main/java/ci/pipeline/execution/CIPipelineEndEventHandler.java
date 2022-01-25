@@ -39,7 +39,7 @@ public class CIPipelineEndEventHandler implements OrchestrationEventHandler {
   @Inject private ConnectorUtils connectorUtils;
 
   private static final String CI_EXECUTED = "ci_built";
-  private static final String NODE_EXECUTED = "node_executed";
+  private static final String NODE_EXECUTED = "step_executed";
 
   @Override
   public void handleEvent(OrchestrationEvent event) {
@@ -87,7 +87,7 @@ public class CIPipelineEndEventHandler implements OrchestrationEventHandler {
     }
 
     ciBuiltMap.put("branch", moduleInfo.getBranch());
-    ciBuiltMap.put("buildType", moduleInfo.getBuildType());
+    ciBuiltMap.put("build_type", moduleInfo.getBuildType());
     ciBuiltMap.put("private_repo", moduleInfo.getIsPrivateRepo());
     ciBuiltMap.put("repo_name", moduleInfo.getRepoName());
     telemetryReporter.sendTrackEvent(CI_EXECUTED, identity, accountId, ciBuiltMap,
@@ -99,8 +99,9 @@ public class CIPipelineEndEventHandler implements OrchestrationEventHandler {
     List<NodeExecution> nodeExecutionList = nodeExecutionService.fetchNodeExecutions(planExecutionId);
     for (NodeExecution nodeExecution : nodeExecutionList) {
       HashMap<String, Object> nodeExecutedMap = new HashMap<>();
-      nodeExecutedMap.put("node_execution_id", nodeExecution.getOriginalNodeExecutionId());
-      nodeExecutedMap.put("node_execution_duration", nodeExecution.getEndTs() - nodeExecution.getStartTs());
+      nodeExecutedMap.put("step_execution_id", nodeExecution.getOriginalNodeExecutionId());
+      nodeExecutedMap.put("step_execution_duration", (nodeExecution.getEndTs() - nodeExecution.getStartTs()) / 1000);
+      nodeExecutedMap.put("step_execution_type", nodeExecution.getNodeType());
       telemetryReporter.sendTrackEvent(NODE_EXECUTED, identity, accountId, nodeExecutedMap,
           Collections.singletonMap(AMPLITUDE, true), io.harness.telemetry.Category.GLOBAL,
           io.harness.telemetry.TelemetryOption.builder().sendForCommunity(false).build());
