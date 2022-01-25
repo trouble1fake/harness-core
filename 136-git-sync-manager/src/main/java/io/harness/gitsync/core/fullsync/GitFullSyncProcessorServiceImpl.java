@@ -164,7 +164,7 @@ public class GitFullSyncProcessorServiceImpl implements io.harness.gitsync.core.
       }
 
       updateTheStatusOfJob(processingFailed, fullSyncJob);
-      if (!processingFailed && fullSyncJob.isCreatePullRequest()) {
+      if (fullSyncJob.isCreatePullRequest()) {
         createAPullRequest(fullSyncJob);
       }
     } finally {
