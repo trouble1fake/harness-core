@@ -1,5 +1,5 @@
-# Harness Community Edition - Docker Compose
-This page contains the instructions necessary to run Harness CE using Docker Compose.
+# Harness Community Edition - Build from Source
+This page contains the instructions necessary to build Harness Community Edition from source.
 
 ## Pre-requisites
 1) Install [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) on your system
