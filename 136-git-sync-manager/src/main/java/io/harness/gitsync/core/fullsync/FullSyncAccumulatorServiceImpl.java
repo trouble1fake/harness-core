@@ -133,6 +133,7 @@ public class FullSyncAccumulatorServiceImpl implements FullSyncAccumulatorServic
             .messageId(messageId)
             .entityDetail(entityDetailProtoToRestMapper.createEntityDetailDTO(entityForFullSync.getEntityDetail()))
             .syncStatus(QUEUED.name())
+            .yamlGitConfigId(entityScopeInfo.getIdentifier())
             .repoName(yamlGitConfigDTO.getName())
             .repoUrl(yamlGitConfigDTO.getRepo())
             .branchName(branchName)
