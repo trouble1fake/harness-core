@@ -57,6 +57,8 @@ import static io.harness.delegate.message.MessageConstants.WATCHER_PROCESS;
 import static io.harness.delegate.message.MessageConstants.WATCHER_VERSION;
 import static io.harness.delegate.message.MessengerType.DELEGATE;
 import static io.harness.delegate.message.MessengerType.WATCHER;
+import static io.harness.delegate.metrics.DelegateMetricsConstants.TASK_ACQUIRE_TIME;
+import static io.harness.delegate.metrics.DelegateMetricsConstants.TASK_EXECUTION_TIME;
 import static io.harness.eraro.ErrorCode.EXPIRED_TOKEN;
 import static io.harness.eraro.ErrorCode.INVALID_TOKEN;
 import static io.harness.eraro.ErrorCode.REVOKED_TOKEN;
@@ -100,7 +102,6 @@ import io.harness.beans.DelegateHeartbeatResponse;
 import io.harness.beans.DelegateTaskEventsResponse;
 import io.harness.concurrent.HTimeLimiter;
 import io.harness.configuration.DeployMode;
-import io.harness.data.structure.HarnessStringUtils;
 import io.harness.data.structure.NullSafeImmutableMap;
 import io.harness.data.structure.UUIDGenerator;
 import io.harness.delegate.beans.Delegate;
@@ -125,6 +126,7 @@ import io.harness.delegate.expression.DelegateExpressionEvaluator;
 import io.harness.delegate.logging.DelegateStackdriverLogAppender;
 import io.harness.delegate.message.Message;
 import io.harness.delegate.message.MessageService;
+import io.harness.delegate.metrics.TaskExecutionMetrics;
 import io.harness.delegate.task.AbstractDelegateRunnableTask;
 import io.harness.delegate.task.ActivityAccess;
 import io.harness.delegate.task.Cd1ApplicationAccess;
@@ -146,6 +148,7 @@ import io.harness.logstreaming.LogStreamingTaskClient;
 import io.harness.logstreaming.LogStreamingTaskClient.LogStreamingTaskClientBuilder;
 import io.harness.managerclient.DelegateAgentManagerClient;
 import io.harness.managerclient.DelegateAgentManagerClientFactory;
+import io.harness.metrics.HarnessMetricRegistry;
 import io.harness.network.FibonacciBackOff;
 import io.harness.network.Http;
 import io.harness.perpetualtask.PerpetualTaskWorker;
@@ -228,7 +231,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLException;
@@ -366,6 +368,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   @Inject(optional = true) @Nullable private DelegateServiceGrpcAgentClient delegateServiceGrpcAgentClient;
   @Inject private KryoSerializer kryoSerializer;
   @Nullable @Inject(optional = true) private ChronicleEventTailer chronicleEventTailer;
+  @Inject HarnessMetricRegistry metricRegistry;
 
   private final AtomicBoolean waiter = new AtomicBoolean(true);
 
@@ -726,13 +729,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
           }
         }
 
-        messageService.closeData(DELEGATE_DASH + getProcessId());
-        messageService.closeChannel(DELEGATE, getProcessId());
-
-        if (upgradePending.get()) {
-          removeDelegateVersionFromCapsule();
-          cleanupOldDelegateVersionFromBackup();
-        }
+        clearData();
       }
 
     } catch (InterruptedException e) {
@@ -740,6 +737,16 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       log.error("Exception while starting/running delegate", e);
     } catch (RuntimeException | IOException e) {
       log.error("Exception while starting/running delegate", e);
+    }
+  }
+
+  private void clearData() {
+    messageService.closeData(DELEGATE_DASH + getProcessId());
+    messageService.closeChannel(DELEGATE, getProcessId());
+
+    if (upgradePending.get()) {
+      removeDelegateVersionFromCapsule();
+      cleanupOldDelegateVersionFromBackup();
     }
   }
 
@@ -1919,6 +1926,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         return;
       }
 
+      long acquiringStartTimeMillis = clock.millis();
       currentlyAcquiringTasks.add(delegateTaskId);
 
       log.debug("Try to acquire DelegateTask - accountId: {}", accountId);
@@ -1947,34 +1955,14 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         log.info("Delegate {} whitelisted for task and accountId: {}", delegateId, accountId);
         executeTask(delegateTaskPackage);
       }
+
+      metricRegistry.recordGaugeValue(TASK_ACQUIRE_TIME, new String[] {DELEGATE_NAME, taskData.getTaskType()},
+          clock.millis() - acquiringStartTimeMillis);
     } catch (IOException e) {
       log.error("Unable to get task for validation", e);
     } finally {
       currentlyAcquiringTasks.remove(delegateTaskId);
       currentlyExecutingFutures.remove(delegateTaskId);
-    }
-  }
-
-  @NotNull
-  private List<String> getCapabilityDetails(DelegateTaskPackage delegateTaskPackage) {
-    return delegateTaskPackage.getExecutionCapabilities()
-        .stream()
-        .map(executionCapability
-            -> executionCapability.getCapabilityType().name() + ":" + executionCapability.fetchCapabilityBasis())
-        .collect(toList());
-  }
-
-  private void logErrorDetails(TaskData taskData, List<DelegateConnectionResult> alternativeResults, boolean original) {
-    List<String> resultDetails = alternativeResults.stream()
-                                     .map(result -> result.getCriteria() + ":" + result.isValidated())
-                                     .collect(Collectors.toList());
-    log.error(
-        "[DelegateCapability] The original validation {} is different from the alternative for task type {}. Result Details for capability are {} ",
-        original, taskData.getTaskType(), HarnessStringUtils.join("|", resultDetails));
-    if (taskData.getTaskType().equals(TaskType.COMMAND.name())) {
-      CommandExecutionContext commandExecutionContext = (CommandExecutionContext) taskData.getParameters()[1];
-      log.error("[DelegateCapability] CommandExecution context has deployment type {}",
-          commandExecutionContext.getDeploymentType());
     }
   }
 
@@ -2065,7 +2053,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     DelegateRunnableTask delegateRunnableTask = delegateTaskFactory.getDelegateRunnableTask(
         TaskType.valueOf(taskData.getTaskType()), delegateTaskPackage, logStreamingTaskClient,
         getPostExecutionFunction(delegateTaskPackage.getDelegateTaskId(), sanitizer.orElse(null),
-            logStreamingTaskClient, delegateExpressionEvaluator),
+            logStreamingTaskClient, delegateExpressionEvaluator, taskData.getTaskType(), clock.millis()),
         getPreExecutionFunction(delegateTaskPackage, sanitizer.orElse(null), logStreamingTaskClient));
     if (delegateRunnableTask instanceof AbstractDelegateRunnableTask) {
       ((AbstractDelegateRunnableTask) delegateRunnableTask).setDelegateHostname(HOST_NAME);
@@ -2277,7 +2265,8 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   }
 
   private Consumer<DelegateTaskResponse> getPostExecutionFunction(String taskId, LogSanitizer sanitizer,
-      ILogStreamingTaskClient logStreamingTaskClient, DelegateExpressionEvaluator delegateExpressionEvaluator) {
+      ILogStreamingTaskClient logStreamingTaskClient, DelegateExpressionEvaluator delegateExpressionEvaluator,
+      String taskType, long taskExecutionStartTimeMillis) {
     return taskResponse -> {
       if (logStreamingTaskClient != null) {
         try {
@@ -2297,6 +2286,8 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
             resp = delegateAgentManagerClient.sendTaskStatus(delegateId, taskId, accountId, taskResponse).execute();
             if (resp != null && resp.code() >= 200 && resp.code() <= 299) {
               log.info("Task {} response sent to manager", taskId);
+              metricRegistry.recordGaugeValue(TASK_EXECUTION_TIME, new String[] {DELEGATE_NAME, taskType},
+                  clock.millis() - taskExecutionStartTimeMillis);
               return resp;
             } else {
               log.warn("Failed to send response for task {}: {}. {}", taskId, resp == null ? "null" : resp.code(),
@@ -2639,5 +2630,15 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
 
   private boolean shouldContactManager() {
     return !selfDestruct.get();
+  }
+
+  @Override
+  public TaskExecutionMetrics getTaskExecutionMetrics() {
+    return new TaskExecutionMetrics(DELEGATE_NAME, currentlyAcquiringTasks.size(), currentlyValidatingTasks.size(),
+        currentlyExecutingTasks.size(), currentlyValidatingFutures.size(), currentlyExecutingFutures.size());
+  }
+
+  private String getDelegateLabelForMetric(String delegateName, String delegateId) {
+    return delegateName + '_' + delegateId;
   }
 }

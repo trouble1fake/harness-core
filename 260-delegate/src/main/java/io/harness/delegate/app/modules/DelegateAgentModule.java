@@ -28,13 +28,21 @@ import io.harness.grpc.delegateservice.DelegateServiceGrpcAgentClientModule;
 import io.harness.grpc.pingpong.PingPongModule;
 import io.harness.logstreaming.LogStreamingModule;
 import io.harness.managerclient.DelegateManagerClientModule;
+import io.harness.metrics.MetricRegistryModule;
 import io.harness.perpetualtask.PerpetualTaskWorkerModule;
 import io.harness.serializer.KryoModule;
 
 import software.wings.delegatetasks.k8s.client.KubernetesClientFactoryModule;
 
+import com.codahale.metrics.MetricRegistry;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
+import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import java.util.Optional;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -50,6 +58,7 @@ public class DelegateAgentModule extends AbstractModule {
     install(new DelegateHealthModule());
     install(KryoModule.getInstance());
     install(new DelegateKryoModule());
+    install(new MetricRegistryModule(new MetricRegistry()));
 
     install(new DelegateManagerClientModule(configuration.getManagerUrl(), configuration.getVerificationServiceUrl(),
         configuration.getCvNextGenUrl(), configuration.getAccountId(), configuration.getAccountSecret()));
@@ -85,6 +94,17 @@ public class DelegateAgentModule extends AbstractModule {
     }
 
     install(new DelegateTokensModule(configuration));
+  }
+
+  @Provides
+  @Singleton
+  @Named("delegateAgentMetricsExecutor")
+  public ScheduledExecutorService delegateAgentMetricsTimeoutExecutor() {
+    return new ScheduledThreadPoolExecutor(40,
+        new ThreadFactoryBuilder()
+            .setNameFormat("delegate-agent-metrics-executor-%d")
+            .setPriority(Thread.NORM_PRIORITY)
+            .build());
   }
 
   private void configureCcmEventTailer(final String queueFilePath) {
