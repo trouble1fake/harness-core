@@ -69,6 +69,7 @@ import javax.ws.rs.QueryParam;
 import lombok.AllArgsConstructor;
 import org.hibernate.validator.constraints.NotBlank;
 import org.hibernate.validator.constraints.NotEmpty;
+import retrofit2.http.Body;
 
 @Api("/full-sync")
 @Path("/full-sync")
@@ -209,12 +210,13 @@ public class GitFullSyncResource {
         gitFullSyncConfigService.delete(accountIdentifier, orgIdentifier, projectIdentifier));
   }
 
-  @GET
+  @POST
   @Path("/files")
   @ApiOperation(value = "List files in full sync along with their status", nickname = "listFullSyncFiles")
   @Operation(operationId = "listFullSyncFiles", summary = "List files in full sync along with their status",
       responses =
       { @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "A list of files involved in full sync") })
+  @NGAccessControlCheck(resourceType = ResourceTypes.PROJECT, permission = VIEW_PROJECT_PERMISSION)
   public ResponseDTO<PageResponse<GitFullSyncEntityInfoDTO>>
   listFiles(
       @RequestBody(description = "Details of Page including: size, index, sort") @BeanParam PageRequest pageRequest,
@@ -226,8 +228,8 @@ public class GitFullSyncResource {
       harness.accesscontrol.ProjectIdentifier @ProjectIdentifier String projectIdentifier,
       @Parameter(description = GitSyncApiConstants.SEARCH_TERM_PARAM_MESSAGE) @QueryParam(
           NGResourceFilterConstants.SEARCH_TERM_KEY) String searchTerm,
-      @RequestBody(description = "Filters like entityType and syncStatus")
-      @BeanParam GitFullSyncEntityInfoFilterDTO gitFullSyncEntityInfoFilterDTO) {
+      @RequestBody(description = "Filters like entityType and syncStatus",
+          required = true) @Body GitFullSyncEntityInfoFilterDTO gitFullSyncEntityInfoFilterDTO) {
     return ResponseDTO.newResponse(gitFullSyncEntityService.list(
         accountIdentifier, orgIdentifier, projectIdentifier, pageRequest, searchTerm, gitFullSyncEntityInfoFilterDTO));
   }
