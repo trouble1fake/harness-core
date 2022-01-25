@@ -76,7 +76,6 @@ public class ExecuteLdapGetUsersRequest implements Function<LdapGetUsersRequest,
     }
 
     LdapResponse ldapResponse = LdapResponse.builder().status(searchStatus).message(searchStatusMsg).build();
-
     return new LdapGetUsersResponse(ldapUserConfig, ldapResponse, searchResult, ldapGetUsersRequest.getGroupBaseDn());
   }
 
