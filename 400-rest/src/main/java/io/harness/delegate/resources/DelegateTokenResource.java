@@ -7,24 +7,21 @@
 
 package io.harness.delegate.resources;
 
-import static software.wings.security.PermissionAttribute.PermissionType.MANAGE_DELEGATES;
-import static software.wings.security.PermissionAttribute.ResourceType.DELEGATE;
-
+import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Timed;
+import com.google.inject.Inject;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.delegate.beans.DelegateTokenDetails;
 import io.harness.delegate.beans.DelegateTokenStatus;
 import io.harness.rest.RestResponse;
 import io.harness.service.intfc.DelegateTokenService;
-
+import io.swagger.annotations.Api;
+import lombok.extern.slf4j.Slf4j;
+import software.wings.security.annotations.ApiKeyAuthorized;
 import software.wings.security.annotations.AuthRule;
 import software.wings.security.annotations.Scope;
 
-import com.codahale.metrics.annotation.ExceptionMetered;
-import com.codahale.metrics.annotation.Timed;
-import com.google.inject.Inject;
-import io.swagger.annotations.Api;
-import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -34,7 +31,10 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+
+import static software.wings.security.PermissionAttribute.PermissionType.MANAGE_DELEGATES;
+import static software.wings.security.PermissionAttribute.ResourceType.DELEGATE;
 
 @Api("/delegate-token")
 @Path("/delegate-token")
@@ -53,6 +53,7 @@ public class DelegateTokenResource {
   @POST
   @Timed
   @ExceptionMetered
+  @ApiKeyAuthorized(permissionType = MANAGE_DELEGATES, skipAuth = true)
   @AuthRule(permissionType = MANAGE_DELEGATES)
   public RestResponse<DelegateTokenDetails> createToken(
       @QueryParam("accountId") @NotNull String accountId, @QueryParam("tokenName") @NotNull String tokenName) {
@@ -72,6 +73,7 @@ public class DelegateTokenResource {
   @PUT
   @Timed
   @ExceptionMetered
+  @ApiKeyAuthorized(permissionType = MANAGE_DELEGATES, skipAuth = true)
   @AuthRule(permissionType = MANAGE_DELEGATES)
   public RestResponse<Void> revokeToken(
       @QueryParam("accountId") @NotNull String accountId, @QueryParam("tokenName") @NotNull String tokenName) {
@@ -92,6 +94,7 @@ public class DelegateTokenResource {
   @GET
   @Timed
   @ExceptionMetered
+  @ApiKeyAuthorized(permissionType = MANAGE_DELEGATES, skipAuth = true)
   public RestResponse<List<DelegateTokenDetails>> getDelegateTokens(@QueryParam("accountId") @NotNull String accountId,
       @QueryParam("status") DelegateTokenStatus status, @QueryParam("tokenName") String tokenName) {
     return new RestResponse<>(delegateTokenService.getDelegateTokens(accountId, status, tokenName));
