@@ -9,11 +9,13 @@ package io.harness.polling;
 
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+import static io.harness.polling.contracts.Type.ARTIFACTORY;
 import static io.harness.polling.contracts.Type.DOCKER_HUB;
 import static io.harness.polling.contracts.Type.ECR;
 import static io.harness.polling.contracts.Type.GCR;
 import static io.harness.polling.contracts.Type.GCS_HELM;
 import static io.harness.polling.contracts.Type.HTTP_HELM;
+import static io.harness.polling.contracts.Type.NEXUS;
 import static io.harness.polling.contracts.Type.S3_HELM;
 
 import io.harness.annotations.dev.HarnessTeam;
@@ -36,9 +38,11 @@ import io.harness.polling.bean.PolledResponseResult.PolledResponseResultBuilder;
 import io.harness.polling.bean.PollingDocument;
 import io.harness.polling.bean.artifact.ArtifactInfo;
 import io.harness.polling.bean.artifact.ArtifactPolledResponse;
+import io.harness.polling.bean.artifact.ArtifactoryRegistryArtifactInfo;
 import io.harness.polling.bean.artifact.DockerHubArtifactInfo;
 import io.harness.polling.bean.artifact.EcrArtifactInfo;
 import io.harness.polling.bean.artifact.GcrArtifactInfo;
+import io.harness.polling.bean.artifact.NexusRegistryArtifactInfo;
 import io.harness.polling.bean.manifest.HelmChartManifestInfo;
 import io.harness.polling.bean.manifest.ManifestInfo;
 import io.harness.polling.bean.manifest.ManifestPolledResponse;
@@ -261,6 +265,14 @@ public class PollingResponseHandler {
       case ECR:
         polledResponseResultBuilder.name(((EcrArtifactInfo) artifactInfo).getImagePath());
         polledResponseResultBuilder.type(ECR);
+        break;
+      case NEXUS_REGISTRY:
+        polledResponseResultBuilder.name(((NexusRegistryArtifactInfo) artifactInfo).getImagePath());
+        polledResponseResultBuilder.type(NEXUS);
+        break;
+      case ARTIFACTORY_REGISTRY:
+        polledResponseResultBuilder.name(((ArtifactoryRegistryArtifactInfo) artifactInfo).getImagePath());
+        polledResponseResultBuilder.type(ARTIFACTORY);
         break;
       default:
         throw new InvalidRequestException("Unsupported Artifact Type" + artifactInfo.getType().getDisplayName());

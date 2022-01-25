@@ -9,12 +9,16 @@ package io.harness.delegate.task.artifacts;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryConnectorDTO;
 import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
 import io.harness.delegate.beans.connector.docker.DockerConnectorDTO;
 import io.harness.delegate.beans.connector.gcpconnector.GcpConnectorDTO;
+import io.harness.delegate.beans.connector.nexusconnector.NexusConnectorDTO;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.docker.DockerArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.ecr.EcrArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.gcr.GcrArtifactDelegateRequest;
+import io.harness.delegate.task.artifacts.nexus.NexusArtifactDelegateRequest;
 import io.harness.security.encryption.EncryptedDataDetail;
 
 import java.util.List;
@@ -63,6 +67,37 @@ public class ArtifactDelegateRequestUtils {
         .tagsList(tagsList)
         .connectorRef(connectorRef)
         .dockerConnectorDTO(dockerConnectorDTO)
+        .encryptedDataDetails(encryptedDataDetails)
+        .sourceType(sourceType)
+        .build();
+  }
+  public NexusArtifactDelegateRequest getNexusArtifactDelegateRequest(String repositoryName, String imagePath,
+      String repositoryFormat, String tag, String tagRegex, List<String> tagsList, String connectorRef,
+      NexusConnectorDTO nexusConnectorDTO, List<EncryptedDataDetail> encryptedDataDetails,
+      ArtifactSourceType sourceType) {
+    return NexusArtifactDelegateRequest.builder()
+        .repositoryName(repositoryName)
+        .imagePath(trim(imagePath))
+        .repositoryFormat(repositoryFormat)
+        .tag(trim(tag))
+        .tagRegex(trim(tagRegex))
+        .tagsList(tagsList)
+        .connectorRef(connectorRef)
+        .nexusConnectorDTO(nexusConnectorDTO)
+        .encryptedDataDetails(encryptedDataDetails)
+        .sourceType(sourceType)
+        .build();
+  }
+  public ArtifactoryArtifactDelegateRequest getArtifactoryArtifactDelegateRequest(String imagePath, String tag,
+      String tagRegex, List<String> tagsList, String connectorRef, ArtifactoryConnectorDTO artifactoryConnectorDTO,
+      List<EncryptedDataDetail> encryptedDataDetails, ArtifactSourceType sourceType) {
+    return ArtifactoryArtifactDelegateRequest.builder()
+        .imagePath(trim(imagePath))
+        .tag(trim(tag))
+        .tagRegex(trim(tagRegex))
+        .tagsList(tagsList)
+        .connectorRef(connectorRef)
+        .artifactoryConnectorDTO(artifactoryConnectorDTO)
         .encryptedDataDetails(encryptedDataDetails)
         .sourceType(sourceType)
         .build();

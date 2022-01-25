@@ -67,6 +67,15 @@ public interface NexusThreeRestClient {
   Call<List<Nexus3Repository>> listRepositories();
 
   @Headers("Accept: application/json")
+  @GET("service/rest/v1/components")
+  Call<Nexus3ComponentResponse> listComponents(
+      @Header("Authorization") String authorization, @Query("repository") String repository);
+
+  @Headers("Accept: application/json")
+  @GET("service/rest/v1/components")
+  Call<Nexus3ComponentResponse> listComponents(@Query("repository") String repository);
+
+  @Headers("Accept: application/json")
   @GET("service/rest/v1/search")
   Call<Nexus3ComponentResponse> search(@Header("Authorization") String authorization,
       @Query("repository") String repository, @Query("continuationToken") String continuationToken);
@@ -75,6 +84,29 @@ public interface NexusThreeRestClient {
   @GET("service/rest/v1/search")
   Call<Nexus3ComponentResponse> search(
       @Query("repository") String repository, @Query("continuationToken") String continuationToken);
+
+  @Headers("Accept: application/json")
+  @GET("service/rest/v1/search")
+  Call<Nexus3ComponentResponse> search(@Query("repository") String repository, @Query("name") String imageName,
+      @Query("format") String repoFormat, @Query("continuationToken") String continuationToken);
+
+  @Headers("Accept: application/json")
+  @GET("service/rest/v1/search")
+  Call<Nexus3ComponentResponse> search(@Header("Authorization") String authorization,
+      @Query("repository") String repository, @Query("name") String imageName, @Query("format") String repoFormat,
+      @Query("continuationToken") String continuationToken);
+
+  @Headers("Accept: application/json")
+  @GET("service/rest/v1/search")
+  Call<Nexus3ComponentResponse> getArtifact(@Header("Authorization") String authorization,
+      @Query("repository") String repository, @Query("name") String imageName, @Query("format") String repoFormat,
+      @Query("version") String version, @Query("continuationToken") String continuationToken);
+
+  @Headers("Accept: application/json")
+  @GET("service/rest/v1/search")
+  Call<Nexus3ComponentResponse> getArtifact(@Query("repository") String repository, @Query("name") String imageName,
+      @Query("format") String repoFormat, @Query("version") String version,
+      @Query("continuationToken") String continuationToken);
 
   @Headers("Accept: application/json")
   @GET("service/rest/v1/search")

@@ -19,7 +19,11 @@ import java.util.Arrays;
 public enum ArtifactSourceType {
   @JsonProperty(DOCKER_REGISTRY_NAME) DOCKER_REGISTRY(DOCKER_REGISTRY_NAME),
   @JsonProperty(GCR_NAME) GCR(GCR_NAME),
-  @JsonProperty(ECR_NAME) ECR(ECR_NAME);
+  @JsonProperty(ECR_NAME) ECR(ECR_NAME),
+  @JsonProperty(ArtifactSourceConstants.NEXUS_REGISTRY_NAME)
+  NEXUS_REGISTRY(ArtifactSourceConstants.NEXUS_REGISTRY_NAME),
+  @JsonProperty(ArtifactSourceConstants.ARTIFACTORY_REGISTRY_NAME)
+  ARTIFACTORY_REGISTRY(ArtifactSourceConstants.ARTIFACTORY_REGISTRY_NAME);
   private final String displayName;
 
   ArtifactSourceType(String displayName) {

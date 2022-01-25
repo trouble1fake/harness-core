@@ -16,6 +16,5 @@ public enum ExceptionMetadataKeys {
   IMAGE_TAG,
   URL,
   CONNECTOR,
-  REGION,
-  GIT_REPO_URL
+  REGION
 }

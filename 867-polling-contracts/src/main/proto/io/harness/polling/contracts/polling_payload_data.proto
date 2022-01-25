@@ -19,6 +19,8 @@ message PollingPayloadData {
     S3HelmPayload s3HelmPayload = 6;
     DockerHubPayload dockerHubPayload = 7;
     GcrPayload gcrPayload = 8;
+    NexusRegistryPayload nexusRegistryPayload= 9;
+    ArtifactoryRegistryPayload artifactoryRegistryPayload= 10;
   }
 }
 
@@ -30,6 +32,8 @@ enum Type {
   S3_HELM = 4;
   DOCKER_HUB = 5;
   GCR = 6;
+  NEXUS = 7;
+  ARTIFACTORY = 8;
 }
 
 message HttpHelmPayload {
@@ -69,4 +73,14 @@ message DockerHubPayload {
 message GcrPayload {
   string imagePath = 1;
   string registryHostname = 2;
+}
+
+message NexusRegistryPayload {
+  string repository = 1;
+  string imagePath = 2;
+  string format = 3;
+}
+
+message ArtifactoryRegistryPayload {
+  string imagePath = 1;
 }

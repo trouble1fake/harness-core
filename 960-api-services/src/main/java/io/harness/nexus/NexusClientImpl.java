@@ -13,6 +13,7 @@ import static io.harness.exception.WingsException.USER;
 import static java.util.Collections.emptyMap;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.artifacts.beans.BuildDetailsInternal;
 import io.harness.concurrent.HTimeLimiter;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.HintException;
@@ -26,8 +27,10 @@ import software.wings.utils.RepositoryFormat;
 import com.google.common.util.concurrent.TimeLimiter;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import java.io.IOException;
 import java.net.UnknownHostException;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import javax.xml.stream.XMLStreamException;
 import lombok.extern.slf4j.Slf4j;
@@ -104,6 +107,32 @@ public class NexusClientImpl {
         NexusHelper.checkSSLHandshakeException(e);
         return true;
       }
+    }
+  }
+
+  public List<BuildDetailsInternal> getArtifactsVersions(
+      NexusRequest nexusConfig, String repositoryName, String imageName, String repoFormat) throws IOException {
+    boolean isNexusTwo = nexusConfig.getVersion() == null || nexusConfig.getVersion().equalsIgnoreCase("2.x");
+
+    if (isNexusTwo) {
+      throw NestedExceptionUtils.hintWithExplanationException("Nexus 2.x does not support Nexus artifacts",
+          "The version for the connector is probably 3.x and not 2.x",
+          new InvalidArtifactServerException("Nexus 2.x does not support Nexus artifact type", USER));
+    } else {
+      return nexusThreeService.getArtifactsVersions(nexusConfig, repositoryName, imageName, repoFormat);
+    }
+  }
+
+  public List<BuildDetailsInternal> getBuildDetails(NexusRequest nexusConfig, String repository, String imageName,
+      String repositoryFormat, String tag) throws IOException {
+    boolean isNexusTwo = nexusConfig.getVersion() == null || nexusConfig.getVersion().equalsIgnoreCase("2.x");
+
+    if (isNexusTwo) {
+      throw NestedExceptionUtils.hintWithExplanationException("Nexus 2.x does not support Nexus artifacts",
+          "The version for the connector is probably 3.x and not 2.x",
+          new InvalidArtifactServerException("Nexus 2.x does not support Nexus artifact type", USER));
+    } else {
+      return nexusThreeService.getBuildDetails(nexusConfig, repository, imageName, repositoryFormat, tag);
     }
   }
 }

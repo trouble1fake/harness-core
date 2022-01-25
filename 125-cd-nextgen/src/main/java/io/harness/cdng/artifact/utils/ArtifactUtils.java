@@ -14,9 +14,11 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.artifact.bean.ArtifactConfig;
 import io.harness.cdng.artifact.bean.yaml.ArtifactListConfig;
+import io.harness.cdng.artifact.bean.yaml.ArtifactoryRegistryArtifactConfig;
 import io.harness.cdng.artifact.bean.yaml.DockerHubArtifactConfig;
 import io.harness.cdng.artifact.bean.yaml.EcrArtifactConfig;
 import io.harness.cdng.artifact.bean.yaml.GcrArtifactConfig;
+import io.harness.cdng.artifact.bean.yaml.NexusRegistryArtifactConfig;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.task.artifacts.ArtifactSourceType;
 import io.harness.exception.InvalidRequestException;
@@ -115,6 +117,22 @@ public class ArtifactUtils {
             ecrArtifactConfig.getTag().getValue() != null ? ecrArtifactConfig.getTag().getValue()
                                                           : ecrArtifactConfig.getTagRegex().getValue(),
             ecrArtifactConfig.getConnectorRef().getValue());
+      case NEXUS_REGISTRY:
+        NexusRegistryArtifactConfig nexusRegistryArtifactConfig = (NexusRegistryArtifactConfig) artifactConfig;
+        return String.format(placeholder, sourceType, nexusRegistryArtifactConfig.getRepository().getValue(),
+            nexusRegistryArtifactConfig.getImagePath().getValue(),
+            nexusRegistryArtifactConfig.getTag().getValue() != null
+                ? nexusRegistryArtifactConfig.getTag().getValue()
+                : nexusRegistryArtifactConfig.getTagRegex().getValue(),
+            nexusRegistryArtifactConfig.getConnectorRef().getValue());
+      case ARTIFACTORY_REGISTRY:
+        ArtifactoryRegistryArtifactConfig artifactoryRegistryArtifactConfig =
+            (ArtifactoryRegistryArtifactConfig) artifactConfig;
+        return String.format(placeholder, sourceType, artifactoryRegistryArtifactConfig.getImagePath().getValue(),
+            artifactoryRegistryArtifactConfig.getTag().getValue() != null
+                ? artifactoryRegistryArtifactConfig.getTag().getValue()
+                : artifactoryRegistryArtifactConfig.getTagRegex().getValue(),
+            artifactoryRegistryArtifactConfig.getConnectorRef().getValue());
       default:
         throw new UnsupportedOperationException(String.format("Unknown Artifact Config type: [%s]", sourceType));
     }

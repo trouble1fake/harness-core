@@ -10,9 +10,11 @@ package io.harness.polling.mapper;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.polling.contracts.Type;
+import io.harness.polling.mapper.artifact.ArtifactoryRegistryArtifactInfoBuilder;
 import io.harness.polling.mapper.artifact.DockerHubArtifactInfoBuilder;
 import io.harness.polling.mapper.artifact.EcrArtifactInfoBuilder;
 import io.harness.polling.mapper.artifact.GcrArtifactInfoBuilder;
+import io.harness.polling.mapper.artifact.NexusRegistryArtifactInfoBuilder;
 import io.harness.polling.mapper.manifest.GcsHelmChartManifestInfoBuilder;
 import io.harness.polling.mapper.manifest.HttpHelmChartManifestInfoBuilder;
 import io.harness.polling.mapper.manifest.S3HelmChartManifestInfoBuilder;
@@ -39,6 +41,8 @@ public class PollingInfoBuilderRegistry {
     registeredPollingInfoBuilders.put(Type.ECR, EcrArtifactInfoBuilder.class);
     registeredPollingInfoBuilders.put(Type.DOCKER_HUB, DockerHubArtifactInfoBuilder.class);
     registeredPollingInfoBuilders.put(Type.GCR, GcrArtifactInfoBuilder.class);
+    registeredPollingInfoBuilders.put(Type.NEXUS, NexusRegistryArtifactInfoBuilder.class);
+    registeredPollingInfoBuilders.put(Type.ARTIFACTORY, ArtifactoryRegistryArtifactInfoBuilder.class);
   }
 
   public Optional<PollingInfoBuilder> getPollingInfoBuilder(Type type) {

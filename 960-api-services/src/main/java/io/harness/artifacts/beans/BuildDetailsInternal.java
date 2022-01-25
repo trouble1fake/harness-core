@@ -7,6 +7,9 @@
 
 package io.harness.artifacts.beans;
 
+import io.harness.delegate.beans.artifact.ArtifactFileMetadataInternal;
+
+import java.util.List;
 import java.util.Map;
 import lombok.Builder;
 import lombok.Value;
@@ -22,7 +25,33 @@ public class BuildDetailsInternal {
   }
 
   String number;
+  String revision;
+  String description;
+  String artifactPath;
   String buildUrl;
-  Map<String, String> metadata;
+  String buildDisplayName;
+  String buildFullDisplayName;
+  String artifactFileSize;
   String uiDisplayName;
+  BuildStatus status;
+  Map<String, String> metadata;
+  Map<String, String> buildParameters;
+  Map<String, String> labels;
+  List<ArtifactFileMetadataInternal> artifactFileMetadataList;
+
+  public enum BuildStatus {
+    FAILURE("Failure"),
+    UNSTABLE("Unstable"),
+    SUCCESS("Success");
+
+    BuildStatus(String displayName) {
+      this.displayName = displayName;
+    }
+
+    private String displayName;
+
+    public String getDisplayName() {
+      return displayName;
+    }
+  }
 }

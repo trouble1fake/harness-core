@@ -11,9 +11,11 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.delegate.task.artifacts.ArtifactSourceType;
 import io.harness.delegate.task.artifacts.DelegateArtifactTaskHandler;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactTaskHandler;
 import io.harness.delegate.task.artifacts.docker.DockerArtifactTaskHandler;
 import io.harness.delegate.task.artifacts.ecr.EcrArtifactTaskHandler;
 import io.harness.delegate.task.artifacts.gcr.GcrArtifactTaskHandler;
+import io.harness.delegate.task.artifacts.nexus.NexusArtifactTaskHandler;
 import io.harness.exception.InvalidRequestException;
 
 import com.google.inject.Inject;
@@ -39,6 +41,10 @@ public class ArtifactCollectionServiceRegistryNg {
         return EcrArtifactTaskHandler.class;
       case GCR:
         return GcrArtifactTaskHandler.class;
+      case NEXUS_REGISTRY:
+        return NexusArtifactTaskHandler.class;
+      case ARTIFACTORY_REGISTRY:
+        return ArtifactoryArtifactTaskHandler.class;
       default:
         throw new InvalidRequestException("Unknown artifact source type: " + artifactSourceType);
     }

@@ -12,19 +12,25 @@ import static io.harness.annotations.dev.HarnessTeam.CDC;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.artifact.ArtifactMetadataKeys;
 import io.harness.cdng.artifact.bean.ArtifactConfig;
+import io.harness.cdng.artifact.bean.yaml.ArtifactoryRegistryArtifactConfig;
 import io.harness.cdng.artifact.bean.yaml.DockerHubArtifactConfig;
 import io.harness.cdng.artifact.bean.yaml.EcrArtifactConfig;
 import io.harness.cdng.artifact.bean.yaml.GcrArtifactConfig;
+import io.harness.cdng.artifact.bean.yaml.NexusRegistryArtifactConfig;
 import io.harness.cdng.artifact.outcome.ArtifactOutcome;
 import io.harness.cdng.artifact.outcome.DockerArtifactOutcome;
+import io.harness.cdng.artifact.outcome.ArtifactoryArtifactOutcome;
+import io.harness.cdng.artifact.outcome.NexusArtifactOutcome;
 import io.harness.cdng.artifact.outcome.EcrArtifactOutcome;
 import io.harness.cdng.artifact.outcome.GcrArtifactOutcome;
 import io.harness.cdng.artifact.utils.ArtifactUtils;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.task.artifacts.ArtifactSourceType;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.docker.DockerArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.ecr.EcrArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.gcr.GcrArtifactDelegateResponse;
+import io.harness.delegate.task.artifacts.nexus.NexusArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.response.ArtifactDelegateResponse;
 
 import lombok.experimental.UtilityClass;
@@ -51,6 +57,17 @@ public class ArtifactResponseToOutcomeMapper {
         EcrArtifactDelegateResponse ecrArtifactDelegateResponse =
             (EcrArtifactDelegateResponse) artifactDelegateResponse;
         return getEcrArtifactOutcome(ecrArtifactConfig, ecrArtifactDelegateResponse, useDelegateResponse);
+      case NEXUS_REGISTRY:
+        NexusRegistryArtifactConfig nexusRegistryArtifactConfig = (NexusRegistryArtifactConfig) artifactConfig;
+        NexusArtifactDelegateResponse nexusDelegateResponse = (NexusArtifactDelegateResponse) artifactDelegateResponse;
+        return getNexusArtifactOutcome(nexusRegistryArtifactConfig, nexusDelegateResponse, useDelegateResponse);
+      case ARTIFACTORY_REGISTRY:
+        ArtifactoryRegistryArtifactConfig artifactoryRegistryArtifactConfig =
+            (ArtifactoryRegistryArtifactConfig) artifactConfig;
+        ArtifactoryArtifactDelegateResponse artifactoryDelegateResponse =
+            (ArtifactoryArtifactDelegateResponse) artifactDelegateResponse;
+        return getArtifactoryArtifactOutcome(
+            artifactoryRegistryArtifactConfig, artifactoryDelegateResponse, useDelegateResponse);
       default:
         throw new UnsupportedOperationException(
             String.format("Unknown Artifact Config type: [%s]", artifactConfig.getSourceType()));
@@ -104,6 +121,40 @@ public class ArtifactResponseToOutcomeMapper {
         .type(ArtifactSourceType.ECR.getDisplayName())
         .primaryArtifact(ecrArtifactConfig.isPrimaryArtifact())
         .imagePullSecret(IMAGE_PULL_SECRET + ArtifactUtils.getArtifactKey(ecrArtifactConfig) + ">")
+        .build();
+  }
+
+  private NexusArtifactOutcome getNexusArtifactOutcome(NexusRegistryArtifactConfig artifactConfig,
+      NexusArtifactDelegateResponse artifactDelegateResponse, boolean useDelegateResponse) {
+    return NexusArtifactOutcome.builder()
+        .image(getImageValue(artifactDelegateResponse))
+        .connectorRef(artifactConfig.getConnectorRef().getValue())
+        .repositoryName(artifactConfig.getRepository().getValue())
+        .imagePath(artifactConfig.getImagePath().getValue())
+        .repositoryFormat(artifactConfig.getRepositoryFormat().getValue())
+        .tag(useDelegateResponse ? artifactDelegateResponse.getTag()
+                                 : (artifactConfig.getTag() != null ? artifactConfig.getTag().getValue() : null))
+        .tagRegex(artifactConfig.getTagRegex() != null ? artifactConfig.getTagRegex().getValue() : null)
+        .identifier(artifactConfig.getIdentifier())
+        .type(ArtifactSourceType.NEXUS_REGISTRY.getDisplayName())
+        .primaryArtifact(artifactConfig.isPrimaryArtifact())
+        .imagePullSecret(IMAGE_PULL_SECRET + ArtifactUtils.getArtifactKey(artifactConfig) + ">")
+        .build();
+  }
+
+  private ArtifactoryArtifactOutcome getArtifactoryArtifactOutcome(ArtifactoryRegistryArtifactConfig artifactConfig,
+      ArtifactoryArtifactDelegateResponse artifactDelegateResponse, boolean useDelegateResponse) {
+    return ArtifactoryArtifactOutcome.builder()
+        .image(getImageValue(artifactDelegateResponse))
+        .connectorRef(artifactConfig.getConnectorRef().getValue())
+        .imagePath(artifactConfig.getImagePath().getValue())
+        .tag(useDelegateResponse ? artifactDelegateResponse.getTag()
+                                 : (artifactConfig.getTag() != null ? artifactConfig.getTag().getValue() : null))
+        .tagRegex(artifactConfig.getTagRegex() != null ? artifactConfig.getTagRegex().getValue() : null)
+        .identifier(artifactConfig.getIdentifier())
+        .type(ArtifactSourceType.ARTIFACTORY_REGISTRY.getDisplayName())
+        .primaryArtifact(artifactConfig.isPrimaryArtifact())
+        .imagePullSecret(IMAGE_PULL_SECRET + ArtifactUtils.getArtifactKey(artifactConfig) + ">")
         .build();
   }
 

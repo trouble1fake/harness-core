@@ -14,18 +14,22 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.DecryptableEntity;
 import io.harness.beans.IdentifierRef;
 import io.harness.cdng.artifact.bean.ArtifactConfig;
+import io.harness.cdng.artifact.bean.yaml.ArtifactoryRegistryArtifactConfig;
 import io.harness.cdng.artifact.bean.yaml.DockerHubArtifactConfig;
 import io.harness.cdng.artifact.bean.yaml.EcrArtifactConfig;
 import io.harness.cdng.artifact.bean.yaml.GcrArtifactConfig;
+import io.harness.cdng.artifact.bean.yaml.NexusRegistryArtifactConfig;
 import io.harness.cdng.artifact.mappers.ArtifactConfigToDelegateReqMapper;
 import io.harness.connector.ConnectorInfoDTO;
 import io.harness.connector.ConnectorResponseDTO;
 import io.harness.connector.services.ConnectorService;
 import io.harness.connector.utils.ConnectorUtils;
 import io.harness.delegate.TaskSelector;
+import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryConnectorDTO;
 import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
 import io.harness.delegate.beans.connector.docker.DockerConnectorDTO;
 import io.harness.delegate.beans.connector.gcpconnector.GcpConnectorDTO;
+import io.harness.delegate.beans.connector.nexusconnector.NexusConnectorDTO;
 import io.harness.delegate.task.artifacts.ArtifactSourceDelegateRequest;
 import io.harness.exception.InvalidConnectorTypeException;
 import io.harness.exception.InvalidRequestException;
@@ -105,6 +109,40 @@ public class ArtifactStepHelper {
         }
         return ArtifactConfigToDelegateReqMapper.getEcrDelegateRequest(
             ecrArtifactConfig, awsConnectorDTO, encryptedDataDetails, ecrArtifactConfig.getConnectorRef().getValue());
+      case NEXUS_REGISTRY:
+        NexusRegistryArtifactConfig nexusRegistryArtifactConfig = (NexusRegistryArtifactConfig) artifactConfig;
+        connectorDTO = getConnector(nexusRegistryArtifactConfig.getConnectorRef().getValue(), ambiance);
+        if (!(connectorDTO.getConnectorConfig() instanceof NexusConnectorDTO)) {
+          throw new InvalidConnectorTypeException("provided Connector "
+                  + nexusRegistryArtifactConfig.getConnectorRef().getValue() + " is not compatible with "
+                  + nexusRegistryArtifactConfig.getSourceType() + " Artifact",
+              WingsException.USER);
+        }
+        NexusConnectorDTO nexusConnectorDTO = (NexusConnectorDTO) connectorDTO.getConnectorConfig();
+        if (nexusConnectorDTO.getAuth() != null && nexusConnectorDTO.getAuth().getCredentials() != null) {
+          encryptedDataDetails =
+              secretManagerClientService.getEncryptionDetails(ngAccess, nexusConnectorDTO.getAuth().getCredentials());
+        }
+        return ArtifactConfigToDelegateReqMapper.getNexusArtifactDelegateRequest(nexusRegistryArtifactConfig,
+            nexusConnectorDTO, encryptedDataDetails, nexusRegistryArtifactConfig.getConnectorRef().getValue());
+      case ARTIFACTORY_REGISTRY:
+        ArtifactoryRegistryArtifactConfig artifactoryRegistryArtifactConfig =
+            (ArtifactoryRegistryArtifactConfig) artifactConfig;
+        connectorDTO = getConnector(artifactoryRegistryArtifactConfig.getConnectorRef().getValue(), ambiance);
+        if (!(connectorDTO.getConnectorConfig() instanceof ArtifactoryConnectorDTO)) {
+          throw new InvalidConnectorTypeException("provided Connector "
+                  + artifactoryRegistryArtifactConfig.getConnectorRef().getValue() + " is not compatible with "
+                  + artifactoryRegistryArtifactConfig.getSourceType() + " Artifact",
+              WingsException.USER);
+        }
+        ArtifactoryConnectorDTO artifactoryConnectorDTO = (ArtifactoryConnectorDTO) connectorDTO.getConnectorConfig();
+        if (artifactoryConnectorDTO.getAuth() != null && artifactoryConnectorDTO.getAuth().getCredentials() != null) {
+          encryptedDataDetails = secretManagerClientService.getEncryptionDetails(
+              ngAccess, artifactoryConnectorDTO.getAuth().getCredentials());
+        }
+        return ArtifactConfigToDelegateReqMapper.getArtifactoryArtifactDelegateRequest(
+            artifactoryRegistryArtifactConfig, artifactoryConnectorDTO, encryptedDataDetails,
+            artifactoryRegistryArtifactConfig.getConnectorRef().getValue());
       default:
         throw new UnsupportedOperationException(
             String.format("Unknown Artifact Config type: [%s]", artifactConfig.getSourceType()));
@@ -133,6 +171,10 @@ public class ArtifactStepHelper {
         return TaskType.GCR_ARTIFACT_TASK_NG;
       case ECR:
         return TaskType.ECR_ARTIFACT_TASK_NG;
+      case NEXUS_REGISTRY:
+        return TaskType.NEXUS_ARTIFACT_TASK_NG;
+      case ARTIFACTORY_REGISTRY:
+        return TaskType.ARTIFACTORY_ARTIFACT_TASK_NG;
       default:
         throw new UnsupportedOperationException(
             String.format("Unknown Artifact Config type: [%s]", artifactConfig.getSourceType()));
@@ -162,6 +204,23 @@ public class ArtifactStepHelper {
         EcrArtifactConfig ecrArtifactConfig = (EcrArtifactConfig) artifactConfig;
         connectorDTO = getConnector(ecrArtifactConfig.getConnectorRef().getValue(), ambiance);
         return TaskSelectorYaml.toTaskSelector(((AwsConnectorDTO) connectorDTO.getConnectorConfig())
+                                                   .getDelegateSelectors()
+                                                   .stream()
+                                                   .map(TaskSelectorYaml::new)
+                                                   .collect(Collectors.toList()));
+      case NEXUS_REGISTRY:
+        NexusRegistryArtifactConfig nexusRegistryArtifactConfig = (NexusRegistryArtifactConfig) artifactConfig;
+        connectorDTO = getConnector(nexusRegistryArtifactConfig.getConnectorRef().getValue(), ambiance);
+        return TaskSelectorYaml.toTaskSelector(((NexusConnectorDTO) connectorDTO.getConnectorConfig())
+                                                   .getDelegateSelectors()
+                                                   .stream()
+                                                   .map(TaskSelectorYaml::new)
+                                                   .collect(Collectors.toList()));
+      case ARTIFACTORY_REGISTRY:
+        ArtifactoryRegistryArtifactConfig artifactoryRegistryArtifactConfig =
+            (ArtifactoryRegistryArtifactConfig) artifactConfig;
+        connectorDTO = getConnector(artifactoryRegistryArtifactConfig.getConnectorRef().getValue(), ambiance);
+        return TaskSelectorYaml.toTaskSelector(((ArtifactoryConnectorDTO) connectorDTO.getConnectorConfig())
                                                    .getDelegateSelectors()
                                                    .stream()
                                                    .map(TaskSelectorYaml::new)
