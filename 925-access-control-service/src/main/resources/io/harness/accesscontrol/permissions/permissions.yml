@@ -652,7 +652,7 @@ permissions:
   - identifier: gitops_agent_view
     name: View a Gitops Agent
     status: STAGING
-    includeInAllRoles: false
+    includeInAllRoles: true
     allowedScopeLevels:
        - project
        - organization
@@ -676,7 +676,7 @@ permissions:
   - identifier: gitops_application_view
     name: View a Gitops Application
     status: STAGING
-    includeInAllRoles: false
+    includeInAllRoles: true
     allowedScopeLevels:
       - project
   - identifier: gitops_application_create
@@ -712,7 +712,7 @@ permissions:
   - identifier: gitops_repository_view
     name: View a Gitops Repository
     status: STAGING
-    includeInAllRoles: false
+    includeInAllRoles: true
     allowedScopeLevels:
       - project
   - identifier: gitops_repository_edit
@@ -730,7 +730,7 @@ permissions:
   - identifier: gitops_cluster_view
     name: View a Gitops Cluster
     status: STAGING
-    includeInAllRoles: false
+    includeInAllRoles: true
     allowedScopeLevels:
       - project
   - identifier: gitops_cluster_edit
@@ -748,7 +748,7 @@ permissions:
   - identifier: gitops_gpgkey_view
     name: View a Gitops Gpgkey
     status: STAGING
-    includeInAllRoles: false
+    includeInAllRoles: true
     allowedScopeLevels:
       - project
   - identifier: gitops_gpgkey_edit
@@ -766,7 +766,7 @@ permissions:
   - identifier: gitops_cert_view
     name: View a Gitops Cert
     status: STAGING
-    includeInAllRoles: false
+    includeInAllRoles: true
     allowedScopeLevels:
       - project
   - identifier: gitops_cert_edit
