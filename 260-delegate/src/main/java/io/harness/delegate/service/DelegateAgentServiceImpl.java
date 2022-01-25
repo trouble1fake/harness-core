@@ -1878,9 +1878,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
 
     Future taskFuture = taskExecutor.submit(() -> dispatchDelegateTask(delegateTaskEvent));
     log.info("Task submitted for execution");
-    if (taskFuture.isCancelled()) {
-      log.warn("Task future is cancelled for taskID: {}", delegateTaskId);
-    }
+
     DelegateTaskExecutionData taskExecutionData = DelegateTaskExecutionData.builder().taskFuture(taskFuture).build();
     currentlyExecutingFutures.put(delegateTaskId, taskExecutionData);
     updateCounterIfLessThanCurrent(maxExecutingFuturesCount, currentlyExecutingFutures.size());
@@ -1890,34 +1888,33 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     log.info("DelegateTaskEvent received - {}", delegateTaskEvent);
     String delegateTaskId = delegateTaskEvent.getDelegateTaskId();
 
-    if (frozen.get()) {
-      log.info(
-          "Delegate process with detected time out of sync or with revoked token is running. Won't acquire tasks.");
-      return;
-    }
-
-    if (!acquireTasks.get()) {
-      log.info("[Old] Upgraded process is running. Won't acquire task while completing other tasks");
-      return;
-    }
-
-    if (upgradePending.get() && !delegateTaskEvent.isSync()) {
-      log.info("[Old] Upgrade pending, won't acquire async task");
-      return;
-    }
-
-    if (currentlyAcquiringTasks.contains(delegateTaskId)) {
-      log.info("Task [DelegateTaskEvent: {}] currently acquiring. Don't acquire again", delegateTaskEvent);
-      return;
-    }
-
-    if (currentlyValidatingTasks.containsKey(delegateTaskId)) {
-      log.info("Task [DelegateTaskEvent: {}] already validating. Don't validate again", delegateTaskEvent);
-      currentlyExecutingFutures.remove(delegateTaskId);
-      return;
-    }
-
     try {
+      if (frozen.get()) {
+        log.info(
+            "Delegate process with detected time out of sync or with revoked token is running. Won't acquire tasks.");
+        return;
+      }
+
+      if (!acquireTasks.get()) {
+        log.info("[Old] Upgraded process is running. Won't acquire task while completing other tasks");
+        return;
+      }
+
+      if (upgradePending.get() && !delegateTaskEvent.isSync()) {
+        log.info("[Old] Upgrade pending, won't acquire async task");
+        return;
+      }
+
+      if (currentlyAcquiringTasks.contains(delegateTaskId)) {
+        log.info("Task [DelegateTaskEvent: {}] currently acquiring. Don't acquire again", delegateTaskEvent);
+        return;
+      }
+
+      if (currentlyValidatingTasks.containsKey(delegateTaskId)) {
+        log.info("Task [DelegateTaskEvent: {}] already validating. Don't validate again", delegateTaskEvent);
+        return;
+      }
+
       int perpetualTaskCount = 0;
       if (perpetualTaskWorker != null) {
         perpetualTaskCount = perpetualTaskWorker.getCurrentlyExecutingPerpetualTasksCount().intValue();
@@ -1936,7 +1933,6 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
           delegateAgentManagerClient.acquireTask(delegateId, delegateTaskId, accountId, delegateInstanceId));
       if (delegateTaskPackage == null || delegateTaskPackage.getData() == null) {
         log.warn("Delegate task data not available - accountId: {}", delegateTaskEvent.getAccountId());
-        currentlyExecutingFutures.remove(delegateTaskId);
         return;
       }
 

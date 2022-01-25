@@ -123,7 +123,7 @@ public class DelegateTaskServiceImpl implements DelegateTaskService {
             return;
           }
         }
-        log.info("Response received for task: {}", taskId);
+        log.info("Response received for task: {} from Delegate: {}", taskId, delegateId);
         handleResponse(delegateTask, taskQuery, response);
 
         updateDelegateTaskInsightsEvent(accountId, delegateId, taskId, response.getResponseCode());
