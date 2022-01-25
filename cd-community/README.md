@@ -1,5 +1,5 @@
-# Harness Community Edition - Docker Compose
-This page contains the instructions necessary to run Harness CE using Docker Compose.
+# Build Harness Community Edition from source
+This page contains the instructions necessary to build Harness Community Edition from source.
 
 ## Pre-requisites
 1) Install [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) on your system
@@ -19,7 +19,7 @@ This page contains the instructions necessary to run Harness CE using Docker Com
    cd harness-core
    ```
 1) Follow the setup instructions from the root of this repo first  
-   It is important that you create the `.bazelrc` file and run the `scripts/bazel/generate_credentials.sh` script before continuing.
+   It is important that you create the `.bazelrc` file. 
 1) Build the application and docker images
    ```shell
    ./cd-community/build.sh
