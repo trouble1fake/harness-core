@@ -21,10 +21,14 @@ spec:
       template:
         spec:
           serviceAccountName: ${upgraderSaName}
+          restartPolicy: Never
           containers:
           - image: ${upgraderDockerImage}
             name: upgrader
             imagePullPolicy: Always
+            envFrom:
+            - secretRef:
+                name: ${accountTokenName}
             env:
             - name: POD_NAMESPACE
               valueFrom:
@@ -32,11 +36,8 @@ spec:
                   fieldPath: metadata.namespace
             - name: ACCOUNT_ID
               value: ${accountId}
-            - name: ACCOUNT_SECRET
-              value: ${accountSecret}
             - name: MANAGER_HOST_AND_PORT
               value: ${managerHostAndPort}
             - name: DELEGATE_NAME
               value: ${fullDelegateName}
-          restartPolicy: Never
 </#macro>
