@@ -4,7 +4,7 @@
       "request" : {
         "path" : [ {
           "matcher" : "exact",
-          "value" : "/controllerr/rest/applications"
+          "value" : "/controller/rest/applications"
         } ],
         "method" : [ {
           "matcher" : "exact",
@@ -30,19 +30,19 @@
         } ]
       },
       "response" : {
-        "status" : 404,
-        "body" : "H4sIAAAAAAAAALWTUW+bMBSF/8otfa3jEtJOIdRSGjIxqWujjmrrowEnWDOY2c4Iq/LfZ0yyRtoeNml9s+xzvnuvfG50Fj8s0ufVEkpTCVg93d59WICHMP4cLDCO0xi+JOnHO/BHl/DJKJ4bjJf3HnilMU2Icdu2ozYYSbXB6SPe9RS/tx2OSDvPqDCFRyJXY1eJWt/8we9Pp9PB1ksZLUhkuBGMzJsm7mpa8VwDgqVSUoFijVQmwoMi0qYTDEzXsBvPsJ3BudaWcoZQ4sPLWtYGrS1AdGFKS1nRi7niVFxoWmukmeLrWS6FVGFbcsNmGc2/bpTc1gUars+vxlfxu+uZA2n+g4XjcbOb7SEZvwndvx7owdvQJ45++xA//ws/Exb9O38oa3H/sdc9rP6O9ko4IE9bPZnY/dYcXtwzhDAI9snj69Wv2giRCLtAEYjwEMRMFp0NpU+SNF3ZRaBmq2FyObF5vJcG3vcdWK1vNQqTqLEO0qcxwhk5yo+RbQ7vFdOabpzkhHF8LZjOFW8Ml3WvSEtmAd+2TBtW2JOWW5Uz4Bpq66XfKRc0E2zkAK6HMjhdHNtcYMca5sD9kpGf+QYgdPwDAAA=",
+        "status" : 200,
+        "body" : "H4sIAAAAAAAAAL3SwYrCMBAG4LtPITk7kDStbb0qqAdBvMoeJsm0BDQtaaug+O7Wuh6FwNLNIZD5CXzkz3Ey7dd92JnDM7HFlOkLYF2DK9nsHRhqtLd1ayv3yj9ja/qTjGWUxL8T1LrqXLvuhoilXMUZNxEISgzEKjOQKZ1DziOucJ4hCc76m4/Zd0aIIU3y+RiCDXpHTQMruoQwBBeRFHIMiaETldjSUMy5cratvA0r6K0apaH9AfDWeQKn4UrqZSsKMLZBdSITiJM8Ff+DC3+tZMzftNzCDh2W5MNB/I+gyc8TyawhS+oDAAA=",
         "encodedBody" : true,
         "templated" : false,
         "headers" : {
           "Connection" : [ "keep-alive" ],
           "Content-Encoding" : [ "gzip" ],
-          "Content-Language" : [ "" ],
-          "Content-Length" : [ "455" ],
-          "Content-Type" : [ "text/html; charset=UTF-8" ],
-          "Date" : [ "Thu, 29 Oct 2020 16:19:27 GMT" ],
+          "Content-Length" : [ "236" ],
+          "Content-Type" : [ "application/json;charset=UTF-8" ],
+          "Date" : [ "Mon, 24 Jan 2022 12:32:19 GMT" ],
           "Hoverfly" : [ "Was-Here" ],
           "Server" : [ "AppDynamics" ],
+          "Set-Cookie" : [ "JSESSIONID=c12a63c6e9e2d4fcf966a2091829; Path=/controller; HttpOnly; Secure" ],
           "X-Content-Type-Options" : [ "nosniff" ],
           "X-Frame-Options" : [ "SAMEORIGIN" ],
           "X-Xss-Protection" : [ "1; mode=block" ]
@@ -56,6 +56,6 @@
   "meta" : {
     "schemaVersion" : "v5",
     "hoverflyVersion" : "v1.1.5",
-    "timeExported" : "2020-10-29T21:49:28+05:30"
+    "timeExported" : "2022-01-24T12:32:23Z"
   }
 }

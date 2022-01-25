@@ -8,6 +8,7 @@
 package io.harness.delegate.authenticator;
 
 import static io.harness.annotations.dev.HarnessTeam.DEL;
+import static io.harness.data.encoding.EncodingUtils.decodeBase64ToString;
 import static io.harness.eraro.ErrorCode.DEFAULT_ERROR_CODE;
 import static io.harness.eraro.ErrorCode.EXPIRED_TOKEN;
 import static io.harness.exception.WingsException.USER_ADMIN;
@@ -134,14 +135,14 @@ public class DelegateTokenAuthenticatorImpl implements DelegateTokenAuthenticato
                                      .field(DelegateTokenKeys.status)
                                      .equal(status);
 
-    boolean result = decryptDelegateTokenByQuery(query, accountId, status, encryptedJWT);
+    boolean result = decryptDelegateTokenByQuery(query, accountId, status, encryptedJWT, false);
     if (!result) {
       Query<DelegateNgToken> queryNg = persistence.createQuery(DelegateNgToken.class)
                                            .field(DelegateNgTokenKeys.accountId)
                                            .equal(accountId)
                                            .field(DelegateNgTokenKeys.status)
                                            .equal(status);
-      result = decryptDelegateTokenByQuery(queryNg, accountId, status, encryptedJWT);
+      result = decryptDelegateTokenByQuery(queryNg, accountId, status, encryptedJWT, true);
     }
     long time_end = System.currentTimeMillis() - time_start;
     log.debug("Delegate Token verification for accountId {} and status {} has taken {} milliseconds.", accountId,
@@ -150,11 +151,15 @@ public class DelegateTokenAuthenticatorImpl implements DelegateTokenAuthenticato
   }
 
   private boolean decryptDelegateTokenByQuery(
-      Query query, String accountId, DelegateTokenStatus status, EncryptedJWT encryptedJWT) {
+      Query query, String accountId, DelegateTokenStatus status, EncryptedJWT encryptedJWT, boolean isNg) {
     try (HIterator<NameAndValueAccess> records = new HIterator<>(query.fetch())) {
       for (NameAndValueAccess delegateToken : records) {
         try {
-          decryptDelegateToken(encryptedJWT, delegateToken.getValue());
+          if (isNg) {
+            decryptDelegateToken(encryptedJWT, decodeBase64ToString(delegateToken.getValue()));
+          } else {
+            decryptDelegateToken(encryptedJWT, delegateToken.getValue());
+          }
 
           if (DelegateTokenStatus.ACTIVE == status) {
             if (!GlobalContextManager.isAvailable()) {

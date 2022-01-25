@@ -145,6 +145,9 @@ public class RetryHelper {
         .module(nodeExecution.module())
         .name(nodeExecution.name())
         .skipGraphType(nodeExecution.skipGraphType())
+        .identifier(nodeExecution.identifier())
+        .stepType(nodeExecution.stepType())
+        .nodeId(nodeExecution.nodeId())
         .build();
   }
 }

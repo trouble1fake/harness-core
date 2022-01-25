@@ -4,7 +4,7 @@
       "request" : {
         "path" : [ {
           "matcher" : "exact",
-          "value" : "/controller/rest/applications"
+          "value" : "/controllerr/rest/applications"
         } ],
         "method" : [ {
           "matcher" : "exact",
@@ -30,19 +30,19 @@
         } ]
       },
       "response" : {
-        "status" : 200,
-        "body" : "H4sIAAAAAAAAALVYTYvbMBC9769YfF6BJH9I6s10S7eHdGkTWtJSgiwribvxB5KcJZT+98pxcik9TCjjg8E2xo83b9688fe7+3j8Op+TTrc2eXOfDGZLgvUheZjv19Yb1wyh6bvp8fV2U8erQhTycq2N6ccuvB/PDxJBq0zSmhNm85pklayJrIwiinJa6UJqy2gS3/z98C8M7oXoYSARCoPAYLnMFAYOczxTQfzYNQcQEsZkioFk+bVcrDeLcr16+vB5tQZh4QVlGFg+6uA35TCAQFDFUCTSRRBkcDAi0hxFHmcMUSNbW8FwUIYijn6wHfH7ZgtqWpYxyRHpyIC6SHO8Rvn2/LwAwUipypCcQ8M6ROSqQKwGB1aDCwwQx0D6bnC2ndioYQ7KcxTXqu0RRoUoUITpX3V7uoGGokCpSKWdOeiTh/p3NC2UBuEZEWTuEtiMp4JStD6ZRQo0cYGC40m7znpPHoE6zXOJMlh5dq0LrCyFQpmt5SONB5NFCmNDSZR2iUzUtu0hGJTgEiuFmtGHvrUODGaSKYo8anuwOx3sBioQlgqUyix1OOkWmkOlkig2NhuHOe7GTgOzKEOxj8Hp7qc+kMvKAtQIztS/RA9Y58bogSTU40TGDatbKlCCmO9f25Mmoa/7QxOXSVgiS3OcRfK8zzq924/QKYPiaVcbIXoMe+DWwlHKMxGyucIBCkWiJFT3Mv9t2Gs3BQFoVOScKsTECnaTmFhRaOmr7eiNnj56g7XxHKV9Zk4MLKKxgqMMnb8cBUZIhoPl7RfyqSSrd8sV9HfQ/46cux9/ALQKUJW4FAAA",
+        "status" : 404,
+        "body" : "H4sIAAAAAAAAALWTUW+bMBSF/8otfa3jEtJOIdRSGjIxqWujjmrrowEnWDOY2c4Iq/LfZ0yyRtoeNml9s+xzvnuvfG50Fj8s0ufVEkpTCVg93d59WICHMP4cLDCO0xi+JOnHO/BHl/DJKJ4bjJf3HnilMU2Icdu2ozYYSbXB6SPe9RS/tx2OSDvPqDCFRyJXY1eJWt/8we9Pp9PB1ksZLUhkuBGMzJsm7mpa8VwDgqVSUoFijVQmwoMi0qYTDEzXsBvPsJ3BudaWcoZQ4sPLWtYGrS1AdGFKS1nRi7niVFxoWmukmeLrWS6FVGFbcsNmGc2/bpTc1gUars+vxlfxu+uZA2n+g4XjcbOb7SEZvwndvx7owdvQJ45++xA//ws/Exb9O38oa3H/sdc9rP6O9ko4IE9bPZnY/dYcXtwzhDAI9snj69Wv2giRCLtAEYjwEMRMFp0NpU+SNF3ZRaBmq2FyObF5vJcG3vcdWK1vNQqTqLEO0qcxwhk5yo+RbQ7vFdOabpzkhHF8LZjOFW8Ml3WvSEtmAd+2TBtW2JOWW5Uz4Bpq66XfKRc0E2zkAK6HMjhdHNtcYMca5sD9kpGf+QYgdPwDAAA=",
         "encodedBody" : true,
         "templated" : false,
         "headers" : {
           "Connection" : [ "keep-alive" ],
           "Content-Encoding" : [ "gzip" ],
-          "Content-Length" : [ "615" ],
-          "Content-Type" : [ "application/json;charset=UTF-8" ],
-          "Date" : [ "Thu, 29 Oct 2020 16:20:20 GMT" ],
+          "Content-Language" : [ "" ],
+          "Content-Length" : [ "455" ],
+          "Content-Type" : [ "text/html; charset=UTF-8" ],
+          "Date" : [ "Mon, 24 Jan 2022 12:32:09 GMT" ],
           "Hoverfly" : [ "Was-Here" ],
           "Server" : [ "AppDynamics" ],
-          "Set-Cookie" : [ "JSESSIONID=528f87bfc437c457c65a8853cc13; Path=/controller; HttpOnly; Secure" ],
           "X-Content-Type-Options" : [ "nosniff" ],
           "X-Frame-Options" : [ "SAMEORIGIN" ],
           "X-Xss-Protection" : [ "1; mode=block" ]
@@ -56,6 +56,6 @@
   "meta" : {
     "schemaVersion" : "v5",
     "hoverflyVersion" : "v1.1.5",
-    "timeExported" : "2020-10-29T21:50:21+05:30"
+    "timeExported" : "2022-01-24T12:32:14Z"
   }
 }
