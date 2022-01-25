@@ -7,11 +7,15 @@
 
 package io.harness.cdng.provision.terraform;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-import com.google.inject.name.Named;
+import static io.harness.cdng.provision.terraform.TerraformPlanCommand.APPLY;
+import static io.harness.common.ParameterFieldHelper.getParameterFieldValue;
+import static io.harness.provision.TerraformConstants.TF_DESTROY_NAME_PREFIX;
+import static io.harness.provision.TerraformConstants.TF_NAME_PREFIX;
+import static io.harness.validation.Validator.notEmptyCheck;
+
+import static java.lang.String.format;
+import static org.apache.commons.lang3.StringUtils.trimToEmpty;
+
 import io.harness.EntityType;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
@@ -30,7 +34,6 @@ import io.harness.connector.ConnectorInfoDTO;
 import io.harness.connector.validator.scmValidators.GitConfigAuthenticationInfoHelper;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.beans.FileBucket;
-import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryConnectorDTO;
 import io.harness.delegate.beans.connector.scm.GitConnectionType;
 import io.harness.delegate.beans.connector.scm.ScmConnector;
 import io.harness.delegate.beans.connector.scm.adapter.ScmConnectorMapper;
@@ -38,7 +41,7 @@ import io.harness.delegate.beans.connector.scm.genericgitconnector.GitConfigDTO;
 import io.harness.delegate.beans.storeconfig.ArtifactoryStoreDelegateConfig;
 import io.harness.delegate.beans.storeconfig.FetchType;
 import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
-import io.harness.delegate.task.artifactory.ArtifactoryFetchFilesConfig;
+import io.harness.delegate.task.filestore.FileStoreFetchFilesConfig;
 import io.harness.delegate.task.git.GitFetchFilesConfig;
 import io.harness.delegate.task.terraform.InlineTerraformVarFileInfo;
 import io.harness.delegate.task.terraform.RemoteTerraformVarFileInfo;
@@ -66,23 +69,20 @@ import io.harness.security.encryption.EncryptionConfig;
 import io.harness.utils.IdentifierRefHelper;
 import io.harness.validation.Validator;
 import io.harness.validator.NGRegexValidatorConstants;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.IOUtils;
-import org.mongodb.morphia.query.Query;
-import org.mongodb.morphia.query.Sort;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.*;
 import java.util.regex.Pattern;
-
-import static io.harness.cdng.provision.terraform.TerraformPlanCommand.APPLY;
-import static io.harness.common.ParameterFieldHelper.getParameterFieldValue;
-import static io.harness.provision.TerraformConstants.TF_DESTROY_NAME_PREFIX;
-import static io.harness.provision.TerraformConstants.TF_NAME_PREFIX;
-import static io.harness.validation.Validator.notEmptyCheck;
-import static java.lang.String.format;
-import static org.apache.commons.lang3.StringUtils.trimToEmpty;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
+import org.mongodb.morphia.query.Query;
+import org.mongodb.morphia.query.Sort;
 
 @Slf4j
 @Singleton
@@ -209,10 +209,12 @@ public class TerraformStepHelper {
   }
 
   // Honestly if this works I will just retire of coding on my peak performance
-  public ArtifactoryFetchFilesConfig getArtifactoryFetchFilesConfig(StoreConfig store, Ambiance ambiance, String identifier) {
+  public FileStoreFetchFilesConfig getFileFactoryFetchFilesConfig(
+      StoreConfig store, Ambiance ambiance, String identifier) {
+    // TODO: What about this? This seems to be that is going to be specific for different filestores
     ArtifactoryStoreConfig artifactoryStoreConfig;
     try {
-       artifactoryStoreConfig = (ArtifactoryStoreConfig) store;
+      artifactoryStoreConfig = (ArtifactoryStoreConfig) store;
     } catch (ClassCastException e) {
       return null;
     }
@@ -227,23 +229,19 @@ public class TerraformStepHelper {
     }
     k8sStepHelper.validateManifest(store.getKind(), connectorDTO, validationMessage);
     NGAccess basicNGAccessObject = AmbianceUtils.getNgAccess(ambiance);
-    List<EncryptedDataDetail> encryptedDataDetails = null; //TODO: So, this is it. IDK how I should be getting secrets
-    // from whenever we need to get them. I have been checking the git code and that seems like _it is not_
-    // the way to go. There is an artifactory class called ArtifactoryConnectionValidator, and _that could it be_?
-    // but so far idk how to grab it from where it is created
-    ArtifactoryStoreDelegateConfig artifactoryStoreDelegateConfig = ArtifactoryStoreDelegateConfig.builder()
-            .artifactName(artifactoryStoreConfig.getArtifactName().getValue())
-            .artifactoryConnector((ArtifactoryConnectorDTO) connectorDTO.getConnectorConfig())
-            .repositoryPath(artifactoryStoreConfig.getRepositoryPath().getValue())
-            .version(artifactoryStoreConfig.getVersion().getValue())
-            .encryptedDataDetails(encryptedDataDetails)
-            .apiAuthEncryptedDataDetails(encryptedDataDetails)
-            .build();
-    return ArtifactoryFetchFilesConfig.builder()
-            .identifier(identifier)
-            .succeedIfFileNotFound(false)
-            .artifactoryStoreDelegateConfig(artifactoryStoreDelegateConfig)
-            .build();
+    List<EncryptedDataDetail> encryptedDataDetails =
+        secretManagerClientService.getEncryptionDetails(basicNGAccessObject, connectorDTO.getConnectorConfig());
+
+    return ArtifactoryStoreDelegateConfig.builder()
+        .artifactName(artifactoryStoreConfig.getArtifactName().getValue())
+        .repositoryPath(artifactoryStoreConfig.getRepositoryPath().getValue())
+        .version(artifactoryStoreConfig.getVersion().getValue())
+        .identifier(identifier)
+        .manifestType(store.getKind())
+        .connectorDTO(connectorDTO)
+        .encryptedDataDetails(encryptedDataDetails)
+        .succeedIfFileNotFound(false)
+        .build();
   }
 
   private void validateArtifactoryStoreConfig(ArtifactoryStoreConfig artifactoryStoreConfig) {
@@ -561,12 +559,12 @@ public class TerraformStepHelper {
               StoreConfig storeConfig = storeConfigWrapper.getSpec();
               GitFetchFilesConfig gitFetchFilesConfig =
                   getGitFetchFilesConfig(storeConfig, ambiance, format(TerraformStepHelper.TF_VAR_FILES, i));
-              ArtifactoryFetchFilesConfig fileFetchFilesConfig = getArtifactoryFetchFilesConfig(
-                      storeConfig, ambiance, format(TerraformStepHelper.TF_VAR_FILES, i));
+              FileStoreFetchFilesConfig fileFetchFilesConfig =
+                  getFileFactoryFetchFilesConfig(storeConfig, ambiance, format(TerraformStepHelper.TF_VAR_FILES, i));
               varFileInfo.add(RemoteTerraformVarFileInfo.builder()
-                      .gitFetchFilesConfig(gitFetchFilesConfig)
-                      .artifactoryFetchFilesConfig(fileFetchFilesConfig)
-                      .build());
+                                  .gitFetchFilesConfig(gitFetchFilesConfig)
+                                  .filestoreFetchFilesConfig(fileFetchFilesConfig)
+                                  .build());
             }
           }
         }

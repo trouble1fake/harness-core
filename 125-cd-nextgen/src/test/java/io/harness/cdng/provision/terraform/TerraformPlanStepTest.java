@@ -61,10 +61,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import lombok.Builder;
+import lombok.Data;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
@@ -95,12 +98,23 @@ public class TerraformPlanStepTest extends CategoryTest {
         .putSetupAbstractions("orgIdentifier", "test-org")
         .build();
   }
+  private enum StoreType { GIT, GITHUB, GITLAB, BITBUCKET, HTTP, S3, GCS, ARTIFACTORY }
+  @Data
+  @Builder
+  private class gitStoreConfig {
+    private String branch;
+    private FetchType fetchType;
+    private ParameterField<String> folderPath;
+    private ParameterField<String> connectoref;
+  }
+  private TerraformPlanStepParameters generateStepPlan(Ambiance ambiance, StoreType storeType) {}
   @Captor ArgumentCaptor<List<EntityDetail>> captor;
   @Test
   @Owner(developers = NAMAN_TALAYCHA)
   @Category(UnitTests.class)
   public void testValidateResources() {
     Ambiance ambiance = getAmbiance();
+
     TerraformConfigFilesWrapper configFilesWrapper = new TerraformConfigFilesWrapper();
     configFilesWrapper.setStore(StoreConfigWrapper.builder()
                                     .spec(GithubStore.builder()

@@ -5,28 +5,26 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.delegate.beans.storeconfig;
+package io.harness.delegate.task.filestore;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.delegate.task.filestore.FileStoreFetchFilesConfig;
+import io.harness.connector.ConnectorInfoDTO;
+import io.harness.delegate.beans.storeconfig.StoreDelegateConfig;
+import io.harness.security.encryption.EncryptedDataDetail;
 
-import lombok.EqualsAndHashCode;
-import lombok.Value;
+import java.util.List;
+import lombok.Data;
 import lombok.experimental.SuperBuilder;
 
-@Value
+@Data
 @SuperBuilder(toBuilder = true)
-@EqualsAndHashCode(callSuper = true)
 @OwnedBy(CDP)
-public class ArtifactoryStoreDelegateConfig extends FileStoreFetchFilesConfig {
-  String artifactName;
-  String repositoryPath;
-  String version;
-
-  @Override
-  public StoreDelegateConfigType getType() {
-    return StoreDelegateConfigType.FILESTORE;
-  }
+public abstract class FileStoreFetchFilesConfig implements StoreDelegateConfig {
+  String identifier;
+  String manifestType;
+  ConnectorInfoDTO connectorDTO;
+  List<EncryptedDataDetail> encryptedDataDetails;
+  boolean succeedIfFileNotFound;
 }
