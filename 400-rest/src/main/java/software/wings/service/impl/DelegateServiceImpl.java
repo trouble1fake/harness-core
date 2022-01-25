@@ -178,6 +178,7 @@ import io.harness.validation.SuppressValidation;
 import io.harness.version.VersionInfoManager;
 import io.harness.waiter.WaitNotifyEngine;
 
+import java.util.Base64;
 import software.wings.app.DelegateGrpcConfig;
 import software.wings.app.MainConfiguration;
 import software.wings.audit.AuditHeader;
@@ -1223,12 +1224,15 @@ public class DelegateServiceImpl implements DelegateService {
                                 .replaceFirst("^0+(?!$)", "");
 
       final boolean isCiEnabled = isCiEnabled(templateParameters);
+      final String accountSecret = getAccountSecret(templateParameters, useNgToken);
+      final String base64Secret = Base64.getEncoder().encodeToString(accountSecret.getBytes());
       ImmutableMap.Builder<String, String> params =
           ImmutableMap.<String, String>builder()
               .put("delegateDockerImage", getDelegateDockerImage(templateParameters.getAccountId()))
               .put("upgraderDockerImage", getUpgraderDockerImage(templateParameters.getAccountId()))
               .put("accountId", templateParameters.getAccountId())
-              .put("accountSecret", getAccountSecret(templateParameters, useNgToken))
+              .put("accountSecret", accountSecret)
+              .put("base64Secret", base64Secret)
               .put("hexkey", hexkey)
               .put(UPGRADE_VERSION, latestVersion)
               .put("managerHostAndPort", templateParameters.getManagerHost())

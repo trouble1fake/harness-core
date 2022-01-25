@@ -19,7 +19,7 @@ metadata:
 
 ---
 
-<@secret.accountToken accountSecret/>
+<@secret.accountToken base64Secret/>
 
 ---
 
