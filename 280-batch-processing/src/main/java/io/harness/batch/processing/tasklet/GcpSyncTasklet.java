@@ -164,8 +164,10 @@ public class GcpSyncTasklet implements Tasklet {
     Dataset dataset = bigQuery.getDataset(datasetIdFullyQualified);
     if (isEmpty(tableName)) {
       // Older way to get the tableName
+      log.info("tableName does not exists in config. Using older way");
       Page<Table> tableList = dataset.list(BigQuery.TableListOption.pageSize(1000));
       tableList.getValues().forEach(table -> {
+        log.info("found table: {}", table.getTableId());
         if (table.getTableId().getTable().contains(GCP_BILLING_EXPORT_V_1)) {
           TableId tableId1 = TableId.of(projectId, datasetId, table.getTableId().getTable());
           Table tableGranularData = bigQuery.getTable(tableId1);
