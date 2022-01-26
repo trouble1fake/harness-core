@@ -10,7 +10,7 @@ package io.harness.cdng.pipeline.executions.beans;
 import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.ngpipeline.pipeline.executions.beans.ArtifactSummary;
+import io.harness.cdng.artifact.ArtifactSummary;
 
 import java.util.List;
 import lombok.Builder;

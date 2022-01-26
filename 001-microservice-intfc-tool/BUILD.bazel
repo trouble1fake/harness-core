@@ -68,7 +68,6 @@ java_binary(
         "//874-orchestration-delay:module",
         "//876-orchestration-beans:module",
         "//878-pipeline-service-utilities:module",
-        "//878-pms-coupling:module",
         "//879-pms-sdk:module",
         "//882-pms-sdk-core:module",
         "//884-pms-commons:module",

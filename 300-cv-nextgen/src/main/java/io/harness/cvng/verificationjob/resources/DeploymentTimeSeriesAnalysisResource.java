@@ -46,11 +46,12 @@ public class DeploymentTimeSeriesAnalysisResource {
       @QueryParam("accountId") String accountId, @QueryParam("anomalousMetricsOnly") boolean anomalousMetricsOnly,
       @QueryParam("hostName") String hostName, @QueryParam("filter") String filter,
       @QueryParam("pageNumber") int pageNumber, @QueryParam("pageSize") @DefaultValue("10") int pageSize) {
-    DeploymentTimeSeriesAnalysisFilter deploymentTimeSeriesAnalysisFilter = DeploymentTimeSeriesAnalysisFilter.builder()
-                                                                                .anomalous(anomalousMetricsOnly)
-                                                                                .hostName(hostName)
-                                                                                .filter(filter)
-                                                                                .build();
+    DeploymentTimeSeriesAnalysisFilter deploymentTimeSeriesAnalysisFilter =
+        DeploymentTimeSeriesAnalysisFilter.builder()
+            .anomalousMetricsOnly(anomalousMetricsOnly)
+            .hostName(hostName)
+            .filter(filter)
+            .build();
     PageParams pageParams = PageParams.builder().page(pageNumber).size(pageSize).build();
     return new RestResponse(deploymentTimeSeriesAnalysisService.getMetrics(
         accountId, verificationJobInstanceId, deploymentTimeSeriesAnalysisFilter, pageParams));

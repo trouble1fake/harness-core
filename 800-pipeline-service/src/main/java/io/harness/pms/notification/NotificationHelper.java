@@ -68,6 +68,9 @@ public class NotificationHelper {
 
   public void sendNotification(
       Ambiance ambiance, PipelineEventType pipelineEventType, NodeExecution nodeExecution, Long updatedAt) {
+    if (!ambiance.getMetadata().getIsNotificationConfigured()) {
+      return;
+    }
     String identifier = nodeExecution != null ? AmbianceUtils.obtainStepIdentifier(nodeExecution.getAmbiance()) : "";
     String accountId = AmbianceUtils.getAccountId(ambiance);
     String orgIdentifier = AmbianceUtils.getOrgIdentifier(ambiance);
