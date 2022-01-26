@@ -8,10 +8,13 @@
 				"repository": {
 					"type": "string"
 				},
+				"repositoryPort": {
+					"type": "integer"
+				},
 				"imagePath": {
 					"type": "string"
 				},
-				"format": {
+				"repositoryFormat": {
 					"type": "string"
 				},
 				"tag": {

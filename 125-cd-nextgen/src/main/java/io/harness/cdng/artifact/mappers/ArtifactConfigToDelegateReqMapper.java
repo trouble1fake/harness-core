@@ -82,8 +82,9 @@ public class ArtifactConfigToDelegateReqMapper {
       tagRegex = "\\*";
     }
     return ArtifactDelegateRequestUtils.getNexusArtifactDelegateRequest(artifactConfig.getRepository().getValue(),
-        artifactConfig.getImagePath().getValue(), artifactConfig.getRepositoryFormat().getValue(), tag, tagRegex, null,
-        connectorRef, nexusConnectorDTO, encryptedDataDetails, ArtifactSourceType.NEXUS_REGISTRY);
+        artifactConfig.getRepositoryPort().getValue(), artifactConfig.getImagePath().getValue(),
+        artifactConfig.getRepositoryFormat().getValue(), tag, tagRegex, null, connectorRef, nexusConnectorDTO,
+        encryptedDataDetails, ArtifactSourceType.NEXUS_REGISTRY);
   }
 
   public ArtifactoryArtifactDelegateRequest getArtifactoryArtifactDelegateRequest(

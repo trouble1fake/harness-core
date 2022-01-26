@@ -15,11 +15,13 @@ import static io.harness.nexus.NexusHelper.isSuccessful;
 import static java.util.Collections.emptyMap;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.artifact.ArtifactMetadataKeys;
 import io.harness.artifacts.beans.BuildDetailsInternal;
 import io.harness.delegate.beans.artifact.ArtifactFileMetadataInternal;
 import io.harness.exception.InvalidArtifactServerException;
 import io.harness.exception.NestedExceptionUtils;
 import io.harness.exception.WingsException;
+import io.harness.network.Http;
 import io.harness.nexus.model.Asset;
 import io.harness.nexus.model.Nexus3ComponentResponse;
 import io.harness.nexus.model.Nexus3Repository;
@@ -760,7 +762,7 @@ public class NexusThreeClientImpl {
   }
 
   public List<BuildDetailsInternal> getArtifactsVersions(
-      NexusRequest nexusConfig, String repoName, String imageName, String repoFormat) throws IOException {
+      NexusRequest nexusConfig, String repoName, Integer port, String imageName, String repoFormat) throws IOException {
     log.info("Retrieving artifacts versions");
     NexusThreeRestClient nexusThreeRestClient = getNexusThreeClient(nexusConfig);
     Response<Nexus3ComponentResponse> response;
@@ -899,8 +901,8 @@ public class NexusThreeClientImpl {
     return StringUtils.isNotBlank(imagePath) ? imagePath : defaultImagePath;
   }
 
-  public List<BuildDetailsInternal> getBuildDetails(NexusRequest nexusConfig, String repository, String imageName,
-      String repositoryFormat, String tag) throws IOException {
+  public List<BuildDetailsInternal> getBuildDetails(NexusRequest nexusConfig, String repository, Integer port,
+      String imageName, String repositoryFormat, String tag) throws IOException {
     log.info("Retrieving artifact details");
     NexusThreeRestClient nexusThreeRestClient = getNexusThreeClient(nexusConfig);
     Response<Nexus3ComponentResponse> response;
@@ -927,8 +929,13 @@ public class NexusThreeClientImpl {
               imagePath = getArtifactImagePath(artifactFileMetadataInternals, null, null);
             }
 
+            String domainName = Http.getDomainWithPort(nexusConfig.getNexusUrl());
+            Map<String, String> metadata = new HashMap<>();
+            metadata.put(ArtifactMetadataKeys.IMAGE, domainName + ":" + port + "/" + imageName + ":" + tag);
+
             BuildDetailsInternal buildDetailsInternal = BuildDetailsInternal.builder()
                                                             .number(component.getVersion())
+                                                            .metadata(metadata)
                                                             .buildUrl(versionDownloadUrl)
                                                             .artifactPath(imagePath)
                                                             .build();

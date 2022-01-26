@@ -71,12 +71,13 @@ public class ArtifactDelegateRequestUtils {
         .sourceType(sourceType)
         .build();
   }
-  public NexusArtifactDelegateRequest getNexusArtifactDelegateRequest(String repositoryName, String imagePath,
-      String repositoryFormat, String tag, String tagRegex, List<String> tagsList, String connectorRef,
-      NexusConnectorDTO nexusConnectorDTO, List<EncryptedDataDetail> encryptedDataDetails,
+  public NexusArtifactDelegateRequest getNexusArtifactDelegateRequest(String repositoryName, Integer repositoryPort,
+      String imagePath, String repositoryFormat, String tag, String tagRegex, List<String> tagsList,
+      String connectorRef, NexusConnectorDTO nexusConnectorDTO, List<EncryptedDataDetail> encryptedDataDetails,
       ArtifactSourceType sourceType) {
     return NexusArtifactDelegateRequest.builder()
         .repositoryName(repositoryName)
+        .repositoryPort(repositoryPort)
         .imagePath(trim(imagePath))
         .repositoryFormat(repositoryFormat)
         .tag(trim(tag))

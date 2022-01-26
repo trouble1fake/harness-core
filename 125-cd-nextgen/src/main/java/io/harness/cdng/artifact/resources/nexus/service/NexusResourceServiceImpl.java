@@ -78,15 +78,16 @@ public class NexusResourceServiceImpl implements NexusResourceService {
   }
 
   @Override
-  public NexusResponseDTO getBuildDetails(IdentifierRef nexusConnectorRef, String repositoryName, String imagePath,
-      String repositoryFormat, String orgIdentifier, String projectIdentifier) {
+  public NexusResponseDTO getBuildDetails(IdentifierRef nexusConnectorRef, String repositoryName,
+      Integer repositoryPort, String imagePath, String repositoryFormat, String orgIdentifier,
+      String projectIdentifier) {
     NexusConnectorDTO connector = getConnector(nexusConnectorRef);
     BaseNGAccess baseNGAccess =
         getBaseNGAccess(nexusConnectorRef.getAccountIdentifier(), orgIdentifier, projectIdentifier);
     List<EncryptedDataDetail> encryptionDetails = getEncryptionDetails(connector, baseNGAccess);
     NexusArtifactDelegateRequest nexusRequest =
-        ArtifactDelegateRequestUtils.getNexusArtifactDelegateRequest(repositoryName, imagePath, repositoryFormat, null,
-            null, null, null, connector, encryptionDetails, ArtifactSourceType.NEXUS_REGISTRY);
+        ArtifactDelegateRequestUtils.getNexusArtifactDelegateRequest(repositoryName, repositoryPort, imagePath,
+            repositoryFormat, null, null, null, null, connector, encryptionDetails, ArtifactSourceType.NEXUS_REGISTRY);
     try {
       ArtifactTaskExecutionResponse artifactTaskExecutionResponse = executeSyncTask(nexusRequest,
           ArtifactTaskType.GET_BUILDS, baseNGAccess, "Nexus Artifact Get Builds task failure due to error");
@@ -102,15 +103,17 @@ public class NexusResourceServiceImpl implements NexusResourceService {
   }
 
   @Override
-  public NexusResponseDTO getLabels(IdentifierRef nexusConnectorRef, String repositoryName, String imagePath,
-      String repositoryFormat, NexusRequestDTO nexusRequestDTO, String orgIdentifier, String projectIdentifier) {
+  public NexusResponseDTO getLabels(IdentifierRef nexusConnectorRef, String repositoryName, Integer repositoryPort,
+      String imagePath, String repositoryFormat, NexusRequestDTO nexusRequestDTO, String orgIdentifier,
+      String projectIdentifier) {
     NexusConnectorDTO connector = getConnector(nexusConnectorRef);
     BaseNGAccess baseNGAccess =
         getBaseNGAccess(nexusConnectorRef.getAccountIdentifier(), orgIdentifier, projectIdentifier);
     List<EncryptedDataDetail> encryptionDetails = getEncryptionDetails(connector, baseNGAccess);
-    NexusArtifactDelegateRequest nexusRequest = ArtifactDelegateRequestUtils.getNexusArtifactDelegateRequest(
-        repositoryName, imagePath, repositoryFormat, nexusRequestDTO.getTag(), nexusRequestDTO.getTagRegex(),
-        nexusRequestDTO.getTagsList(), null, connector, encryptionDetails, ArtifactSourceType.NEXUS_REGISTRY);
+    NexusArtifactDelegateRequest nexusRequest =
+        ArtifactDelegateRequestUtils.getNexusArtifactDelegateRequest(repositoryName, repositoryPort, imagePath,
+            repositoryFormat, nexusRequestDTO.getTag(), nexusRequestDTO.getTagRegex(), nexusRequestDTO.getTagsList(),
+            null, connector, encryptionDetails, ArtifactSourceType.NEXUS_REGISTRY);
     ArtifactTaskExecutionResponse artifactTaskExecutionResponse = executeSyncTask(
         nexusRequest, ArtifactTaskType.GET_LABELS, baseNGAccess, "Nexus Artifact Get labels task failure due to error");
     return getNexusResponseDTO(artifactTaskExecutionResponse);
@@ -118,15 +121,16 @@ public class NexusResourceServiceImpl implements NexusResourceService {
 
   @Override
   public NexusBuildDetailsDTO getSuccessfulBuild(IdentifierRef nexusConnectorRef, String repositoryName,
-      String imagePath, String repositoryFormat, NexusRequestDTO nexusRequestDTO, String orgIdentifier,
-      String projectIdentifier) {
+      Integer repositoryPort, String imagePath, String repositoryFormat, NexusRequestDTO nexusRequestDTO,
+      String orgIdentifier, String projectIdentifier) {
     NexusConnectorDTO connector = getConnector(nexusConnectorRef);
     BaseNGAccess baseNGAccess =
         getBaseNGAccess(nexusConnectorRef.getAccountIdentifier(), orgIdentifier, projectIdentifier);
     List<EncryptedDataDetail> encryptionDetails = getEncryptionDetails(connector, baseNGAccess);
-    NexusArtifactDelegateRequest nexusRequest = ArtifactDelegateRequestUtils.getNexusArtifactDelegateRequest(
-        repositoryName, imagePath, repositoryFormat, nexusRequestDTO.getTag(), nexusRequestDTO.getTagRegex(),
-        nexusRequestDTO.getTagsList(), null, connector, encryptionDetails, ArtifactSourceType.NEXUS_REGISTRY);
+    NexusArtifactDelegateRequest nexusRequest =
+        ArtifactDelegateRequestUtils.getNexusArtifactDelegateRequest(repositoryName, repositoryPort, imagePath,
+            repositoryFormat, nexusRequestDTO.getTag(), nexusRequestDTO.getTagRegex(), nexusRequestDTO.getTagsList(),
+            null, connector, encryptionDetails, ArtifactSourceType.NEXUS_REGISTRY);
     ArtifactTaskExecutionResponse artifactTaskExecutionResponse =
         executeSyncTask(nexusRequest, ArtifactTaskType.GET_LAST_SUCCESSFUL_BUILD, baseNGAccess,
             "Nexus Get last successful build task failure due to error");
@@ -144,8 +148,8 @@ public class NexusResourceServiceImpl implements NexusResourceService {
     BaseNGAccess baseNGAccess =
         getBaseNGAccess(nexusConnectorRef.getAccountIdentifier(), orgIdentifier, projectIdentifier);
     List<EncryptedDataDetail> encryptionDetails = getEncryptionDetails(connector, baseNGAccess);
-    NexusArtifactDelegateRequest nexusRequest = ArtifactDelegateRequestUtils.getNexusArtifactDelegateRequest(
-        null, null, null, null, null, null, null, connector, encryptionDetails, ArtifactSourceType.NEXUS_REGISTRY);
+    NexusArtifactDelegateRequest nexusRequest = ArtifactDelegateRequestUtils.getNexusArtifactDelegateRequest(null, null,
+        null, null, null, null, null, null, connector, encryptionDetails, ArtifactSourceType.NEXUS_REGISTRY);
     ArtifactTaskExecutionResponse artifactTaskExecutionResponse =
         executeSyncTask(nexusRequest, ArtifactTaskType.VALIDATE_ARTIFACT_SERVER, baseNGAccess,
             "Nexus validate artifact server task failure due to error");
@@ -153,15 +157,15 @@ public class NexusResourceServiceImpl implements NexusResourceService {
   }
 
   @Override
-  public boolean validateArtifactSource(String repositoryName, String imagePath, String repositoryFormat,
-      IdentifierRef nexusConnectorRef, String orgIdentifier, String projectIdentifier) {
+  public boolean validateArtifactSource(String repositoryName, Integer repositoryPort, String imagePath,
+      String repositoryFormat, IdentifierRef nexusConnectorRef, String orgIdentifier, String projectIdentifier) {
     NexusConnectorDTO connector = getConnector(nexusConnectorRef);
     BaseNGAccess baseNGAccess =
         getBaseNGAccess(nexusConnectorRef.getAccountIdentifier(), orgIdentifier, projectIdentifier);
     List<EncryptedDataDetail> encryptionDetails = getEncryptionDetails(connector, baseNGAccess);
     NexusArtifactDelegateRequest nexusRequest =
-        ArtifactDelegateRequestUtils.getNexusArtifactDelegateRequest(repositoryName, imagePath, repositoryFormat, null,
-            null, null, null, connector, encryptionDetails, ArtifactSourceType.NEXUS_REGISTRY);
+        ArtifactDelegateRequestUtils.getNexusArtifactDelegateRequest(repositoryName, repositoryPort, imagePath,
+            repositoryFormat, null, null, null, null, connector, encryptionDetails, ArtifactSourceType.NEXUS_REGISTRY);
     ArtifactTaskExecutionResponse artifactTaskExecutionResponse =
         executeSyncTask(nexusRequest, ArtifactTaskType.VALIDATE_ARTIFACT_SOURCE, baseNGAccess,
             "Nexus validate artifact source task failure due to error");

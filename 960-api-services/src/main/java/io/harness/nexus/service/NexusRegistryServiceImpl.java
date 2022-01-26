@@ -21,7 +21,6 @@ import io.harness.exception.ArtifactServerException;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.InvalidArtifactServerException;
 import io.harness.exception.NestedExceptionUtils;
-import io.harness.exception.WingsException;
 import io.harness.exception.exceptionmanager.exceptionhandler.ExceptionMetadataKeys;
 import io.harness.exception.runtime.NexusRegistryInvalidTagRuntimeRuntimeException;
 import io.harness.exception.runtime.NexusServerRuntimeException;
@@ -43,22 +42,15 @@ import lombok.extern.slf4j.Slf4j;
 @Singleton
 @Slf4j
 public class NexusRegistryServiceImpl implements NexusRegistryService {
-  //  public static final String BEARER = "Bearer ";
-  //  @Inject private DockerPublicRegistryProcessor dockerPublicRegistryProcessor;
-  //  @Inject private DockerRegistryUtils dockerRegistryUtils;
-  //  @Inject private DockerRestClientFactory dockerRestClientFactory;
-  //  private static final String AUTHENTICATE_HEADER = "Www-Authenticate";
   private static final int MAX_NUMBER_OF_BUILDS = 250;
   @Inject NexusClientImpl nexusClient;
 
-  //  private ExpiringMap<String, String> cachedBearerTokens = ExpiringMap.builder().variableExpiration().build();
-
   @Override
-  public List<BuildDetailsInternal> getBuilds(
-      NexusRequest nexusConfig, String repositoryName, String imageName, String repoFormat, int maxNumberOfBuilds) {
+  public List<BuildDetailsInternal> getBuilds(NexusRequest nexusConfig, String repositoryName, Integer port,
+      String imageName, String repoFormat, int maxNumberOfBuilds) {
     List<BuildDetailsInternal> buildDetails;
     try {
-      buildDetails = nexusClient.getArtifactsVersions(nexusConfig, repositoryName, imageName, repoFormat);
+      buildDetails = nexusClient.getArtifactsVersions(nexusConfig, repositoryName, port, imageName, repoFormat);
     } catch (NexusServerRuntimeException ex) {
       throw ex;
     } catch (Exception e) {
@@ -71,11 +63,11 @@ public class NexusRegistryServiceImpl implements NexusRegistryService {
     return buildDetails.stream().sorted(new BuildDetailsInternalComparatorAscending()).collect(toList());
   }
 
-  private List<BuildDetailsInternal> getBuildDetails(NexusRequest nexusConfig, String repository, String imageName,
-      String repositoryFormat, String tag) throws IOException {
+  private List<BuildDetailsInternal> getBuildDetails(NexusRequest nexusConfig, String repository, Integer port,
+      String imageName, String repositoryFormat, String tag) throws IOException {
     List<BuildDetailsInternal> buildDetails;
     try {
-      buildDetails = nexusClient.getBuildDetails(nexusConfig, repository, imageName, repositoryFormat, tag);
+      buildDetails = nexusClient.getBuildDetails(nexusConfig, repository, port, imageName, repositoryFormat, tag);
     } catch (NexusServerRuntimeException ex) {
       throw ex;
     } catch (Exception e) {
@@ -203,8 +195,8 @@ public class NexusRegistryServiceImpl implements NexusRegistryService {
   //  }
 
   @Override
-  public List<Map<String, String>> getLabels(
-      NexusRequest nexusConfig, String repository, String imageName, String repositoryFormat, List<String> buildNos) {
+  public List<Map<String, String>> getLabels(NexusRequest nexusConfig, String repository, Integer port,
+      String imageName, String repositoryFormat, List<String> buildNos) {
     //    if (!nexusConfig.isHasCredentials()) {
     //      return dockerPublicRegistryProcessor.getLabels(dockerConfig, imageName, buildNos);
     //    }
@@ -219,15 +211,15 @@ public class NexusRegistryServiceImpl implements NexusRegistryService {
 
   @Override
   public BuildDetailsInternal getLastSuccessfulBuild(
-      NexusRequest nexusConfig, String repository, String imageName, String repositoryFormat) {
+      NexusRequest nexusConfig, String repository, Integer port, String imageName, String repositoryFormat) {
     return null;
   }
 
   @Override
-  public BuildDetailsInternal getLastSuccessfulBuildFromRegex(
-      NexusRequest nexusConfig, String repository, String imageName, String repositoryFormat, String tagRegex) {
+  public BuildDetailsInternal getLastSuccessfulBuildFromRegex(NexusRequest nexusConfig, String repository, Integer port,
+      String imageName, String repositoryFormat, String tagRegex) {
     List<BuildDetailsInternal> builds =
-        getBuilds(nexusConfig, repository, imageName, repositoryFormat, MAX_NUMBER_OF_BUILDS);
+        getBuilds(nexusConfig, repository, port, imageName, repositoryFormat, MAX_NUMBER_OF_BUILDS);
     builds = builds.stream()
                  .filter(build -> new RegexFunctor().match(tagRegex, build.getNumber()))
                  .sorted(new BuildDetailsInternalComparatorDescending())
@@ -252,9 +244,9 @@ public class NexusRegistryServiceImpl implements NexusRegistryService {
   //  }
 
   @Override
-  public BuildDetailsInternal verifyBuildNumber(
-      NexusRequest nexusConfig, String repository, String imageName, String repositoryFormat, String tag) {
-    return getBuildNumber(nexusConfig, repository, imageName, repositoryFormat, tag);
+  public BuildDetailsInternal verifyBuildNumber(NexusRequest nexusConfig, String repository, Integer port,
+      String imageName, String repositoryFormat, String tag) {
+    return getBuildNumber(nexusConfig, repository, port, imageName, repositoryFormat, tag);
   }
 
   //  private boolean checkImageName(DockerInternalConfig dockerConfig, String imageName) {
@@ -280,10 +272,11 @@ public class NexusRegistryServiceImpl implements NexusRegistryService {
   //    return true;
   //  }
 
-  private BuildDetailsInternal getBuildNumber(
-      NexusRequest nexusConfig, String repository, String imageName, String repositoryFormat, String tag) {
+  private BuildDetailsInternal getBuildNumber(NexusRequest nexusConfig, String repository, Integer port,
+      String imageName, String repositoryFormat, String tag) {
     try {
-      List<BuildDetailsInternal> builds = getBuildDetails(nexusConfig, repository, imageName, repositoryFormat, tag);
+      List<BuildDetailsInternal> builds =
+          getBuildDetails(nexusConfig, repository, port, imageName, repositoryFormat, tag);
       builds = builds.stream().filter(build -> build.getNumber().equals(tag)).collect(Collectors.toList());
 
       if (builds.size() != 1) {

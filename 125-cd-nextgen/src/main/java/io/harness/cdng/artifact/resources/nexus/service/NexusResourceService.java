@@ -13,18 +13,20 @@ import io.harness.cdng.artifact.resources.nexus.dtos.NexusRequestDTO;
 import io.harness.cdng.artifact.resources.nexus.dtos.NexusResponseDTO;
 
 public interface NexusResourceService {
-  NexusResponseDTO getBuildDetails(IdentifierRef nexusConnectorRef, String repositoryName, String imagePath,
-      String repositoryFormat, String orgIdentifier, String projectIdentifier);
+  NexusResponseDTO getBuildDetails(IdentifierRef nexusConnectorRef, String repositoryName, Integer repositoryPort,
+      String imagePath, String repositoryFormat, String orgIdentifier, String projectIdentifier);
 
-  NexusResponseDTO getLabels(IdentifierRef nexusConnectorRef, String repositoryName, String imagePath,
-      String repositoryFormat, NexusRequestDTO nexusRequestDTO, String orgIdentifier, String projectIdentifier);
+  NexusResponseDTO getLabels(IdentifierRef nexusConnectorRef, String repositoryName, Integer repositoryPort,
+      String imagePath, String repositoryFormat, NexusRequestDTO nexusRequestDTO, String orgIdentifier,
+      String projectIdentifier);
 
-  NexusBuildDetailsDTO getSuccessfulBuild(IdentifierRef nexusConnectorRef, String repositoryName, String imagePath,
-      String repositoryFormat, NexusRequestDTO nexusRequestDTO, String orgIdentifier, String projectIdentifier);
+  NexusBuildDetailsDTO getSuccessfulBuild(IdentifierRef nexusConnectorRef, String repositoryName,
+      Integer repositoryPort, String imagePath, String repositoryFormat, NexusRequestDTO nexusRequestDTO,
+      String orgIdentifier, String projectIdentifier);
 
   boolean validateArtifactServer(IdentifierRef nexusConnectorRef, String orgIdentifier, String projectIdentifier);
 
   // In case of docker source here is docker image.
-  boolean validateArtifactSource(String repositoryName, String imagePath, String repositoryFormat,
-      IdentifierRef nexusConnectorRef, String orgIdentifier, String projectIdentifier);
+  boolean validateArtifactSource(String repositoryName, Integer repositoryPort, String imagePath,
+      String repositoryFormat, IdentifierRef nexusConnectorRef, String orgIdentifier, String projectIdentifier);
 }

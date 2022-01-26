@@ -67,11 +67,19 @@ public class NexusRegistryArtifactConfig implements ArtifactConfig, Visitable, W
    */
   @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) @Wither ParameterField<String> imagePath;
   /**
-   * Repo format .
+   * Repo format.
    */
-  @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH, hidden = true, required = false)
+  @NotNull
+  @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
   @Wither
   ParameterField<String> repositoryFormat;
+  /**
+   * Repo port.
+   */
+  @NotNull
+  @ApiModelProperty(dataType = SwaggerConstants.INTEGER_CLASSPATH)
+  @Wither
+  ParameterField<Integer> repositoryPort;
   /**
    * Tag refers to exact tag number.
    */

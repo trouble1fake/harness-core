@@ -9,7 +9,6 @@ package io.harness.polling.mapper.artifact;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.pms.yaml.ParameterField;
 import io.harness.polling.bean.PollingInfo;
 import io.harness.polling.bean.artifact.NexusRegistryArtifactInfo;
 import io.harness.polling.contracts.PollingPayloadData;

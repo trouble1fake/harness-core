@@ -9,12 +9,8 @@ package io.harness.delegate.task.artifacts.nexus;
 
 import io.harness.artifacts.beans.BuildDetailsInternal;
 import io.harness.artifacts.comparator.BuildDetailsInternalComparatorDescending;
-import io.harness.artifacts.docker.service.DockerRegistryService;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.task.artifacts.DelegateArtifactTaskHandler;
-import io.harness.delegate.task.artifacts.docker.DockerArtifactDelegateRequest;
-import io.harness.delegate.task.artifacts.docker.DockerArtifactDelegateResponse;
-import io.harness.delegate.task.artifacts.mappers.DockerRequestResponseMapper;
 import io.harness.delegate.task.artifacts.mappers.NexusRequestResponseMapper;
 import io.harness.delegate.task.artifacts.response.ArtifactTaskExecutionResponse;
 import io.harness.nexus.service.NexusRegistryService;
@@ -24,7 +20,6 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -41,11 +36,13 @@ public class NexusArtifactTaskHandler extends DelegateArtifactTaskHandler<NexusA
     if (isRegex(attributesRequest)) {
       lastSuccessfulBuild = nexusRegistryService.getLastSuccessfulBuildFromRegex(
           NexusRequestResponseMapper.toNexusInternalConfig(attributesRequest), attributesRequest.getRepositoryName(),
-          attributesRequest.getImagePath(), attributesRequest.getRepositoryFormat(), attributesRequest.getTagRegex());
+          attributesRequest.getRepositoryPort(), attributesRequest.getImagePath(),
+          attributesRequest.getRepositoryFormat(), attributesRequest.getTagRegex());
     } else {
-      lastSuccessfulBuild = nexusRegistryService.verifyBuildNumber(
-          NexusRequestResponseMapper.toNexusInternalConfig(attributesRequest), attributesRequest.getRepositoryName(),
-          attributesRequest.getImagePath(), attributesRequest.getRepositoryFormat(), attributesRequest.getTag());
+      lastSuccessfulBuild =
+          nexusRegistryService.verifyBuildNumber(NexusRequestResponseMapper.toNexusInternalConfig(attributesRequest),
+              attributesRequest.getRepositoryName(), attributesRequest.getRepositoryPort(),
+              attributesRequest.getImagePath(), attributesRequest.getRepositoryFormat(), attributesRequest.getTag());
     }
     NexusArtifactDelegateResponse nexusArtifactDelegateResponse =
         NexusRequestResponseMapper.toNexusResponse(lastSuccessfulBuild, attributesRequest);
@@ -54,10 +51,10 @@ public class NexusArtifactTaskHandler extends DelegateArtifactTaskHandler<NexusA
 
   @Override
   public ArtifactTaskExecutionResponse getBuilds(NexusArtifactDelegateRequest attributesRequest) {
-    List<BuildDetailsInternal> builds =
-        nexusRegistryService.getBuilds(NexusRequestResponseMapper.toNexusInternalConfig(attributesRequest),
-            attributesRequest.getRepositoryName(), attributesRequest.getImagePath(),
-            attributesRequest.getRepositoryFormat(), NexusRegistryService.MAX_NO_OF_TAGS_PER_IMAGE);
+    List<BuildDetailsInternal> builds = nexusRegistryService.getBuilds(
+        NexusRequestResponseMapper.toNexusInternalConfig(attributesRequest), attributesRequest.getRepositoryName(),
+        attributesRequest.getRepositoryPort(), attributesRequest.getImagePath(),
+        attributesRequest.getRepositoryFormat(), NexusRegistryService.MAX_NO_OF_TAGS_PER_IMAGE);
     List<NexusArtifactDelegateResponse> nexusArtifactDelegateResponseList =
         builds.stream()
             .sorted(new BuildDetailsInternalComparatorDescending())

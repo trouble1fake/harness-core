@@ -50,10 +50,10 @@ public class ArtifactoryArtifactTaskHandler extends DelegateArtifactTaskHandler<
   //
   @Override
   public ArtifactTaskExecutionResponse getBuilds(NexusArtifactDelegateRequest attributesRequest) {
-    List<BuildDetailsInternal> builds =
-        nexusRegistryService.getBuilds(NexusRequestResponseMapper.toNexusInternalConfig(attributesRequest),
-            attributesRequest.getRepositoryName(), attributesRequest.getImagePath(),
-            attributesRequest.getRepositoryFormat(), NexusRegistryService.MAX_NO_OF_TAGS_PER_IMAGE);
+    List<BuildDetailsInternal> builds = nexusRegistryService.getBuilds(
+        NexusRequestResponseMapper.toNexusInternalConfig(attributesRequest), attributesRequest.getRepositoryName(),
+        attributesRequest.getRepositoryPort(), attributesRequest.getImagePath(),
+        attributesRequest.getRepositoryFormat(), NexusRegistryService.MAX_NO_OF_TAGS_PER_IMAGE);
     List<NexusArtifactDelegateResponse> nexusArtifactDelegateResponseList =
         builds.stream()
             .sorted(new BuildDetailsInternalComparatorDescending())

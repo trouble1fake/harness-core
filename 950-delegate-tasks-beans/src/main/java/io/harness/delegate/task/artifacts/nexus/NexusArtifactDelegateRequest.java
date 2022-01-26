@@ -36,6 +36,8 @@ import lombok.Value;
 public class NexusArtifactDelegateRequest implements ArtifactSourceDelegateRequest {
   /** Nexus repo name. */
   String repositoryName;
+
+  Integer repositoryPort;
   /** Images in repos need to be referenced via a path. */
   String imagePath;
   /** Nexus repository format type. */

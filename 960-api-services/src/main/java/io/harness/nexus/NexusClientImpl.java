@@ -110,8 +110,8 @@ public class NexusClientImpl {
     }
   }
 
-  public List<BuildDetailsInternal> getArtifactsVersions(
-      NexusRequest nexusConfig, String repositoryName, String imageName, String repoFormat) throws IOException {
+  public List<BuildDetailsInternal> getArtifactsVersions(NexusRequest nexusConfig, String repositoryName, Integer port,
+      String imageName, String repoFormat) throws IOException {
     boolean isNexusTwo = nexusConfig.getVersion() == null || nexusConfig.getVersion().equalsIgnoreCase("2.x");
 
     if (isNexusTwo) {
@@ -119,12 +119,12 @@ public class NexusClientImpl {
           "The version for the connector is probably 3.x and not 2.x",
           new InvalidArtifactServerException("Nexus 2.x does not support Nexus artifact type", USER));
     } else {
-      return nexusThreeService.getArtifactsVersions(nexusConfig, repositoryName, imageName, repoFormat);
+      return nexusThreeService.getArtifactsVersions(nexusConfig, repositoryName, port, imageName, repoFormat);
     }
   }
 
-  public List<BuildDetailsInternal> getBuildDetails(NexusRequest nexusConfig, String repository, String imageName,
-      String repositoryFormat, String tag) throws IOException {
+  public List<BuildDetailsInternal> getBuildDetails(NexusRequest nexusConfig, String repository, Integer port,
+      String imageName, String repositoryFormat, String tag) throws IOException {
     boolean isNexusTwo = nexusConfig.getVersion() == null || nexusConfig.getVersion().equalsIgnoreCase("2.x");
 
     if (isNexusTwo) {
@@ -132,7 +132,7 @@ public class NexusClientImpl {
           "The version for the connector is probably 3.x and not 2.x",
           new InvalidArtifactServerException("Nexus 2.x does not support Nexus artifact type", USER));
     } else {
-      return nexusThreeService.getBuildDetails(nexusConfig, repository, imageName, repositoryFormat, tag);
+      return nexusThreeService.getBuildDetails(nexusConfig, repository, port, imageName, repositoryFormat, tag);
     }
   }
 }

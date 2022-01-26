@@ -19,8 +19,8 @@ message PollingPayloadData {
     S3HelmPayload s3HelmPayload = 6;
     DockerHubPayload dockerHubPayload = 7;
     GcrPayload gcrPayload = 8;
-    NexusRegistryPayload nexusRegistryPayload= 9;
-    ArtifactoryRegistryPayload artifactoryRegistryPayload= 10;
+    NexusRegistryPayload nexusRegistryPayload = 9;
+    ArtifactoryRegistryPayload artifactoryRegistryPayload = 10;
   }
 }
 

@@ -28,8 +28,8 @@ public interface NexusRegistryService {
    * @param maxNumberOfBuilds the max number of builds
    * @return the builds
    */
-  List<BuildDetailsInternal> getBuilds(
-      NexusRequest nexusConfig, String repositoryName, String imageName, String repoFormat, int maxNumberOfBuilds);
+  List<BuildDetailsInternal> getBuilds(NexusRequest nexusConfig, String repositoryName, Integer port, String imageName,
+      String repoFormat, int maxNumberOfBuilds);
 
   /**
    * Gets labels.
@@ -39,8 +39,8 @@ public interface NexusRegistryService {
    * @param tags         the image tags to find labels of
    * @return the builds
    */
-  List<Map<String, String>> getLabels(
-      NexusRequest nexusConfig, String repository, String imageName, String repositoryFormat, List<String> tags);
+  List<Map<String, String>> getLabels(NexusRequest nexusConfig, String repository, Integer port, String imageName,
+      String repositoryFormat, List<String> tags);
 
   /**
    * Gets last successful build.
@@ -50,7 +50,7 @@ public interface NexusRegistryService {
    * @return the last successful build
    */
   BuildDetailsInternal getLastSuccessfulBuild(
-      NexusRequest nexusConfig, String repository, String imageName, String repositoryFormat);
+      NexusRequest nexusConfig, String repository, Integer port, String imageName, String repositoryFormat);
 
   /**
    * Gets the last successful build with input as tag regex.
@@ -59,8 +59,8 @@ public interface NexusRegistryService {
    * @param tagRegex tag regex
    * @return the last successful build
    */
-  BuildDetailsInternal getLastSuccessfulBuildFromRegex(
-      NexusRequest nexusConfig, String repository, String imageName, String repositoryFormat, String tagRegex);
+  BuildDetailsInternal getLastSuccessfulBuildFromRegex(NexusRequest nexusConfig, String repository, Integer port,
+      String imageName, String repositoryFormat, String tagRegex);
 
   //  /**
   //   * Validates the Image
@@ -75,7 +75,7 @@ public interface NexusRegistryService {
    * @param imageName the image name
    */
   BuildDetailsInternal verifyBuildNumber(
-      NexusRequest nexusConfig, String repository, String imageName, String repositoryFormat, String tag);
+      NexusRequest nexusConfig, String repository, Integer port, String imageName, String repositoryFormat, String tag);
 
   //  /**
   //   * Validate the credentials
