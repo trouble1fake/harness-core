@@ -9,6 +9,8 @@ package io.harness.gitsync.utils;
 
 import static io.harness.data.structure.HarnessStringUtils.emptyIfNull;
 
+import static org.apache.commons.lang3.StringUtils.isBlank;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.InvalidRequestException;
@@ -25,8 +27,18 @@ public class GitSyncSdkUtils {
       throw new InvalidRequestException(String.format(
           "The path %s doesn't contain the .harness folder, thus this file won't be processed", completeFilePath));
     }
-    String folderPath = pathSplited[0] + GitSyncConstants.FOLDER_PATH;
+
+    String folderPath = getGitFolderPath(pathSplited[0]);
     String filePath = pathSplited[1];
     return GitEntityFilePath.builder().rootFolder(folderPath).filePath(filePath).build();
+  }
+
+  private String getGitFolderPath(String folderPath) {
+    String prefix = "";
+    if (isBlank(folderPath) || folderPath.charAt(0) != '/') {
+      prefix = "/";
+    }
+
+    return prefix + folderPath + GitSyncConstants.FOLDER_PATH;
   }
 }

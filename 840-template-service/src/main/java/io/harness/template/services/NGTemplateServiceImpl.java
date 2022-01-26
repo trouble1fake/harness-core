@@ -559,7 +559,8 @@ public class NGTemplateServiceImpl implements NGTemplateService {
     Update update = new Update()
                         .set(TemplateEntityKeys.filePath, gitEntityFilePath.getFilePath())
                         .set(TemplateEntityKeys.rootFolder, gitEntityFilePath.getRootFolder());
-    return templateRepository.update(criteria, update);
+    return templateRepository.update(templateEntity.getAccountId(), templateEntity.getOrgIdentifier(),
+        templateEntity.getProjectIdentifier(), criteria, update);
   }
 
   private void assureThatTheProjectAndOrgExists(String accountId, String orgId, String projectId) {

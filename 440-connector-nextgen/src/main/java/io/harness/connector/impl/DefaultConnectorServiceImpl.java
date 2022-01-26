@@ -546,7 +546,9 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
                         .set(ConnectorKeys.filePath, gitEntityFilePath.getFilePath())
                         .set(ConnectorKeys.rootFolder, gitEntityFilePath.getRootFolder());
     return getResponse(accountIdentifier, connectorDTO.getConnectorInfo().getOrgIdentifier(),
-        connectorDTO.getConnectorInfo().getProjectIdentifier(), connectorRepository.update(criteria, update));
+        connectorDTO.getConnectorInfo().getProjectIdentifier(),
+        connectorRepository.update(accountIdentifier, connectorDTO.getConnectorInfo().getOrgIdentifier(),
+            connectorDTO.getConnectorInfo().getProjectIdentifier(), criteria, update));
   }
 
   private void deleteTheExistingReferences(

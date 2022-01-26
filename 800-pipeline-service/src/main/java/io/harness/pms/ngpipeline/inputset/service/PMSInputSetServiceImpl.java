@@ -278,6 +278,7 @@ public class PMSInputSetServiceImpl implements PMSInputSetService {
     Update update = new Update()
                         .set(InputSetEntityKeys.filePath, gitEntityFilePath.getFilePath())
                         .set(InputSetEntityKeys.rootFolder, gitEntityFilePath.getRootFolder());
-    return inputSetRepository.update(criteria, update);
+    return inputSetRepository.update(inputSetEntity.getAccountId(), inputSetEntity.getOrgIdentifier(),
+        inputSetEntity.getProjectIdentifier(), criteria, update);
   }
 }
