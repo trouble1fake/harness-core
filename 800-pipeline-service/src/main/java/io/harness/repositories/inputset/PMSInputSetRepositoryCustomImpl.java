@@ -148,6 +148,24 @@ public class PMSInputSetRepositoryCustomImpl implements PMSInputSetRepositoryCus
   }
 
   @Override
+  public InputSetEntity update(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, Criteria criteria, Update update) {
+    Criteria gitSyncCriteria = gitAwarePersistence.getCriteriaWithGitSync(
+        projectIdentifier, orgIdentifier, accountIdentifier, InputSetEntity.class);
+    if (gitSyncCriteria != null) {
+      criteria = new Criteria().andOperator(criteria, gitSyncCriteria);
+    }
+
+    Query query = new Query(criteria);
+    RetryPolicy<Object> retryPolicy = getRetryPolicy(
+        "[Retrying]: Failed updating Input Set; attempt: {}", "[Failed]: Failed updating Input Set; attempt: {}");
+    return Failsafe.with(retryPolicy)
+        .get(()
+                 -> mongoTemplate.findAndModify(
+                     query, update, new FindAndModifyOptions().returnNew(true), InputSetEntity.class));
+  }
+
+  @Override
   public InputSetEntity delete(InputSetEntity entityToDelete, InputSetYamlDTO yamlDTO) {
     Supplier<OutboxEvent> functor = ()
         -> outboxService.save(InputSetDeleteEvent.builder()

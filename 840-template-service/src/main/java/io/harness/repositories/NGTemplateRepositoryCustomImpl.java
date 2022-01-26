@@ -184,7 +184,14 @@ public class NGTemplateRepositoryCustomImpl implements NGTemplateRepositoryCusto
   }
 
   @Override
-  public TemplateEntity update(Criteria criteria, Update update) {
+  public TemplateEntity update(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, Criteria criteria, Update update) {
+    Criteria gitSyncCriteria = gitAwarePersistence.getCriteriaWithGitSync(
+        projectIdentifier, orgIdentifier, accountIdentifier, TemplateEntity.class);
+    if (gitSyncCriteria != null) {
+      criteria = new Criteria().andOperator(criteria, gitSyncCriteria);
+    }
+
     return mongoTemplate.findAndModify(
         query(criteria), update, FindAndModifyOptions.options().returnNew(true), TemplateEntity.class);
   }
