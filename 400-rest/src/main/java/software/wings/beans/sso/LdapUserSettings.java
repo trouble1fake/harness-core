@@ -33,7 +33,7 @@ public class LdapUserSettings implements LdapUserConfig {
   @JsonProperty @NotBlank String baseDN;
   @JsonProperty @NotBlank String searchFilter = LdapConstants.DEFAULT_USER_SEARCH_FILTER;
   @JsonProperty @NotBlank String uidAttr = "uid";
-  @JsonProperty @NotBlank String samlAccountNameAttr = "samlAccountName";
+  @JsonProperty @NotBlank String samlAccountNameAttr = "samAccountName";
   @JsonProperty @NotBlank String emailAttr = "mail";
   @JsonProperty @NotBlank String displayNameAttr = "cn";
   @JsonProperty @NotBlank String groupMembershipAttr = "memberOf";
