@@ -22,8 +22,7 @@ import lombok.experimental.SuperBuilder;
 @OwnedBy(CV)
 @FieldNameConstants(innerTypeName = "DynatraceServiceDetailsRequestKeys")
 public class DynatraceServiceDetailsRequest extends DynatraceRequest {
-  private static final List<String> FIELDS =
-      Arrays.asList("fromRelationships", "toRelationships");
+  private static final List<String> FIELDS = Arrays.asList("fromRelationships", "toRelationships");
   private static final String DSL =
       DataCollectionRequest.readDSL("dynatrace-service-details.datacollection", DynatraceServiceDetailsRequest.class);
 

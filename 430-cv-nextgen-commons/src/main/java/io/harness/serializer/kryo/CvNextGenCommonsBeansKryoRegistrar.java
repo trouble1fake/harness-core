@@ -24,6 +24,7 @@ import io.harness.cvng.beans.DataCollectionType;
 import io.harness.cvng.beans.DataSourceType;
 import io.harness.cvng.beans.DatadogLogDataCollectionInfo;
 import io.harness.cvng.beans.DatadogMetricsDataCollectionInfo;
+import io.harness.cvng.beans.DynatraceDataCollectionInfo;
 import io.harness.cvng.beans.ErrorTrackingDataCollectionInfo;
 import io.harness.cvng.beans.K8ActivityDataCollectionInfo;
 import io.harness.cvng.beans.MetricPackDTO;
@@ -195,5 +196,6 @@ public class CvNextGenCommonsBeansKryoRegistrar implements KryoRegistrar {
     kryo.register(DynatraceMetricPackValidationRequest.class, 9094);
     kryo.register(DynatraceSampleDataRequest.class, 9095);
     kryo.register(DynatraceMetricListRequest.class, 9096);
+    kryo.register(DynatraceDataCollectionInfo.class, 9097);
   }
 }

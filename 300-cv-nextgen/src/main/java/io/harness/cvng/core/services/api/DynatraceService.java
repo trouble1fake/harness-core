@@ -14,8 +14,7 @@ public interface DynatraceService extends DataSourceConnectivityChecker {
   List<DynatraceServiceDTO> getAllServices(
       ProjectParams projectParams, String connectorIdentifier, String filter, String tracingId);
 
-  List<DynatraceMetricDTO> getAllMetrics(
-          ProjectParams projectParams, String connectorIdentifier, String tracingId);
+  List<DynatraceMetricDTO> getAllMetrics(ProjectParams projectParams, String connectorIdentifier, String tracingId);
 
   DynatraceServiceDTO getServiceDetails(
       ProjectParams projectParams, String connectorIdentifier, String serviceEntityId, String tracingId);
@@ -23,6 +22,6 @@ public interface DynatraceService extends DataSourceConnectivityChecker {
   Set<MetricPackValidationResponse> validateData(ProjectParams projectParams, String connectorIdentifier,
       List<String> serviceMethodsIds, List<MetricPackDTO> metricPacks, String tracingId);
 
-  List<TimeSeriesSampleDTO> fetchSampleData(ProjectParams projectParams, String connectorIdentifier,
-                                                         String serviceId, String metricSelector, String tracingId);
+  List<TimeSeriesSampleDTO> fetchSampleData(ProjectParams projectParams, String connectorIdentifier, String serviceId,
+      String metricSelector, String tracingId);
 }

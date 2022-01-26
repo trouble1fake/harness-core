@@ -10,8 +10,6 @@ import io.harness.cvng.beans.dynatrace.DynatraceSampleDataRequest;
 import io.harness.cvng.beans.dynatrace.DynatraceServiceDetailsRequest;
 import io.harness.cvng.beans.dynatrace.DynatraceServiceListRequest;
 import io.harness.cvng.core.beans.MetricPackValidationResponse;
-import io.harness.cvng.core.beans.OnboardingRequestDTO;
-import io.harness.cvng.core.beans.OnboardingResponseDTO;
 import io.harness.cvng.core.beans.TimeSeriesSampleDTO;
 import io.harness.cvng.core.beans.dynatrace.DynatraceMetricDTO;
 import io.harness.cvng.core.beans.dynatrace.DynatraceServiceDTO;
@@ -19,20 +17,15 @@ import io.harness.cvng.core.beans.params.ProjectParams;
 import io.harness.cvng.core.services.api.DynatraceService;
 import io.harness.cvng.core.services.api.OnboardingService;
 import io.harness.delegate.beans.connector.dynatrace.DynatraceConnectorDTO;
-import io.harness.ng.core.dto.ResponseDTO;
-import io.harness.serializer.JsonUtils;
 
 import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import java.lang.reflect.Type;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class DynatraceServiceImpl
     implements DynatraceService, DataCollectionRequestResultExtractor<DynatraceConnectorDTO> {
@@ -51,9 +44,8 @@ public class DynatraceServiceImpl
             .build();
 
     Type type = new TypeToken<List<DynatraceServiceDTO>>() {}.getType();
-    List<DynatraceServiceDTO> services =
-        performRequestAndGetDataResult(request, onboardingService, type, projectParams, connectorIdentifier, tracingId);
-    return services.stream().filter(service -> service.getServiceMethodIds() != null).collect(Collectors.toList());
+    return performRequestAndGetDataResult(
+        request, onboardingService, type, projectParams, connectorIdentifier, tracingId);
   }
 
   @Override

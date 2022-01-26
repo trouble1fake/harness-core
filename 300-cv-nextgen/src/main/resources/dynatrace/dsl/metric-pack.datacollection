@@ -1,13 +1,14 @@
 Var metricsUrl = concat(Env:baseUrl, "api/v2/metrics/query")
-Var params = {}
-Var:params.put("from", Env:startTimeMillis)
-Var:params.put("to", Env:endTimeMillis)
-Var:params.put("resolution", Env:resolution)
-Var:params.put("entitySelector", Env:entitySelector)
+
 
 Var nullObject = null
 Var returnList = []
 foreach metricToValidate in Env:metricsToValidate {
+  Var params = {}
+  Var:params.put("from", Env:startTimeMillis)
+  Var:params.put("to", Env:endTimeMillis)
+  Var:params.put("resolution", Env:resolution)
+  Var:params.put("entitySelector", Env:entitySelector)
   Var query = extract(Var:metricToValidate, $.querySelector)
   Var:params.put("metricSelector", Var:query)
   Var metricName = extract(Var:metricToValidate, $.metricName)

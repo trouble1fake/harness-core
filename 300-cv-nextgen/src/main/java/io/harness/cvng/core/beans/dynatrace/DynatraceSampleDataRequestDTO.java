@@ -4,6 +4,6 @@ import lombok.Value;
 
 @Value
 public class DynatraceSampleDataRequestDTO {
-    String metricSelector;
-    String serviceId;
+  String metricSelector;
+  String serviceId;
 }

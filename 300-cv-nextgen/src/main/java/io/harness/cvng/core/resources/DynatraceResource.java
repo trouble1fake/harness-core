@@ -1,7 +1,6 @@
 package io.harness.cvng.core.resources;
 
 import io.harness.annotations.ExposeInternalException;
-import io.harness.cvng.beans.MetricPackDTO;
 import io.harness.cvng.core.beans.MetricPackValidationResponse;
 import io.harness.cvng.core.beans.TimeSeriesSampleDTO;
 import io.harness.cvng.core.beans.dynatrace.DynatraceMetricDTO;
@@ -22,12 +21,10 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -72,16 +69,16 @@ public class DynatraceResource {
   @ExceptionMetered
   @ApiOperation(value = "get all dynatrace service metrics", nickname = "getAllDynatraceServiceMetrics")
   public ResponseDTO<List<DynatraceMetricDTO>> getDynatraceMetrics(@NotNull @QueryParam("accountId") String accountId,
-                                                                   @NotNull @QueryParam("connectorIdentifier") final String connectorIdentifier,
-                                                                   @QueryParam("orgIdentifier") @NotNull String orgIdentifier,
-                                                                   @QueryParam("projectIdentifier") @NotNull String projectIdentifier,
-                                                                   @NotNull @QueryParam("tracingId") String tracingId) {
+      @NotNull @QueryParam("connectorIdentifier") final String connectorIdentifier,
+      @QueryParam("orgIdentifier") @NotNull String orgIdentifier,
+      @QueryParam("projectIdentifier") @NotNull String projectIdentifier,
+      @NotNull @QueryParam("tracingId") String tracingId) {
     return ResponseDTO.newResponse(dynatraceService.getAllMetrics(ProjectParams.builder()
-                    .projectIdentifier(projectIdentifier)
-                    .orgIdentifier(orgIdentifier)
-                    .accountIdentifier(accountId)
-                    .build(),
-            connectorIdentifier, tracingId));
+                                                                      .projectIdentifier(projectIdentifier)
+                                                                      .orgIdentifier(orgIdentifier)
+                                                                      .accountIdentifier(accountId)
+                                                                      .build(),
+        connectorIdentifier, tracingId));
   }
 
   @GET
@@ -118,7 +115,8 @@ public class DynatraceResource {
                                                                      .orgIdentifier(orgIdentifier)
                                                                      .accountIdentifier(accountId)
                                                                      .build(),
-        connectorIdentifier, validateDataRequestDTO.getServiceMethodsIds(), validateDataRequestDTO.getMetricPacks(), tracingId));
+        connectorIdentifier, validateDataRequestDTO.getServiceMethodsIds(), validateDataRequestDTO.getMetricPacks(),
+        tracingId));
   }
 
   @POST

@@ -8,7 +8,6 @@ import io.harness.cvng.beans.DataCollectionRequest;
 import io.harness.cvng.beans.MetricPackDTO;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,9 +44,11 @@ public class DynatraceMetricPackValidationRequest extends DynatraceRequest {
 
     if (isNotEmpty(serviceMethodsIds)) {
       serviceMethodsIdsParam = serviceMethodsIds.stream()
-              .map(serviceMethodId -> "\"".concat(serviceMethodId).concat("\""))
-              .reduce((prev, next) -> prev.concat(",").concat(next)).orElse(null);
-      commonEnvVariables.put("entitySelector", "type(\"dt.entity.service_method\"),entityId(".concat(serviceMethodsIdsParam).concat(")"));
+                                   .map(serviceMethodId -> "\"".concat(serviceMethodId).concat("\""))
+                                   .reduce((prev, next) -> prev.concat(",").concat(next))
+                                   .orElse(null);
+      commonEnvVariables.put(
+          "entitySelector", "type(\"dt.entity.service_method\"),entityId(".concat(serviceMethodsIdsParam).concat(")"));
     } else {
       throw new IllegalArgumentException("Service methods IDs must be provided for Dynatrace data collection.");
     }

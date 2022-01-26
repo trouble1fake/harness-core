@@ -5,8 +5,6 @@ import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 
-import java.util.List;
-
 @Value
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)

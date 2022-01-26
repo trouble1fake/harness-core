@@ -1,18 +1,16 @@
 package io.harness.cvng.beans.dynatrace;
 
-import com.fasterxml.jackson.annotation.JsonTypeName;
+import static io.harness.annotations.dev.HarnessTeam.CV;
+
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cvng.beans.DataCollectionRequest;
+
+import com.fasterxml.jackson.annotation.JsonTypeName;
+import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-
-import static io.harness.annotations.dev.HarnessTeam.CV;
 
 @JsonTypeName("DYNATRACE_METRIC_LIST_REQUEST")
 @Data

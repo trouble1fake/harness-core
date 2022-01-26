@@ -111,7 +111,7 @@ public abstract class DataCollectionRequest<T extends ConnectorConfigDTO> implem
             maskingEvaluator, connectorInfoDTO.getConnectorConfig());
       case DYNATRACE:
         return DynatraceCapabilityHelper.fetchRequiredExecutionCapabilities(
-                maskingEvaluator, connectorInfoDTO.getConnectorConfig());
+            maskingEvaluator, connectorInfoDTO.getConnectorConfig());
       case CUSTOM_HEALTH:
         return CustomHealthCapabilityHelper.fetchRequiredExecutionCapabilities(
             maskingEvaluator, connectorInfoDTO.getConnectorConfig());

@@ -1,6 +1,5 @@
 package io.harness.cvng.core.beans.monitoredService.healthSouceSpec;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import io.harness.cvng.beans.CVMonitoringCategory;
 import io.harness.cvng.beans.DataSourceType;
 import io.harness.cvng.core.beans.HealthSourceMetricDefinition;
@@ -13,6 +12,7 @@ import io.harness.cvng.core.entities.MetricPack;
 import io.harness.cvng.core.services.api.MetricPackService;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.Sets;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -141,8 +141,8 @@ public class DynatraceHealthSourceSpec extends HealthSourceSpec {
                                    .groupName(metricDefinitionList.get(0).getGroupName())
                                    .category(metricDefinitionList.get(0).getRiskProfile().getCategory())
                                    .build();
-                           cvConfig.populateFromMetricDefinitions(
-                               metricDefinitions, metricDefinitions.get(0).getRiskProfile().getCategory());
+                           cvConfig.populateFromMetricDefinitions(metricDefinitionList,
+                               metricDefinitionList.get(0).getAnalysis().getRiskProfile().getCategory());
                            return cvConfig;
                          })
                          .collect(Collectors.toList()));

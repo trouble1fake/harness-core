@@ -1,5 +1,8 @@
 package io.harness.cvng.beans;
 
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+
+import io.harness.cvng.core.services.CVNextGenConstants;
 import io.harness.delegate.beans.connector.dynatrace.DynatraceConnectorDTO;
 import io.harness.delegate.beans.cvng.dynatrace.DynatraceUtils;
 
@@ -14,8 +17,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.apache.commons.collections4.CollectionUtils;
-
-import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 @Data
 @Builder
@@ -33,7 +34,7 @@ public class DynatraceDataCollectionInfo extends TimeSeriesDataCollectionInfo<Dy
   private String serviceId;
   private List<String> serviceMethodIds;
   @Nullable private List<MetricCollectionInfo> customMetrics;
-  @Nullable private MetricPackDTO metricPack;
+  private MetricPackDTO metricPack;
 
   @Override
   public Map<String, Object> getDslEnvVariables(DynatraceConnectorDTO connectorConfigDTO) {
@@ -43,17 +44,19 @@ public class DynatraceDataCollectionInfo extends TimeSeriesDataCollectionInfo<Dy
     dslEnvVariables.put("host", isCollectHostData() ? DYNATRACE_SERVICE_INSTANCE_DEFAULT_PLACEHOLDER : null);
 
     List<Map<String, String>> metricsToValidate = new ArrayList<>();
-    if (metricPack != null) {
+    if (!CVNextGenConstants.CUSTOM_PACK_IDENTIFIER.equals(metricPack.getIdentifier())) {
       // if collection is not for custom metric, we should filter by service methods
-        String serviceMethodsIdsParam;
-        if (isNotEmpty(serviceMethodIds)) {
-            serviceMethodsIdsParam = serviceMethodIds.stream()
-                    .map(serviceMethodId -> "\"".concat(serviceMethodId).concat("\""))
-                    .reduce((prev, next) -> prev.concat(",").concat(next)).orElse(null);
-            dslEnvVariables.put(ENTITY_ID_PARAM, "type(\"dt.entity.service_method\"),entityId(".concat(serviceMethodsIdsParam).concat(")"));
-        } else {
-            throw new IllegalArgumentException("Service methods IDs must be provided for Dynatrace data collection.");
-        }
+      String serviceMethodsIdsParam;
+      if (isNotEmpty(serviceMethodIds)) {
+        serviceMethodsIdsParam = serviceMethodIds.stream()
+                                     .map(serviceMethodId -> "\"".concat(serviceMethodId).concat("\""))
+                                     .reduce((prev, next) -> prev.concat(",").concat(next))
+                                     .orElse(null);
+        dslEnvVariables.put(
+            ENTITY_ID_PARAM, "type(\"dt.entity.service_method\"),entityId(".concat(serviceMethodsIdsParam).concat(")"));
+      } else {
+        throw new IllegalArgumentException("Service methods IDs must be provided for Dynatrace data collection.");
+      }
       metricsToValidate = CollectionUtils.emptyIfNull(metricPack.getMetrics())
                               .stream()
                               .map(metricDefinitionDTO -> {
@@ -64,7 +67,7 @@ public class DynatraceDataCollectionInfo extends TimeSeriesDataCollectionInfo<Dy
                               })
                               .collect(Collectors.toList());
     } else if (customMetrics != null) {
-      dslEnvVariables.put(ENTITY_ID_PARAM, "type(\"dt.entity.service\"),entityId(".concat(serviceId).concat(")"));
+      dslEnvVariables.put(ENTITY_ID_PARAM, "type(\"dt.entity.service\"),entityId(\"".concat(serviceId).concat("\")"));
       metricsToValidate = customMetrics.stream()
                               .map(metricDefinitionDTO -> {
                                 Map<String, String> metricMap = new HashMap<>();
@@ -75,7 +78,6 @@ public class DynatraceDataCollectionInfo extends TimeSeriesDataCollectionInfo<Dy
                               .collect(Collectors.toList());
     }
     dslEnvVariables.put(METRICS_TO_VALIDATE_PARAM, metricsToValidate);
-
     return dslEnvVariables;
   }
 

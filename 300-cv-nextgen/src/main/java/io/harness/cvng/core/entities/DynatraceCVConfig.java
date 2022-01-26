@@ -67,7 +67,7 @@ public class DynatraceCVConfig extends MetricCVConfig {
       this.metricInfos = new ArrayList<>();
     }
 
-    metricDefinitions.stream().filter(md -> md.getGroupName().equals(getGroupName())).forEach(md -> {
+    metricDefinitions.forEach(md -> {
       DynatraceMetricInfo metricInfo =
           DynatraceMetricInfo.builder()
               .identifier(md.getIdentifier())

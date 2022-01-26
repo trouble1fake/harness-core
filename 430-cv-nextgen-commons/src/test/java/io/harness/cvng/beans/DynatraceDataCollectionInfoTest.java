@@ -11,6 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.harness.CategoryTest;
 import io.harness.category.element.UnitTests;
+import io.harness.cvng.core.services.CVNextGenConstants;
 import io.harness.delegate.beans.connector.dynatrace.DynatraceConnectorDTO;
 import io.harness.rule.Owner;
 
@@ -26,6 +27,8 @@ import org.junit.experimental.categories.Category;
 public class DynatraceDataCollectionInfoTest extends CategoryTest {
   private static final String SERVICE_ID = "SERVICE_ID";
   private static final String GROUP_NAME = "GROUP_NAME";
+  private static final String METRIC_NAME = "MOCK_METRIC_NAME";
+  private static final String MOCK_PATH = "MOCK_PATH";
 
   private DynatraceDataCollectionInfo classUnderTest;
 
@@ -45,21 +48,22 @@ public class DynatraceDataCollectionInfoTest extends CategoryTest {
     MetricPackDTO metricPackDTO =
         MetricPackDTO.builder()
             .metrics(Collections.singleton(
-                (MetricPackDTO.MetricDefinitionDTO.builder().name("MOCK_METRIC_NAME").path("MOCK_PATH").build())))
+                (MetricPackDTO.MetricDefinitionDTO.builder().name(METRIC_NAME).path(MOCK_PATH).build())))
             .build();
     classUnderTest.setMetricPack(metricPackDTO);
     Map<String, Object> metricPackMetricsEnvVariables =
         classUnderTest.getDslEnvVariables(DynatraceConnectorDTO.builder().build());
 
     String serviceMethodsIdsParam = "\"SERVICE_METHOD_1\",\"SERVICE_METHOD_2\"";
-    assertThat(metricPackMetricsEnvVariables.get(ENTITY_ID_PARAM)).isEqualTo("type(\"dt.entity.service_method\"),entityId(".concat(serviceMethodsIdsParam).concat(")"));
+    assertThat(metricPackMetricsEnvVariables.get(ENTITY_ID_PARAM))
+        .isEqualTo("type(\"dt.entity.service_method\"),entityId(".concat(serviceMethodsIdsParam).concat(")"));
     assertThat(metricPackMetricsEnvVariables.get(GROUP_NAME_PARAM)).isEqualTo(GROUP_NAME);
     List<Map<String, String>> metricsToValidate =
         (List<Map<String, String>>) metricPackMetricsEnvVariables.get(METRICS_TO_VALIDATE_PARAM);
 
     assertThat(metricsToValidate.size()).isEqualTo(1);
-    assertThat(metricsToValidate.get(0).get(METRIC_NAME_PARAM)).isEqualTo("MOCK_METRIC_NAME");
-    assertThat(metricsToValidate.get(0).get(QUERY_SELECTOR_PARAM)).isEqualTo("MOCK_PATH");
+    assertThat(metricsToValidate.get(0).get(METRIC_NAME_PARAM)).isEqualTo(METRIC_NAME);
+    assertThat(metricsToValidate.get(0).get(QUERY_SELECTOR_PARAM)).isEqualTo(MOCK_PATH);
   }
 
   @Test
@@ -77,11 +81,20 @@ public class DynatraceDataCollectionInfoTest extends CategoryTest {
                 .metricName("Metric 2")
                 .metricSelector("mock_metric_selector_2")
                 .build());
+
+    MetricPackDTO customPackDTO =
+        MetricPackDTO.builder()
+            .identifier(CVNextGenConstants.CUSTOM_PACK_IDENTIFIER)
+            .metrics(Collections.singleton(
+                (MetricPackDTO.MetricDefinitionDTO.builder().name(METRIC_NAME).path(MOCK_PATH).build())))
+            .build();
     classUnderTest.setCustomMetrics(customMetrics);
+    classUnderTest.setMetricPack(customPackDTO);
     Map<String, Object> metricPackMetricsEnvVariables =
         classUnderTest.getDslEnvVariables(DynatraceConnectorDTO.builder().build());
 
-    assertThat(metricPackMetricsEnvVariables.get(ENTITY_ID_PARAM)).isEqualTo("type(\"dt.entity.service\"),entityId(".concat(SERVICE_ID).concat(")"));
+    assertThat(metricPackMetricsEnvVariables.get(ENTITY_ID_PARAM))
+        .isEqualTo("type(\"dt.entity.service\"),entityId(\"".concat(SERVICE_ID).concat("\")"));
     assertThat(metricPackMetricsEnvVariables.get(GROUP_NAME_PARAM)).isEqualTo(GROUP_NAME);
     List<Map<String, String>> metricsToValidate =
         (List<Map<String, String>>) metricPackMetricsEnvVariables.get(METRICS_TO_VALIDATE_PARAM);

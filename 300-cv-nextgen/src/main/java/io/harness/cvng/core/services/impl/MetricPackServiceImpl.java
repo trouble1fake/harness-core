@@ -55,8 +55,8 @@ public class MetricPackServiceImpl implements MetricPackService {
   static final List<String> NEWRELIC_METRICPACK_FILES = Lists.newArrayList(
       "/newrelic/metric-packs/performance-pack.yml", "/newrelic/metric-packs/default-custom-pack.yml");
 
-  static final List<String> DYNATRACE_METRIC_FILES = Lists.newArrayList(
-      "/dynatrace/metric-packs/performance-pack.yml", "/dynatrace/metric-packs/infrastructure-pack.yml");
+  static final List<String> DYNATRACE_METRIC_FILES = Lists.newArrayList("/dynatrace/metric-packs/performance-pack.yml",
+      "/dynatrace/metric-packs/infrastructure-pack.yml", "/dynatrace/metric-packs/default-custom-pack.yml");
 
   static final List<String> STACKDRIVER_METRICPACK_FILES =
       Lists.newArrayList("/stackdriver/metric-packs/default-performance-pack.yaml",
@@ -171,7 +171,7 @@ public class MetricPackServiceImpl implements MetricPackService {
   }
 
   private List<DataSourceType> getDatasourcesToEliminateForCustom() {
-    return Arrays.asList(DataSourceType.APP_DYNAMICS, DataSourceType.NEW_RELIC);
+    return Arrays.asList(DataSourceType.APP_DYNAMICS, DataSourceType.NEW_RELIC, DataSourceType.DYNATRACE);
   }
 
   @Override
@@ -426,6 +426,7 @@ public class MetricPackServiceImpl implements MetricPackService {
       }
     });
   }
+
   @Override
   public void populateDataCollectionDsl(DataSourceType dataSourceType, MetricPack metricPack) {
     switch (dataSourceType) {
