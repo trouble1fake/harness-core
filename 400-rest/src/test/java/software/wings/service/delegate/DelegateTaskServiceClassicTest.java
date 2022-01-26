@@ -1007,7 +1007,6 @@ public class DelegateTaskServiceClassicTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void shouldNotSaveDelegateTaskWhenNoEligibleDelegate_async() {
     DelegateTask delegateTask = getDelegateTask();
-    thrown.expect(NoEligibleDelegatesInAccountException.class);
     delegateTaskServiceClassic.queueTask(delegateTask);
     assertThat(persistence.get(DelegateTask.class, delegateTask.getUuid())).isNull();
   }
@@ -1046,7 +1045,6 @@ public class DelegateTaskServiceClassicTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void testDelegateQueuedEventForTaskPollWhenNoEligibleDelegates_async() {
     DelegateTask delegateTask = getDelegateTask();
-    thrown.expect(NoEligibleDelegatesInAccountException.class);
     delegateTaskServiceClassic.queueTask(delegateTask);
     List<DelegateTaskEvent> delegateTaskEvents =
         delegateTaskServiceClassic.getDelegateTaskEvents(ACCOUNT_ID, DELEGATE_ID, false);
@@ -1088,7 +1086,6 @@ public class DelegateTaskServiceClassicTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void testDelegateQueuedEventForTaskPollWhenNoEligibleDelegates_sync() {
     DelegateTask delegateTask = getDelegateTask();
-    thrown.expect(NoEligibleDelegatesInAccountException.class);
     delegateTaskServiceClassic.queueTask(delegateTask);
     List<DelegateTaskEvent> delegateTaskEvents =
         delegateTaskServiceClassic.getDelegateTaskEvents(ACCOUNT_ID, DELEGATE_ID, true);
