@@ -147,6 +147,7 @@ import io.harness.queue.QueuePublisher;
 import io.harness.validation.Create;
 import io.harness.validation.Update;
 
+import software.wings.api.CloudProviderType;
 import software.wings.api.DeploymentType;
 import software.wings.api.InstanceElement;
 import software.wings.app.StaticConfiguration;
@@ -4295,8 +4296,20 @@ public class WorkflowServiceImpl implements WorkflowService, DataProvider {
       LinkedList<String> recent, StepType[] stepTypes, WorkflowPhase workflowPhase, String appId,
       OrchestrationWorkflowType orchestrationWorkflowType) {
     Map<String, WorkflowStepMeta> steps = new HashMap<>();
+    String infraDefinitionId = workflowPhase.getInfraDefinitionId();
+    CloudProviderType cloudProviderType = null;
+    if (infraDefinitionId != null) {
+      InfrastructureDefinition infrastructureDefinition = infrastructureDefinitionService.get(appId, infraDefinitionId);
+      cloudProviderType = infrastructureDefinition.getCloudProviderType();
+    }
+
     DeploymentType workflowPhaseDeploymentType = workflowPhase != null ? workflowPhase.getDeploymentType() : null;
     for (StepType step : stepTypes) {
+      if (Objects.nonNull(cloudProviderType) && !CloudProviderType.RANCHER.equals(cloudProviderType)
+          && step.name().startsWith("RANCHER_")) {
+        continue;
+      }
+
       if (step.matches(workflowPhaseDeploymentType, orchestrationWorkflowType)) {
         WorkflowStepMeta stepMeta = WorkflowStepMeta.builder()
                                         .name(step.getName())
