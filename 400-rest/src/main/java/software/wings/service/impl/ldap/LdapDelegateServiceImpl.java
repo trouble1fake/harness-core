@@ -135,6 +135,8 @@ public class LdapDelegateServiceImpl implements LdapDelegateService {
           "UserConfig email attribute = {} is missing for LdapEntry user object = {}", userConfig.getEmailAttr(), user);
     }
 
+    log.info("The ldap entry for the user with email {} is {}", email, user);
+
     if (Arrays.asList(user.getAttributeNames()).contains(userConfig.getDisplayNameAttr())) {
       if (user.getAttribute(userConfig.getDisplayNameAttr()) != null) {
         name = user.getAttribute(userConfig.getDisplayNameAttr()).getStringValue();
@@ -147,9 +149,17 @@ public class LdapDelegateServiceImpl implements LdapDelegateService {
     }
 
     String externalUserId = "";
-    if (Arrays.asList(user.getAttributeNames()).contains(userConfig.getUidAttr())
+    if (user.getAttributes() != null && Arrays.asList(user.getAttributeNames()).contains(userConfig.getUidAttr())
         && user.getAttribute(userConfig.getUidAttr()) != null) {
       externalUserId = user.getAttribute(userConfig.getUidAttr()).getStringValue();
+    }
+
+    if (user.getAttributes() != null
+        && Arrays.asList(user.getAttributeNames()).contains(userConfig.getSamAccountNameAttr())
+        && user.getAttribute(userConfig.getSamAccountNameAttr()) != null) {
+      log.info("LDAP user with email {} samAccountName set as {}", email,
+          user.getAttribute(userConfig.getSamAccountNameAttr()).getStringValue());
+      externalUserId = user.getAttribute(userConfig.getSamAccountNameAttr()).getStringValue();
     }
     log.info("LDAP user response with name {} and email {} and userId {}", name, email, externalUserId);
 

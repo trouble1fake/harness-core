@@ -73,8 +73,9 @@ public class ExecuteLdapGetUsersRequest implements Function<LdapGetUsersRequest,
 
     if (searchResult != null) { // Scenario when search result
       searchStatus = Status.SUCCESS;
+      log.info("The search result for baseDN {} and searchfilter {} found is {}", ldapUserConfig.getBaseDN(),
+          ldapUserConfig.getSearchFilter(), searchResult);
     }
-
     LdapResponse ldapResponse = LdapResponse.builder().status(searchStatus).message(searchStatusMsg).build();
 
     return new LdapGetUsersResponse(ldapUserConfig, ldapResponse, searchResult, ldapGetUsersRequest.getGroupBaseDn());
