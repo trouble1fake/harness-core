@@ -135,7 +135,7 @@ public class LdapSearch implements LdapValidator {
             ldapAttributeList.add(new LdapAttribute("mail", (String) entry.getAttributes().get("mail").get()));
             ldapAttributeList.add(new LdapAttribute("uid", (String) entry.getAttributes().get("uid").get()));
             ldapAttributeList.add(
-                new LdapAttribute("samlAccountName", (String) entry.getAttributes().get("samlAccountName").get()));
+                new LdapAttribute("samAccountName", (String) entry.getAttributes().get("samlAccountName").get()));
 
             String dn = "dn=uid" + entry.getAttributes().get("uid").get() + baseDN;
             LdapEntry ldapEntry = new LdapEntry(dn, ldapAttributeList);
