@@ -487,6 +487,8 @@ public class DelegateTaskServiceClassicImpl implements DelegateTaskServiceClassi
           task.setNextBroadcast(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(5));
         }
         persistence.save(task);
+        delegateSelectionLogsService.logBroadcastToDelegate(
+            Sets.newHashSet(task.getBroadcastToDelegateIds()), task.getAccountId(), task.getUuid());
         delegateMetricsService.recordDelegateTaskMetrics(task, DELEGATE_TASK_CREATION);
         log.info("Task {} marked as {} with first attempt broadcast to {}", task.getUuid(), taskStatus,
             task.getBroadcastToDelegateIds());

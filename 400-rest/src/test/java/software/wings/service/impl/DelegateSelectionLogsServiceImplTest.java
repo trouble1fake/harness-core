@@ -40,9 +40,10 @@ import io.harness.ff.FeatureFlagService;
 import io.harness.persistence.HPersistence;
 import io.harness.rule.Owner;
 import io.harness.selection.log.DelegateSelectionLog;
-
+import io.harness.selection.log.DelegateSelectionLog.DelegateSelectionLogKeys;
 import io.harness.selection.log.DelegateSelectionLogTaskMetadata;
 import io.harness.threading.Concurrent;
+
 import software.wings.WingsBaseTest;
 import software.wings.beans.Application;
 import software.wings.beans.Environment;
@@ -52,13 +53,11 @@ import software.wings.dl.WingsPersistence;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
-
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.InjectMocks;
@@ -134,7 +133,6 @@ public class DelegateSelectionLogsServiceImplTest extends WingsBaseTest {
     String delegate5 = generateUuid();
     String delegate6 = generateUuid();
 
-
     Map<String, List<String>> nonSelected = new HashMap<>();
     nonSelected.put(CAN_NOT_ASSIGN_CG_NG_TASK_GROUP, Lists.newArrayList(delegate1));
     nonSelected.put(CAN_NOT_ASSIGN_DELEGATE_SCOPE_GROUP, Lists.newArrayList(delegate2));
@@ -158,10 +156,11 @@ public class DelegateSelectionLogsServiceImplTest extends WingsBaseTest {
     assertThat(delegateSelectionLogParams.get(1).getEventTimestamp()).isNotNull();
     assertThat(delegateSelectionLogParams.get(2).getEventTimestamp()).isNotNull();
     assertThat(delegateSelectionLogParams.get(3).getEventTimestamp()).isNotNull();
-    List<String> delegateSelectionLogMessages = delegateSelectionLogParams.stream().map(DelegateSelectionLogParams::getMessage).collect(Collectors.toList());
+    List<String> delegateSelectionLogMessages =
+        delegateSelectionLogParams.stream().map(DelegateSelectionLogParams::getMessage).collect(Collectors.toList());
     assertThat(delegateSelectionLogMessages).contains(CAN_NOT_ASSIGN_PROFILE_SCOPE_GROUP + " : " + delegate3);
-   assertThat(delegateSelectionLogMessages).contains(CAN_NOT_ASSIGN_TASK_GROUP + " : " + delegate5);
-   assertThat(delegateSelectionLogMessages).contains(CAN_NOT_ASSIGN_DELEGATE_SCOPE_GROUP + " : " + delegate2);
+    assertThat(delegateSelectionLogMessages).contains(CAN_NOT_ASSIGN_TASK_GROUP + " : " + delegate5);
+    assertThat(delegateSelectionLogMessages).contains(CAN_NOT_ASSIGN_DELEGATE_SCOPE_GROUP + " : " + delegate2);
     assertThat(delegateSelectionLogMessages).contains(CAN_NOT_ASSIGN_SELECTOR_TASK_GROUP + " : " + delegate4);
   }
 
@@ -243,20 +242,32 @@ public class DelegateSelectionLogsServiceImplTest extends WingsBaseTest {
         .doesNotThrowAnyException();
   }
 
+  @Test
+  @Owner(developers = JENNY)
+  @Category(UnitTests.class)
+  public void shouldNotLogBroadcastToDelegateWithEmptyDelegateIds() {
+    assertThatCode(() -> delegateSelectionLogsService.logBroadcastToDelegate(Sets.newHashSet(), null, null))
+        .doesNotThrowAnyException();
+  }
 
   @Test
   @Owner(developers = JENNY)
   @Category(UnitTests.class)
   public void shouldSaveSelectionLog() {
-    DelegateSelectionLog selectionLog =
-            DelegateSelectionLog.builder().accountId(generateUuid()).taskId(generateUuid()).uuid(generateUuid()).message("ffenabled").groupId(generateUuid()).build();
+    DelegateSelectionLog selectionLog = DelegateSelectionLog.builder()
+                                            .accountId(generateUuid())
+                                            .taskId(generateUuid())
+                                            .uuid(generateUuid())
+                                            .message("ffenabled")
+                                            .groupId(generateUuid())
+                                            .build();
 
     DelegateSelectionLogTaskMetadata taskMetadata = DelegateSelectionLogTaskMetadata.builder()
-            .uuid(generateUuid())
-            .taskId(generateUuid())
-            .accountId(generateUuid())
-            .setupAbstractions(obtainTaskSetupAbstractions())
-            .build();
+                                                        .uuid(generateUuid())
+                                                        .taskId(generateUuid())
+                                                        .accountId(generateUuid())
+                                                        .setupAbstractions(obtainTaskSetupAbstractions())
+                                                        .build();
 
     delegateSelectionLogsService.save(selectionLog);
 
@@ -265,16 +276,16 @@ public class DelegateSelectionLogsServiceImplTest extends WingsBaseTest {
     persistence.save(taskMetadata);
 
     DelegateSelectionLogTaskMetadata savedTaskMetadata =
-            wingsPersistence.get(DelegateSelectionLogTaskMetadata.class, taskMetadata.getUuid());
+        wingsPersistence.get(DelegateSelectionLogTaskMetadata.class, taskMetadata.getUuid());
 
     assertThat(savedTaskMetadata).isNotNull();
     assertThat(savedTaskMetadata.getSetupAbstractions()).isNotNull();
     assertThat(savedTaskMetadata.getSetupAbstractions().get(Cd1SetupFields.APPLICATION))
-            .isEqualTo(taskMetadata.getSetupAbstractions().get(Cd1SetupFields.APPLICATION));
+        .isEqualTo(taskMetadata.getSetupAbstractions().get(Cd1SetupFields.APPLICATION));
     assertThat(savedTaskMetadata.getSetupAbstractions().get(Cd1SetupFields.SERVICE))
-            .isEqualTo(taskMetadata.getSetupAbstractions().get(Cd1SetupFields.SERVICE));
+        .isEqualTo(taskMetadata.getSetupAbstractions().get(Cd1SetupFields.SERVICE));
     assertThat(savedTaskMetadata.getSetupAbstractions().get(Cd1SetupFields.ENVIRONMENT))
-            .isEqualTo(taskMetadata.getSetupAbstractions().get(Cd1SetupFields.ENVIRONMENT));
+        .isEqualTo(taskMetadata.getSetupAbstractions().get(Cd1SetupFields.ENVIRONMENT));
   }
 
   @Test
@@ -292,12 +303,11 @@ public class DelegateSelectionLogsServiceImplTest extends WingsBaseTest {
     });
 
     assertThat(wingsPersistence.createQuery(DelegateSelectionLog.class)
-            .filter(DelegateSelectionLog.DelegateSelectionLogKeys.taskId, taskId)
-            .filter(DelegateSelectionLog.DelegateSelectionLogKeys.accountId, accountId)
-            .count())
-            .isEqualTo(20L);
+                   .filter(DelegateSelectionLogKeys.taskId, taskId)
+                   .filter(DelegateSelectionLogKeys.accountId, accountId)
+                   .count())
+        .isEqualTo(20L);
   }
-
 
   private Map<String, String> obtainTaskSetupAbstractions() {
     String envId = generateUuid();
@@ -328,19 +338,20 @@ public class DelegateSelectionLogsServiceImplTest extends WingsBaseTest {
   }
 
   private List<DelegateSelectionLog> createDelegateSelectionLogs(String taskId, String accountId) {
-    DelegateSelectionLog selectionLog1 = DelegateSelectionLog.builder().accountId(generateUuid())
-            .taskId(taskId)
-            .accountId(accountId)
-            .message(MISSING_SELECTOR_MESSAGE)
-            .build();
+    DelegateSelectionLog selectionLog1 = DelegateSelectionLog.builder()
+                                             .accountId(generateUuid())
+                                             .taskId(taskId)
+                                             .accountId(accountId)
+                                             .message(MISSING_SELECTOR_MESSAGE)
+                                             .build();
 
-    DelegateSelectionLog selectionLog2 = DelegateSelectionLog.builder().accountId(generateUuid())
-            .taskId(taskId)
-            .accountId(accountId)
-            .message(MISSING_SELECTOR_MESSAGE)
-            .build();
+    DelegateSelectionLog selectionLog2 = DelegateSelectionLog.builder()
+                                             .accountId(generateUuid())
+                                             .taskId(taskId)
+                                             .accountId(accountId)
+                                             .message(MISSING_SELECTOR_MESSAGE)
+                                             .build();
 
     return Arrays.asList(selectionLog1, selectionLog2);
   }
-
 }

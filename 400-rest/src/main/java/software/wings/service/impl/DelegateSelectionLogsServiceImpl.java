@@ -16,6 +16,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.Cd1SetupFields;
 import io.harness.beans.FeatureName;
+import io.harness.delegate.beans.Delegate;
 import io.harness.delegate.beans.DelegateSelectionLogParams;
 import io.harness.delegate.beans.DelegateSelectionLogResponse;
 import io.harness.ff.FeatureFlagService;
@@ -38,7 +39,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.mongodb.morphia.query.Sort;
 
 @Singleton
 @Slf4j
@@ -105,7 +105,8 @@ public class DelegateSelectionLogsServiceImpl implements DelegateSelectionLogsSe
     if (isEmpty(delegateIds)) {
       return;
     }
-    String message = String.format("%s : [%s]", ELIGIBLE_DELEGATES, String.join(", ", delegateIds));
+    String message =
+        String.format("%s : [%s]", ELIGIBLE_DELEGATES, String.join(", ", getDelegateHostName(accountId, delegateIds)));
     save(DelegateSelectionLog.builder()
              .accountId(accountId)
              .taskId(taskId)
@@ -132,6 +133,7 @@ public class DelegateSelectionLogsServiceImpl implements DelegateSelectionLogsSe
                     .taskId(taskId)
                     .message(msg)
                     .conclusion(NON_SELECTED)
+                    .eventTimestamp(System.currentTimeMillis())
                     .build()));
   }
 
@@ -140,7 +142,8 @@ public class DelegateSelectionLogsServiceImpl implements DelegateSelectionLogsSe
     if (isEmpty(delegateIds)) {
       return;
     }
-    String message = String.format("%s : [%s]", BROADCASTING_DELEGATES, String.join(", ", delegateIds));
+    String message = String.format(
+        "%s : [%s]", BROADCASTING_DELEGATES, String.join(", ", getDelegateHostName(accountId, delegateIds)));
     save(DelegateSelectionLog.builder()
              .accountId(accountId)
              .taskId(taskId)
@@ -153,6 +156,10 @@ public class DelegateSelectionLogsServiceImpl implements DelegateSelectionLogsSe
 
   @Override
   public void logTaskAssigned(String accountId, String delegateId, String taskId) {
+    Delegate delegate = delegateCache.get(accountId, delegateId, false);
+    if (delegate != null) {
+      delegateId = delegate.getHostName();
+    }
     String message = String.format("%s : [%s]", TASK_ASSIGNED, delegateId);
     save(DelegateSelectionLog.builder()
              .accountId(accountId)
@@ -178,7 +185,6 @@ public class DelegateSelectionLogsServiceImpl implements DelegateSelectionLogsSe
     DelegateSelectionLogTaskMetadata taskMetadata = persistence.createQuery(DelegateSelectionLogTaskMetadata.class)
                                                         .filter(DelegateSelectionLogKeys.accountId, accountId)
                                                         .filter(DelegateSelectionLogKeys.taskId, taskId)
-                                                        .order(Sort.descending(DelegateSelectionLogKeys.eventTimestamp))
                                                         .get();
 
     Map<String, String> previewSetupAbstractions = new HashMap<>();
@@ -219,5 +225,14 @@ public class DelegateSelectionLogsServiceImpl implements DelegateSelectionLogsSe
         .message(selectionLog.getMessage())
         .eventTimestamp(selectionLog.getEventTimestamp())
         .build();
+  }
+
+  private Set<String> getDelegateHostName(String accountId, Set<String> delegateIds) {
+    return delegateIds.stream()
+        .map(delegateId
+            -> Optional.ofNullable(delegateCache.get(accountId, delegateId, false))
+                   .map(Delegate::getHostName)
+                   .orElse(delegateId))
+        .collect(Collectors.toSet());
   }
 }
