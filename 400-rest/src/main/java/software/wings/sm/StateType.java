@@ -234,6 +234,7 @@ import software.wings.sm.states.provision.TerragruntDestroyState;
 import software.wings.sm.states.provision.TerragruntRollbackState;
 import software.wings.sm.states.rancher.RancherK8sBlueGreenDeploy;
 import software.wings.sm.states.rancher.RancherK8sCanaryDeploy;
+import software.wings.sm.states.rancher.RancherK8sDelete;
 import software.wings.sm.states.rancher.RancherK8sRollingDeploy;
 import software.wings.sm.states.rancher.RancherK8sRollingDeployRollback;
 import software.wings.sm.states.rancher.RancherKubernetesSwapServiceSelectors;
@@ -864,7 +865,7 @@ public enum StateType implements StateTypeDescriptor {
       Lists.newArrayList(InfrastructureMappingType.RANCHER_KUBERNETES),
       asList(CONTAINER_DEPLOY, ROUTE_UPDATE, WRAP_UP, K8S_PHASE_STEP), ORCHESTRATION_STENCILS),
 
-  RANCHER_K8S_DELETE(K8sDelete.class, KUBERNETES, 38, WorkflowConstants.RANCHER_K8S_DELETE,
+  RANCHER_K8S_DELETE(RancherK8sDelete.class, KUBERNETES, 38, WorkflowConstants.RANCHER_K8S_DELETE,
       Lists.newArrayList(InfrastructureMappingType.RANCHER_KUBERNETES), asList(K8S_PHASE_STEP), ORCHESTRATION_STENCILS),
 
   RANCHER_K8S_DEPLOYMENT_ROLLING_ROLLBACK(RancherK8sRollingDeployRollback.class, KUBERNETES, 39,
