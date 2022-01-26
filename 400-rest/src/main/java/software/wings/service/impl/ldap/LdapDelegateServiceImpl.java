@@ -147,7 +147,13 @@ public class LdapDelegateServiceImpl implements LdapDelegateService {
     }
 
     String externalUserId = "";
-    if (Arrays.asList(user.getAttributeNames()).contains(userConfig.getSamlAccountNameAttr())
+    if (user.getAttributes() != null && Arrays.asList(user.getAttributeNames()).contains(userConfig.getUidAttr())
+        && user.getAttribute(userConfig.getUidAttr()) != null) {
+      externalUserId = user.getAttribute(userConfig.getUidAttr()).getStringValue();
+    }
+
+    if (user.getAttributes() != null
+        && Arrays.asList(user.getAttributeNames()).contains(userConfig.getSamlAccountNameAttr())
         && user.getAttribute(userConfig.getSamlAccountNameAttr()) != null) {
       externalUserId = user.getAttribute(userConfig.getSamlAccountNameAttr()).getStringValue();
     }
