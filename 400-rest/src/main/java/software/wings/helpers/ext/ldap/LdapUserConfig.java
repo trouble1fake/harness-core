@@ -18,7 +18,7 @@ public interface LdapUserConfig extends LdapSearchConfig {
 
   String getUidAttr();
 
-  String getSamlAccountNameAttr();
+  String getSamAccountNameAttr();
 
   String getGroupMembershipAttr();
 
