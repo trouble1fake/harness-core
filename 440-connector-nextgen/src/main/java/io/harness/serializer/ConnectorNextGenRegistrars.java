@@ -33,14 +33,11 @@ public class ConnectorNextGenRegistrars {
           .addAll(NGCoreRegistrars.kryoRegistrars)
           .addAll(DelegateServiceDriverRegistrars.kryoRegistrars)
           .addAll(NGCoreClientRegistrars.kryoRegistrars)
-          .addAll(YamlBeansModuleRegistrars.kryoRegistrars)
           .addAll(SMCoreRegistrars.kryoRegistrars)
           .addAll(DelegateAgentBeansRegistrars.kryoRegistrars)
           .add(ConnectorNextGenKryoRegistrar.class)
-          .addAll(PmsCommonsModuleRegistrars.kryoRegistrars)
           .addAll(GitSyncSdkRegistrar.kryoRegistrars)
           .addAll(NGAuditCommonsRegistrars.kryoRegistrars)
-          .addAll(PmsSdkCoreModuleRegistrars.kryoRegistrars)
           .addAll(DelegateTaskRegistrars.kryoRegistrars)
           .addAll(LicenseBeanRegistrar.kryoRegistrars)
           .build();
@@ -50,24 +47,18 @@ public class ConnectorNextGenRegistrars {
           .addAll(NGCoreRegistrars.morphiaRegistrars)
           .addAll(DelegateServiceDriverRegistrars.morphiaRegistrars)
           .addAll(NGCoreClientRegistrars.morphiaRegistrars)
-          .addAll(YamlBeansModuleRegistrars.morphiaRegistrars)
           .addAll(FiltersRegistrars.morphiaRegistrars)
           .addAll(SMCoreRegistrars.morphiaRegistrars)
           .add(ConnectorMorphiaClassesRegistrar.class)
           .addAll(ConnectorBeansRegistrars.morphiaRegistrars)
-          .add(PmsSdkCoreMorphiaRegistrar.class)
-          .addAll(PmsCommonsModuleRegistrars.morphiaRegistrars)
           .addAll(GitSyncSdkRegistrar.morphiaRegistrars)
           .addAll(NGAuditCommonsRegistrars.morphiaRegistrars)
           .addAll(OutboxEventRegistrars.morphiaRegistrars)
-          .addAll(PmsSdkCoreModuleRegistrars.morphiaRegistrars)
           .addAll(DelegateTaskRegistrars.morphiaRegistrars)
           .build();
 
   public static final ImmutableList<Class<? extends Converter<?, ?>>> springConverters =
-      ImmutableList.<Class<? extends Converter<?, ?>>>builder()
-          .addAll(PmsSdkCoreModuleRegistrars.springConverters)
-          .build();
+      ImmutableList.<Class<? extends Converter<?, ?>>>builder().build();
 
   public static final ImmutableList<YamlSchemaRootClass> yamlSchemaRegistrars =
       ImmutableList.<YamlSchemaRootClass>builder()

@@ -28,6 +28,8 @@ import io.harness.gcp.client.GcpClient;
 import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.security.encryption.SecretDecryptionService;
 
+import software.wings.delegatetasks.ExceptionMessageSanitizer;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import java.util.Collections;
@@ -88,6 +90,7 @@ public class GcpValidationTaskHandler implements TaskHandler, ConnectorValidatio
 
     GcpManualDetailsDTO gcpManualDetailsDTO = gcpRequest.getGcpManualDetailsDTO();
     secretDecryptionService.decrypt(gcpManualDetailsDTO, gcpRequest.getEncryptionDetails());
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(gcpManualDetailsDTO, gcpRequest.getEncryptionDetails());
     gcpClient.getGkeContainerService(gcpManualDetailsDTO.getSecretKeyRef().getDecryptedValue());
     ConnectorValidationResult connectorValidationResult = ConnectorValidationResult.builder()
                                                               .status(ConnectivityStatus.SUCCESS)

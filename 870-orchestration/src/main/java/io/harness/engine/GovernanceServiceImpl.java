@@ -71,6 +71,7 @@ public class GovernanceServiceImpl implements GovernanceService {
               String.format("FF: [%s] is disabled for account: [%s]", FeatureName.OPA_PIPELINE_GOVERNANCE, accountId))
           .build();
     }
+    log.info("Initiating policy check for pipeline with expanded JSON:\n" + expandedJson);
 
     PipelineOpaEvaluationContext context;
     try {

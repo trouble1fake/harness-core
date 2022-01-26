@@ -24,6 +24,8 @@ import io.harness.delegate.beans.storeconfig.S3HelmStoreDelegateConfig;
 import io.harness.delegate.beans.storeconfig.StoreDelegateConfig;
 import io.harness.utils.FieldWithPlainTextOrSecretValueHelper;
 
+import software.wings.delegatetasks.ExceptionMessageSanitizer;
+
 import com.google.inject.Inject;
 
 @OwnedBy(CDP)
@@ -64,9 +66,13 @@ public class NGChartMuseumServiceImpl implements NGChartMuseumService {
                 format("Credentials type %s are not supported", awsConnector.getCredential().getAwsCredentialType()));
         }
 
-        return clientHelper.startS3ChartMuseumServer(s3StoreDelegateConfig.getBucketName(),
-            s3StoreDelegateConfig.getFolderPath(), s3StoreDelegateConfig.getRegion(), inheritFromDelegate, accessKey,
-            secretKey, irsa, s3StoreDelegateConfig.isUseLatestChartMuseumVersion());
+        try {
+          return clientHelper.startS3ChartMuseumServer(s3StoreDelegateConfig.getBucketName(),
+              s3StoreDelegateConfig.getFolderPath(), s3StoreDelegateConfig.getRegion(), inheritFromDelegate, accessKey,
+              secretKey, irsa, s3StoreDelegateConfig.isUseLatestChartMuseumVersion());
+        } catch (Exception ex) {
+          throw ExceptionMessageSanitizer.sanitizeException(ex);
+        }
 
       case GCS_HELM:
         GcsHelmStoreDelegateConfig gcsHelmStoreDelegateConfig = (GcsHelmStoreDelegateConfig) storeDelegateConfig;
@@ -78,9 +84,13 @@ public class NGChartMuseumServiceImpl implements NGChartMuseumService {
           serviceAccountKey = manualCredentials.getSecretKeyRef().getDecryptedValue();
         }
 
-        return clientHelper.startGCSChartMuseumServer(gcsHelmStoreDelegateConfig.getBucketName(),
-            gcsHelmStoreDelegateConfig.getFolderPath(), serviceAccountKey, resourceDirectory,
-            gcsHelmStoreDelegateConfig.isUseLatestChartMuseumVersion());
+        try {
+          return clientHelper.startGCSChartMuseumServer(gcsHelmStoreDelegateConfig.getBucketName(),
+              gcsHelmStoreDelegateConfig.getFolderPath(), serviceAccountKey, resourceDirectory,
+              gcsHelmStoreDelegateConfig.isUseLatestChartMuseumVersion());
+        } catch (Exception ex) {
+          throw ExceptionMessageSanitizer.sanitizeException(ex);
+        }
 
       default:
         throw new UnsupportedOperationException(

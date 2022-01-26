@@ -12,6 +12,8 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 
+import java.net.URI;
+import javax.ws.rs.core.UriBuilder;
 import lombok.Builder;
 import lombok.ToString;
 import lombok.Value;
@@ -31,6 +33,7 @@ public class DockerInternalConfig {
   }
 
   public String getDockerRegistryUrl() {
-    return dockerRegistryUrl.endsWith("/") ? dockerRegistryUrl : dockerRegistryUrl.concat("/");
+    URI uri = UriBuilder.fromUri(dockerRegistryUrl).build();
+    return UriBuilder.fromUri(dockerRegistryUrl).path(uri.getPath().endsWith("/") ? "" : "/").build().toString();
   }
 }

@@ -135,7 +135,7 @@ public class TimeseriesDashboardResource {
     PageParams pageParams = PageParams.builder().page(page).size(size).build();
     TimeSeriesAnalysisFilter timeSeriesAnalysisFilter = TimeSeriesAnalysisFilter.builder()
                                                             .filter(filter)
-                                                            .anomalous(anomalous)
+                                                            .anomalousMetricsOnly(anomalous)
                                                             .healthSourceIdentifiers(healthSourceIdentifiers)
                                                             .build();
 

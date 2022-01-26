@@ -12,7 +12,9 @@ import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 import static com.fasterxml.jackson.annotation.JsonTypeInfo.As.EXTERNAL_PROPERTY;
 import static com.fasterxml.jackson.annotation.JsonTypeInfo.Id.NAME;
 
+import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.SwaggerConstants;
 import io.harness.data.validator.EntityIdentifier;
 import io.harness.data.validator.EntityName;
@@ -49,6 +51,7 @@ import org.springframework.data.annotation.TypeAlias;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @OneOfSet(fields = {"skipCondition, when, failureStrategies, type, stageType, variables, tags", "template"},
     requiredFieldNames = {"type", "template"})
+@TargetModule(HarnessModule._889_YAML_COMMONS)
 public class StageElementConfig {
   @JsonProperty(YamlNode.UUID_FIELD_NAME)
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })

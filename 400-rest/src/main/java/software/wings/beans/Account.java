@@ -470,6 +470,7 @@ public class Account extends Base implements PersistentRegularIterable {
 
     else if (AccountKeys.delegateTelemetryPublisherIteration.equals(fieldName)) {
       this.delegateTelemetryPublisherIteration = nextIteration;
+      return;
     }
 
     throw new IllegalArgumentException("Invalid fieldName " + fieldName);

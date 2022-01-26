@@ -114,6 +114,9 @@ public class IdentityNodeExecutionStrategy
             .module(node.getServiceName())
             .name(node.getName())
             .skipGraphType(node.getSkipGraphType())
+            .identifier(node.getIdentifier())
+            .stepType(node.getStepType())
+            .nodeId(node.getUuid())
             .build();
     NodeExecution savedNodeExecution = nodeExecutionService.save(nodeExecution);
     // TODO: Should add to an execution queue rather than submitting straight to thread pool
