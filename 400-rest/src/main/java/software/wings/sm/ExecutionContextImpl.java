@@ -109,6 +109,7 @@ import software.wings.beans.artifact.Artifact;
 import software.wings.beans.artifact.ArtifactStream;
 import software.wings.beans.customdeployment.CustomDeploymentTypeDTO;
 import software.wings.common.InfrastructureConstants;
+import software.wings.common.RancherK8sClusterProcessor;
 import software.wings.common.VariableProcessor;
 import software.wings.expression.ArtifactLabelEvaluator;
 import software.wings.expression.ManagerExpressionEvaluator;
@@ -1011,6 +1012,9 @@ public class ExecutionContextImpl implements DeploymentExecutionContext {
       contextMap.put("sweepingOutputSecrets",
           SweepingOutputSecretManagerFunctor.builder().simpleEncryption(new SimpleEncryption()).build());
     }
+
+    contextMap.put(RancherK8sClusterProcessor.FILTERED_CLUSTERS_EXPR_PREFIX,
+        expressionProcessorFactory.getExpressionProcessor(RancherK8sClusterProcessor.EXPRESSION_EQUAL_PATTERN, this));
     return contextMap;
   }
 
