@@ -183,8 +183,7 @@ public class AzureWebAppSlotSetup extends AbstractAzureAppServiceState {
 
   @Override
   protected ExecutionResponse handleAsyncInternal(ExecutionContext context, Map<String, ResponseData> response) {
-    AzureAppServiceSlotSetupExecutionData stateExecutionData =
-        (AzureAppServiceSlotSetupExecutionData) context.getStateExecutionData();
+    AzureAppServiceSlotSetupExecutionData stateExecutionData = context.getStateExecutionData();
     TaskType taskType = stateExecutionData.getTaskType();
     switch (taskType) {
       case GIT_FETCH_FILES_TASK:
@@ -286,22 +285,14 @@ public class AzureWebAppSlotSetup extends AbstractAzureAppServiceState {
   }
 
   @Override
-  protected List<CommandUnit> commandUnits(boolean isNonDocker, boolean isGitFetch) {
+  protected List<CommandUnit> commandUnits(boolean isGitFetch) {
     List<CommandUnit> commandUnits = new ArrayList<>();
     if (isGitFetch) {
       commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.FETCH_FILES));
     }
     commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.SAVE_EXISTING_CONFIGURATIONS));
-    commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.STOP_DEPLOYMENT_SLOT));
-    commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.UPDATE_DEPLOYMENT_SLOT_CONFIGURATION_SETTINGS));
-    if (isNonDocker) {
-      commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.DEPLOY_ARTIFACT));
-      commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.START_DEPLOYMENT_SLOT));
-    } else {
-      commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.UPDATE_DEPLOYMENT_SLOT_CONTAINER_SETTINGS));
-      commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.START_DEPLOYMENT_SLOT));
-      commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.DEPLOY_DOCKER_IMAGE));
-    }
+    commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.UPDATE_SLOT_CONFIGURATION_SETTINGS));
+    commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.DEPLOY_TO_SLOT));
     commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.DEPLOYMENT_STATUS));
     return commandUnits;
   }
@@ -333,8 +324,7 @@ public class AzureWebAppSlotSetup extends AbstractAzureAppServiceState {
 
   private void provideAppServiceSettings(
       ExecutionContext context, AzureWebAppSlotSetupParametersBuilder slotSetupParametersBuilder) {
-    AzureAppServiceSlotSetupExecutionData setupExecutionData =
-        (AzureAppServiceSlotSetupExecutionData) context.getStateExecutionData();
+    AzureAppServiceSlotSetupExecutionData setupExecutionData = context.getStateExecutionData();
     AzureAppServiceConfiguration appServiceConfiguration;
     if (setupExecutionData != null && setupExecutionData.isGitFetchDone()) {
       appServiceConfiguration = azureAppServiceManifestUtils.getAzureAppServiceConfigurationGit(setupExecutionData);

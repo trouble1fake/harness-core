@@ -7,6 +7,9 @@
 
 package io.harness.azure.impl;
 
+import static io.harness.azure.model.AzureConstants.FAIL_DEPLOYMENT_ERROR_MSG;
+import static io.harness.azure.model.AzureConstants.FAIL_LOG_STREAMING;
+import static io.harness.azure.model.AzureConstants.LOG_STREAM_SUCCESS_MSG;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.logging.CommandExecutionStatus.FAILURE;
 import static io.harness.logging.CommandExecutionStatus.SUCCESS;
@@ -34,7 +37,7 @@ import rx.Observable;
 import rx.Subscriber;
 import rx.Subscription;
 
-public class AzureLogStreamer implements Runnable {
+public class SlotLogStreamer implements Runnable {
   AzureWebClientContext azureWebClientContext;
   AzureWebClient azureWebClient;
   String slotName;
@@ -47,21 +50,15 @@ public class AzureLogStreamer implements Runnable {
   private final AtomicBoolean operationFailed = new AtomicBoolean();
   private String errorLog;
 
-  public AzureLogStreamer(AzureWebClientContext azureWebClientContext, AzureWebClient azureWebClient, String slotName,
+  public SlotLogStreamer(AzureWebClientContext azureWebClientContext, AzureWebClient azureWebClient, String slotName,
       LogCallback logCallback, boolean containerDeployment) {
-    this(azureWebClientContext, azureWebClient, slotName, logCallback, containerDeployment,
-        new DateTime(DateTimeZone.UTC));
-  }
-
-  public AzureLogStreamer(AzureWebClientContext azureWebClientContext, AzureWebClient azureWebClient, String slotName,
-      LogCallback logCallback, boolean containerDeployment, DateTime startTime) {
     this.azureWebClientContext = azureWebClientContext;
     this.azureWebClient = azureWebClient;
     this.slotName = slotName;
     this.logCallback = logCallback;
     this.logParser = new AzureLogParser();
     this.containerDeployment = containerDeployment;
-    this.startTime = startTime;
+    this.startTime = new DateTime(DateTimeZone.UTC);
   }
 
   private void validateAndLog(String log) {
@@ -79,7 +76,7 @@ public class AzureLogStreamer implements Runnable {
     validateAndLog(log);
     if (logParser.checkIsSuccessDeployment(log, containerDeployment)) {
       operationCompleted.set(true);
-      logCallback.saveExecutionLog(String.format("Deployment on slot - [%s] was successful", slotName), INFO, SUCCESS);
+      logCallback.saveExecutionLog(String.format(LOG_STREAM_SUCCESS_MSG, slotName), INFO, SUCCESS);
       subscription.unsubscribe();
     }
 
@@ -87,8 +84,7 @@ public class AzureLogStreamer implements Runnable {
       operationCompleted.set(true);
       operationFailed.set(true);
       errorLog = log;
-      logCallback.saveExecutionLog(
-          String.format("Deployment on slot - [%s] failed. %s", slotName, log), ERROR, FAILURE);
+      logCallback.saveExecutionLog(String.format(FAIL_DEPLOYMENT_ERROR_MSG, slotName, log), ERROR, FAILURE);
       subscription.unsubscribe();
       throw new InvalidRequestException(log);
     }
@@ -116,10 +112,7 @@ public class AzureLogStreamer implements Runnable {
           errorLog = errorMessage;
           logCallback.saveExecutionLog(
               color(
-                  String.format(
-                      "Failed to stream the deployment logs from slot - [%s] due to %n [%s]. %nPlease verify the status of deployment manually",
-                      slotName, isEmpty(errorMessage) ? "" : errorMessage),
-                  White, Bold),
+                  String.format(FAIL_LOG_STREAMING, slotName, isEmpty(errorMessage) ? "" : errorMessage), White, Bold),
               INFO, SUCCESS);
         }
         operationCompleted.set(true);
@@ -166,7 +159,11 @@ public class AzureLogStreamer implements Runnable {
   }
 
   private String failureMessage(Throwable throwable) {
-    return throwable.getMessage();
+    Throwable cause = throwable.getCause();
+    if (cause != null) {
+      return cause.getMessage();
+    }
+    return throwable.toString();
   }
 
   private String getBodyMessage(Throwable throwable) {

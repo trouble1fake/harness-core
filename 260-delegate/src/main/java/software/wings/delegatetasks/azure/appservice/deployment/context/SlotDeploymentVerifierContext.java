@@ -9,20 +9,21 @@ package software.wings.delegatetasks.azure.appservice.deployment.context;
 
 import io.harness.azure.client.AzureWebClient;
 import io.harness.azure.context.AzureWebClientContext;
+import io.harness.azure.impl.SlotLogStreamer;
 import io.harness.logging.LogCallback;
 
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NonNull;
-import org.joda.time.DateTime;
 
-public class SlotDockerDeploymentVerifierContext extends StatusVerifierContext {
-  private DateTime startTime;
+public class SlotDeploymentVerifierContext extends StatusVerifierContext {
+  @Getter private final SlotLogStreamer logStreamer;
 
   @Builder
-  public SlotDockerDeploymentVerifierContext(@NonNull LogCallback logCallback, @NonNull String slotName,
+  public SlotDeploymentVerifierContext(@NonNull LogCallback logCallback, @NonNull String slotName,
       @NonNull AzureWebClient azureWebClient, @NonNull AzureWebClientContext azureWebClientContext,
-      DateTime startTime) {
+      @NonNull SlotLogStreamer logStreamer) {
     super(logCallback, slotName, azureWebClient, azureWebClientContext, null);
-    this.startTime = startTime;
+    this.logStreamer = logStreamer;
   }
 }

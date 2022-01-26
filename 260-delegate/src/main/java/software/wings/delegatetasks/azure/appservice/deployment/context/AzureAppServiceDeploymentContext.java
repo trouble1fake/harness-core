@@ -32,6 +32,7 @@ public class AzureAppServiceDeploymentContext {
   private Map<String, AzureAppServiceConnectionString> connSettingsToRemove;
   private String slotName;
   private String targetSlotName;
+  private String startupCommand;
   private int steadyStateTimeoutInMin;
 
   public void deploy(

@@ -33,7 +33,6 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 @TargetModule(HarnessModule._930_DELEGATE_TASKS)
 public class AzureAppServicePackageDeploymentContext extends AzureAppServiceDeploymentContext {
-  private String startupCommand;
   @NotNull(message = ARTIFACT_FILE_BLANK_ERROR_MSG) private File artifactFile;
   @NotNull(message = ARTIFACT_TYPE_BLANK_ERROR_MSG)
   @ArtifactTypeSubset(anyOf = {ArtifactType.ZIP, ArtifactType.WAR, ArtifactType.NUGET})
@@ -47,8 +46,7 @@ public class AzureAppServicePackageDeploymentContext extends AzureAppServiceDepl
       Map<String, AzureAppServiceConnectionString> connSettingsToRemove, String startupCommand, String slotName,
       String targetSlotName, File artifactFile, ArtifactType artifactType, int steadyStateTimeoutInMin) {
     super(azureWebClientContext, logStreamingTaskClient, appSettingsToAdd, appSettingsToRemove, connSettingsToAdd,
-        connSettingsToRemove, slotName, targetSlotName, steadyStateTimeoutInMin);
-    this.startupCommand = startupCommand;
+        connSettingsToRemove, slotName, targetSlotName, startupCommand, steadyStateTimeoutInMin);
     this.artifactFile = artifactFile;
     this.artifactType = artifactType;
   }

@@ -1194,7 +1194,7 @@ public class AzureVMSSStateHelperTest extends CategoryTest {
     when(context.getAppId()).thenReturn(appId);
     doReturn(service).when(serviceResourceService).getWithDetails(appId, serviceId);
 
-    assertThat(azureVMSSStateHelper.isWebAppNonContainerDeployment(context)).isFalse();
+    assertThat(azureVMSSStateHelper.isWebAppDockerDeployment(context)).isTrue();
   }
 
   @Test

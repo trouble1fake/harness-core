@@ -169,7 +169,7 @@ public class AzureWebAppSlotRollbackTest extends WingsBaseTest {
     ExecutionContextImpl mockContext = initializeMockSetup(true, true);
     ExecutionContextImpl rollbackContext = initializeMockSetup(true, true);
     doReturn(serviceId).when(azureVMSSStateHelper).getServiceId(mockContext);
-    doReturn(true).when(azureVMSSStateHelper).isWebAppNonContainerDeployment(mockContext);
+    doReturn(false).when(azureVMSSStateHelper).isWebAppDockerDeployment(mockContext);
     doReturn(Optional.of(rollbackActivity))
         .when(azureVMSSStateHelper)
         .getWebAppRollbackActivity(mockContext, serviceId);

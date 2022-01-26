@@ -8,16 +8,17 @@
 package software.wings.delegatetasks.azure.appservice.webapp.taskhandler;
 
 import static io.harness.azure.model.AzureConstants.AZURE_APP_SVC_ARTIFACT_DOWNLOAD_DIR_PATH;
+import static io.harness.azure.model.AzureConstants.DEPLOY_TO_SLOT;
 import static io.harness.azure.model.AzureConstants.REPOSITORY_DIR_PATH;
 import static io.harness.azure.model.AzureConstants.SLOT_TRAFFIC_PERCENTAGE;
 import static io.harness.azure.model.AzureConstants.START_DEPLOYMENT_SLOT;
 import static io.harness.azure.model.AzureConstants.STOP_DEPLOYMENT_SLOT;
-import static io.harness.azure.model.AzureConstants.UPDATE_DEPLOYMENT_SLOT_CONFIGURATION_SETTINGS;
 import static io.harness.azure.model.AzureConstants.UPDATE_DEPLOYMENT_SLOT_CONTAINER_SETTINGS;
+import static io.harness.azure.model.AzureConstants.UPDATE_SLOT_CONFIGURATION_SETTINGS;
 
 import static software.wings.delegatetasks.azure.appservice.webapp.AppServiceDeploymentProgress.SAVE_CONFIGURATION;
 import static software.wings.delegatetasks.azure.appservice.webapp.AppServiceDeploymentProgress.STOP_SLOT;
-import static software.wings.delegatetasks.azure.appservice.webapp.AppServiceDeploymentProgress.UPDATE_SLOT_CONFIGURATIONS;
+import static software.wings.delegatetasks.azure.appservice.webapp.AppServiceDeploymentProgress.UPDATE_SLOT_CONFIGURATIONS_SETTINGS;
 import static software.wings.delegatetasks.azure.appservice.webapp.AppServiceDeploymentProgress.UPDATE_SLOT_CONTAINER_SETTINGS;
 
 import io.harness.annotations.dev.HarnessModule;
@@ -118,7 +119,8 @@ public class AzureWebAppRollbackTaskHandler extends AbstractAzureWebAppTaskHandl
   private boolean slotDeploymentDidNotHappen(AzureWebAppRollbackParameters rollbackParameters) {
     AppServiceDeploymentProgress progressMarker = getProgressMarker(rollbackParameters);
     return (progressMarker == SAVE_CONFIGURATION) || (progressMarker == STOP_SLOT)
-        || (progressMarker == UPDATE_SLOT_CONFIGURATIONS) || (progressMarker == UPDATE_SLOT_CONTAINER_SETTINGS);
+        || (progressMarker == UPDATE_SLOT_CONFIGURATIONS_SETTINGS)
+        || (progressMarker == UPDATE_SLOT_CONTAINER_SETTINGS);
   }
 
   private void performRollback(ILogStreamingTaskClient logStreamingTaskClient,
@@ -136,14 +138,12 @@ public class AzureWebAppRollbackTaskHandler extends AbstractAzureWebAppTaskHandl
         rollbackFromStopSlotState(logStreamingTaskClient, rollbackParameters, deploymentContext);
         break;
 
-      case UPDATE_SLOT_CONFIGURATIONS:
+      case UPDATE_SLOT_CONFIGURATIONS_SETTINGS:
         rollbackFromUpdateConfigurationState(logStreamingTaskClient, rollbackParameters, deploymentContext);
         break;
 
       case UPDATE_SLOT_CONTAINER_SETTINGS:
-      case DEPLOY_DOCKER_IMAGE:
-      case DEPLOY_ARTIFACT:
-      case START_SLOT:
+      case DEPLOY_TO_SLOT:
       case UPDATE_TRAFFIC_PERCENT:
       case SWAP_SLOT:
         rollbackDeploymentAndTrafficShift(
@@ -167,26 +167,20 @@ public class AzureWebAppRollbackTaskHandler extends AbstractAzureWebAppTaskHandl
 
   private void rollbackFromSaveConfigurationState(ILogStreamingTaskClient logStreamingTaskClient) {
     String message = "The previous deployment did not start. Hence nothing to revert during rollback";
-    markCommandUnitAsDone(logStreamingTaskClient, STOP_DEPLOYMENT_SLOT, message);
-    markCommandUnitAsDone(logStreamingTaskClient, UPDATE_DEPLOYMENT_SLOT_CONFIGURATION_SETTINGS, message);
-    markCommandUnitAsDone(logStreamingTaskClient, UPDATE_DEPLOYMENT_SLOT_CONTAINER_SETTINGS, message);
-    markCommandUnitAsDone(logStreamingTaskClient, START_DEPLOYMENT_SLOT, message);
+    markCommandUnitAsDone(logStreamingTaskClient, UPDATE_SLOT_CONFIGURATION_SETTINGS, message);
+    markCommandUnitAsDone(logStreamingTaskClient, DEPLOY_TO_SLOT, message);
     markCommandUnitAsDone(logStreamingTaskClient, SLOT_TRAFFIC_PERCENTAGE, message);
   }
 
   private void rollbackFromStopSlotState(ILogStreamingTaskClient logStreamingTaskClient,
       AzureWebAppRollbackParameters rollbackParameters, AzureAppServiceDeploymentContext deploymentContext) {
-    String message = "Failed to stop the slot during deployment. Hence skipping this step";
-    markCommandUnitAsDone(logStreamingTaskClient, STOP_DEPLOYMENT_SLOT, message);
+    String message = "Slot configuration was not changed. Hence skipping this step";
+    markCommandUnitAsDone(logStreamingTaskClient, UPDATE_SLOT_CONFIGURATION_SETTINGS, message);
 
-    message = "Slot configuration was not changed. Hence skipping this step";
-    markCommandUnitAsDone(logStreamingTaskClient, UPDATE_DEPLOYMENT_SLOT_CONFIGURATION_SETTINGS, message);
-
-    message = "Slot container settings was not changed. Hence skipping this step";
-    markCommandUnitAsDone(logStreamingTaskClient, UPDATE_DEPLOYMENT_SLOT_CONTAINER_SETTINGS, message);
-
+    LogCallback deployLogCallback = logStreamingTaskClient.obtainLogCallback(DEPLOY_TO_SLOT);
     azureAppServiceDeploymentService.startSlotAsyncWithSteadyCheck(
-        deploymentContext, rollbackParameters.getPreDeploymentData());
+        deploymentContext, rollbackParameters.getPreDeploymentData(), deployLogCallback);
+    markCommandUnitAsDone(logStreamingTaskClient, DEPLOY_TO_SLOT, "Rollback completed");
 
     message = "Slot traffic was not changed. Hence skipping this step";
     markCommandUnitAsDone(logStreamingTaskClient, SLOT_TRAFFIC_PERCENTAGE, message);
@@ -194,17 +188,14 @@ public class AzureWebAppRollbackTaskHandler extends AbstractAzureWebAppTaskHandl
 
   private void rollbackFromUpdateConfigurationState(ILogStreamingTaskClient logStreamingTaskClient,
       AzureWebAppRollbackParameters rollbackParameters, AzureAppServiceDeploymentContext deploymentContext) {
-    String message = "Slot is already stopped. Hence skipping this step";
-    markCommandUnitAsDone(logStreamingTaskClient, STOP_DEPLOYMENT_SLOT, message);
-
+    LogCallback logCallback = logStreamingTaskClient.obtainLogCallback(UPDATE_SLOT_CONFIGURATION_SETTINGS);
     azureAppServiceDeploymentService.updateDeploymentSlotConfigurationSettings(
-        deploymentContext, rollbackParameters.getPreDeploymentData());
+        deploymentContext, rollbackParameters.getPreDeploymentData(), logCallback);
+    markCommandUnitAsDone(
+        logStreamingTaskClient, UPDATE_SLOT_CONFIGURATION_SETTINGS, "Reverted the slot configuration settings");
 
-    message = "Slot container settings was not changed. Hence skipping this step";
-    markCommandUnitAsDone(logStreamingTaskClient, UPDATE_DEPLOYMENT_SLOT_CONTAINER_SETTINGS, message);
-
-    azureAppServiceDeploymentService.startSlotAsyncWithSteadyCheck(
-        deploymentContext, rollbackParameters.getPreDeploymentData());
+    String message = "No artifact/image was deployed during deployment. Hence skipping this step";
+    markCommandUnitAsDone(logStreamingTaskClient, DEPLOY_TO_SLOT, message);
 
     message = "Slot traffic was not changed. Hence skipping this step";
     markCommandUnitAsDone(logStreamingTaskClient, SLOT_TRAFFIC_PERCENTAGE, message);
@@ -222,7 +213,7 @@ public class AzureWebAppRollbackTaskHandler extends AbstractAzureWebAppTaskHandl
     String message;
     message = "The previous deployment was complete. Hence nothing to revert during rollback";
     markCommandUnitAsDone(logStreamingTaskClient, STOP_DEPLOYMENT_SLOT, message);
-    markCommandUnitAsDone(logStreamingTaskClient, UPDATE_DEPLOYMENT_SLOT_CONFIGURATION_SETTINGS, message);
+    markCommandUnitAsDone(logStreamingTaskClient, UPDATE_SLOT_CONFIGURATION_SETTINGS, message);
     markCommandUnitAsDone(logStreamingTaskClient, UPDATE_DEPLOYMENT_SLOT_CONTAINER_SETTINGS, message);
     markCommandUnitAsDone(logStreamingTaskClient, START_DEPLOYMENT_SLOT, message);
     markCommandUnitAsDone(logStreamingTaskClient, SLOT_TRAFFIC_PERCENTAGE, message);
@@ -252,6 +243,7 @@ public class AzureWebAppRollbackTaskHandler extends AbstractAzureWebAppTaskHandl
         .imagePathAndTag(preDeploymentData.getImageNameAndTag())
         .slotName(preDeploymentData.getSlotName())
         .azureWebClientContext(azureWebClientContext)
+        .startupCommand(preDeploymentData.getStartupCommand())
         .steadyStateTimeoutInMin(rollbackParameters.getTimeoutIntervalInMin())
         .build();
   }

@@ -9,7 +9,12 @@ package software.wings.delegatetasks.azure.appservice.deployment;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.logging.CommandExecutionStatus.FAILURE;
+import static io.harness.logging.CommandExecutionStatus.SUCCESS;
 import static io.harness.threading.Morpheus.sleep;
+
+import static software.wings.beans.LogColor.White;
+import static software.wings.beans.LogHelper.color;
+import static software.wings.beans.LogWeight.Bold;
 
 import static java.lang.String.format;
 import static java.time.Duration.ofSeconds;
@@ -42,27 +47,29 @@ public class SlotSteadyStateChecker {
   public void waitUntilCompleteWithTimeout(long steadyCheckTimeoutInMinutes, long statusCheckIntervalInSeconds,
       LogCallback logCallback, String commandUnitName, SlotStatusVerifier slotStatusVerifier) {
     try {
-      Callable<Object> objectCallable = () -> {
-        while (true) {
-          if (slotStatusVerifier.operationFailed()) {
-            String errorMessage = slotStatusVerifier.getErrorMessage();
-            logCallback.saveExecutionLog(errorMessage, LogLevel.ERROR, FAILURE);
-            throw new InvalidRequestException(errorMessage);
-          }
-
-          if (slotStatusVerifier.hasReachedSteadyState()) {
-            return Boolean.TRUE;
-          }
-          sleep(ofSeconds(statusCheckIntervalInSeconds));
-        }
-      };
-
-      HTimeLimiter.callInterruptible21(timeLimiter, Duration.ofMinutes(steadyCheckTimeoutInMinutes), objectCallable);
+      startPollingTask(steadyCheckTimeoutInMinutes, statusCheckIntervalInSeconds, logCallback, slotStatusVerifier);
     } catch (UncheckedTimeoutException e) {
       String message = format("Timed out waiting for executing operation [%s], %n %s", commandUnitName, e.getMessage());
       logCallback.saveExecutionLog(message, LogLevel.ERROR, FAILURE);
-      slotStatusVerifier.stopPolling();
       throw new InvalidRequestException(message, e);
+    } catch (Exception e) {
+      String message =
+          format("Error while waiting for executing operation [%s], %n %s", commandUnitName, e.getMessage());
+      logCallback.saveExecutionLog(message, LogLevel.ERROR, FAILURE);
+      throw new InvalidRequestException(message, e);
+    }
+  }
+
+  public void waitUntilDeploymentCompleteWithTimeout(long steadyCheckTimeoutInMinutes,
+      long statusCheckIntervalInSeconds, LogCallback logCallback, String commandUnitName,
+      SlotStatusVerifier slotStatusVerifier) {
+    try {
+      startPollingTask(steadyCheckTimeoutInMinutes, statusCheckIntervalInSeconds, logCallback, slotStatusVerifier);
+    } catch (UncheckedTimeoutException e) {
+      String message =
+          "Timed out waiting for deployment to complete. \nUnable to determine the deployment status through slot streaming log. \nPlease verify manually the deployment status";
+      logCallback.saveExecutionLog(color(message, White, Bold), LogLevel.INFO, SUCCESS);
+      slotStatusVerifier.stopPolling();
     } catch (Exception e) {
       String message =
           format("Error while waiting for executing operation [%s], %n %s", commandUnitName, e.getMessage());
@@ -70,5 +77,25 @@ public class SlotSteadyStateChecker {
       slotStatusVerifier.stopPolling();
       throw new InvalidRequestException(message, e);
     }
+  }
+
+  private void startPollingTask(long steadyCheckTimeoutInMinutes, long statusCheckIntervalInSeconds,
+      LogCallback logCallback, SlotStatusVerifier slotStatusVerifier) throws Exception {
+    Callable<Object> objectCallable = () -> {
+      while (true) {
+        if (slotStatusVerifier.operationFailed()) {
+          String errorMessage = slotStatusVerifier.getErrorMessage();
+          logCallback.saveExecutionLog(errorMessage, LogLevel.ERROR, FAILURE);
+          throw new InvalidRequestException(errorMessage);
+        }
+
+        if (slotStatusVerifier.hasReachedSteadyState()) {
+          return Boolean.TRUE;
+        }
+        sleep(ofSeconds(statusCheckIntervalInSeconds));
+      }
+    };
+
+    HTimeLimiter.callInterruptible21(timeLimiter, Duration.ofMinutes(steadyCheckTimeoutInMinutes), objectCallable);
   }
 }

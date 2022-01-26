@@ -199,7 +199,7 @@ public class AzureVMSSStateHelper {
   }
 
   public Artifact getWebAppNonContainerArtifact(ExecutionContext context, boolean isRollback) {
-    if (!isWebAppNonContainerDeployment(context)) {
+    if (isWebAppDockerDeployment(context)) {
       return null;
     }
     String serviceId = getServiceId(context);
@@ -262,11 +262,10 @@ public class AzureVMSSStateHelper {
     }
   }
 
-  public boolean isWebAppNonContainerDeployment(ExecutionContext context) {
+  public boolean isWebAppDockerDeployment(ExecutionContext context) {
     Service service = getServiceByAppId(context, context.getAppId());
     ArtifactType artifactType = service.getArtifactType();
-    return ArtifactType.WAR.equals(artifactType) || ArtifactType.ZIP.equals(artifactType)
-        || ArtifactType.NUGET.equals(artifactType);
+    return ArtifactType.DOCKER.equals(artifactType);
   }
 
   public ExecutionContext getExecutionContext(

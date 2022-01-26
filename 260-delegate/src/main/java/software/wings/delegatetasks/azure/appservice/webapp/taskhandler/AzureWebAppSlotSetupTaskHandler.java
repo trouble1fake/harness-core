@@ -165,6 +165,7 @@ public class AzureWebAppSlotSetupTaskHandler extends AbstractAzureWebAppTaskHand
         .imagePathAndTag(imagePathAndTag)
         .slotName(slotSetupParameters.getSlotName())
         .targetSlotName(slotSetupParameters.getTargetSlotName())
+        .startupCommand(slotSetupParameters.getStartupCommand())
         .azureWebClientContext(azureWebClientContext)
         .steadyStateTimeoutInMin(slotSetupParameters.getTimeoutIntervalInMin())
         .build();

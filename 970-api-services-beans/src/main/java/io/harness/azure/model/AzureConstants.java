@@ -202,12 +202,67 @@ public interface AzureConstants {
   String DEPLOYMENT_SLOT_NAME_PREFIX_PATTERN = "%s-";
   String DEPLOYMENT_SLOT_NON_PRODUCTION_TYPE = "non-production";
   String DEPLOYMENT_SLOT_PRODUCTION_TYPE = "production";
+  String UPDATING_SLOT_CONFIGURATIONS = "Start updating configurations settings for  slot - [%s]";
+  String UPDATE_SLOT_CONFIGURATIONS_SUCCESS = "%nAll configurations settings for  slot - [%s] update successfully";
+  String UPDATE_APPLICATION_CONFIGURATIONS = "Updating application configurations for slot - [%s]";
+  String FAIL_UPDATE_SLOT_CONFIGURATIONS = "Failed to update slot configurations - [%s]";
+
+  String DELETE_APPLICATION_SETTINGS = "Deleting following Application settings: %n[%s]";
+  String SUCCESS_DELETE_APPLICATIONS_SETTINGS = "Application settings deleted successfully";
+  String ADD_APPLICATION_SETTINGS = "%nAdding following Application settings: %n[%s]";
+  String SUCCESS_ADD_APPLICATION_SETTINGS = "Application settings updated successfully";
+
+  String DELETE_CONNECTION_STRINGS = "Deleting following Connection strings: %n[%s]";
+  String SUCCESS_DELETE_CONNECTION_STRINGS = "Connection strings deleted successfully";
+  String ADD_CONNECTION_STRINGS = "%nAdding following Connection strings: %n[%s]";
+  String SUCCESS_ADD_CONNECTION_STRINGS = "Connection strings updated successfully";
+
+  String DELETE_CONTAINER_SETTINGS = "Cleaning existing container settings";
+  String SUCCESS_DELETE_CONTAINER_SETTINGS = "Existing container settings deleted successfully";
+  String DELETE_IMAGE_SETTINGS = "Cleaning existing image settings";
+  String SUCCESS_DELETE_IMAGE_SETTINGS = "Existing image settings deleted successfully";
+  String UPDATE_IMAGE_SETTINGS = "Updating container image and tag: %n[%s], web app hosting OS [%s]";
+  String SUCCESS_UPDATE_IMAGE_SETTINGS = "Image and tag updated successfully for slot [%s]";
+  String UPDATE_CONTAINER_SETTINGS = "%nUpdating Container settings for slot - [%s]";
+  String SUCCESS_UPDATE_CONTAINER_SETTINGS = "Deployment slot container settings updated successfully";
+  String FAIL_UPDATE_CONTAINER_SETTINGS = "Failed to update Container settings - [%s]";
+  String EMPTY_DOCKER_SETTINGS = "Docker settings list for updating slot configuration is empty, slot name [%s]";
+
+  String REQUEST_START_SLOT = "Sending request for starting deployment slot - [%s]";
+  String SUCCESS_START_SLOT = "Deployment slot started successfully";
+  String FAIL_START_SLOT = "Failed to start deployment slot - [%s]";
+  String START_SLOT_DEPLOYMENT = "Starting deployment to slot - [%s]";
+
+  String REQUEST_STOP_SLOT = "%nSending request for stopping deployment slot - [%s]";
+  String SUCCESS_STOP_SLOT = "Deployment slot stopped successfully";
+  String FAIL_STOP_SLOT = "Failed to stop deployment slot - [%s]";
+
+  String REQUEST_TRAFFIC_SHIFT = "Sending request to shift [%.2f] traffic to deployment slot: [%s]";
+  String SUCCESS_TRAFFIC_SHIFT = "Traffic percentage updated successfully";
+
+  String UPDATE_STARTUP_COMMAND = "Start updating slot configuration with startup command, %n"
+      + "App name: [%s]%nSlot name: [%s]";
+  String SUCCESS_UPDATE_STARTUP_COMMAND = "Startup command updated successfully";
+  String SWAP_SLOT_SUCCESS = "Swapping slots done successfully";
+
+  String SUCCESS_SLOT_DEPLOYMENT = "Deployment to slot - [%s] is successful";
+  String FAIL_DEPLOYMENT = "Deployment failed for slot - [%s]";
+  String FAIL_DEPLOYMENT_ERROR_MSG = "Deployment on slot - [%s] failed. %s";
+
+  String LOG_STREAM_SUCCESS_MSG = "Receive deployment success event from log stream for slot - [%s]";
+  String FAIL_LOG_STREAMING = "Failed to stream the deployment logs from slot - [%s] "
+      + "due to %n [%s]. %nPlease verify the status of deployment manually";
+  String START_ARTIFACT_DEPLOY = "Start deploying artifact file";
+  String ARTIFACT_DEPLOY_STARTED = "Deployment started. This operation can take a while to complete ...";
+  String UNSUPPORTED_ARTIFACT = "Unsupported package deployment for artifact type, artifactType: %s, slotName: %s";
+  String ZIP_DEPLOY = "Deploying artifact ZIP file on slot, %nArtifact file: %s%nApp name: %s%nSlot name: %s";
+  String WAR_DEPLOY = "Deploying artifact WAR file on slot, %nArtifact file: %s%nApp name: %s%nSlot name: %s";
 
   // Azure App Service Command Units
   String SAVE_EXISTING_CONFIGURATIONS = "Save App Service Configurations";
   String STOP_DEPLOYMENT_SLOT = "Stop Slot";
-  String UPDATE_DEPLOYMENT_SLOT_CONFIGURATION_SETTINGS = "Update Slot Configuration Settings";
-  String DEPLOY_ARTIFACT = "Deploy Artifact";
+  String UPDATE_SLOT_CONFIGURATION_SETTINGS = "Update Slot Configuration Settings";
+  String DEPLOY_TO_SLOT = "Deploy to Slot";
   String DEPLOY_DOCKER_IMAGE = "Deploy Docker Image";
   String UPDATE_DEPLOYMENT_SLOT_CONTAINER_SETTINGS = "Update Slot Container Settings";
   String START_DEPLOYMENT_SLOT = "Start Slot";
