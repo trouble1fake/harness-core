@@ -12,7 +12,6 @@ java_library(
         "//:lombok",
         "//400-rest:module",
         "//860-orchestration-steps:module",
-        "//878-pms-coupling:module",
         "//960-ng-license-usage-beans:module",
         "@maven//:com_fasterxml_jackson_core_jackson_annotations",
         "@maven//:io_swagger_swagger_annotations",

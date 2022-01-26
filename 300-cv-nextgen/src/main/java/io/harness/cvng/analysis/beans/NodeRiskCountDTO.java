@@ -18,11 +18,11 @@ import lombok.Value;
 public class NodeRiskCountDTO {
   private Integer totalNodeCount;
   private Integer anomalousNodeCount;
-  @Singular private List<RiskCount> riskCounts;
+  @Singular private List<NodeRiskCount> nodeRiskCounts;
 
   @Value
   @Builder
-  public static class RiskCount {
+  public static class NodeRiskCount {
     Risk risk;
     Integer count;
 

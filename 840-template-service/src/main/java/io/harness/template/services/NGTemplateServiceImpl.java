@@ -566,7 +566,7 @@ public class NGTemplateServiceImpl implements NGTemplateService {
       checkProjectExists(accountId, orgId, projectId);
     } else if (isNotEmpty(orgId)) {
       // its a org level connector
-      checkThatTheOrganizationExists(orgId, accountId);
+      checkThatTheOrganizationExists(accountId, orgId);
     }
   }
 

@@ -1,0 +1,14 @@
+[
+  {
+    "metricIdentifier": "calls_number",
+    "metricName": "Calls Number",
+    "metricValue": 0.0,
+    "timestamp": 1642966080000
+  },
+  {
+    "metricIdentifier": "stall_number",
+    "metricName": "Stall Count",
+    "metricValue": 0.0,
+    "timestamp": 1642966080000
+  }
+]

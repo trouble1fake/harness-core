@@ -9,11 +9,11 @@ package io.harness.cdng.artifact.steps;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.cdng.artifact.outcome.ArtifactOutcome;
+import io.harness.cdng.artifact.outcome.SidecarsOutcome;
 import io.harness.cdng.service.steps.ServiceStepsHelper;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.executions.steps.ExecutionNodeType;
-import io.harness.ngpipeline.artifact.bean.ArtifactOutcome;
-import io.harness.ngpipeline.artifact.bean.SidecarsOutcome;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
@@ -40,7 +40,7 @@ public class SidecarsStep extends NGForkStep {
   public StepResponse handleChildrenResponse(
       Ambiance ambiance, ForkStepParameters stepParameters, Map<String, ResponseData> responseDataMap) {
     List<Outcome> outcomes = serviceStepsHelper.getChildrenOutcomes(responseDataMap);
-    io.harness.ngpipeline.artifact.bean.SidecarsOutcome sidecarsOutcome = new SidecarsOutcome();
+    SidecarsOutcome sidecarsOutcome = new SidecarsOutcome();
     if (EmptyPredicate.isNotEmpty(outcomes)) {
       for (Outcome outcome : outcomes) {
         if (!(outcome instanceof ArtifactOutcome)) {

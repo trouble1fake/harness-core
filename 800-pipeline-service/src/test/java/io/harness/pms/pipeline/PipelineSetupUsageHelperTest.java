@@ -16,6 +16,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -53,6 +54,7 @@ import io.harness.rule.Owner;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
+import com.google.protobuf.StringValue;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -108,6 +110,38 @@ public class PipelineSetupUsageHelperTest extends PipelineServiceTestBase {
     } catch (IOException e) {
       throw new InvalidRequestException("Could not read file " + filename);
     }
+  }
+
+  @Test
+  @Owner(developers = NAMAN)
+  @Category(UnitTests.class)
+  public void testDeleteExistingSetupUsages() {
+    String account = "account";
+    String org = "org";
+    String project = "proj";
+    String id = "id";
+    IdentifierRefProtoDTO pipeIdRef = IdentifierRefProtoDTO.newBuilder()
+                                          .setAccountIdentifier(StringValue.newBuilder().setValue(account).build())
+                                          .build();
+    doReturn(pipeIdRef).when(identifierRefProtoDTOHelper).createIdentifierRefProtoDTO(account, org, project, id);
+    pipelineSetupUsageHelper.deleteExistingSetupUsages(account, org, project, id);
+
+    EntitySetupUsageCreateV2DTO entityReferenceDTO =
+        EntitySetupUsageCreateV2DTO.newBuilder()
+            .setAccountIdentifier(account)
+            .setReferredByEntity(EntityDetailProtoDTO.newBuilder()
+                                     .setIdentifierRef(pipeIdRef)
+                                     .setType(EntityTypeProtoEnum.PIPELINES)
+                                     .build())
+            .setDeleteOldReferredByRecords(true)
+            .build();
+
+    verify(eventProducer)
+        .send(Message.newBuilder()
+                  .putAllMetadata(ImmutableMap.of("accountId", account, EventsFrameworkMetadataConstants.ACTION,
+                      EventsFrameworkMetadataConstants.FLUSH_CREATE_ACTION))
+                  .setData(entityReferenceDTO.toByteString())
+                  .build());
   }
 
   @Test

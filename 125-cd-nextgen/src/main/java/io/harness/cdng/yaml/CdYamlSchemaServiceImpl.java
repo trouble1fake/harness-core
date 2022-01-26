@@ -17,6 +17,7 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FeatureFlag;
 import io.harness.cdng.creator.plan.stage.DeploymentStageConfig;
+import io.harness.cdng.creator.plan.stage.DeploymentStageNode;
 import io.harness.encryption.Scope;
 import io.harness.jackson.JsonNodeUtils;
 import io.harness.plancreator.steps.ParallelStepElementConfig;
@@ -56,7 +57,7 @@ import lombok.extern.slf4j.Slf4j;
 @OwnedBy(HarnessTeam.CDP)
 @Slf4j
 public class CdYamlSchemaServiceImpl implements CdYamlSchemaService {
-  private static final String DEPLOYMENT_STAGE_CONFIG = YamlSchemaUtils.getSwaggerName(DeploymentStageConfig.class);
+  private static final String DEPLOYMENT_STAGE_NODE = YamlSchemaUtils.getSwaggerName(DeploymentStageNode.class);
   private static final String STEP_ELEMENT_CONFIG = YamlSchemaUtils.getSwaggerName(StepElementConfig.class);
   private static final Class<StepElementConfig> STEP_ELEMENT_CONFIG_CLASS = StepElementConfig.class;
 
@@ -164,7 +165,7 @@ public class CdYamlSchemaServiceImpl implements CdYamlSchemaService {
 
     return PartialSchemaDTO.builder()
         .namespace(CD_NAMESPACE)
-        .nodeName(DEPLOYMENT_STAGE_CONFIG)
+        .nodeName(DEPLOYMENT_STAGE_NODE)
         .schema(partialCdSchema)
         .nodeType(getDeploymentStageTypeName())
         .moduleType(ModuleType.CD)

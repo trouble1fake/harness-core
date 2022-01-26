@@ -147,6 +147,6 @@ public abstract class ChangeSource
   }
 
   public boolean shouldGenerateAutoDemoEvents() {
-    return !getIdentifier().contains("no-auto-events");
+    return !getIdentifier().contains("noautoevents");
   }
 }

@@ -153,6 +153,8 @@ import io.harness.serializer.YamlUtils;
 import io.harness.shell.SshSessionConfig;
 import io.harness.yaml.BooleanPatchedRepresenter;
 
+import software.wings.delegatetasks.ExceptionMessageSanitizer;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -2401,6 +2403,10 @@ public class K8sTaskHelperBase {
         secretDecryptionService.decrypt(
             GitApiAccessDecryptionHelper.getAPIAccessDecryptableEntity(gitStoreDelegateConfig.getGitConfigDTO()),
             gitStoreDelegateConfig.getApiAuthEncryptedDataDetails());
+        ExceptionMessageSanitizer.storeAllSecretsForSanitizing(
+            GitApiAccessDecryptionHelper.getAPIAccessDecryptableEntity(gitStoreDelegateConfig.getGitConfigDTO()),
+            gitStoreDelegateConfig.getApiAuthEncryptedDataDetails());
+
         scmFetchFilesHelper.downloadFilesUsingScm(manifestFilesDirectory, gitStoreDelegateConfig, executionLogCallback);
       } else {
         GitConfigDTO gitConfigDTO = ScmConnectorMapper.toGitConfigDTO(gitStoreDelegateConfig.getGitConfigDTO());
@@ -2417,9 +2423,10 @@ public class K8sTaskHelperBase {
 
       return true;
     } catch (YamlException e) {
-      log.error("Failure in fetching files from git", e);
+      Exception sanitizedException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Failure in fetching files from git", sanitizedException);
       executionLogCallback.saveExecutionLog(
-          "Failed to download manifest files from git. " + ExceptionUtils.getMessage(e), ERROR,
+          "Failed to download manifest files from git. " + ExceptionUtils.getMessage(sanitizedException), ERROR,
           CommandExecutionStatus.FAILURE);
 
       throw new KubernetesTaskException(
@@ -2427,9 +2434,10 @@ public class K8sTaskHelperBase {
               gitStoreDelegateConfig.getConnectorName(), gitStoreDelegateConfig.getManifestId()),
           e.getCause());
     } catch (Exception e) {
-      log.error("Failure in fetching files from git", e);
+      Exception sanitizedException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Failure in fetching files from git", sanitizedException);
       executionLogCallback.saveExecutionLog(
-          "Failed to download manifest files from git. " + ExceptionUtils.getMessage(e), ERROR,
+          "Failed to download manifest files from git. " + ExceptionUtils.getMessage(sanitizedException), ERROR,
           CommandExecutionStatus.FAILURE);
 
       throw new KubernetesTaskException(
@@ -2495,14 +2503,17 @@ public class K8sTaskHelperBase {
     } catch (HelmClientException e) {
       String errorMsg = format("Failed to download manifest files from %s repo. ",
           manifestDelegateConfig.getStoreDelegateConfig().getType());
-      logCallback.saveExecutionLog(errorMsg + ExceptionUtils.getMessage(e), ERROR, CommandExecutionStatus.FAILURE);
+      logCallback.saveExecutionLog(errorMsg + ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)),
+          ERROR, CommandExecutionStatus.FAILURE);
 
       throw new HelmClientRuntimeException(e);
     } catch (Exception e) {
+      Exception sanitizedException = ExceptionMessageSanitizer.sanitizeException(e);
       String errorMsg = format("Failed to download manifest files from %s repo. ",
           manifestDelegateConfig.getStoreDelegateConfig().getType());
-      logCallback.saveExecutionLog(errorMsg + ExceptionUtils.getMessage(e), ERROR, CommandExecutionStatus.FAILURE);
-      throw new HelmClientException(errorMsg, e, HelmCliCommandType.FETCH);
+      logCallback.saveExecutionLog(
+          errorMsg + ExceptionUtils.getMessage(sanitizedException), ERROR, CommandExecutionStatus.FAILURE);
+      throw new HelmClientException(errorMsg, sanitizedException, HelmCliCommandType.FETCH);
     }
 
     return true;
@@ -2516,9 +2527,11 @@ public class K8sTaskHelperBase {
       log.debug(versionInfo.toString());
       return ConnectorValidationResult.builder().status(ConnectivityStatus.SUCCESS).build();
     } catch (Exception ex) {
-      log.error(K8sExceptionConstants.KUBERNETES_CLUSTER_CONNECTION_VALIDATION_FAILED, ex);
+      Exception sanitizedException = ExceptionMessageSanitizer.sanitizeException(ex);
+      log.error(K8sExceptionConstants.KUBERNETES_CLUSTER_CONNECTION_VALIDATION_FAILED, sanitizedException);
       throw NestedExceptionUtils.hintWithExplanationException(
-          K8sExceptionConstants.KUBERNETES_CLUSTER_CONNECTION_VALIDATION_FAILED, ex.getMessage(), ex);
+          K8sExceptionConstants.KUBERNETES_CLUSTER_CONNECTION_VALIDATION_FAILED, sanitizedException.getMessage(),
+          sanitizedException);
     }
   }
 
@@ -2530,6 +2543,7 @@ public class K8sTaskHelperBase {
       KubernetesAuthCredentialDTO kubernetesCredentialAuth = getKubernetesCredentialsAuth(
           (KubernetesClusterDetailsDTO) kubernetesClusterConfig.getCredential().getConfig());
       secretDecryptionService.decrypt(kubernetesCredentialAuth, encryptionDetailList);
+      ExceptionMessageSanitizer.storeAllSecretsForSanitizing(kubernetesCredentialAuth, encryptionDetailList);
     }
     return k8sYamlToDelegateDTOMapper.createKubernetesConfigFromClusterConfig(kubernetesClusterConfig);
   }
@@ -2575,8 +2589,8 @@ public class K8sTaskHelperBase {
             .build();
       }
     } catch (Exception ex) {
-      log.info("Exception while validating kubernetes credentials", ex);
-      return createConnectivityFailureValidationResult(ex);
+      log.info("Exception while validating kubernetes credentials", ExceptionMessageSanitizer.sanitizeException(ex));
+      return createConnectivityFailureValidationResult(ExceptionMessageSanitizer.sanitizeException(ex));
     }
     return ConnectorValidationResult.builder().status(connectivityStatus).build();
   }

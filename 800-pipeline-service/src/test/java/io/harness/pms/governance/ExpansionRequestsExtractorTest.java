@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.Stack;
+import java.util.stream.Collectors;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -52,12 +53,12 @@ public class ExpansionRequestsExtractorTest extends CategoryTest {
   Map<ModuleType, Set<String>> expandableFieldsPerService;
   List<LocalFQNExpansionInfo> localFQNRequestMetadata;
   String pipelineYaml;
+  String pipelineYamlWithParallelStages;
 
-  private String readFile() {
+  private String readFile(String filename) {
     ClassLoader classLoader = getClass().getClassLoader();
     try {
-      return Resources.toString(
-          Objects.requireNonNull(classLoader.getResource("opa-pipeline.yaml")), StandardCharsets.UTF_8);
+      return Resources.toString(Objects.requireNonNull(classLoader.getResource(filename)), StandardCharsets.UTF_8);
     } catch (IOException e) {
       throw new InvalidRequestException("Could not read resource file: opa-pipeline.yaml");
     }
@@ -65,7 +66,8 @@ public class ExpansionRequestsExtractorTest extends CategoryTest {
 
   @Before
   public void setUp() {
-    pipelineYaml = readFile();
+    pipelineYaml = readFile("opa-pipeline.yaml");
+    pipelineYamlWithParallelStages = readFile("pipeline-extensive.yml");
     MockitoAnnotations.initMocks(this);
     typeToService = new HashMap<>();
     typeToService.put("Approval", ModuleType.PMS);
@@ -177,5 +179,23 @@ public class ExpansionRequestsExtractorTest extends CategoryTest {
     ExpansionRequest expansionRequest1 = serviceCallsList.get(1);
     assertThat(expansionRequest1.getModule()).isEqualTo(ModuleType.CV);
     assertThat(expansionRequest1.getFqn()).isEqualTo("pipeline/stages/[1]/stage/spec");
+  }
+
+  @Test
+  @Owner(developers = NAMAN)
+  @Category(UnitTests.class)
+  public void testGetFQNBasedServiceCallForParallelStages() throws IOException {
+    doReturn(localFQNRequestMetadata).when(expansionRequestsHelper).getLocalFQNRequestMetadata();
+
+    YamlNode pipelineNode = YamlUtils.readTree(pipelineYamlWithParallelStages).getNode();
+    Set<ExpansionRequest> serviceCalls = new HashSet<>();
+    expansionRequestsExtractor.getFQNBasedServiceCalls(pipelineNode, localFQNRequestMetadata, serviceCalls);
+    List<String> serviceCallsFQNs = serviceCalls.stream().map(ExpansionRequest::getFqn).collect(Collectors.toList());
+    assertThat(serviceCallsFQNs).hasSize(8);
+    assertThat(serviceCallsFQNs)
+        .contains("pipeline/stages/[0]/stage/spec", "pipeline/stages/[0]/stage/spec/execution",
+            "pipeline/stages/[1]/parallel/[0]/stage/spec", "pipeline/stages/[1]/parallel/[0]/stage/spec/execution",
+            "pipeline/stages/[1]/parallel/[1]/stage/spec", "pipeline/stages/[1]/parallel/[1]/stage/spec/execution",
+            "pipeline/stages/[2]/stage/spec", "pipeline/stages/[2]/stage/spec/execution");
   }
 }

@@ -968,10 +968,9 @@ public class DelegateTaskServiceClassicImpl implements DelegateTaskServiceClassi
   }
 
   private boolean isValidationComplete(DelegateTask delegateTask) {
-    Set<String> validatingDelegates = delegateTask.getValidatingDelegateIds();
     Set<String> completeDelegates = delegateTask.getValidationCompleteDelegateIds();
-    boolean allDelegatesFinished = isNotEmpty(validatingDelegates) && isNotEmpty(completeDelegates)
-        && completeDelegates.containsAll(validatingDelegates);
+    boolean allDelegatesFinished =
+        isNotEmpty(completeDelegates) && completeDelegates.containsAll(delegateTask.getEligibleToExecuteDelegateIds());
     if (allDelegatesFinished) {
       log.debug("Validation attempts are complete for task", delegateTask.getUuid());
     }

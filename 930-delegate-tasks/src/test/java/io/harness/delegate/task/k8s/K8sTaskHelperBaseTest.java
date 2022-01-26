@@ -3176,7 +3176,7 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
         .thenReturn(new V1TokenReviewStatusBuilder().withNewUser().withUsername(username).endUser().build());
 
     V1TokenReviewStatus v1TokenReviewStatus = k8sTaskHelperBase.fetchTokenReviewStatus(
-        manualK8sConfig(), ImmutableList.of(EncryptedDataDetail.builder().build()));
+        manualK8sConfig(), ImmutableList.of(EncryptedDataDetail.builder().fieldName("accessKey").build()));
 
     assertThat(v1TokenReviewStatus).isNotNull();
     assertThat(v1TokenReviewStatus.getUser()).isNotNull();

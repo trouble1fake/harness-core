@@ -27,7 +27,6 @@ import lombok.experimental.UtilityClass;
 public class CiBeansRegistrars {
   public static final ImmutableSet<Class<? extends KryoRegistrar>> kryoRegistrars =
       ImmutableSet.<Class<? extends KryoRegistrar>>builder()
-          .addAll(NGPipelineRegistrars.kryoRegistrars)
           .addAll(ProjectAndOrgRegistrars.kryoRegistrars)
           .addAll(NGCoreBeansRegistrars.kryoRegistrars)
           .addAll(SecretManagerClientRegistrars.kryoRegistrars)
@@ -40,7 +39,6 @@ public class CiBeansRegistrars {
 
   public static final ImmutableSet<Class<? extends MorphiaRegistrar>> morphiaRegistrars =
       ImmutableSet.<Class<? extends MorphiaRegistrar>>builder()
-          .addAll(NGPipelineRegistrars.morphiaRegistrars)
           .addAll(ProjectAndOrgRegistrars.morphiaRegistrars)
           .addAll(NGCoreBeansRegistrars.morphiaRegistrars)
           .addAll(SecretManagerClientRegistrars.morphiaRegistrars)
