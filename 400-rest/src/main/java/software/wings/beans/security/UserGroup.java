@@ -27,6 +27,7 @@ import io.harness.persistence.AccountAccess;
 import io.harness.persistence.NameAccess;
 
 import software.wings.beans.Base;
+import software.wings.beans.EntityReference;
 import software.wings.beans.NotificationChannelType;
 import software.wings.beans.User;
 import software.wings.beans.notification.NotificationSettings;
@@ -39,10 +40,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -138,13 +141,16 @@ public class UserGroup extends Base implements NotificationReceiverInfo, Account
 
   private boolean isDefault;
 
+  @FdIndex private Set<EntityReference> parents = new HashSet<>();
+
   // TODO: Should use Builder at the class level itself.
   @Builder
   public UserGroup(String name, String description, String accountId, List<String> memberIds, List<User> members,
       Set<AppPermission> appPermissions, AccountPermissions accountPermissions, String uuid, String appId,
       EmbeddedUser createdBy, long createdAt, EmbeddedUser lastUpdatedBy, long lastUpdatedAt, String entityYamlPath,
       boolean isSsoLinked, SSOType linkedSsoType, String linkedSsoId, String linkedSsoDisplayName, String ssoGroupId,
-      String ssoGroupName, NotificationSettings notificationSettings, boolean isDefault, boolean importedByScim) {
+      String ssoGroupName, NotificationSettings notificationSettings, boolean isDefault, boolean importedByScim,
+      Set<EntityReference> parents) {
     super(uuid, appId, createdBy, createdAt, lastUpdatedBy, lastUpdatedAt, entityYamlPath);
     this.name = name;
     this.description = description;
@@ -162,6 +168,7 @@ public class UserGroup extends Base implements NotificationReceiverInfo, Account
     this.notificationSettings = notificationSettings;
     this.isDefault = isDefault;
     this.importedByScim = importedByScim;
+    this.parents = parents;
   }
 
   public UserGroup buildUserGroupAudit() {
@@ -220,6 +227,14 @@ public class UserGroup extends Base implements NotificationReceiverInfo, Account
 
   public List<User> getMembers() {
     return CollectionUtils.emptyIfNull(members);
+  }
+
+  public void addParent(@NotNull EntityReference entityReference) {
+    parents.add(entityReference);
+  }
+
+  public void removeParent(@NotNull EntityReference entityReference) {
+    parents.remove(entityReference);
   }
 
   @Override
