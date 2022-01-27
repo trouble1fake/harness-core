@@ -7,11 +7,14 @@
 
 package io.harness.waiter;
 
+import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.annotations.dev.TargetModule;
 import io.harness.pms.sdk.core.waiter.AsyncWaitEngine;
 
 @OwnedBy(HarnessTeam.PIPELINE)
+@TargetModule(HarnessModule._882_PMS_SDK_CORE)
 public class AsyncWaitEngineImpl implements AsyncWaitEngine {
   private final WaitNotifyEngine waitNotifyEngine;
   private final String publisherName;

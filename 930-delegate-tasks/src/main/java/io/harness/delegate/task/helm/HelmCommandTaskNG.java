@@ -36,6 +36,9 @@ import io.harness.k8s.K8sGlobalConfigService;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
 import io.harness.logging.LogLevel;
+import io.harness.secret.SecretSanitizerThreadLocal;
+
+import software.wings.delegatetasks.ExceptionMessageSanitizer;
 
 import com.google.inject.Inject;
 import java.nio.file.Paths;
@@ -67,6 +70,7 @@ public class HelmCommandTaskNG extends AbstractDelegateRunnableTask {
   public HelmCommandTaskNG(DelegateTaskPackage delegateTaskPackage, ILogStreamingTaskClient logStreamingTaskClient,
       Consumer<DelegateTaskResponse> consumer, BooleanSupplier preExecute) {
     super(delegateTaskPackage, logStreamingTaskClient, consumer, preExecute);
+    SecretSanitizerThreadLocal.addAll(delegateTaskPackage.getSecrets());
   }
 
   @Override
@@ -122,14 +126,16 @@ public class HelmCommandTaskNG extends AbstractDelegateRunnableTask {
           throw new UnsupportedOperationException("Operation not supported");
       }
     } catch (Exception ex) {
-      String errorMsg = ExceptionUtils.getMessage(ex);
-
+      Exception sanitizedException = ExceptionMessageSanitizer.sanitizeException(ex);
+      String errorMsg = sanitizedException.getMessage();
       helmCommandRequestNG.getLogCallback().saveExecutionLog(
           errorMsg + "\n Overall deployment Failed", LogLevel.ERROR, CommandExecutionStatus.FAILURE);
-      log.error(format("Exception in processing helm task [%s]", helmCommandRequestNG.toString()), ex);
-      closeOpenCommandUnits(helmCommandRequestNG.getCommandUnitsProgress(), getLogStreamingTaskClient(), ex);
+      log.error(format("Exception in processing helm task [%s]", helmCommandRequestNG.toString()), sanitizedException);
+      closeOpenCommandUnits(
+          helmCommandRequestNG.getCommandUnitsProgress(), getLogStreamingTaskClient(), sanitizedException);
       throw new TaskNGDataException(
-          UnitProgressDataMapper.toUnitProgressData(helmCommandRequestNG.getCommandUnitsProgress()), ex);
+          UnitProgressDataMapper.toUnitProgressData(helmCommandRequestNG.getCommandUnitsProgress()),
+          sanitizedException);
     }
 
     helmCommandRequestNG.getLogCallback().saveExecutionLog(
@@ -219,7 +225,7 @@ public class HelmCommandTaskNG extends AbstractDelegateRunnableTask {
         }
       }
     } catch (Exception ex) {
-      log.error("Exception while closing command units", ex);
+      log.error("Exception while closing command units", ExceptionMessageSanitizer.sanitizeException(ex));
     }
   }
 

@@ -10,7 +10,9 @@ package io.harness.when.beans;
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 
 import io.harness.annotation.RecasterAlias;
+import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.SwaggerConstants;
 import io.harness.pms.yaml.ParameterField;
 
@@ -23,6 +25,7 @@ import lombok.Value;
 @Builder
 @OwnedBy(PIPELINE)
 @RecasterAlias("io.harness.when.beans.StageWhenCondition")
+@TargetModule(HarnessModule._889_YAML_COMMONS)
 public class StageWhenCondition {
   @NotNull WhenConditionStatus pipelineStatus;
   @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> condition;

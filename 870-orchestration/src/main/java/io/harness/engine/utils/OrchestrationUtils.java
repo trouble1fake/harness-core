@@ -19,10 +19,12 @@ import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.ambiance.Level;
 import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.steps.StepCategory;
+import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.execution.utils.StatusUtils;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.experimental.UtilityClass;
 
@@ -44,11 +46,13 @@ public class OrchestrationUtils {
   }
 
   public static boolean isStageNode(NodeExecution nodeExecution) {
-    return AmbianceUtils.getCurrentStepType(nodeExecution.getAmbiance()).getStepCategory() == StepCategory.STAGE;
+    StepType currentStepType = Objects.requireNonNull(AmbianceUtils.getCurrentStepType(nodeExecution.getAmbiance()));
+    return currentStepType.getStepCategory() == StepCategory.STAGE;
   }
 
   public static boolean isPipelineNode(NodeExecution nodeExecution) {
-    return nodeExecution.getNode().getStepCategory() == StepCategory.PIPELINE;
+    StepType currentStepType = Objects.requireNonNull(AmbianceUtils.getCurrentStepType(nodeExecution.getAmbiance()));
+    return currentStepType.getStepCategory() == StepCategory.PIPELINE;
   }
 
   public static NodeType currentNodeType(Ambiance ambiance) {

@@ -16,7 +16,6 @@ import io.harness.delegate.task.azure.AzureTaskExecutionResponse;
 import io.harness.delegate.task.azure.appservice.webapp.request.AzureWebAppSlotShiftTrafficParameters;
 import io.harness.delegate.task.azure.appservice.webapp.response.AzureWebAppSlotShiftTrafficResponse;
 
-import software.wings.beans.Activity;
 import software.wings.beans.command.AzureWebAppCommandUnit;
 import software.wings.beans.command.CommandUnit;
 import software.wings.beans.command.CommandUnitDetails;
@@ -69,9 +68,9 @@ public class AzureWebAppSlotShiftTraffic extends AbstractAzureAppServiceState {
 
   @Override
   protected AzureTaskExecutionRequest buildTaskExecutionRequest(
-      ExecutionContext context, AzureAppServiceStateData azureAppServiceStateData, Activity activity) {
+      ExecutionContext context, AzureAppServiceStateData azureAppServiceStateData, String activityId) {
     AzureWebAppSlotShiftTrafficParameters trafficShiftParams =
-        buildTrafficShiftParams(context, azureAppServiceStateData, activity);
+        buildTrafficShiftParams(context, azureAppServiceStateData, activityId);
 
     return AzureTaskExecutionRequest.builder()
         .azureConfigDTO(azureVMSSStateHelper.createAzureConfigDTO(azureAppServiceStateData.getAzureConfig()))
@@ -82,10 +81,10 @@ public class AzureWebAppSlotShiftTraffic extends AbstractAzureAppServiceState {
 
   @Override
   protected StateExecutionData buildPreStateExecutionData(
-      Activity activity, ExecutionContext context, AzureAppServiceStateData azureAppServiceStateData) {
+      String activityId, ExecutionContext context, AzureAppServiceStateData azureAppServiceStateData) {
     AzureAppServiceSlotSetupContextElement contextElement = readContextElement(context);
     return AzureAppServiceSlotShiftTrafficExecutionData.builder()
-        .activityId(activity.getUuid())
+        .activityId(activityId)
         .infrastructureMappingId(azureAppServiceStateData.getInfrastructureMapping().getUuid())
         .appServiceName(contextElement.getWebApp())
         .deploySlotName(contextElement.getDeploymentSlot())
@@ -110,7 +109,7 @@ public class AzureWebAppSlotShiftTraffic extends AbstractAzureAppServiceState {
   }
 
   @Override
-  protected List<CommandUnit> commandUnits(boolean isGitFetch) {
+  protected List<CommandUnit> commandUnits(boolean isNonDocker, boolean isGitFetch) {
     return ImmutableList.of(new AzureWebAppCommandUnit(AzureConstants.SLOT_TRAFFIC_PERCENTAGE),
         new AzureWebAppCommandUnit(AzureConstants.DEPLOYMENT_STATUS));
   }
@@ -127,13 +126,13 @@ public class AzureWebAppSlotShiftTraffic extends AbstractAzureAppServiceState {
   }
 
   private AzureWebAppSlotShiftTrafficParameters buildTrafficShiftParams(
-      ExecutionContext context, AzureAppServiceStateData azureAppServiceStateData, Activity activity) {
+      ExecutionContext context, AzureAppServiceStateData azureAppServiceStateData, String activityId) {
     AzureAppServiceSlotSetupContextElement contextElement = readContextElement(context);
 
     return AzureWebAppSlotShiftTrafficParameters.builder()
         .accountId(azureAppServiceStateData.getApplication().getAccountId())
         .appId(azureAppServiceStateData.getApplication().getAppId())
-        .activityId(activity.getUuid())
+        .activityId(activityId)
         .commandName(APP_SERVICE_SLOT_TRAFFIC_SHIFT)
         .timeoutIntervalInMin(contextElement.getAppServiceSlotSetupTimeOut())
         .subscriptionId(azureAppServiceStateData.getSubscriptionId())

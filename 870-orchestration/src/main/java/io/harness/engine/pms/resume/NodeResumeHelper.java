@@ -14,9 +14,10 @@ import io.harness.engine.pms.data.PmsOutcomeService;
 import io.harness.engine.pms.resume.publisher.NodeResumeEventPublisher;
 import io.harness.engine.pms.resume.publisher.ResumeMetadata;
 import io.harness.execution.NodeExecution;
-import io.harness.plan.Node;
+import io.harness.pms.contracts.ambiance.Level;
 import io.harness.pms.contracts.execution.ChildChainExecutableResponse;
 import io.harness.pms.contracts.execution.ExecutionMode;
+import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.sdk.core.steps.io.StepResponseNotifyData;
 import io.harness.serializer.KryoSerializer;
 
@@ -46,18 +47,18 @@ public class NodeResumeHelper {
       List<NodeExecution> childExecutions =
           nodeExecutionService.fetchNodeExecutionsByParentId(resumeMetadata.getNodeExecutionUuid(), false);
       for (NodeExecution childExecution : childExecutions) {
-        Node node = childExecution.getNode();
+        Level level = Objects.requireNonNull(AmbianceUtils.obtainCurrentLevel(childExecution.getAmbiance()));
         StepResponseNotifyData notifyData =
             StepResponseNotifyData.builder()
-                .nodeUuid(node.getUuid())
-                .identifier(node.getIdentifier())
-                .group(node.getGroup())
+                .nodeUuid(level.getSetupId())
+                .identifier(level.getIdentifier())
+                .group(level.getGroup())
                 .status(childExecution.getStatus())
                 .failureInfo(childExecution.getFailureInfo())
                 .stepOutcomeRefs(pmsOutcomeService.fetchOutcomeRefs(childExecution.getUuid()))
                 .adviserResponse(childExecution.getAdviserResponse())
                 .build();
-        byteResponseMap.put(node.getUuid(), ByteString.copyFrom(kryoSerializer.asDeflatedBytes(notifyData)));
+        byteResponseMap.put(level.getSetupId(), ByteString.copyFrom(kryoSerializer.asDeflatedBytes(notifyData)));
       }
       return byteResponseMap;
     }

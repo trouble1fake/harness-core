@@ -36,4 +36,6 @@ public class NodeProjectionUtils {
       Sets.newHashSet(NodeExecutionKeys.status, NodeExecutionKeys.ambiance, NodeExecutionKeys.planNode,
           NodeExecutionKeys.resolvedStepParameters, NodeExecutionKeys.mode, NodeExecutionKeys.startTs,
           NodeExecutionKeys.endTs, NodeExecutionKeys.resolvedStepParameters, NodeExecutionKeys.parentId);
+  public static Set<String> forFacilitation = Sets.newHashSet(NodeExecutionKeys.ambiance, NodeExecutionKeys.planNode,
+      NodeExecutionKeys.originalNodeExecutionId, NodeExecutionKeys.resolvedStepParameters, NodeExecutionKeys.module);
 }

@@ -7,26 +7,49 @@
 
 package io.harness.secret;
 
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
+
+import java.util.HashSet;
 import java.util.Set;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class SecretSanitizerThreadLocal {
-  public static final ThreadLocal<Set<String>> triggeredByThreadLocal = new ThreadLocal<>();
+  public static final ThreadLocal<Set<String>> secretsThreadLocal = new ThreadLocal<>();
 
   /**
    *
    * @param secrets
    */
   public static void set(final Set<String> secrets) {
-    triggeredByThreadLocal.set(secrets);
+    secretsThreadLocal.set(secrets);
+  }
+
+  public static void addAll(final Set<String> secrets) {
+    if (isEmpty(secrets)) {
+      return;
+    }
+    if (secretsThreadLocal.get() == null) {
+      secretsThreadLocal.set(new HashSet<>());
+    }
+    secretsThreadLocal.get().addAll(secrets);
+  }
+
+  public static void add(final String secret) {
+    if (isEmpty(secret)) {
+      return;
+    }
+    if (secretsThreadLocal.get() == null) {
+      secretsThreadLocal.set(new HashSet<>());
+    }
+    secretsThreadLocal.get().add(secret);
   }
 
   /**
    * Unset.
    */
   public static void unset() {
-    triggeredByThreadLocal.remove();
+    secretsThreadLocal.remove();
   }
 
   /**
@@ -34,6 +57,6 @@ public class SecretSanitizerThreadLocal {
    * @return
    */
   public static Set<String> get() {
-    return triggeredByThreadLocal.get();
+    return secretsThreadLocal.get();
   }
 }

@@ -21,6 +21,7 @@ message ExpansionRequestBatch {
 message ExpansionRequestProto {
   string fqn = 1;
   bytes value = 2;
+  string key = 3;
 }
 
 message ExpansionResponseBatch {

@@ -77,6 +77,12 @@ public class SpawnChildrenRequestProcessor implements SdkResponseProcessor {
                 .parentId(nodeExecution.getUuid())
                 .startTs(AmbianceUtils.getCurrentLevelStartTs(clonedAmbiance))
                 .originalNodeExecutionId(OrchestrationUtils.getOriginalNodeExecutionId(node))
+                .module(node.getServiceName())
+                .name(node.getName())
+                .skipGraphType(node.getSkipGraphType())
+                .identifier(node.getIdentifier())
+                .stepType(node.getStepType())
+                .nodeId(node.getUuid())
                 .build();
         nodeExecutionService.save(childNodeExecution);
         log.info("For Children Executable starting Child NodeExecution with id: {}", uuid);

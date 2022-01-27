@@ -142,6 +142,12 @@ public class RetryHelper {
         .retryIds(retryIds)
         .oldRetry(false)
         .originalNodeExecutionId(nodeExecution.getOriginalNodeExecutionId())
+        .module(nodeExecution.module())
+        .name(nodeExecution.name())
+        .skipGraphType(nodeExecution.skipGraphType())
+        .identifier(nodeExecution.identifier())
+        .stepType(nodeExecution.stepType())
+        .nodeId(nodeExecution.nodeId())
         .build();
   }
 }

@@ -10,6 +10,9 @@ package io.harness.cdng.manifest;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 
+import java.util.Arrays;
+import java.util.HashSet;
+
 @OwnedBy(HarnessTeam.CDP)
 public interface ManifestType {
   String K8Manifest = "K8sManifest";
@@ -20,4 +23,10 @@ public interface ManifestType {
   String OpenshiftTemplate = "OpenshiftTemplate";
   String OpenshiftParam = "OpenshiftParam";
   String KustomizePatches = "KustomizePatches";
+
+  static HashSet<String> getAllManifestTypes() {
+    return new HashSet<>(Arrays.asList(ManifestType.K8Manifest, ManifestType.VALUES, ManifestType.OpenshiftTemplate,
+        ManifestType.KustomizePatches, ManifestType.Kustomize, ManifestType.HelmChart, ManifestType.CONFIG_FILE,
+        ManifestType.OpenshiftParam));
+  }
 }

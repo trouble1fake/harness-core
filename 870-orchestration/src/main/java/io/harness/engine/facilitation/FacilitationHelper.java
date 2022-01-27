@@ -20,8 +20,8 @@ import io.harness.engine.facilitation.facilitator.chilidren.ChildrenFacilitator;
 import io.harness.engine.facilitation.facilitator.sync.SyncFacilitator;
 import io.harness.engine.facilitation.facilitator.task.TaskFacilitator;
 import io.harness.exception.InvalidRequestException;
-import io.harness.execution.NodeExecution;
 import io.harness.plan.PlanNode;
+import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.facilitators.FacilitatorObtainment;
 import io.harness.pms.contracts.facilitators.FacilitatorResponseProto;
 import io.harness.pms.contracts.facilitators.FacilitatorType;
@@ -44,13 +44,11 @@ public class FacilitationHelper {
                 .allMatch(OrchestrationFacilitatorType.ALL_FACILITATOR_TYPES::contains);
   }
 
-  public FacilitatorResponseProto calculateFacilitatorResponse(NodeExecution nodeExecution) {
-    PlanNode planNode = nodeExecution.getNode();
+  public FacilitatorResponseProto calculateFacilitatorResponse(Ambiance ambiance, PlanNode planNode) {
     FacilitatorResponseProto facilitatorResponse = null;
     for (FacilitatorObtainment obtainment : planNode.getFacilitatorObtainments()) {
       CoreFacilitator facilitator = getFacilitatorFromType(obtainment.getType());
-      facilitatorResponse =
-          facilitator.facilitate(nodeExecution.getAmbiance(), obtainment.getParameters().toByteArray());
+      facilitatorResponse = facilitator.facilitate(ambiance, obtainment.getParameters().toByteArray());
       if (facilitatorResponse != null) {
         break;
       }

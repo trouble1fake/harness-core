@@ -38,14 +38,12 @@ import io.harness.tasks.ResponseData;
 
 import software.wings.api.InstanceElement;
 import software.wings.api.InstanceElementListParam;
-import software.wings.beans.Activity;
 import software.wings.beans.AzureWebAppInfrastructureMapping;
 import software.wings.beans.TaskType;
 import software.wings.beans.artifact.ArtifactStreamAttributes;
 import software.wings.beans.command.AzureWebAppCommandUnit;
 import software.wings.beans.command.CommandUnit;
 import software.wings.beans.command.CommandUnitDetails.CommandUnitType;
-import software.wings.beans.container.UserDataSpecification;
 import software.wings.beans.yaml.GitCommandExecutionResponse;
 import software.wings.beans.yaml.GitFetchFilesFromMultipleRepoResult;
 import software.wings.service.impl.azure.manager.AzureTaskExecutionRequest;
@@ -55,7 +53,7 @@ import software.wings.sm.ExecutionResponse;
 import software.wings.sm.InstanceStatusSummary;
 import software.wings.sm.StateExecutionData;
 import software.wings.sm.StateType;
-import software.wings.sm.states.azure.artifact.ArtifactStreamMapper;
+import software.wings.sm.states.azure.artifact.ArtifactConnectorMapper;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.github.reinert.jjschema.SchemaIgnore;
@@ -65,7 +63,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.Getter;
 import lombok.Setter;
@@ -114,30 +111,30 @@ public class AzureWebAppSlotSetup extends AbstractAzureAppServiceState {
 
   @Override
   protected AzureTaskExecutionRequest buildTaskExecutionRequest(
-      ExecutionContext context, AzureAppServiceStateData azureAppServiceStateData, Activity activity) {
+      ExecutionContext context, AzureAppServiceStateData azureAppServiceStateData, String activityId) {
     AzureWebAppSlotSetupParameters slotSetupParameters =
-        buildSlotSetupParams(context, azureAppServiceStateData, activity);
-    ArtifactStreamMapper artifactStreamMapper =
+        buildSlotSetupParams(context, azureAppServiceStateData, activityId);
+    ArtifactConnectorMapper artifactConnectorMapper =
         azureVMSSStateHelper.getConnectorMapper(context, azureAppServiceStateData.getArtifact());
-    populateContainerArtifactDetails(context, slotSetupParameters, artifactStreamMapper);
+    populateContainerArtifactDetails(context, slotSetupParameters, artifactConnectorMapper);
     return AzureTaskExecutionRequest.builder()
         .azureConfigDTO(azureVMSSStateHelper.createAzureConfigDTO(azureAppServiceStateData.getAzureConfig()))
         .azureConfigEncryptionDetails(azureAppServiceStateData.getAzureEncryptedDataDetails())
         .azureTaskParameters(slotSetupParameters)
-        .artifactStreamAttributes(getArtifactStreamAttributes(context, artifactStreamMapper))
+        .artifactStreamAttributes(getArtifactStreamAttributes(context, artifactConnectorMapper))
         .build();
   }
 
   @Override
   protected StateExecutionData buildPreStateExecutionData(
-      Activity activity, ExecutionContext context, AzureAppServiceStateData azureAppServiceStateData) {
+      String activityId, ExecutionContext context, AzureAppServiceStateData azureAppServiceStateData) {
     String appServiceName = context.renderExpression(appService);
     String deploySlotName =
         AzureResourceUtility.fixDeploymentSlotName(context.renderExpression(deploymentSlot), appServiceName);
     String targetSlotName =
         AzureResourceUtility.fixDeploymentSlotName(context.renderExpression(targetSlot), appServiceName);
     return AzureAppServiceSlotSetupExecutionData.builder()
-        .activityId(activity.getUuid())
+        .activityId(activityId)
         .resourceGroup(azureAppServiceStateData.getResourceGroup())
         .subscriptionId(azureAppServiceStateData.getSubscriptionId())
         .appServiceName(appServiceName)
@@ -217,7 +214,9 @@ public class AzureWebAppSlotSetup extends AbstractAzureAppServiceState {
 
     stateExecutionData.setFetchFilesResult(
         (GitFetchFilesFromMultipleRepoResult) executionResponse.getGitCommandResult());
-    return super.execute(context);
+
+    String activityId = ((AzureAppServiceSlotSetupExecutionData) context.getStateExecutionData()).getActivityId();
+    return submitTask(context, activityId);
   }
 
   @Override
@@ -287,7 +286,7 @@ public class AzureWebAppSlotSetup extends AbstractAzureAppServiceState {
   }
 
   @Override
-  protected List<CommandUnit> commandUnits(boolean isGitFetch) {
+  protected List<CommandUnit> commandUnits(boolean isNonDocker, boolean isGitFetch) {
     List<CommandUnit> commandUnits = new ArrayList<>();
     if (isGitFetch) {
       commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.FETCH_FILES));
@@ -295,17 +294,22 @@ public class AzureWebAppSlotSetup extends AbstractAzureAppServiceState {
     commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.SAVE_EXISTING_CONFIGURATIONS));
     commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.STOP_DEPLOYMENT_SLOT));
     commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.UPDATE_DEPLOYMENT_SLOT_CONFIGURATION_SETTINGS));
-    commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.UPDATE_DEPLOYMENT_SLOT_CONTAINER_SETTINGS));
-    commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.START_DEPLOYMENT_SLOT));
+    if (isNonDocker) {
+      commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.DEPLOY_ARTIFACT));
+      commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.START_DEPLOYMENT_SLOT));
+    } else {
+      commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.UPDATE_DEPLOYMENT_SLOT_CONTAINER_SETTINGS));
+      commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.START_DEPLOYMENT_SLOT));
+      commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.DEPLOY_DOCKER_IMAGE));
+    }
     commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.DEPLOYMENT_STATUS));
     return commandUnits;
   }
 
   private AzureWebAppSlotSetupParameters buildSlotSetupParams(
-      ExecutionContext context, AzureAppServiceStateData azureAppServiceStateData, Activity activity) {
+      ExecutionContext context, AzureAppServiceStateData azureAppServiceStateData, String activityId) {
     AzureWebAppSlotSetupParametersBuilder slotSetupParametersBuilder = AzureWebAppSlotSetupParameters.builder();
     provideAppServiceSettings(context, slotSetupParametersBuilder);
-    provideStartupCommand(context, slotSetupParametersBuilder);
 
     String appServiceName = context.renderExpression(appService);
     String deploySlotName =
@@ -316,13 +320,14 @@ public class AzureWebAppSlotSetup extends AbstractAzureAppServiceState {
     return slotSetupParametersBuilder.accountId(azureAppServiceStateData.getApplication().getAccountId())
         .appId(azureAppServiceStateData.getApplication().getAppId())
         .commandName(APP_SERVICE_SLOT_SETUP)
-        .activityId(activity.getUuid())
+        .activityId(activityId)
         .subscriptionId(azureAppServiceStateData.getSubscriptionId())
         .resourceGroupName(azureAppServiceStateData.getResourceGroup())
         .slotName(deploySlotName)
         .targetSlotName(targetSlotName)
         .webAppName(appServiceName)
         .timeoutIntervalInMin(getUserDefinedTimeOut(context))
+        .startupCommand(fetchStartupCommand(context))
         .build();
   }
 
@@ -348,14 +353,14 @@ public class AzureWebAppSlotSetup extends AbstractAzureAppServiceState {
   }
 
   private void populateContainerArtifactDetails(ExecutionContext context,
-      AzureWebAppSlotSetupParameters slotSetupParameters, ArtifactStreamMapper artifactStreamMapper) {
-    if (!artifactStreamMapper.isDockerArtifactType()) {
+      AzureWebAppSlotSetupParameters slotSetupParameters, ArtifactConnectorMapper artifactConnectorMapper) {
+    if (!artifactConnectorMapper.isDockerArtifactType()) {
       return;
     }
-    AzureRegistryType azureRegistryType = artifactStreamMapper.getAzureRegistryType();
-    ConnectorConfigDTO connectorConfigDTO = artifactStreamMapper.getConnectorDTO();
+    AzureRegistryType azureRegistryType = artifactConnectorMapper.getAzureRegistryType();
+    ConnectorConfigDTO connectorConfigDTO = artifactConnectorMapper.getConnectorDTO();
     List<EncryptedDataDetail> encryptedDataDetails =
-        artifactStreamMapper.getEncryptableSetting()
+        artifactConnectorMapper.getEncryptableSetting()
             .map(setting -> azureVMSSStateHelper.getEncryptedDataDetails(context, setting))
             .orElse(Collections.emptyList());
 
@@ -364,30 +369,23 @@ public class AzureWebAppSlotSetup extends AbstractAzureAppServiceState {
     slotSetupParameters.setConnectorConfigDTO(connectorConfigDTO);
     slotSetupParameters.setEncryptedDataDetails(encryptedDataDetails);
     slotSetupParameters.setAzureRegistryType(azureRegistryType);
-    slotSetupParameters.setImageName(artifactStreamMapper.getFullImageName());
-    slotSetupParameters.setImageTag(artifactStreamMapper.getImageTag());
+    slotSetupParameters.setImageName(artifactConnectorMapper.getFullImageName());
+    slotSetupParameters.setImageTag(artifactConnectorMapper.getImageTag());
   }
 
-  private ArtifactStreamAttributes getArtifactStreamAttributes(
-      ExecutionContext context, ArtifactStreamMapper artifactStreamMapper) {
-    if (artifactStreamMapper.isDockerArtifactType()) {
+  protected ArtifactStreamAttributes getArtifactStreamAttributes(
+      ExecutionContext context, ArtifactConnectorMapper artifactConnectorMapper) {
+    if (artifactConnectorMapper.isDockerArtifactType()) {
       return null;
     }
-    ArtifactStreamAttributes artifactStreamAttributes = artifactStreamMapper.artifactStreamAttributes();
+    ArtifactStreamAttributes artifactStreamAttributes = artifactConnectorMapper.artifactStreamAttributes();
     List<EncryptedDataDetail> encryptedDataDetails =
-        artifactStreamMapper.getEncryptableSetting()
+        artifactConnectorMapper.getEncryptableSetting()
             .map(setting -> azureVMSSStateHelper.getEncryptedDataDetails(context, setting))
             .orElse(Collections.emptyList());
     artifactStreamAttributes.setArtifactServerEncryptedDataDetails(encryptedDataDetails);
 
     return artifactStreamAttributes;
-  }
-
-  private void provideStartupCommand(
-      ExecutionContext context, AzureWebAppSlotSetupParametersBuilder slotSetupParametersBuilder) {
-    Optional<UserDataSpecification> userDataSpecification = azureVMSSStateHelper.getUserDataSpecification(context);
-    userDataSpecification.ifPresent(
-        dataSpecification -> slotSetupParametersBuilder.startupCommand(dataSpecification.getData()));
   }
 
   private void provideInstanceElementDetails(

@@ -75,6 +75,11 @@ public class IdentityPlanNode implements Node {
     return this.skipGraphType;
   }
 
+  @Override
+  public boolean isSkipUnresolvedExpressionsCheck() {
+    return true;
+  }
+
   public static IdentityPlanNode mapPlanNodeToIdentityNode(
       Node node, StepType stepType, String originalNodeExecutionUuid) {
     return IdentityPlanNode.builder()
