@@ -22,6 +22,7 @@ import software.wings.beans.AzureKubernetesInfrastructureMapping;
 import software.wings.beans.DirectKubernetesInfrastructureMapping;
 import software.wings.beans.GcpKubernetesInfrastructureMapping;
 import software.wings.beans.InfrastructureMapping;
+import software.wings.beans.RancherKubernetesInfrastructureMapping;
 import software.wings.dl.WingsPersistence;
 import software.wings.service.intfc.AppService;
 import software.wings.service.intfc.InfrastructureMappingService;
@@ -67,6 +68,12 @@ public class ExecutionEventListener extends QueueListener<ExecutionEvent> {
         if (infrastructureMapping instanceof DirectKubernetesInfrastructureMapping
             && containsVariablePattern(
                 ((DirectKubernetesInfrastructureMapping) infrastructureMapping).getNamespace())) {
+          namespaceExpression = true;
+          break;
+        }
+        if (infrastructureMapping instanceof RancherKubernetesInfrastructureMapping
+            && containsVariablePattern(
+                ((RancherKubernetesInfrastructureMapping) infrastructureMapping).getNamespace())) {
           namespaceExpression = true;
           break;
         }

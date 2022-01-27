@@ -164,6 +164,7 @@ import software.wings.infra.PhysicalDataCenterInfra;
 import software.wings.infra.PhysicalInfra;
 import software.wings.infra.PhysicalInfraWinrm;
 import software.wings.infra.ProvisionerAware;
+import software.wings.infra.RancherKubernetesInfrastructure;
 import software.wings.infra.SshBasedInfrastructure;
 import software.wings.infra.WinRmBasedInfrastructure;
 import software.wings.prune.PruneEntityListener;
@@ -561,6 +562,13 @@ public class InfrastructureDefinitionServiceImpl implements InfrastructureDefini
           (DirectKubernetesInfrastructure) infraDefinition.getInfrastructure();
       if (isBlank(directKubernetesInfrastructure.getNamespace())) {
         directKubernetesInfrastructure.setNamespace(DEFAULT);
+      }
+    }
+    if (infraDefinition.getInfrastructure() instanceof RancherKubernetesInfrastructure) {
+      RancherKubernetesInfrastructure rancherKubernetesInfrastructure =
+          (RancherKubernetesInfrastructure) infraDefinition.getInfrastructure();
+      if (isBlank(rancherKubernetesInfrastructure.getNamespace())) {
+        rancherKubernetesInfrastructure.setNamespace(DEFAULT);
       }
     }
   }

@@ -126,6 +126,7 @@ import software.wings.beans.PcfInfrastructureMapping;
 import software.wings.beans.PhysicalInfrastructureMapping;
 import software.wings.beans.PhysicalInfrastructureMappingBase;
 import software.wings.beans.PhysicalInfrastructureMappingWinRm;
+import software.wings.beans.RancherConfig;
 import software.wings.beans.RancherKubernetesInfrastructureMapping;
 import software.wings.beans.SSHVaultConfig;
 import software.wings.beans.Service;
@@ -273,6 +274,7 @@ public class InfrastructureMappingServiceImpl implements InfrastructureMappingSe
   @Inject private SSHVaultService sshVaultService;
   @Inject private QueuePublisher<PruneEvent> pruneQueue;
   @Inject private RemoteObserverInformer remoteObserverInformer;
+  @Inject private RancherHelperService rancherHelperService;
 
   @Override
   public PageResponse<InfrastructureMapping> list(PageRequest<InfrastructureMapping> pageRequest) {
@@ -417,6 +419,12 @@ public class InfrastructureMappingServiceImpl implements InfrastructureMappingSe
       validateDirectKubernetesInfraMapping(directKubernetesInfrastructureMapping, null);
     }
 
+    if (infraMapping instanceof RancherKubernetesInfrastructureMapping) {
+      RancherKubernetesInfrastructureMapping rancherKubernetesInfrastructureMapping =
+          (RancherKubernetesInfrastructureMapping) infraMapping;
+      validateRancherKubernetesInfraMapping(rancherKubernetesInfrastructureMapping, null);
+    }
+
     if (infraMapping instanceof PhysicalInfrastructureMapping) {
       PhysicalInfrastructureMapping physicalInfrastructureMapping = (PhysicalInfrastructureMapping) infraMapping;
       validatePhysicalInfrastructureMapping(physicalInfrastructureMapping);
@@ -473,7 +481,8 @@ public class InfrastructureMappingServiceImpl implements InfrastructureMappingSe
 
     if (infraMapping instanceof AzureKubernetesInfrastructureMapping
         || infraMapping instanceof DirectKubernetesInfrastructureMapping
-        || infraMapping instanceof GcpKubernetesInfrastructureMapping) {
+        || infraMapping instanceof GcpKubernetesInfrastructureMapping
+        || infraMapping instanceof RancherKubernetesInfrastructureMapping) {
       releaseName = ((ContainerInfrastructureMapping) infraMapping).getReleaseName();
 
       if (isBlank(releaseName)) {
@@ -609,6 +618,21 @@ public class InfrastructureMappingServiceImpl implements InfrastructureMappingSe
       }
       if (directKubernetesInfrastructureMapping.getClusterName() != null) {
         keyValuePairs.put("clusterName", directKubernetesInfrastructureMapping.getClusterName());
+      } else {
+        fieldsToRemove.add("clusterName");
+      }
+    } else if (infrastructureMapping instanceof RancherKubernetesInfrastructureMapping) {
+      RancherKubernetesInfrastructureMapping rancherKubernetesInfrastructureMapping =
+          (RancherKubernetesInfrastructureMapping) infrastructureMapping;
+      validateInfraMapping(rancherKubernetesInfrastructureMapping, skipValidation, null);
+      if (isNotBlank(rancherKubernetesInfrastructureMapping.getNamespace())) {
+        keyValuePairs.put("namespace", rancherKubernetesInfrastructureMapping.getNamespace());
+      } else {
+        rancherKubernetesInfrastructureMapping.setNamespace(DEFAULT);
+        keyValuePairs.put("namespace", DEFAULT);
+      }
+      if (rancherKubernetesInfrastructureMapping.getClusterName() != null) {
+        keyValuePairs.put("clusterName", rancherKubernetesInfrastructureMapping.getClusterName());
       } else {
         fieldsToRemove.add("clusterName");
       }
@@ -1172,6 +1196,29 @@ public class InfrastructureMappingServiceImpl implements InfrastructureMappingSe
     try {
       delegateProxyFactory.get(ContainerService.class, syncTaskContext)
           .validate(containerServiceParams, useNewKubectlVersion);
+    } catch (Exception e) {
+      log.warn(ExceptionUtils.getMessage(e), e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(e), USER);
+    }
+  }
+
+  private void validateRancherKubernetesInfraMapping(
+      RancherKubernetesInfrastructureMapping infraMapping, String workflowExecutionId) {
+    SettingAttribute settingAttribute = settingsService.get(infraMapping.getComputeProviderSettingId());
+    String namespace = infraMapping.getNamespace();
+
+    if (isNotEmpty(infraMapping.getProvisionerId())) {
+      return;
+    }
+
+    KubernetesHelperService.validateNamespace(namespace);
+
+    List<EncryptedDataDetail> encryptionDetails =
+        secretManager.getEncryptionDetails((EncryptableSetting) settingAttribute.getValue(), null, workflowExecutionId);
+
+    try {
+      RancherConfig rancherConfig = (RancherConfig) settingAttribute.getValue();
+      rancherHelperService.validateRancherConfig(rancherConfig, encryptionDetails);
     } catch (Exception e) {
       log.warn(ExceptionUtils.getMessage(e), e);
       throw new InvalidRequestException(ExceptionUtils.getMessage(e), USER);
