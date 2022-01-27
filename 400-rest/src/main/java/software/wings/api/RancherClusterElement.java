@@ -54,7 +54,7 @@ public class RancherClusterElement implements ContextElement {
   @Override
   public Map<String, Object> paramMap(ExecutionContext context) {
     Map<String, Object> paramMap = new HashMap<>();
-    paramMap.put(INSTANCE, this);
+    paramMap.put(RANCHER, this);
 
     return paramMap;
   }

@@ -45,6 +45,7 @@ public interface ContextElement {
   String NAMESPACE = "namespace";
   String KUBECONFIG = "kubeconfig";
   String SHELL = "shell";
+  String RANCHER = "rancher";
 
   ContextElementType getElementType();
 

@@ -9,20 +9,28 @@ package software.wings.common;
 
 import io.harness.beans.SweepingOutput;
 import io.harness.context.ContextElementType;
+import io.harness.data.structure.UUIDGenerator;
 
 import software.wings.api.RancherClusterElement;
 import software.wings.service.intfc.sweepingoutput.SweepingOutputService;
+import software.wings.sm.ContextElement;
 import software.wings.sm.ExecutionContext;
 import software.wings.sm.ExpressionProcessor;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.google.inject.Inject;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.mongodb.morphia.annotations.Transient;
 
 @NoArgsConstructor
@@ -32,9 +40,10 @@ public class RancherK8sClusterProcessor implements ExpressionProcessor {
   private ExecutionContext context;
 
   public static final String DEFAULT_EXPRESSION = "${rancherClusters}";
+  public static final String FILTERED_CLUSTERS_EXPR_PREFIX = "rancher";
+  public static final String EXPRESSION_EQUAL_PATTERN = "rancherClusters";
 
   private static final String EXPRESSION_START_PATTERN = "rancherClusters()";
-  private static final String EXPRESSION_EQUAL_PATTERN = "rancherClusters";
   private static final String INSTANCE_EXPR_PROCESSOR = "rancherK8sClusterProcessor";
 
   public RancherK8sClusterProcessor(ExecutionContext context) {
@@ -63,6 +72,18 @@ public class RancherK8sClusterProcessor implements ExpressionProcessor {
 
   public RancherK8sClusterProcessor getRancherClusters() {
     return this;
+  }
+
+  public String getClusters() {
+    List<RancherClusterElement> clusterElements = list();
+
+    if (Objects.isNull(clusterElements)) {
+      return StringUtils.EMPTY;
+    }
+
+    return StringUtils.join(
+        clusterElements.stream().map(RancherClusterElement::getClusterName).collect(Collectors.toList()).listIterator(),
+        ',');
   }
 
   public List<RancherClusterElement> list() {
