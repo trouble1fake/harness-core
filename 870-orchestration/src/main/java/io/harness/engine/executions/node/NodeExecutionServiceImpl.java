@@ -272,6 +272,8 @@ public class NodeExecutionServiceImpl implements NodeExecutionService {
           NodeExecutionStartObserver::onNodeStart, NodeStartInfo.builder().nodeExecution(nodeExecution).build());
       return nodeExecution1;
     } else {
+      nodeExecutionStartSubject.fireInform(
+          NodeExecutionStartObserver::onNodeStart, NodeStartInfo.builder().nodeExecution(nodeExecution).build());
       return mongoTemplate.save(nodeExecution);
     }
   }

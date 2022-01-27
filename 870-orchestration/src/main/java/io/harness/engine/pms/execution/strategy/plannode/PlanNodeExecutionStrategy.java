@@ -108,6 +108,10 @@ public class PlanNodeExecutionStrategy
           ops -> ops.set(NodeExecutionKeys.nextId, uuid).set(NodeExecutionKeys.endTs, System.currentTimeMillis()));
     }
     Ambiance cloned = AmbianceUtils.cloneForFinish(ambiance, PmsLevelUtils.buildLevelFromNode(uuid, node));
+    boolean skipUnresolvedExpressionsCheck = node.isSkipUnresolvedExpressionsCheck();
+    log.info("Starting to Resolve step parameters and Inputs");
+    Object resolvedStepParameters =
+        pmsEngineExpressionService.resolve(ambiance, node.getStepParameters(), skipUnresolvedExpressionsCheck);
     NodeExecution nodeExecution =
         NodeExecution.builder()
             .uuid(uuid)
@@ -121,6 +125,8 @@ public class PlanNodeExecutionStrategy
             .unitProgresses(new ArrayList<>())
             .startTs(AmbianceUtils.getCurrentLevelStartTs(cloned))
             .module(node.getServiceName())
+            .resolvedParams(PmsStepParameters.parse(
+                OrchestrationMapBackwardCompatibilityUtils.extractToOrchestrationMap(resolvedStepParameters)))
             .name(node.getName())
             .skipGraphType(node.getSkipGraphType())
             .identifier(node.getIdentifier())
@@ -310,15 +316,9 @@ public class PlanNodeExecutionStrategy
     String nodeExecutionId = Objects.requireNonNull(AmbianceUtils.obtainCurrentRuntimeId(ambiance));
     boolean skipUnresolvedExpressionsCheck = node.isSkipUnresolvedExpressionsCheck();
     log.info("Starting to Resolve step parameters and Inputs");
-    Object resolvedStepParameters =
-        pmsEngineExpressionService.resolve(ambiance, node.getStepParameters(), skipUnresolvedExpressionsCheck);
-
     Object resolvedStepInputs =
         pmsEngineExpressionService.resolve(ambiance, node.getStepInputs(), skipUnresolvedExpressionsCheck);
     log.info("Step Parameters and Inputs Resolution complete");
-
-    nodeExecutionService.updateV2(
-        nodeExecutionId, ops -> { setUnset(ops, NodeExecutionKeys.resolvedStepParameters, resolvedStepParameters); });
 
     pmsGraphStepDetailsService.addStepInputs(nodeExecutionId, ambiance.getPlanExecutionId(),
         PmsStepParameters.parse(

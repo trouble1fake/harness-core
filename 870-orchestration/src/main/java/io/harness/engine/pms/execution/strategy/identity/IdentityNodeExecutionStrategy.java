@@ -73,12 +73,13 @@ public class IdentityNodeExecutionStrategy
   @Inject @Named("EngineExecutorService") private ExecutorService executorService;
   @Inject PmsGraphStepDetailsService pmsGraphStepDetailsService;
 
-  private String SERVICE_NAME_IDENTITY = ModuleType.PMS.name().toLowerCase();
+  private final String SERVICE_NAME_IDENTITY = ModuleType.PMS.name().toLowerCase();
 
   private void setNodeExecutionParameters(Update update, NodeExecution originalExecution) {
-    setUnset(update, NodeExecutionKeys.resolvedStepParameters, originalExecution.getResolvedStepParameters());
+    setUnset(update, NodeExecutionKeys.resolvedParams, originalExecution.getResolvedStepParameters());
     // Todo: Remove this after one month
     setUnset(update, NodeExecutionKeys.resolvedInputs, originalExecution.getResolvedInputs());
+
     setUnset(update, NodeExecutionKeys.mode, originalExecution.getMode());
     setUnset(update, NodeExecutionKeys.nodeRunInfo, originalExecution.getNodeRunInfo());
     setUnset(update, NodeExecutionKeys.skipInfo, originalExecution.getSkipInfo());
