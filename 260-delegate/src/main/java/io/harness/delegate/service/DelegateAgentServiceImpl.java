@@ -912,7 +912,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
             taskExecutor.submit(() -> abortDelegateTask((DelegateTaskAbortEvent) delegateTaskEvent));
           }
         }
-      } catch (Throwable e) {
+      } catch (Exception e) {
         log.error("Exception while decoding task", e);
       }
       return;
