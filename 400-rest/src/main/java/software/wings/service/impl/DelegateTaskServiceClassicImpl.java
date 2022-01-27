@@ -36,6 +36,7 @@ import static io.harness.mongo.MongoUtils.setUnset;
 import static io.harness.persistence.HQuery.excludeAuthority;
 
 import static software.wings.service.impl.DelegateSelectionLogsServiceImpl.NO_ELIGIBLE_DELEGATES;
+import static software.wings.service.impl.DelegateSelectionLogsServiceImpl.TASK_VALIDATION_FAILED;
 
 import static java.lang.String.format;
 import static java.lang.String.join;
@@ -865,6 +866,9 @@ public class DelegateTaskServiceClassicImpl implements DelegateTaskServiceClassi
         log.info("Waiting for task {} to be acquired by a whitelisted delegate: {}", taskId, whitelistedDelegates);
         return;
       }
+      String capabilitiesFailErrorMessage = TASK_VALIDATION_FAILED + generateCapabilitiesMessage(delegateTask);
+      delegateSelectionLogsService.logTaskValidationFailed(
+          delegateTask.getAccountId(), delegateTask.getUuid(), capabilitiesFailErrorMessage);
 
       String errorMessage = generateValidationError(delegateTask, areClientToolsInstalled);
       log.info(errorMessage);
@@ -872,7 +876,7 @@ public class DelegateTaskServiceClassicImpl implements DelegateTaskServiceClassi
       if (delegateTask.getData().isAsync()) {
         response = ErrorNotifyResponseData.builder()
                        .failureTypes(EnumSet.of(FailureType.DELEGATE_PROVISIONING))
-                       .errorMessage(errorMessage)
+                       .errorMessage(capabilitiesFailErrorMessage)
                        .build();
       } else {
         response =

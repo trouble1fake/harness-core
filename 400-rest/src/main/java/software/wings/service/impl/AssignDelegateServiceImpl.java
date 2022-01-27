@@ -15,7 +15,11 @@ import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.delegate.task.TaskFailureReason.EXPIRED;
 import static io.harness.persistence.HPersistence.upsertReturnNewOptions;
 
-import static software.wings.service.impl.DelegateSelectionLogsServiceImpl.*;
+import static software.wings.service.impl.DelegateSelectionLogsServiceImpl.CAN_NOT_ASSIGN_CG_NG_TASK_GROUP;
+import static software.wings.service.impl.DelegateSelectionLogsServiceImpl.CAN_NOT_ASSIGN_DELEGATE_SCOPE_GROUP;
+import static software.wings.service.impl.DelegateSelectionLogsServiceImpl.CAN_NOT_ASSIGN_PROFILE_SCOPE_GROUP;
+import static software.wings.service.impl.DelegateSelectionLogsServiceImpl.CAN_NOT_ASSIGN_SELECTOR_TASK_GROUP;
+import static software.wings.service.impl.DelegateSelectionLogsServiceImpl.CAN_NOT_ASSIGN_TASK_GROUP;
 
 import static com.google.common.cache.CacheLoader.InvalidCacheLoadException;
 import static java.lang.System.currentTimeMillis;
@@ -460,7 +464,9 @@ public class AssignDelegateServiceImpl implements AssignDelegateService, Delegat
     }
 
     Set<String> delegateSelectors = trimmedLowercaseSet(delegateService.retrieveDelegateSelectors(delegate));
-
+    if (isEmpty(delegateSelectors)) {
+      return false;
+    }
     boolean canAssignSelector = true;
 
     for (SelectorCapability selectorCapability : selectorsCapabilityList) {

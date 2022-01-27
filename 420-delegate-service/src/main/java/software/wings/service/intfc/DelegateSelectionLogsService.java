@@ -33,6 +33,8 @@ public interface DelegateSelectionLogsService {
 
   void logTaskAssigned(String accountId, String delegateId, String taskId);
 
+  void logTaskValidationFailed(String accountId, String taskId, String failureMessage);
+
   List<DelegateSelectionLogParams> fetchTaskSelectionLogs(String accountId, String taskId);
 
   DelegateSelectionLogResponse fetchTaskSelectionLogsData(String accountId, String taskId);

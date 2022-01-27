@@ -8,7 +8,6 @@
 package software.wings.service.impl;
 
 import static io.harness.annotations.dev.HarnessTeam.DEL;
-import static io.harness.data.structure.EmptyPredicate.isEmpty;
 
 import io.harness.annotations.dev.BreakDependencyOn;
 import io.harness.annotations.dev.HarnessModule;
@@ -35,6 +34,7 @@ import io.fabric8.utils.Lists;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -76,6 +76,8 @@ public class DelegateSelectionLogsServiceImpl implements DelegateSelectionLogsSe
   public static final String CAN_NOT_ASSIGN_SELECTOR_TASK_GROUP =
       "Cannot assign due to mismatch in task selector(s) with selector(s) in delegate(s)";
   public static final String CAN_NOT_ASSIGN_OWNER = "Cannot match task owner with delegate owner";
+  public static final String TASK_VALIDATION_FAILED =
+      "No eligible delegate was able to confirm that it has the capability to execute ";
 
   @Override
   public void save(DelegateSelectionLog selectionLog) {
@@ -101,12 +103,12 @@ public class DelegateSelectionLogsServiceImpl implements DelegateSelectionLogsSe
   }
 
   @Override
-  public void logEligibleDelegatesToExecuteTask(final Set<String> delegateIds, String accountId, String taskId) {
-    if (isEmpty(delegateIds)) {
+  public void logEligibleDelegatesToExecuteTask(Set<String> delegateIds, String accountId, String taskId) {
+    if (Objects.isNull(delegateIds)) {
       return;
     }
     String message =
-        String.format("%s : [%s]", ELIGIBLE_DELEGATES, String.join(", ", getDelegateHostName(accountId, delegateIds)));
+        String.format("%s : [%s]", ELIGIBLE_DELEGATES, String.join(", ", getDelegateHostNames(accountId, delegateIds)));
     save(DelegateSelectionLog.builder()
              .accountId(accountId)
              .taskId(taskId)
@@ -120,6 +122,9 @@ public class DelegateSelectionLogsServiceImpl implements DelegateSelectionLogsSe
   @Override
   public void logNonSelectedDelegates(
       String accountId, String taskId, Map<String, List<String>> nonAssignableDelegates) {
+    if (Objects.isNull(nonAssignableDelegates)) {
+      return;
+    }
     List<String> excludeGroups = Lists.newArrayList(CAN_NOT_ASSIGN_OWNER, CAN_NOT_ASSIGN_CG_NG_TASK_GROUP);
     List<String> nonAssignables =
         nonAssignableDelegates.keySet()
@@ -139,11 +144,11 @@ public class DelegateSelectionLogsServiceImpl implements DelegateSelectionLogsSe
 
   @Override
   public void logBroadcastToDelegate(Set<String> delegateIds, String accountId, String taskId) {
-    if (isEmpty(delegateIds)) {
+    if (Objects.isNull(delegateIds)) {
       return;
     }
     String message = String.format(
-        "%s : [%s]", BROADCASTING_DELEGATES, String.join(", ", getDelegateHostName(accountId, delegateIds)));
+        "%s : [%s]", BROADCASTING_DELEGATES, String.join(", ", getDelegateHostNames(accountId, delegateIds)));
     save(DelegateSelectionLog.builder()
              .accountId(accountId)
              .taskId(taskId)
@@ -166,6 +171,17 @@ public class DelegateSelectionLogsServiceImpl implements DelegateSelectionLogsSe
              .taskId(taskId)
              .conclusion(ASSIGNED)
              .message(message)
+             .eventTimestamp(System.currentTimeMillis())
+             .build());
+  }
+
+  @Override
+  public void logTaskValidationFailed(String accountId, String taskId, String failureMessage) {
+    save(DelegateSelectionLog.builder()
+             .accountId(accountId)
+             .taskId(taskId)
+             .conclusion(REJECTED)
+             .message(failureMessage)
              .eventTimestamp(System.currentTimeMillis())
              .build());
   }
@@ -227,7 +243,7 @@ public class DelegateSelectionLogsServiceImpl implements DelegateSelectionLogsSe
         .build();
   }
 
-  private Set<String> getDelegateHostName(String accountId, Set<String> delegateIds) {
+  private Set<String> getDelegateHostNames(String accountId, Set<String> delegateIds) {
     return delegateIds.stream()
         .map(delegateId
             -> Optional.ofNullable(delegateCache.get(accountId, delegateId, false))
