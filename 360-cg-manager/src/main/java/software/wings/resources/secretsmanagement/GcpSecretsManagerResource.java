@@ -18,6 +18,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.logging.AccountLogContext;
 import io.harness.logging.AutoLogContext;
 import io.harness.rest.RestResponse;
+import io.harness.security.annotations.InternalApi;
 import io.harness.security.encryption.EncryptionType;
 import io.harness.stream.BoundedInputStream;
 
@@ -32,6 +33,8 @@ import software.wings.utils.AccountPermissionUtils;
 
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Hidden;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -62,7 +65,7 @@ public class GcpSecretsManagerResource {
   private UsageRestrictionsService usageRestrictionsService;
 
   @Inject
-  GcpSecretsManagerResource(GcpSecretsManagerService gcpSecretsManagerService,
+  public GcpSecretsManagerResource(GcpSecretsManagerService gcpSecretsManagerService,
       AccountPermissionUtils accountPermissionUtils, MainConfiguration mainConfiguration,
       UsageRestrictionsService usageRestrictionsService) {
     this.gcpSecretsManagerService = gcpSecretsManagerService;
@@ -100,6 +103,38 @@ public class GcpSecretsManagerResource {
   }
 
   @POST
+  @Path("/global-kms")
+  @ApiOperation(value = "This is used to update global kms", hidden = true)
+  @InternalApi
+  @Hidden
+  public RestResponse<String> updateGlobalKmsConfig(@QueryParam("accountId") final String accountId,
+      @FormDataParam("uuid") String uuid, @FormDataParam("name") String name, @FormDataParam("keyName") String keyName,
+      @FormDataParam("keyRing") String keyRing, @FormDataParam("projectId") String projectId,
+      @FormDataParam("region") String region, @FormDataParam("isDefault") boolean isDefault,
+      @FormDataParam("usageRestrictions") String usageRestrictionsString,
+      @FormDataParam("credentials") InputStream uploadedInputStream,
+      @FormDataParam("delegateSelectors") Set<String> delegateSelectors) throws IOException {
+    try (AutoLogContext ignore = new AccountLogContext(accountId, OVERRIDE_ERROR)) {
+      RestResponse<String> response = accountPermissionUtils.checkIfHarnessUser("User not allowed to save global KMS");
+      if (response != null) {
+        return response;
+      }
+      UsageRestrictions usageRestrictions =
+          usageRestrictionsService.getUsageRestrictionsFromJson(usageRestrictionsString);
+      BoundedInputStream boundedInputStream =
+          new BoundedInputStream(uploadedInputStream, configuration.getFileUploadLimits().getEncryptedFileLimit());
+      char[] credentials = IOUtils.toString(boundedInputStream, Charset.defaultCharset()).toCharArray();
+      GcpKmsConfig gcpKmsConfig =
+          new GcpKmsConfig(name, projectId, region, keyRing, keyName, credentials, delegateSelectors);
+      gcpKmsConfig.setDefault(isDefault);
+      gcpKmsConfig.setEncryptionType(EncryptionType.GCP_KMS);
+      gcpKmsConfig.setUuid(uuid);
+      gcpKmsConfig.setUsageRestrictions(usageRestrictions);
+      return new RestResponse<>(gcpSecretsManagerService.updateGcpKmsConfig(GLOBAL_ACCOUNT_ID, gcpKmsConfig, true));
+    }
+  }
+
+  @POST
   @Path("/{secretMangerId}")
   public RestResponse<String> updateGcpSecretsManagerConfig(@QueryParam("accountId") final String accountId,
       @PathParam("secretMangerId") final String secretMangerId, @FormDataParam("name") String name,
@@ -121,7 +156,12 @@ public class GcpSecretsManagerResource {
       gcpKmsConfig.setDefault(isDefault);
       gcpKmsConfig.setEncryptionType(encryptionType);
       gcpKmsConfig.setUsageRestrictions(usageRestrictions);
-      return new RestResponse<>(gcpSecretsManagerService.updateGcpKmsConfig(accountId, gcpKmsConfig));
+      GcpKmsConfig globalKmsConfig = gcpSecretsManagerService.getGlobalKmsConfig();
+      if (globalKmsConfig.getUuid().equals(secretMangerId)) {
+        return accountPermissionUtils.getErrorResponse("User not allowed to update global KMS");
+      } else {
+        return new RestResponse<>(gcpSecretsManagerService.updateGcpKmsConfig(accountId, gcpKmsConfig));
+      }
     }
   }
 

@@ -128,12 +128,8 @@ public class PipelineResource implements YamlSchemaResource {
   private final GovernanceService governanceService;
   private final PmsFeatureFlagHelper pmsFeatureFlagHelper;
 
-  private PipelineEntity createPipelineInternal(String accountId, String orgId, String projectId, String yaml)
-      throws IOException {
-    PipelineEntity pipelineEntity = PMSPipelineDtoMapper.toPipelineEntity(accountId, orgId, projectId, yaml);
-    log.info(String.format("Creating pipeline with identifier %s in project %s, org %s, account %s",
-        pipelineEntity.getIdentifier(), projectId, orgId, accountId));
-
+  private PipelineEntity createPipelineInternal(
+      String accountId, String orgId, String projectId, PipelineEntity pipelineEntity) throws IOException {
     // Apply all the templateRefs(if any) then check for schema validation.
     TemplateMergeResponseDTO templateMergeResponseDTO =
         pipelineTemplateHelper.resolveTemplateRefsInPipeline(pipelineEntity);
@@ -164,7 +160,10 @@ public class PipelineResource implements YamlSchemaResource {
           NGCommonEntityConstants.PROJECT_KEY) @ProjectIdentifier String projectId,
       @BeanParam GitEntityCreateInfoDTO gitEntityCreateInfo,
       @RequestBody(required = true, description = "Pipeline YAML") @NotNull String yaml) throws IOException {
-    PipelineEntity createdEntity = createPipelineInternal(accountId, orgId, projectId, yaml);
+    PipelineEntity pipelineEntity = PMSPipelineDtoMapper.toPipelineEntity(accountId, orgId, projectId, yaml);
+    log.info(String.format("Creating pipeline with identifier %s in project %s, org %s, account %s",
+        pipelineEntity.getIdentifier(), projectId, orgId, accountId));
+    PipelineEntity createdEntity = createPipelineInternal(accountId, orgId, projectId, pipelineEntity);
     return ResponseDTO.newResponse(createdEntity.getVersion().toString(), createdEntity.getIdentifier());
   }
 
@@ -187,6 +186,9 @@ public class PipelineResource implements YamlSchemaResource {
           NGCommonEntityConstants.PROJECT_KEY) @ProjectIdentifier String projectId,
       @BeanParam GitEntityCreateInfoDTO gitEntityCreateInfo,
       @RequestBody(required = true, description = "Pipeline YAML") @NotNull String yaml) throws IOException {
+    PipelineEntity pipelineEntity = PMSPipelineDtoMapper.toPipelineEntity(accountId, orgId, projectId, yaml);
+    log.info(String.format("Creating pipeline with identifier %s in project %s, org %s, account %s",
+        pipelineEntity.getIdentifier(), projectId, orgId, accountId));
     String expandedPipelineJSON =
         pmsPipelineService.fetchExpandedPipelineJSONFromYaml(accountId, orgId, projectId, yaml);
     GovernanceMetadata governanceMetadata = governanceService.evaluateGovernancePolicies(
@@ -195,7 +197,7 @@ public class PipelineResource implements YamlSchemaResource {
       return ResponseDTO.newResponse(PipelineSaveResponse.builder().governanceMetadata(governanceMetadata).build());
     }
 
-    PipelineEntity createdEntity = createPipelineInternal(accountId, orgId, projectId, yaml);
+    PipelineEntity createdEntity = createPipelineInternal(accountId, orgId, projectId, pipelineEntity);
     return ResponseDTO.newResponse(createdEntity.getVersion().toString(),
         PipelineSaveResponse.builder()
             .governanceMetadata(governanceMetadata)
@@ -272,9 +274,6 @@ public class PipelineResource implements YamlSchemaResource {
 
   private PipelineEntity updatePipelineInternal(String accountId, String orgId, String projectId, String yaml,
       String pipelineId, String ifMatch) throws IOException {
-    log.info(String.format("Updating pipeline with identifier %s in project %s, org %s, account %s", pipelineId,
-        projectId, orgId, accountId));
-
     // Apply all the templateRefs(if any) then check for schema validation.
     TemplateMergeResponseDTO templateMergeResponseDTO =
         pipelineTemplateHelper.resolveTemplateRefsInPipeline(accountId, orgId, projectId, yaml);
@@ -318,6 +317,8 @@ public class PipelineResource implements YamlSchemaResource {
       @BeanParam GitEntityUpdateInfoDTO gitEntityInfo,
       @RequestBody(required = true, description = "Pipeline YAML to be updated") @NotNull String yaml)
       throws IOException {
+    log.info(String.format("Updating pipeline with identifier %s in project %s, org %s, account %s", pipelineId,
+        projectId, orgId, accountId));
     PipelineEntity updatedEntity = updatePipelineInternal(accountId, orgId, projectId, yaml, pipelineId, ifMatch);
     return ResponseDTO.newResponse(updatedEntity.getVersion().toString(), updatedEntity.getIdentifier());
   }
@@ -346,6 +347,8 @@ public class PipelineResource implements YamlSchemaResource {
       @BeanParam GitEntityUpdateInfoDTO gitEntityInfo,
       @RequestBody(required = true, description = "Pipeline YAML to be updated") @NotNull String yaml)
       throws IOException {
+    log.info(String.format("Updating pipeline with identifier %s in project %s, org %s, account %s", pipelineId,
+        projectId, orgId, accountId));
     String expandedPipelineJSON =
         pmsPipelineService.fetchExpandedPipelineJSONFromYaml(accountId, orgId, projectId, yaml);
     GovernanceMetadata governanceMetadata = governanceService.evaluateGovernancePolicies(

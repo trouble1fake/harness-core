@@ -24,6 +24,7 @@ import io.harness.category.element.UnitTests;
 import io.harness.engine.ExecutionCheck;
 import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.executions.node.NodeExecutionUpdateFailedException;
+import io.harness.engine.executions.plan.PlanService;
 import io.harness.engine.interrupts.InterruptService;
 import io.harness.engine.pms.commons.events.PmsEventSender;
 import io.harness.engine.utils.PmsLevelUtils;
@@ -55,6 +56,7 @@ import org.mockito.Mock;
 @OwnedBy(HarnessTeam.PIPELINE)
 public class NodeStartHelperTest extends OrchestrationTestBase {
   @Mock private InterruptService interruptService;
+  @Mock private PlanService planService;
   @Mock private NodeExecutionService nodeExecutionService;
   @Mock private PmsEventSender pmsEventSender;
   @Inject private KryoSerializer kryoSerializer;
@@ -73,6 +75,7 @@ public class NodeStartHelperTest extends OrchestrationTestBase {
                             .identifier("DUMMY")
                             .serviceName("CD")
                             .stepType(StepType.newBuilder().setType("DUMMY_TYPE").build())
+                            .serviceName("CD")
                             .build();
 
     Ambiance ambiance = Ambiance.newBuilder()
@@ -89,6 +92,7 @@ public class NodeStartHelperTest extends OrchestrationTestBase {
                                       .startTs(System.currentTimeMillis())
                                       .build();
 
+    when(planService.fetchNode(planId, planNode.getUuid())).thenReturn(planNode);
     when(interruptService.checkInterruptsPreInvocation(planExecutionId, nodeExecutionId))
         .thenReturn(ExecutionCheck.builder().proceed(true).build());
 
@@ -142,6 +146,7 @@ public class NodeStartHelperTest extends OrchestrationTestBase {
                                        .planNode(planNode)
                                        .startTs(System.currentTimeMillis());
 
+    when(planService.fetchNode(planId, planNode.getUuid())).thenReturn(planNode);
     when(interruptService.checkInterruptsPreInvocation(planExecutionId, nodeExecutionId))
         .thenReturn(ExecutionCheck.builder().proceed(true).build());
     when(nodeExecutionService.getWithFieldsIncluded(nodeExecutionId, NodeProjectionUtils.withAmbianceAndNode))

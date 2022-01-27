@@ -47,7 +47,6 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -240,7 +239,7 @@ public class DeploymentTimeSeriesAnalysisServiceImpl implements DeploymentTimeSe
           .filter(transactionMetricHostData
               -> filterAnomalousMetrics(transactionMetricHostData,
                   deploymentTimeSeriesAnalysisFilter.filterByHostNames(),
-                  deploymentTimeSeriesAnalysisFilter.isAnomalous()))
+                  deploymentTimeSeriesAnalysisFilter.isAnomalousMetricsOnly()))
           .forEach(transactionMetricHostData -> {
             Map<Risk, Integer> nodeCountByRiskStatusMap = new HashMap<>();
             SortedSet<DeploymentTimeSeriesAnalysisDTO.HostData> nodeDataSet = new TreeSet();
@@ -248,7 +247,9 @@ public class DeploymentTimeSeriesAnalysisServiceImpl implements DeploymentTimeSe
                 .stream()
                 .filter(hostData
                     -> filterHostData(hostData, deploymentTimeSeriesAnalysisFilter.getHostNames(),
-                        deploymentTimeSeriesAnalysisFilter.isAnomalous()))
+                        deploymentTimeSeriesAnalysisFilter.isAnomalousMetricsOnly()))
+                .filter(hostData
+                    -> filterAnomalousNodes(hostData, deploymentTimeSeriesAnalysisFilter.isAnomalousNodesOnly()))
                 .forEach(hostData -> {
                   nodeDataSet.add(hostData);
                   Risk risk = hostData.getRisk();
@@ -275,20 +276,18 @@ public class DeploymentTimeSeriesAnalysisServiceImpl implements DeploymentTimeSe
   }
 
   private NodeRiskCountDTO getNodeRiskCountDTO(Map<Risk, Integer> nodeCountByRiskStatusMap) {
-    int totalNodeCount = 0;
-    for (int val : nodeCountByRiskStatusMap.values()) {
-      totalNodeCount += val;
+    Integer totalNodeCount = 0;
+    List<NodeRiskCountDTO.NodeRiskCount> nodeRiskCounts = new ArrayList<>();
+    for (Risk risk : nodeCountByRiskStatusMap.keySet()) {
+      totalNodeCount += nodeCountByRiskStatusMap.get(risk);
+      nodeRiskCounts.add(
+          NodeRiskCountDTO.NodeRiskCount.builder().risk(risk).count(nodeCountByRiskStatusMap.get(risk)).build());
     }
+    nodeRiskCounts.sort((r1, r2) -> Integer.compare(r2.getRisk().getValue(), r1.getRisk().getValue()));
     return NodeRiskCountDTO.builder()
         .totalNodeCount(totalNodeCount)
         .anomalousNodeCount(totalNodeCount - nodeCountByRiskStatusMap.getOrDefault(Risk.HEALTHY, 0))
-        .riskCounts(Arrays.stream(Risk.values())
-                        .map(risk
-                            -> NodeRiskCountDTO.RiskCount.builder()
-                                   .risk(risk)
-                                   .count(nodeCountByRiskStatusMap.getOrDefault(risk, 0))
-                                   .build())
-                        .collect(Collectors.toList()))
+        .nodeRiskCounts(nodeRiskCounts)
         .build();
   }
 
@@ -310,6 +309,13 @@ public class DeploymentTimeSeriesAnalysisServiceImpl implements DeploymentTimeSe
       return true; // need to filter at host data level.
     }
     return !anomalousMetricsOnly || transactionMetricHostData.isAnomalous();
+  }
+
+  private boolean filterAnomalousNodes(DeploymentTimeSeriesAnalysisDTO.HostData hostData, boolean anomalousNodesOnly) {
+    if (!anomalousNodesOnly || (anomalousNodesOnly && hostData.isAnomalous())) {
+      return true;
+    }
+    return false;
   }
 
   private TransactionMetricInfo.TransactionMetric createTransactionMetric(

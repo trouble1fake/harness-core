@@ -1184,7 +1184,7 @@ public class DelegateServiceImpl implements DelegateService {
 
     String latestVersion = null;
     String delegateJarDownloadUrl = null;
-    
+
     try {
       if (mainConfiguration.getDeployMode() == DeployMode.KUBERNETES) {
         log.info("Multi-Version is enabled");

@@ -14,11 +14,13 @@ import io.harness.audit.ResourceTypeConstants;
 import io.harness.event.Event;
 import io.harness.ng.core.ProjectScope;
 import io.harness.ng.core.Resource;
+import io.harness.ng.core.ResourceConstants;
 import io.harness.ng.core.ResourceScope;
 import io.harness.pms.ngpipeline.inputset.beans.entity.InputSetEntity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.google.common.collect.ImmutableMap;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -44,10 +46,13 @@ public class InputSetUpdateEvent implements Event {
   @JsonIgnore
   @Override
   public Resource getResource() {
+    Map<String, String> labels = new HashMap<>();
+    labels.put(ResourceConstants.LABEL_KEY_RESOURCE_NAME, newInputSet.getName());
+    labels.put(ResourceConstants.LABEL_KEY_PIPELINE_IDENTIFIER, pipelineIdentifier);
     return Resource.builder()
         .identifier(newInputSet.getIdentifier())
         .type(ResourceTypeConstants.INPUT_SET)
-        .labels(ImmutableMap.<String, String>builder().put("pipelineIdentifier", pipelineIdentifier).build())
+        .labels(labels)
         .build();
   }
 

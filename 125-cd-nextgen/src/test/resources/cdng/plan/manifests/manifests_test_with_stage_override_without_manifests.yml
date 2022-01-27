@@ -1,0 +1,4 @@
+stageOverrides:
+  artifacts:
+    primary:
+    sidecars: []

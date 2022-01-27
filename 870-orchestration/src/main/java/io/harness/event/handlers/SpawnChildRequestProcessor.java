@@ -91,6 +91,12 @@ public class SpawnChildRequestProcessor implements SdkResponseProcessor {
                                          .parentId(nodeExecution.getUuid())
                                          .startTs(AmbianceUtils.getCurrentLevelStartTs(clonedAmbiance))
                                          .originalNodeExecutionId(OrchestrationUtils.getOriginalNodeExecutionId(node))
+                                         .module(node.getServiceName())
+                                         .name(node.getName())
+                                         .skipGraphType(node.getSkipGraphType())
+                                         .identifier(node.getIdentifier())
+                                         .stepType(node.getStepType())
+                                         .nodeId(node.getUuid())
                                          .build());
   }
 

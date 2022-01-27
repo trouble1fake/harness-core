@@ -81,6 +81,7 @@ public class PlanNodeExecutionStrategy
     implements NodeExecutionStrategy<PlanNode, NodeExecution, NodeExecutionMetadata> {
   @Inject private Injector injector;
   @Inject private NodeExecutionService nodeExecutionService;
+  @Inject private PlanService planService;
   @Inject private PmsEngineExpressionService pmsEngineExpressionService;
   @Inject private FacilitationHelper facilitationHelper;
   @Inject private ExceptionManager exceptionManager;
@@ -94,7 +95,6 @@ public class PlanNodeExecutionStrategy
   @Inject private WaitNotifyEngine waitNotifyEngine;
   @Inject private OrchestrationEngine orchestrationEngine;
   @Inject private PmsOutcomeService outcomeService;
-  @Inject private PlanService planService;
   @Inject @Named("EngineExecutorService") private ExecutorService executorService;
 
   @Override
@@ -118,6 +118,12 @@ public class PlanNodeExecutionStrategy
             .previousId(previousNodeExecution == null ? null : previousNodeExecution.getUuid())
             .unitProgresses(new ArrayList<>())
             .startTs(AmbianceUtils.getCurrentLevelStartTs(cloned))
+            .module(node.getServiceName())
+            .name(node.getName())
+            .skipGraphType(node.getSkipGraphType())
+            .identifier(node.getIdentifier())
+            .stepType(node.getStepType())
+            .nodeId(node.getUuid())
             .build();
     NodeExecution save = nodeExecutionService.save(nodeExecution);
     // TODO: Should add to an execution queue rather than submitting straight to thread pool
@@ -127,26 +133,29 @@ public class PlanNodeExecutionStrategy
 
   @Override
   public void startExecution(Ambiance ambiance) {
-    NodeExecution nodeExecution = nodeExecutionService.get(AmbianceUtils.obtainCurrentRuntimeId(ambiance));
+    String nodeExecutionId = AmbianceUtils.obtainCurrentRuntimeId(ambiance);
+    String nodeId = AmbianceUtils.obtainCurrentSetupId(ambiance);
     try (AutoLogContext ignore = AmbianceUtils.autoLogContext(ambiance)) {
-      ExecutionCheck check = performPreFacilitationChecks(nodeExecution);
+      PlanNode planNode = planService.fetchNode(ambiance.getPlanId(), nodeId);
+      ExecutionCheck check = performPreFacilitationChecks(ambiance, planNode);
       if (!check.isProceed()) {
         log.info("Not Proceeding with  Execution. Reason : {}", check.getReason());
         return;
       }
       log.info("Proceeding with  Execution. Reason : {}", check.getReason());
-      resolveParameters(ambiance, nodeExecution);
 
-      if (facilitationHelper.customFacilitatorPresent(nodeExecution.getNode())) {
-        facilitateEventPublisher.publishEvent(nodeExecution.getUuid());
+      resolveParameters(ambiance, planNode);
+
+      if (facilitationHelper.customFacilitatorPresent(planNode)) {
+        facilitateEventPublisher.publishEvent(ambiance, planNode);
         return;
       }
       FacilitatorResponseProto facilitatorResponseProto =
-          facilitationHelper.calculateFacilitatorResponse(nodeExecution);
+          facilitationHelper.calculateFacilitatorResponse(ambiance, planNode);
       processFacilitationResponse(ambiance, facilitatorResponseProto);
     } catch (Exception exception) {
       log.error("Exception Occurred in facilitateAndStartStep NodeExecutionId : {}, PlanExecutionId: {}",
-          AmbianceUtils.obtainCurrentRuntimeId(ambiance), ambiance.getPlanExecutionId(), exception);
+          nodeExecutionId, ambiance.getPlanExecutionId(), exception);
       handleError(ambiance, exception);
     }
   }
@@ -221,20 +230,17 @@ public class PlanNodeExecutionStrategy
       log.warn("Cannot conclude node execution. Status update failed To:{}", toStatus);
       return;
     }
-    nodeAdviseHelper.queueAdvisingEvent(updatedNodeExecution, fromStatus);
+    nodeAdviseHelper.queueAdvisingEvent(updatedNodeExecution, node, fromStatus);
   }
 
   @Override
   public void processStepResponse(Ambiance ambiance, StepResponseProto stepResponse) {
-    String nodeExecutionId = AmbianceUtils.obtainCurrentRuntimeId(ambiance);
-    NodeExecution nodeExecution = Preconditions.checkNotNull(
-        nodeExecutionService.get(nodeExecutionId), "NodeExecution null for id" + nodeExecutionId);
-    try (AutoLogContext ignore = AmbianceUtils.autoLogContext(nodeExecution.getAmbiance())) {
-      handleStepResponseInternal(nodeExecution, stepResponse);
+    try (AutoLogContext ignore = AmbianceUtils.autoLogContext(ambiance)) {
+      handleStepResponseInternal(ambiance, stepResponse);
     } catch (Exception ex) {
-      log.error("Exception Occurred in handleStepResponse NodeExecutionId : {}, PlanExecutionId: {}", nodeExecutionId,
-          nodeExecution.getAmbiance().getPlanExecutionId(), ex);
-      handleError(nodeExecution.getAmbiance(), ex);
+      log.error("Exception Occurred in handleStepResponse NodeExecutionId : {}, PlanExecutionId: {}",
+          AmbianceUtils.obtainCurrentRuntimeId(ambiance), ambiance.getPlanExecutionId(), ex);
+      handleError(ambiance, ex);
     }
   }
 
@@ -261,13 +267,13 @@ public class PlanNodeExecutionStrategy
     NodeExecution nodeExecution = nodeExecutionService.update(
         nodeExecutionId, ops -> ops.set(NodeExecutionKeys.endTs, System.currentTimeMillis()));
     if (isNotEmpty(nodeExecution.getNotifyId())) {
-      PlanNode planNode = nodeExecution.getNode();
+      Level level = AmbianceUtils.obtainCurrentLevel(ambiance);
       StepResponseNotifyData responseData = StepResponseNotifyData.builder()
-                                                .nodeUuid(planNode.getUuid())
+                                                .nodeUuid(level.getSetupId())
                                                 .stepOutcomeRefs(outcomeService.fetchOutcomeRefs(nodeExecutionId))
                                                 .failureInfo(nodeExecution.getFailureInfo())
-                                                .identifier(planNode.getIdentifier())
-                                                .group(planNode.getGroup())
+                                                .identifier(level.getIdentifier())
+                                                .group(level.getGroup())
                                                 .status(nodeExecution.getStatus())
                                                 .adviserResponse(nodeExecution.getAdviserResponse())
                                                 .build();
@@ -279,24 +285,27 @@ public class PlanNodeExecutionStrategy
   }
 
   @VisibleForTesting
-  void handleStepResponseInternal(@NonNull NodeExecution nodeExecution, @NonNull StepResponseProto stepResponse) {
-    PlanNode node = nodeExecution.getNode();
-    if (isEmpty(node.getAdviserObtainments())) {
+  void handleStepResponseInternal(@NonNull Ambiance ambiance, @NonNull StepResponseProto stepResponse) {
+    PlanNode planNode = planService.fetchNode(ambiance.getPlanId(), AmbianceUtils.obtainCurrentSetupId(ambiance));
+    if (isEmpty(planNode.getAdviserObtainments())) {
       log.info("No Advisers for the node Ending Execution");
-      endNodeExecutionHelper.endNodeExecutionWithNoAdvisers(nodeExecution, stepResponse);
+      endNodeExecutionHelper.endNodeExecutionWithNoAdvisers(ambiance, stepResponse);
       return;
     }
-    NodeExecution updatedNodeExecution =
-        endNodeExecutionHelper.handleStepResponsePreAdviser(nodeExecution, stepResponse);
+    // TODO: find a way to remove this and pass old status as parameter
+    NodeExecution nodeExecution = nodeExecutionService.getWithFieldsIncluded(
+        AmbianceUtils.obtainCurrentRuntimeId(ambiance), NodeProjectionUtils.withStatus);
+    NodeExecution updatedNodeExecution = endNodeExecutionHelper.handleStepResponsePreAdviser(ambiance, stepResponse);
     if (updatedNodeExecution == null) {
       return;
     }
-    nodeAdviseHelper.queueAdvisingEvent(updatedNodeExecution, nodeExecution.getStatus());
+
+    nodeAdviseHelper.queueAdvisingEvent(updatedNodeExecution, planNode, nodeExecution.getStatus());
   }
 
   @VisibleForTesting
-  void resolveParameters(Ambiance ambiance, NodeExecution nodeExecution) {
-    PlanNode node = nodeExecution.getNode();
+  void resolveParameters(Ambiance ambiance, PlanNode node) {
+    String nodeExecutionId = Objects.requireNonNull(AmbianceUtils.obtainCurrentRuntimeId(ambiance));
     boolean skipUnresolvedExpressionsCheck = node.isSkipUnresolvedExpressionsCheck();
     log.info("Starting to Resolve step parameters and Inputs");
     Object resolvedStepParameters =
@@ -306,7 +315,7 @@ public class PlanNodeExecutionStrategy
         pmsEngineExpressionService.resolve(ambiance, node.getStepInputs(), skipUnresolvedExpressionsCheck);
     log.info("Step Parameters and Inputs Resolution complete");
 
-    nodeExecutionService.updateV2(nodeExecution.getUuid(), ops -> {
+    nodeExecutionService.updateV2(nodeExecutionId, ops -> {
       setUnset(ops, NodeExecutionKeys.resolvedStepParameters, resolvedStepParameters);
       setUnset(ops, NodeExecutionKeys.resolvedInputs,
           PmsStepParameters.parse(
@@ -314,15 +323,16 @@ public class PlanNodeExecutionStrategy
     });
   }
 
-  private ExecutionCheck performPreFacilitationChecks(NodeExecution nodeExecution) {
+  private ExecutionCheck performPreFacilitationChecks(Ambiance ambiance, PlanNode planNode) {
     // Ignore facilitation checks if node is retried
-    if (!nodeExecution.getRetryIds().isEmpty()) {
+
+    if (AmbianceUtils.isRetry(ambiance)) {
       return ExecutionCheck.builder().proceed(true).reason("Node is retried.").build();
     }
     RunPreFacilitationChecker rChecker = injector.getInstance(RunPreFacilitationChecker.class);
     SkipPreFacilitationChecker sChecker = injector.getInstance(SkipPreFacilitationChecker.class);
     rChecker.setNextChecker(sChecker);
-    return rChecker.check(nodeExecution);
+    return rChecker.check(ambiance, planNode);
   }
 
   @Override
@@ -333,8 +343,7 @@ public class PlanNodeExecutionStrategy
       if (isNotEmpty(responseMessages)) {
         builder.setFailureInfo(EngineExceptionUtils.transformResponseMessagesToFailureInfo(responseMessages));
       }
-      NodeExecution nodeExecution = nodeExecutionService.get(AmbianceUtils.obtainCurrentRuntimeId(ambiance));
-      handleStepResponseInternal(nodeExecution, builder.build());
+      handleStepResponseInternal(ambiance, builder.build());
     } catch (Exception ex) {
       // Smile if you see irony in this
       log.error("This is very BAD!!!. Exception Occurred while handling Exception. Erroring out Execution", ex);

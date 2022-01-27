@@ -109,7 +109,7 @@ public class GraphStatusUpdateHelper {
         .ambiance(nodeExecution.getAmbiance())
         .planNodeId(level.getSetupId())
         .identifier(level.getIdentifier())
-        .name(nodeExecution.getNode().getName())
+        .name(nodeExecution.name())
         .startTs(nodeExecution.getStartTs())
         .endTs(nodeExecution.getEndTs())
         .initialWaitDuration(nodeExecution.getInitialWaitDuration())
@@ -124,7 +124,7 @@ public class GraphStatusUpdateHelper {
         .executableResponses(CollectionUtils.emptyIfNull(nodeExecution.getExecutableResponses()))
         .interruptHistories(nodeExecution.getInterruptHistories())
         .retryIds(nodeExecution.getRetryIds())
-        .skipType(nodeExecution.getNode().getSkipGraphType())
+        .skipType(nodeExecution.skipGraphType())
         .unitProgresses(nodeExecution.getUnitProgresses())
         .progressData(nodeExecution.getPmsProgressData())
         .build();

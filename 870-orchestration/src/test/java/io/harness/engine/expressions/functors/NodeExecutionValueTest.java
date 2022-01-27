@@ -20,6 +20,7 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.engine.executions.node.NodeExecutionService;
+import io.harness.engine.executions.plan.PlanService;
 import io.harness.engine.expressions.NodeExecutionsCache;
 import io.harness.engine.pms.data.PmsOutcomeService;
 import io.harness.engine.utils.PmsLevelUtils;
@@ -27,16 +28,13 @@ import io.harness.execution.NodeExecution;
 import io.harness.execution.NodeExecution.NodeExecutionKeys;
 import io.harness.plan.PlanNode;
 import io.harness.pms.contracts.ambiance.Ambiance;
-import io.harness.pms.contracts.ambiance.Level;
 import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.data.stepparameters.PmsStepParameters;
-import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.execution.utils.NodeProjectionUtils;
 import io.harness.pms.serializer.recaster.RecastOrchestrationUtils;
 import io.harness.rule.Owner;
-import io.harness.utils.AmbianceTestUtils;
 import io.harness.utils.steps.TestStepParameters;
 
 import com.google.common.collect.ImmutableMap;
@@ -58,13 +56,12 @@ import org.mockito.junit.MockitoRule;
 public class NodeExecutionValueTest extends OrchestrationTestBase {
   @Mock NodeExecutionService nodeExecutionService;
   @Mock PmsOutcomeService pmsOutcomeService;
+  @Mock PlanService planService;
 
   @Rule public MockitoRule mockitoRule = MockitoJUnit.rule();
 
   private JexlEngine engine;
-  private Ambiance ambiance;
   NodeExecution nodeExecution1;
-
   NodeExecution nodeExecution2;
   NodeExecution nodeExecution3;
   NodeExecution nodeExecution4;
@@ -72,6 +69,9 @@ public class NodeExecutionValueTest extends OrchestrationTestBase {
   NodeExecution nodeExecution6;
   NodeExecution nodeExecution7;
   NodeExecution nodeExecution8;
+
+  String planId = generateUuid();
+  String planExecutionId = generateUuid();
 
   @Before
   public void setup() {
@@ -84,12 +84,13 @@ public class NodeExecutionValueTest extends OrchestrationTestBase {
     String nodeExecution7Id = generateUuid();
     String nodeExecution8Id = generateUuid();
     engine = new JexlBuilder().logger(new NoOpLog()).create();
-    ambiance = AmbianceTestUtils.buildAmbiance();
 
     PlanNode node1 = preparePlanNode(false, "a");
     Ambiance.Builder ambianceBuilder = Ambiance.newBuilder()
-                                           .setPlanExecutionId(generateUuid())
+                                           .setPlanExecutionId(planExecutionId)
+                                           .setPlanId(planId)
                                            .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution1Id, node1));
+    when(planService.fetchNode(planId, node1.getUuid())).thenReturn(node1);
     nodeExecution1 = NodeExecution.builder()
                          .uuid(nodeExecution1Id)
                          .ambiance(ambianceBuilder.build())
@@ -98,6 +99,7 @@ public class NodeExecutionValueTest extends OrchestrationTestBase {
                          .build();
 
     PlanNode node2 = preparePlanNode(false, "b");
+    when(planService.fetchNode(planId, node2.getUuid())).thenReturn(node2);
     nodeExecution2 =
         NodeExecution.builder()
             .uuid(nodeExecution2Id)
@@ -109,6 +111,7 @@ public class NodeExecutionValueTest extends OrchestrationTestBase {
             .build();
 
     PlanNode node3 = preparePlanNode(true, "c");
+    when(planService.fetchNode(planId, node3.getUuid())).thenReturn(node3);
     nodeExecution3 =
         NodeExecution.builder()
             .uuid(nodeExecution3Id)
@@ -120,6 +123,7 @@ public class NodeExecutionValueTest extends OrchestrationTestBase {
             .build();
 
     PlanNode node4 = preparePlanNode(false, "d", "di1", "STAGE");
+    when(planService.fetchNode(planId, node4.getUuid())).thenReturn(node4);
     nodeExecution4 = NodeExecution.builder()
                          .uuid(nodeExecution4Id)
                          .ambiance(ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution3Id, node3))
@@ -131,6 +135,7 @@ public class NodeExecutionValueTest extends OrchestrationTestBase {
                          .build();
 
     PlanNode node5 = preparePlanNode(false, "d", "di2");
+    when(planService.fetchNode(planId, node5.getUuid())).thenReturn(node5);
     nodeExecution5 = NodeExecution.builder()
                          .uuid(nodeExecution5Id)
                          .ambiance(ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution3Id, node3))
@@ -143,6 +148,7 @@ public class NodeExecutionValueTest extends OrchestrationTestBase {
                          .build();
 
     PlanNode node6 = preparePlanNode(false, "e");
+    when(planService.fetchNode(planId, node6.getUuid())).thenReturn(node6);
     nodeExecution6 = NodeExecution.builder()
                          .uuid(nodeExecution6Id)
                          .ambiance(ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution3Id, node3))
@@ -155,6 +161,7 @@ public class NodeExecutionValueTest extends OrchestrationTestBase {
                          .build();
 
     PlanNode node7 = preparePlanNode(false, "f");
+    when(planService.fetchNode(planId, node7.getUuid())).thenReturn(node7);
     nodeExecution7 = NodeExecution.builder()
                          .uuid(nodeExecution7Id)
                          .ambiance(ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution3Id, node3))
@@ -169,6 +176,7 @@ public class NodeExecutionValueTest extends OrchestrationTestBase {
                          .build();
 
     PlanNode node8 = preparePlanNode(false, "g");
+    when(planService.fetchNode(planId, node8.getUuid())).thenReturn(node8);
     nodeExecution8 = NodeExecution.builder()
                          .uuid(nodeExecution8Id)
                          .ambiance(ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution3Id, node3))
@@ -207,7 +215,6 @@ public class NodeExecutionValueTest extends OrchestrationTestBase {
              nodeExecution8.getUuid(), NodeProjectionUtils.fieldsForExpressionEngine))
         .thenReturn(nodeExecution8);
 
-    String planExecutionId = ambiance.getPlanExecutionId();
     when(nodeExecutionService.fetchChildrenNodeExecutions(
              planExecutionId, null, NodeProjectionUtils.fieldsForExpressionEngine))
         .thenReturn(Collections.singletonList(nodeExecution1));
@@ -229,11 +236,10 @@ public class NodeExecutionValueTest extends OrchestrationTestBase {
   @Owner(developers = GARVIT)
   @Category(UnitTests.class)
   public void testNodeExecutionChildFunctor() {
-    Ambiance newAmbiance =
-        AmbianceUtils.cloneForChild(ambiance, Level.newBuilder().setRuntimeId(nodeExecution1.getUuid()).build());
+    Ambiance newAmbiance = nodeExecution1.getAmbiance();
     NodeExecutionChildFunctor functor =
         NodeExecutionChildFunctor.builder()
-            .nodeExecutionsCache(new NodeExecutionsCache(nodeExecutionService, newAmbiance))
+            .nodeExecutionsCache(new NodeExecutionsCache(nodeExecutionService, planService, newAmbiance))
             .pmsOutcomeService(pmsOutcomeService)
             .ambiance(newAmbiance)
             .build();
@@ -249,11 +255,10 @@ public class NodeExecutionValueTest extends OrchestrationTestBase {
   @Owner(developers = GARVIT)
   @Category(UnitTests.class)
   public void testNodeExecutionAncestorFunctor() {
-    Ambiance newAmbiance =
-        AmbianceUtils.cloneForChild(ambiance, Level.newBuilder().setRuntimeId(nodeExecution6.getUuid()).build());
+    Ambiance newAmbiance = nodeExecution6.getAmbiance();
     NodeExecutionAncestorFunctor functor =
         NodeExecutionAncestorFunctor.builder()
-            .nodeExecutionsCache(new NodeExecutionsCache(nodeExecutionService, newAmbiance))
+            .nodeExecutionsCache(new NodeExecutionsCache(nodeExecutionService, planService, newAmbiance))
             .pmsOutcomeService(pmsOutcomeService)
             .ambiance(newAmbiance)
             .groupAliases(ImmutableMap.of("stage", "STAGE"))
@@ -273,18 +278,17 @@ public class NodeExecutionValueTest extends OrchestrationTestBase {
   @Owner(developers = ARCHIT)
   @Category(UnitTests.class)
   public void testNodeExecutionCurrentStatus() {
-    Ambiance newAmbiance =
-        AmbianceUtils.cloneForChild(ambiance, Level.newBuilder().setRuntimeId(nodeExecution8.getUuid()).build());
+    Ambiance newAmbiance = nodeExecution8.getAmbiance();
     NodeExecutionAncestorFunctor functor =
         NodeExecutionAncestorFunctor.builder()
-            .nodeExecutionsCache(new NodeExecutionsCache(nodeExecutionService, newAmbiance))
+            .nodeExecutionsCache(new NodeExecutionsCache(nodeExecutionService, planService, newAmbiance))
             .pmsOutcomeService(pmsOutcomeService)
             .ambiance(newAmbiance)
             .groupAliases(ImmutableMap.of("stage", "STAGE"))
             .build();
 
-    when(nodeExecutionService.findAllChildren(ambiance.getPlanExecutionId(), nodeExecution4.getUuid(), false,
-             NodeProjectionUtils.fieldsForExpressionEngine))
+    when(nodeExecutionService.findAllChildren(
+             planExecutionId, nodeExecution4.getUuid(), false, NodeProjectionUtils.fieldsForExpressionEngine))
         .thenReturn(asList(nodeExecution8, nodeExecution7, nodeExecution6));
 
     Reflect.on(nodeExecution4).set(NodeExecutionKeys.status, Status.RUNNING);
@@ -308,12 +312,12 @@ public class NodeExecutionValueTest extends OrchestrationTestBase {
   @Owner(developers = GARVIT)
   @Category(UnitTests.class)
   public void testNodeExecutionQualifiedFunctor() {
-    NodeExecutionQualifiedFunctor functor =
-        NodeExecutionQualifiedFunctor.builder()
-            .nodeExecutionsCache(new NodeExecutionsCache(nodeExecutionService, ambiance))
-            .pmsOutcomeService(pmsOutcomeService)
-            .ambiance(ambiance)
-            .build();
+    NodeExecutionQualifiedFunctor functor = NodeExecutionQualifiedFunctor.builder()
+                                                .nodeExecutionsCache(new NodeExecutionsCache(
+                                                    nodeExecutionService, planService, nodeExecution1.getAmbiance()))
+                                                .pmsOutcomeService(pmsOutcomeService)
+                                                .ambiance(nodeExecution1.getAmbiance())
+                                                .build();
     NodeExecutionMap nodeExecutionMap = (NodeExecutionMap) functor.bind();
     assertThat(engine.getProperty(nodeExecutionMap, "a.b.param")).isEqualTo("bo");
     assertThat(engine.getProperty(nodeExecutionMap, "a.d[0].param")).isEqualTo("di1");
