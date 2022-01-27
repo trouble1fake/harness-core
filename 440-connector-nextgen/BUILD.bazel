@@ -8,10 +8,6 @@ java_library(
     visibility = ["//visibility:public"],
     deps = [
         "//:lombok",
-        "//882-pms-sdk-core:module",
-        "//884-pms-commons:module",
-        "//889-yaml-commons:module",
-        "//890-pms-contracts:module",
         "//890-sm-core:module",
         "//900-git-sync-sdk:module",
         "//910-delegate-service-driver:module",
@@ -98,9 +94,6 @@ java_library(
     deps = [
         "module",
         "//:lombok",
-        "//882-pms-sdk-core:module",
-        "//889-yaml-commons:module",
-        "//890-pms-contracts:module",
         "//890-sm-core:module",
         "//900-git-sync-sdk:module",
         "//910-delegate-service-driver:module",

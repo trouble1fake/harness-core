@@ -11,9 +11,12 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.OrchestrationGraph;
 import io.harness.graph.stepDetail.service.PmsGraphStepDetailsService;
+import io.harness.pms.data.stepdetails.PmsStepDetails;
+import io.harness.pms.data.stepparameters.PmsStepParameters;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 
 @Singleton
@@ -25,10 +28,21 @@ public class StepDetailsUpdateEventHandler {
   public OrchestrationGraph handleEvent(
       String planExecutionId, String nodeExecutionId, OrchestrationGraph orchestrationGraph) {
     try {
-      orchestrationGraph.getAdjacencyList()
-          .getGraphVertexMap()
-          .get(nodeExecutionId)
-          .setStepDetails(pmsGraphStepDetailsService.getStepDetails(planExecutionId, nodeExecutionId));
+      Map<String, PmsStepDetails> stepDetails =
+          pmsGraphStepDetailsService.getStepDetails(planExecutionId, nodeExecutionId);
+      orchestrationGraph.getAdjacencyList().getGraphVertexMap().get(nodeExecutionId).setStepDetails(stepDetails);
+      return orchestrationGraph;
+    } catch (Exception e) {
+      log.error("Graph update for Step Details update event failed for node [{}]", nodeExecutionId, e);
+      throw e;
+    }
+  }
+
+  public OrchestrationGraph handleStepInputEvent(
+      String planExecutionId, String nodeExecutionId, OrchestrationGraph orchestrationGraph) {
+    try {
+      PmsStepParameters stepDetails = pmsGraphStepDetailsService.getStepInputs(planExecutionId, nodeExecutionId);
+      orchestrationGraph.getAdjacencyList().getGraphVertexMap().get(nodeExecutionId).setStepParameters(stepDetails);
       return orchestrationGraph;
     } catch (Exception e) {
       log.error("Graph update for Step Details update event failed for node [{}]", nodeExecutionId, e);

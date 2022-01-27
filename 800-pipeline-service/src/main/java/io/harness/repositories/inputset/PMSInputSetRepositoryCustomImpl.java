@@ -150,12 +150,8 @@ public class PMSInputSetRepositoryCustomImpl implements PMSInputSetRepositoryCus
   @Override
   public InputSetEntity update(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, Criteria criteria, Update update) {
-    Criteria gitSyncCriteria = gitAwarePersistence.getCriteriaWithGitSync(
-        projectIdentifier, orgIdentifier, accountIdentifier, InputSetEntity.class);
-    if (gitSyncCriteria != null) {
-      criteria = new Criteria().andOperator(criteria, gitSyncCriteria);
-    }
-
+    criteria = gitAwarePersistence.makeCriteriaGitAware(
+        accountIdentifier, orgIdentifier, projectIdentifier, InputSetEntity.class, criteria);
     Query query = new Query(criteria);
     RetryPolicy<Object> retryPolicy = getRetryPolicy(
         "[Retrying]: Failed updating Input Set; attempt: {}", "[Failed]: Failed updating Input Set; attempt: {}");

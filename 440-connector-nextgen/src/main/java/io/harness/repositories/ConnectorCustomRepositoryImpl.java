@@ -81,11 +81,8 @@ public class ConnectorCustomRepositoryImpl implements ConnectorCustomRepository 
   @Override
   public Connector update(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, Criteria criteria, Update update) {
-    Criteria gitSyncCriteria = gitAwarePersistence.getCriteriaWithGitSync(
-        projectIdentifier, orgIdentifier, accountIdentifier, Connector.class);
-    if (gitSyncCriteria != null) {
-      criteria = new Criteria().andOperator(criteria, gitSyncCriteria);
-    }
+    criteria = gitAwarePersistence.makeCriteriaGitAware(
+        accountIdentifier, orgIdentifier, projectIdentifier, Connector.class, criteria);
 
     return mongoTemplate.findAndModify(
         query(criteria), update, FindAndModifyOptions.options().returnNew(true), Connector.class);

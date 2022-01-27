@@ -9,8 +9,6 @@
 
     <statusListener class="ch.qos.logback.core.status.NopStatusListener"/>
 
-    <contextListener class="software.wings.delegate.app.DelegateLoggerStartupListener"/>
-
     <conversionRule conversionWord="version" converterClass="io.harness.logging.VersionConverter"/>
     <conversionRule conversionWord="process_id" converterClass="io.harness.logging.ProcessIdConverter"/>
 

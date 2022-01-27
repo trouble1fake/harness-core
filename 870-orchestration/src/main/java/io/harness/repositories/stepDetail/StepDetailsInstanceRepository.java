@@ -13,10 +13,12 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.stepDetail.StepDetailInstance;
 
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.repository.PagingAndSortingRepository;
 
 @OwnedBy(HarnessTeam.PIPELINE)
 @HarnessRepo
 public interface StepDetailsInstanceRepository extends PagingAndSortingRepository<StepDetailInstance, String> {
   List<StepDetailInstance> findByNodeExecutionId(String nodeExecutionId);
+  Optional<StepDetailInstance> findByNameAndNodeExecutionId(String name, String nodeExecutionId);
 }
