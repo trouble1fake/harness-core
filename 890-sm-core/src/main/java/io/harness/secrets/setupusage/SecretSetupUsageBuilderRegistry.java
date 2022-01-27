@@ -42,6 +42,7 @@ public class SecretSetupUsageBuilderRegistry {
     registeredSecretSetupUsageBuilders.put(SettingVariableTypes.KUBERNETES, SETTING_ATTRIBUTE_SETUP_USAGE_BUILDER);
     registeredSecretSetupUsageBuilders.put(
         SettingVariableTypes.KUBERNETES_CLUSTER, SETTING_ATTRIBUTE_SETUP_USAGE_BUILDER);
+    registeredSecretSetupUsageBuilders.put(SettingVariableTypes.RANCHER, SETTING_ATTRIBUTE_SETUP_USAGE_BUILDER);
     registeredSecretSetupUsageBuilders.put(SettingVariableTypes.PCF, SETTING_ATTRIBUTE_SETUP_USAGE_BUILDER);
     registeredSecretSetupUsageBuilders.put(SettingVariableTypes.SPOT_INST, SETTING_ATTRIBUTE_SETUP_USAGE_BUILDER);
     registeredSecretSetupUsageBuilders.put(SettingVariableTypes.SMTP, SETTING_ATTRIBUTE_SETUP_USAGE_BUILDER);
