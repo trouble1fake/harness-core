@@ -1041,9 +1041,12 @@ public class HelmDeployState extends State {
                 helmChartConfigHelperService.getHelmChartConfigTaskParams(context, appManifest);
             helmChartConfigTaskParams.setUseLatestChartMuseumVersion(
                 featureFlagService.isEnabled(USE_LATEST_CHARTMUSEUM_VERSION, context.getAccountId()));
-            helmChartConfigTaskParams.setUseRepoFlags(
-                featureFlagService.isEnabled(USE_HELM_REPO_FLAGS, context.getAccountId())
-                && HelmVersion.V3.equals(helmVersion));
+
+            if (HelmVersion.V3.equals(helmVersion)) {
+              helmChartConfigTaskParams.setUseRepoFlags(
+                  featureFlagService.isEnabled(USE_HELM_REPO_FLAGS, context.getAccountId()));
+            }
+
             manifestConfig = K8sDelegateManifestConfig.builder()
                                  .helmChartConfigParams(helmChartConfigTaskParams)
                                  .manifestStoreTypes(HelmChartRepo)

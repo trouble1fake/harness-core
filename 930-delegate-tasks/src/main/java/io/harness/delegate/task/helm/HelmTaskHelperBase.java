@@ -731,15 +731,15 @@ public class HelmTaskHelperBase {
   }
 
   public void updateRepo(String repoName, String workingDirectory, HelmVersion helmVersion, long timeoutInMillis,
-      boolean useRepoFlag, String tempDir) {
+      boolean useRepoFlag, String repoDir) {
     try {
       String repoUpdateCommand = getRepoUpdateCommand(repoName, workingDirectory, helmVersion);
       Map<String, String> environment = new HashMap<>();
 
       if (useRepoFlag) {
         environment.put(HELM_CACHE_HOME,
-            HELM_CACHE_HOME_PATH.replace(REPO_NAME, repoName).replace(HELM_CACHE_HOME_PLACEHOLDER, tempDir));
-        repoUpdateCommand = addRepoFlags(repoUpdateCommand, repoName, tempDir);
+            HELM_CACHE_HOME_PATH.replace(REPO_NAME, repoName).replace(HELM_CACHE_HOME_PLACEHOLDER, repoDir));
+        repoUpdateCommand = addRepoFlags(repoUpdateCommand, repoName, repoDir);
       }
 
       ProcessResult processResult = executeCommand(environment, repoUpdateCommand, null,
