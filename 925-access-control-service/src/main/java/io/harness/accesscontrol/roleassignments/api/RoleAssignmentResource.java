@@ -342,9 +342,11 @@ public class RoleAssignmentResource {
   }
 
   private static void validateDeprecatedResourceGroupNotUsed(String resourceGroupIdentifier, String scopeLevel) {
-    if (HarnessResourceGroupConstants.DEFAULT_RESOURCE_GROUP_IDENTIFIER.equals(resourceGroupIdentifier)) {
-      throw new InvalidRequestException(
-          String.format("_all_resources is deprecated, please use _all_%s_level_resources.", scopeLevel));
+    if (HarnessResourceGroupConstants.DEPRECATED_ALL_RESOURCES_RESOURCE_GROUP_IDENTIFIER.equals(
+            resourceGroupIdentifier)) {
+      throw new InvalidRequestException(String.format("%s is deprecated, please use %s.",
+          HarnessResourceGroupConstants.DEPRECATED_ALL_RESOURCES_RESOURCE_GROUP_IDENTIFIER,
+          HarnessResourceGroupConstants.ALL_RESOURCES_INCLUDING_CHILD_SCOPES_RESOURCE_GROUP_IDENTIFIER));
     }
   }
 
@@ -418,9 +420,10 @@ public class RoleAssignmentResource {
   create(@BeanParam HarnessScopeParams harnessScopeParams,
       @Body RoleAssignmentCreateRequestDTO roleAssignmentCreateRequestDTO,
       @QueryParam("managed") @DefaultValue("false") Boolean managed) {
+    // TODO: remove this deprecated resource group handling
     List<RoleAssignmentDTO> roleAssignmentDTOs = new ArrayList<>();
     roleAssignmentCreateRequestDTO.getRoleAssignments().forEach(roleAssignmentDTO -> {
-      if (HarnessResourceGroupConstants.DEFAULT_RESOURCE_GROUP_IDENTIFIER.equals(
+      if (HarnessResourceGroupConstants.DEPRECATED_ALL_RESOURCES_RESOURCE_GROUP_IDENTIFIER.equals(
               roleAssignmentDTO.getResourceGroupIdentifier())) {
         roleAssignmentDTOs.add(RoleAssignmentDTO.builder()
                                    .disabled(roleAssignmentDTO.isDisabled())

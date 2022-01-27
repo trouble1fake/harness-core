@@ -48,7 +48,7 @@ import org.springframework.data.annotation.TypeAlias;
 @TypeAlias("stepElementConfig")
 @OwnedBy(CDC)
 // TODO this should go to yaml commons
-@TargetModule(HarnessModule._884_PMS_COMMONS)
+@TargetModule(HarnessModule._889_YAML_COMMONS)
 public class StepElementConfig {
   @JsonProperty(YamlNode.UUID_FIELD_NAME)
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })

@@ -39,6 +39,7 @@ import io.harness.pms.plan.execution.beans.PipelineExecutionSummaryEntity;
 import io.harness.pms.plan.execution.beans.dto.InterruptDTO;
 import io.harness.pms.plan.execution.beans.dto.RunStageRequestDTO;
 import io.harness.pms.plan.execution.service.PMSExecutionService;
+import io.harness.pms.plan.utils.PlanResourceUtility;
 import io.harness.pms.preflight.PreFlightDTO;
 import io.harness.pms.preflight.service.PreflightService;
 import io.harness.pms.rbac.PipelineRbacPermissions;
@@ -370,6 +371,15 @@ public class PlanExecutionResource {
               .build());
     }
 
+    boolean inTimeLimit =
+        PlanResourceUtility.validateInTimeLimitForRetry(pipelineExecutionSummaryEntity.getCreatedAt());
+    if (!inTimeLimit) {
+      return ResponseDTO.newResponse(RetryInfo.builder()
+                                         .isResumable(false)
+                                         .errorMessage("Execution is more than 30 days old. Cannot retry")
+                                         .build());
+    }
+
     String updatedPipeline = updatedPipelineEntity.get().getYaml();
 
     String executedPipeline = retryExecutionHelper.getYamlFromExecutionId(planExecutionId);
@@ -669,14 +679,37 @@ public class PlanExecutionResource {
     if (retryStagesIdentifier.size() == 0) {
       throw new InvalidRequestException("You need to select the stage to retry!!");
     }
+
+    Optional<PipelineEntity> updatedPipelineEntity =
+        pmsPipelineService.get(accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, false);
+
+    // checking if pipeline exists or not
+    if (!updatedPipelineEntity.isPresent()) {
+      throw new InvalidRequestException(
+          String.format("Pipeline with the given ID: %s does not exist or has been deleted", pipelineIdentifier));
+    }
+
     PipelineExecutionSummaryEntity pipelineExecutionSummaryEntity =
         pmsExecutionService.getPipelineExecutionSummaryEntity(
             accountId, orgIdentifier, projectIdentifier, previousExecutionId, false);
+
+    // only latest execution can be retried
+    if (!pipelineExecutionSummaryEntity.isLatestExecution()) {
+      throw new InvalidRequestException(
+          "This execution is not the latest of all retried execution. You can only retry the latest execution.");
+    }
 
     if (!StatusUtils.getRetryableFailedStatuses().contains(
             pipelineExecutionSummaryEntity.getStatus().getEngineStatus())) {
       throw new InvalidRequestException(
           "Retrying is applicable only for failed pipeline. You can only retry when executed pipeline is either of these statuses - Failed, Aborted, Expired, Rejected");
+    }
+
+    // validate time limit for retry stages: time limit is 30 days
+    boolean inTimeLimit =
+        PlanResourceUtility.validateInTimeLimitForRetry(pipelineExecutionSummaryEntity.getCreatedAt());
+    if (!inTimeLimit) {
+      throw new InvalidRequestException("Execution is more than 30 days old. Cannot retry");
     }
 
     PlanExecutionResponseDto planExecutionResponseDto = pipelineExecutor.retryPipelineWithInputSetPipelineYaml(

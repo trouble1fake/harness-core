@@ -79,6 +79,9 @@ public class ExceptionMessageSanitizer {
 
   public static void storeAllSecretsForSanitizing(
       DecryptableEntity object, List<EncryptedDataDetail> encryptedDataDetails) {
+    if (isEmpty(encryptedDataDetails)) {
+      return;
+    }
     for (EncryptedDataDetail encryptedDataDetail : encryptedDataDetails) {
       Field f = getFieldByName(object.getClass(), encryptedDataDetail.getFieldName());
       if (f == null) {

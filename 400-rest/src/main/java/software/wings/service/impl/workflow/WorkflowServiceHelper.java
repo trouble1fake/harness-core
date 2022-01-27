@@ -3289,17 +3289,28 @@ public class WorkflowServiceHelper {
     validateWaitInterval(orchestrationWorkflow.getRollbackWorkflowPhaseIdMap());
   }
 
+  private void validateWaitIntervalValue(Integer value) {
+    if (value != null) {
+      if (value < 0) {
+        throw new InvalidRequestException("Negative values for wait interval not allowed.");
+      }
+      // We use DelayEventHelper. Queueable.java has a FdTtlIndex limited to a day.
+      // Refer to CDC-16519
+      if (value > 24 * 60 * 60) {
+        throw new InvalidRequestException("Wait Interval cannot be more than one day.");
+      }
+    }
+  }
+
   private void validateWaitInterval(WorkflowPhase workflowPhase) {
-    if (workflowPhase != null && workflowPhase.getPhaseSteps() != null
-        && workflowPhase.getPhaseSteps().stream().anyMatch(
-            phaseStep -> phaseStep.getWaitInterval() != null && phaseStep.getWaitInterval() < 0)) {
-      throw new InvalidRequestException("Negative values for waitInterval not allowed.");
+    if (workflowPhase != null && workflowPhase.getPhaseSteps() != null) {
+      workflowPhase.getPhaseSteps().forEach(phaseStep -> validateWaitIntervalValue(phaseStep.getWaitInterval()));
     }
   }
 
   public void validateWaitInterval(PhaseStep phaseStep) {
-    if (phaseStep != null && phaseStep.getWaitInterval() != null && phaseStep.getWaitInterval() < 0) {
-      throw new InvalidRequestException("Negative values for wait interval not allowed.");
+    if (phaseStep != null) {
+      validateWaitIntervalValue(phaseStep.getWaitInterval());
     }
   }
 

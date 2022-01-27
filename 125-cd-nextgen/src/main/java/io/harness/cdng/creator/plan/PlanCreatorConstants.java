@@ -38,4 +38,5 @@ public class PlanCreatorConstants {
   public final String SIDECARS_PARAMETERS_MAP = "sideCarsParametersMap";
   public final String IDENTIFIER = "identifier";
   public final String SIDECAR_STEP_PARAMETERS = "sideCarsStepParameters";
+  public final String MANIFEST_STEP_PARAMETER = "manifestStepParameters";
 }

@@ -7,8 +7,12 @@
 
 package io.harness.pms.sdk.execution.events;
 
+import io.harness.annotations.dev.HarnessModule;
+import io.harness.annotations.dev.TargetModule;
+
 import java.util.Map;
 
+@TargetModule(HarnessModule._884_PMS_COMMONS)
 public interface PmsCommonsBaseEventHandler<T> {
   void handleEvent(T event, Map<String, String> metadataMap, long timestamp);
 }

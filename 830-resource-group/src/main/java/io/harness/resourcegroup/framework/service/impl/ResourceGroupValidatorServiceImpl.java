@@ -8,8 +8,9 @@
 package io.harness.resourcegroup.framework.service.impl;
 
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
-import static io.harness.resourcegroup.beans.ValidatorType.DYNAMIC;
-import static io.harness.resourcegroup.beans.ValidatorType.STATIC;
+import static io.harness.resourcegroup.beans.ValidatorType.BY_RESOURCE_IDENTIFIER;
+import static io.harness.resourcegroup.beans.ValidatorType.BY_RESOURCE_TYPE;
+import static io.harness.resourcegroup.beans.ValidatorType.BY_RESOURCE_TYPE_INCLUDING_CHILD_SCOPES;
 
 import io.harness.beans.Scope;
 import io.harness.beans.ScopeLevel;
@@ -87,7 +88,13 @@ public class ResourceGroupValidatorServiceImpl implements ResourceGroupValidator
 
     return resourceMap.containsKey(resourceType)
         && resourceMap.get(resourceType).getValidScopeLevels().contains(scopeLevel)
-        && resourceMap.get(resourceType).getSelectorKind().contains(DYNAMIC);
+        && resourceMap.get(resourceType).getSelectorKind().containsKey(scopeLevel)
+        && (Boolean.TRUE.equals(resourceSelector.getIncludeChildScopes())
+                ? resourceMap.get(resourceType)
+                      .getSelectorKind()
+                      .get(scopeLevel)
+                      .contains(BY_RESOURCE_TYPE_INCLUDING_CHILD_SCOPES)
+                : resourceMap.get(resourceType).getSelectorKind().get(scopeLevel).contains(BY_RESOURCE_TYPE));
   }
 
   private boolean sanitizeStaticResourceSelector(Scope scope, StaticResourceSelector resourceSelector) {
@@ -97,7 +104,8 @@ public class ResourceGroupValidatorServiceImpl implements ResourceGroupValidator
 
     Resource resource = resourceMap.get(resourceType);
     if (resource == null || !resource.getValidScopeLevels().contains(scopeLevel)
-        || !resource.getSelectorKind().contains(STATIC)) {
+        || !resource.getSelectorKind().containsKey(scopeLevel)
+        || !resource.getSelectorKind().get(scopeLevel).contains(BY_RESOURCE_IDENTIFIER)) {
       resourceSelector.getIdentifiers().clear();
       return true;
     }
