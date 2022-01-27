@@ -9,7 +9,7 @@ package io.harness.ci.serializer.vm;
 
 import static io.harness.beans.serializer.RunTimeInputHandler.resolveJsonNodeMapParameter;
 import static io.harness.common.CIExecutionConstants.GIT_CLONE_STEP_ID;
-import static io.harness.common.CIExecutionConstants.PLUGIN_ENV_PREFIX;
+import static io.harness.common.CIExecutionConstants.SECURITY_ENV_PREFIX;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 
 import io.harness.beans.serializer.RunTimeInputHandler;
@@ -51,7 +51,7 @@ public class VmSecurityStepSerializer {
     Map<String, String> envVars = new HashMap<>();
     if (!isEmpty(settings)) {
       for (Map.Entry<String, JsonNode> entry : settings.entrySet()) {
-        String key = PLUGIN_ENV_PREFIX + entry.getKey().toUpperCase();
+        String key = SECURITY_ENV_PREFIX + entry.getKey().toUpperCase();
         envVars.put(key, SerializerUtils.convertJsonNodeToString(entry.getKey(), entry.getValue()));
       }
     }

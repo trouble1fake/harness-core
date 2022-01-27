@@ -8,7 +8,7 @@
 package io.harness.ci.serializer;
 
 import static io.harness.beans.serializer.RunTimeInputHandler.resolveJsonNodeMapParameter;
-import static io.harness.common.CIExecutionConstants.PLUGIN_ENV_PREFIX;
+import static io.harness.common.CIExecutionConstants.SECURITY_ENV_PREFIX;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 
 import static java.util.Collections.emptyList;
@@ -63,7 +63,7 @@ public class SecurityStepProtobufSerializer implements ProtobufStepSerializer<Se
     Map<String, String> envVarMap = new HashMap<>();
     if (!isEmpty(settings)) {
       for (Map.Entry<String, JsonNode> entry : settings.entrySet()) {
-        String key = PLUGIN_ENV_PREFIX + entry.getKey().toUpperCase();
+        String key = SECURITY_ENV_PREFIX + entry.getKey().toUpperCase();
         envVarMap.put(key, SerializerUtils.convertJsonNodeToString(entry.getKey(), entry.getValue()));
       }
     }
