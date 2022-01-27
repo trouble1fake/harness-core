@@ -359,8 +359,8 @@ public class HelmTaskHelper {
 
   public void addRepo(String repoName, String repoDisplayName, String chartRepoUrl, String username, char[] password,
       String chartDirectory, HelmVersion helmVersion, long timeoutInMillis) {
-    helmTaskHelperBase.addRepo(
-        repoName, repoDisplayName, chartRepoUrl, username, password, chartDirectory, helmVersion, timeoutInMillis);
+    helmTaskHelperBase.addRepo(repoName, repoDisplayName, chartRepoUrl, username, password, chartDirectory, helmVersion,
+        timeoutInMillis, false);
   }
 
   private void fetchChartFromHttpServer(HelmChartConfigParams helmChartConfigParams, String chartDirectory,
@@ -369,7 +369,7 @@ public class HelmTaskHelper {
 
     helmTaskHelperBase.addRepo(helmChartConfigParams.getRepoName(), helmChartConfigParams.getRepoDisplayName(),
         httpHelmRepoConfig.getChartRepoUrl(), httpHelmRepoConfig.getUsername(), httpHelmRepoConfig.getPassword(),
-        chartDirectory, helmChartConfigParams.getHelmVersion(), timeoutInMillis);
+        chartDirectory, helmChartConfigParams.getHelmVersion(), timeoutInMillis, false);
     helmTaskHelperBase.fetchChartFromRepo(helmChartConfigParams.getRepoName(),
         helmChartConfigParams.getRepoDisplayName(), helmChartConfigParams.getChartName(),
         helmChartConfigParams.getChartVersion(), chartDirectory, helmChartConfigParams.getHelmVersion(),
@@ -406,7 +406,7 @@ public class HelmTaskHelper {
   }
 
   public void updateRepo(String repoName, String workingDirectory, HelmVersion helmVersion, long timeoutInMillis) {
-    helmTaskHelperBase.updateRepo(repoName, workingDirectory, helmVersion, timeoutInMillis);
+    helmTaskHelperBase.updateRepo(repoName, workingDirectory, helmVersion, timeoutInMillis, false, EMPTY);
   }
 
   /*

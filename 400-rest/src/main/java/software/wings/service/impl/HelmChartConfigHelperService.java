@@ -28,6 +28,7 @@ import io.harness.security.encryption.EncryptedDataDetail;
 import software.wings.annotation.EncryptableSetting;
 import software.wings.api.PhaseElement;
 import software.wings.beans.HelmChartConfig;
+import software.wings.beans.Service;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.appmanifest.ApplicationManifest;
 import software.wings.beans.settings.helm.HelmRepoConfig;
@@ -129,6 +130,10 @@ public class HelmChartConfigHelperService {
 
     helmChartConfigParamsBuilder.useLatestChartMuseumVersion(
         featureFlagService.isEnabled(FeatureName.USE_LATEST_CHARTMUSEUM_VERSION, context.getAccountId()));
+
+    helmChartConfigParamsBuilder.useRepoFlags(
+        featureFlagService.isEnabled(FeatureName.USE_HELM_REPO_FLAGS, context.getAccountId())
+        && HelmVersion.V3.equals(getHelmVersionFromService(context)));
 
     if (isNotBlank(helmChartConfig.getChartName())) {
       String chartName = helmChartConfig.getChartName();
