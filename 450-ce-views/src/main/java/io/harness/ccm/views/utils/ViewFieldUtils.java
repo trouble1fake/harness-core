@@ -91,6 +91,9 @@ public class ViewFieldUtils {
     return ImmutableList.of(QLCEViewField.builder().fieldId("region").fieldName("Region").build(),
         QLCEViewField.builder().fieldId("product").fieldName("Product").build(),
         QLCEViewField.builder().fieldId("label").fieldName("Label").build(),
+        QLCEViewField.builder().fieldId("cloudProvider").fieldName("Cloud Provider").build(),
+        QLCEViewField.builder().fieldId("gcpProjectId").fieldName("Project").build(),
+        QLCEViewField.builder().fieldId("awsUsageAccountId").fieldName("Account").build(),
         QLCEViewField.builder().fieldId("none").fieldName(NONE_FIELD).build());
   }
 }
