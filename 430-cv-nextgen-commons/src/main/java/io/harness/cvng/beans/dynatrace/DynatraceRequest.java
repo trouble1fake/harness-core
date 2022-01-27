@@ -1,17 +1,17 @@
 package io.harness.cvng.beans.dynatrace;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import static io.harness.annotations.dev.HarnessTeam.CV;
+
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cvng.beans.DataCollectionRequest;
 import io.harness.delegate.beans.connector.dynatrace.DynatraceConnectorDTO;
 import io.harness.delegate.beans.cvng.dynatrace.DynatraceUtils;
-import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.HashMap;
 import java.util.Map;
-
-import static io.harness.annotations.dev.HarnessTeam.CV;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
 @JsonIgnoreProperties(ignoreUnknown = true)

@@ -111,7 +111,7 @@ public class DynatraceHealthSourceSpecTest extends CvNextGenTestBase {
     result.getAdded().stream().map(DynatraceHealthSourceSpecTest::apply).forEach(this::assertCommon);
     assertThat(result.getAdded().stream().map(DynatraceHealthSourceSpecTest::apply).count()).isEqualTo(1);
     DynatraceCVConfig dynamicsCVConfig = (DynatraceCVConfig) result.getAdded().get(0);
-    assertThat(dynamicsCVConfig.getMetricPack().getCategory()).isEqualTo(CVMonitoringCategory.INFRASTRUCTURE);
+    assertThat(dynamicsCVConfig.getMetricPack().getCategory()).isEqualTo(CVMonitoringCategory.PERFORMANCE);
   }
 
   @Test
