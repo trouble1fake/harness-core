@@ -48,7 +48,7 @@ public class DynatraceDataCollectionInfoTest extends CategoryTest {
     MetricPackDTO metricPackDTO =
         MetricPackDTO.builder()
             .metrics(Collections.singleton(
-                (MetricPackDTO.MetricDefinitionDTO.builder().name(METRIC_NAME).path(MOCK_PATH).build())))
+                MetricPackDTO.MetricDefinitionDTO.builder().name(METRIC_NAME).path(MOCK_PATH).build()))
             .build();
     classUnderTest.setMetricPack(metricPackDTO);
     Map<String, Object> metricPackMetricsEnvVariables =
@@ -86,7 +86,7 @@ public class DynatraceDataCollectionInfoTest extends CategoryTest {
         MetricPackDTO.builder()
             .identifier(CVNextGenConstants.CUSTOM_PACK_IDENTIFIER)
             .metrics(Collections.singleton(
-                (MetricPackDTO.MetricDefinitionDTO.builder().name(METRIC_NAME).path(MOCK_PATH).build())))
+                MetricPackDTO.MetricDefinitionDTO.builder().name(METRIC_NAME).path(MOCK_PATH).build()))
             .build();
     classUnderTest.setCustomMetrics(customMetrics);
     classUnderTest.setMetricPack(customPackDTO);

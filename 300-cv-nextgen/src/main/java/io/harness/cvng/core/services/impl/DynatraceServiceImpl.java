@@ -10,6 +10,8 @@ import io.harness.cvng.beans.dynatrace.DynatraceSampleDataRequest;
 import io.harness.cvng.beans.dynatrace.DynatraceServiceDetailsRequest;
 import io.harness.cvng.beans.dynatrace.DynatraceServiceListRequest;
 import io.harness.cvng.core.beans.MetricPackValidationResponse;
+import io.harness.cvng.core.beans.MetricPackValidationResponse.MetricPackValidationResponseBuilder;
+import io.harness.cvng.core.beans.MetricPackValidationResponse.MetricValidationResponse;
 import io.harness.cvng.core.beans.TimeSeriesSampleDTO;
 import io.harness.cvng.core.beans.dynatrace.DynatraceMetricDTO;
 import io.harness.cvng.core.beans.dynatrace.DynatraceServiceDTO;
@@ -85,11 +87,11 @@ public class DynatraceServiceImpl
               .type(DataCollectionRequestType.DYNATRACE_VALIDATION_REQUEST)
               .build();
 
-      Type type = new TypeToken<List<MetricPackValidationResponse.MetricValidationResponse>>() {}.getType();
-      List<MetricPackValidationResponse.MetricValidationResponse> validationResponses = performRequestAndGetDataResult(
+      Type type = new TypeToken<List<MetricValidationResponse>>() {}.getType();
+      List<MetricValidationResponse> validationResponses = performRequestAndGetDataResult(
           request, onboardingService, type, projectParams, connectorIdentifier, tracingId);
 
-      MetricPackValidationResponse.MetricPackValidationResponseBuilder metricPackValidationResponseBuilder =
+      MetricPackValidationResponseBuilder metricPackValidationResponseBuilder =
           MetricPackValidationResponse.builder()
               .metricPackName(metricPack.getIdentifier())
               .metricValidationResponses(validationResponses);
