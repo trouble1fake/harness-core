@@ -91,14 +91,13 @@ public class DelegateAgentApplication extends Application<DelegateAgentConfig> {
 
     registerHealthChecks(environment, injector);
     registerResources(environment, injector);
+    initializeMetrics(environment, injector);
     injector.getInstance(PingPongClient.class).startAsync();
 
     log.info("Starting Delegate");
     log.info("Process: {}", ManagementFactory.getRuntimeMXBean().getName());
 
     injector.getInstance(DelegateAgentService.class).run(false, true);
-
-    initializeMetrics(environment, injector);
   }
 
   @Override
@@ -159,14 +158,14 @@ public class DelegateAgentApplication extends Application<DelegateAgentConfig> {
   }
 
   private void initializeMetrics(Environment environment, Injector injector) {
+    log.info("Initializing metrics for Delegate agent.");
     DelegateAgentMetrics delegateAgentMetrics = injector.getInstance(DelegateAgentMetrics.class);
     delegateAgentMetrics.scheduleDelegateAgentMetricsPoll();
     delegateAgentMetrics.registerDelegateMetrics();
-
-    environment.jersey().register(injector.getInstance(DelegateAgentMetricResource.class));
   }
 
   private void registerResources(final Environment environment, final Injector injector) {
     environment.jersey().register(injector.getInstance(HealthResource.class));
+    environment.jersey().register(injector.getInstance(DelegateAgentMetricResource.class));
   }
 }

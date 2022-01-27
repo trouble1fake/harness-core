@@ -18,19 +18,20 @@ public class DelegateMetricsConstants {
   public static final String CURRENTLY_ACQUIRING_TASKS = "acquiring_tasks";
   public static final String CURRENTLY_VALIDATING_TASKS = "validating_tasks";
   public static final String CURRENTLY_EXECUTING_TASKS = "executing_tasks";
-  public static final String CURRENTLY_VALIDATING_FUTURES = "validating_futures";
   public static final String CURRENTLY_EXECUTING_FUTURES = "executing_futures";
   public static final String TASK_EXECUTION_TIME = "task_execution_time";
   public static final String TASK_ACQUIRE_TIME = "task_acquire_time";
 
+  private static final String DELEGATE_NAME_LABEL = "delegate_name";
+  private static final String TASK_TYPE_LABEL = "task_type";
+
   static {
-    put(CURRENTLY_ACQUIRING_TASKS, create("Number of the tasks being acquired", "delegate_name"));
-    put(CURRENTLY_VALIDATING_TASKS, create("Number of the tasks being validated", "delegate_name"));
-    put(CURRENTLY_EXECUTING_TASKS, create("Number of the tasks being executed", "delegate_name"));
-    put(CURRENTLY_VALIDATING_FUTURES, create("Number of the java runnable futures being validated", "delegate_name"));
-    put(CURRENTLY_EXECUTING_FUTURES, create("Number of the java runnable futures being executed", "delegate_name"));
-    put(TASK_EXECUTION_TIME, create("Time needed to execute the task ", "delegate_name", "task_type"));
-    put(TASK_ACQUIRE_TIME, create("Time needed to acquire the task ", "delegate_name", "task_type"));
+    put(CURRENTLY_ACQUIRING_TASKS, create("Number of the tasks being acquired", DELEGATE_NAME_LABEL));
+    put(CURRENTLY_VALIDATING_TASKS, create("Number of the tasks being validated", DELEGATE_NAME_LABEL));
+    put(CURRENTLY_EXECUTING_TASKS, create("Number of the tasks being executed", DELEGATE_NAME_LABEL));
+    put(CURRENTLY_EXECUTING_FUTURES, create("Number of the java runnable futures being executed", DELEGATE_NAME_LABEL));
+    put(TASK_EXECUTION_TIME, create("Time needed to execute the task ", DELEGATE_NAME_LABEL, TASK_TYPE_LABEL));
+    put(TASK_ACQUIRE_TIME, create("Time needed to acquire the task ", DELEGATE_NAME_LABEL));
   }
 
   private static void put(String metricName, DelegateMetricDetails metricDetails) {

@@ -1956,8 +1956,8 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         executeTask(delegateTaskPackage);
       }
 
-      metricRegistry.recordGaugeValue(TASK_ACQUIRE_TIME, new String[] {DELEGATE_NAME, taskData.getTaskType()},
-          clock.millis() - acquiringStartTimeMillis);
+      metricRegistry.recordGaugeValue(
+          TASK_ACQUIRE_TIME, new String[] {DELEGATE_NAME}, clock.millis() - acquiringStartTimeMillis);
     } catch (IOException e) {
       log.error("Unable to get task for validation", e);
     } finally {
@@ -2635,10 +2635,6 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   @Override
   public TaskExecutionMetrics getTaskExecutionMetrics() {
     return new TaskExecutionMetrics(DELEGATE_NAME, currentlyAcquiringTasks.size(), currentlyValidatingTasks.size(),
-        currentlyExecutingTasks.size(), currentlyValidatingFutures.size(), currentlyExecutingFutures.size());
-  }
-
-  private String getDelegateLabelForMetric(String delegateName, String delegateId) {
-    return delegateName + '_' + delegateId;
+        currentlyExecutingTasks.size(), currentlyExecutingFutures.size());
   }
 }

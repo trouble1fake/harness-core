@@ -17,6 +17,5 @@ public class TaskExecutionMetrics {
   private int currentlyAcquiringTasks;
   private int currentlyValidatingTasks;
   private int currentlyExecutingTasks;
-  private int currentlyValidatingFutures;
   private int currentlyExecutingFutures;
 }

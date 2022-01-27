@@ -10,11 +10,8 @@ package io.harness.delegate.metrics;
 import static io.harness.delegate.metrics.DelegateMetricsConstants.CURRENTLY_ACQUIRING_TASKS;
 import static io.harness.delegate.metrics.DelegateMetricsConstants.CURRENTLY_EXECUTING_FUTURES;
 import static io.harness.delegate.metrics.DelegateMetricsConstants.CURRENTLY_EXECUTING_TASKS;
-import static io.harness.delegate.metrics.DelegateMetricsConstants.CURRENTLY_VALIDATING_FUTURES;
 import static io.harness.delegate.metrics.DelegateMetricsConstants.CURRENTLY_VALIDATING_TASKS;
 import static io.harness.delegate.metrics.DelegateMetricsConstants.DELEGATE_AGENT_METRIC_MAP;
-
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 import io.harness.delegate.service.DelegateAgentService;
 import io.harness.metrics.HarnessMetricRegistry;
@@ -30,9 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 @Singleton
 @Slf4j
 public class DelegateAgentMetrics {
-  private final int METRICS_POLL_DELAY_SECONDS = isNotBlank(System.getenv().get("METRICS_POLL_DELAY_SECONDS"))
-      ? Integer.parseInt(System.getenv().get("METRICS_POLL_DELAY_SECONDS"))
-      : 10;
+  private static final int METRICS_POLL_DELAY_SECONDS = 30;
   @Inject @Named("delegateAgentMetricsExecutor") protected ScheduledExecutorService executorService;
 
   @Inject private HarnessMetricRegistry metricRegistry;
@@ -47,16 +42,15 @@ public class DelegateAgentMetrics {
   void recordMetric() {
     try {
       TaskExecutionMetrics taskExecutionMetrics = delegateService.getTaskExecutionMetrics();
-      metricRegistry.recordGaugeValue(CURRENTLY_ACQUIRING_TASKS, new String[] {taskExecutionMetrics.getDelegateName()},
-          taskExecutionMetrics.getCurrentlyAcquiringTasks());
-      metricRegistry.recordGaugeValue(CURRENTLY_VALIDATING_TASKS, new String[] {taskExecutionMetrics.getDelegateName()},
-          taskExecutionMetrics.getCurrentlyValidatingTasks());
-      metricRegistry.recordGaugeValue(CURRENTLY_EXECUTING_TASKS, new String[] {taskExecutionMetrics.getDelegateName()},
-          taskExecutionMetrics.getCurrentlyExecutingTasks());
-      metricRegistry.recordGaugeValue(CURRENTLY_VALIDATING_FUTURES,
-          new String[] {taskExecutionMetrics.getDelegateName()}, taskExecutionMetrics.getCurrentlyValidatingFutures());
-      metricRegistry.recordGaugeValue(CURRENTLY_EXECUTING_FUTURES,
-          new String[] {taskExecutionMetrics.getDelegateName()}, taskExecutionMetrics.getCurrentlyExecutingFutures());
+      String delegateName = taskExecutionMetrics.getDelegateName();
+      metricRegistry.recordGaugeValue(
+          CURRENTLY_ACQUIRING_TASKS, new String[] {delegateName}, taskExecutionMetrics.getCurrentlyAcquiringTasks());
+      metricRegistry.recordGaugeValue(
+          CURRENTLY_VALIDATING_TASKS, new String[] {delegateName}, taskExecutionMetrics.getCurrentlyValidatingTasks());
+      metricRegistry.recordGaugeValue(
+          CURRENTLY_EXECUTING_TASKS, new String[] {delegateName}, taskExecutionMetrics.getCurrentlyExecutingTasks());
+      metricRegistry.recordGaugeValue(CURRENTLY_EXECUTING_FUTURES, new String[] {delegateName},
+          taskExecutionMetrics.getCurrentlyExecutingFutures());
 
     } catch (Exception e) {
       log.error("Could not record metrics.", e);
