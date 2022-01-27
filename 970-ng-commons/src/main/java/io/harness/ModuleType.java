@@ -21,7 +21,6 @@ public enum ModuleType {
   @JsonProperty("CV") CV("Continuous Verification"),
   @JsonProperty("CF") CF("Continuous Features"),
   @JsonProperty("CE") CE("Continuous Efficiency"),
-  @JsonProperty("STO") STO("Security Testing Orchestration"),
 
   // Internal
   @JsonProperty("CORE") CORE("Core", true),
