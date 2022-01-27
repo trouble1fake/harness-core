@@ -230,8 +230,6 @@ aeriform("//878-pipeline-service-utilities:module")
 
 aeriform("//878-pipeline-service-utilities:tests")
 
-aeriform("//878-pms-coupling:tests")
-
 aeriform("//879-pms-sdk:module")
 
 aeriform("//879-pms-sdk:tests")

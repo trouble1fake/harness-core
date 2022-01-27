@@ -13,7 +13,6 @@ import io.harness.serializer.kryo.DelegateAgentBeansKryoRegister;
 import io.harness.serializer.kryo.DelegateAgentKryoRegister;
 import io.harness.serializer.kryo.ManagerKryoRegistrar;
 import io.harness.serializer.kryo.NgAuthenticationServiceKryoRegistrar;
-import io.harness.serializer.kryo.OrchestrationStepsKryoRegistrar;
 import io.harness.serializer.kryo.ProjectAndOrgKryoRegistrar;
 import io.harness.serializer.kryo.SecretManagerClientKryoRegistrar;
 import io.harness.serializer.kryo.WatcherBeansKryoRegister;
@@ -23,7 +22,6 @@ import io.harness.serializer.morphia.EventMorphiaRegistrar;
 import io.harness.serializer.morphia.LimitsMorphiaRegistrar;
 import io.harness.serializer.morphia.ManagerMorphiaRegistrar;
 import io.harness.serializer.morphia.NGCoreMorphiaClassesRegistrar;
-import io.harness.serializer.morphia.OrchestrationStepsMorphiaRegistrar;
 import io.harness.serializer.morphia.ProjectAndOrgMorphiaRegistrar;
 import io.harness.serializer.morphia.SMCoreMorphiaRegistrar;
 import io.harness.serializer.morphia.SecretManagerClientMorphiaRegistrar;
@@ -37,8 +35,6 @@ public class EventsServerRegistrars {
       ImmutableSet.<Class<? extends KryoRegistrar>>builder()
           .addAll(DelegateTasksBeansRegistrars.kryoRegistrars)
           .addAll(CgOrchestrationRegistrars.kryoRegistrars)
-          .addAll(OrchestrationRegistrars.kryoRegistrars)
-          .add(OrchestrationStepsKryoRegistrar.class)
           .add(ManagerKryoRegistrar.class)
           .add(NgAuthenticationServiceKryoRegistrar.class)
           .add(ProjectAndOrgKryoRegistrar.class)
@@ -55,8 +51,6 @@ public class EventsServerRegistrars {
   public static final ImmutableSet<Class<? extends MorphiaRegistrar>> morphiaRegistrars =
       ImmutableSet.<Class<? extends MorphiaRegistrar>>builder()
           .addAll(DelegateTasksBeansRegistrars.morphiaRegistrars)
-          .addAll(OrchestrationRegistrars.morphiaRegistrars)
-          .add(OrchestrationStepsMorphiaRegistrar.class)
           .add(ManagerMorphiaRegistrar.class)
           .add(LimitsMorphiaRegistrar.class)
           .add(ProjectAndOrgMorphiaRegistrar.class)

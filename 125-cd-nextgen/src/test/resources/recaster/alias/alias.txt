@@ -229,3 +229,4 @@ io.harness.steps.approval.step.servicenow.ServiceNowApprovalOutcome
 io.harness.steps.approval.step.servicenow.ServiceNowApprovalSpecParameters
 io.harness.steps.approval.step.servicenow.ServiceNowApprovalStepInfo
 io.harness.cdng.creator.plan.stage.DeploymentStageNode
+io.harness.steps.approval.stage.ApprovalStageNode

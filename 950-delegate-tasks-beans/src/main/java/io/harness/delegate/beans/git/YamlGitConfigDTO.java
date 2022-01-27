@@ -15,6 +15,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.delegate.beans.connector.ConnectorType;
 import io.harness.encryption.Scope;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.List;
@@ -46,6 +47,17 @@ public class YamlGitConfigDTO {
 
   private String entityFQN;
   private Scope scope;
+
+  @JsonIgnore private String gitConnectorsRepo;
+  @JsonIgnore private String gitConnectorsBranch;
+
+  public void setGitConnectorsRepo(String gitConnectorsRepo) {
+    this.gitConnectorsRepo = gitConnectorsRepo;
+  }
+
+  public void setGitConnectorsBranch(String gitConnectorsBranch) {
+    this.gitConnectorsBranch = gitConnectorsBranch;
+  }
 
   @Data
   @FieldDefaults(level = AccessLevel.PRIVATE)

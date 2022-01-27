@@ -20,6 +20,8 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.git.model.ChangeType;
 import io.harness.gitsync.helpers.GitContextHelper;
 import io.harness.gitsync.scm.EntityObjectIdUtils;
+import io.harness.gitsync.utils.GitEntityFilePath;
+import io.harness.gitsync.utils.GitSyncSdkUtils;
 import io.harness.grpc.utils.StringValueUtils;
 import io.harness.pms.gitsync.PmsGitSyncBranchContextGuard;
 import io.harness.pms.inputset.gitsync.InputSetYamlDTOMapper;
@@ -272,7 +274,11 @@ public class PMSInputSetServiceImpl implements PMSInputSetService {
                             .and(InputSetEntityKeys.identifier)
                             .is(inputSetEntity.getIdentifier());
 
-    Update update = new Update().set(InputSetEntityKeys.filePath, newFilePath);
-    return inputSetRepository.update(criteria, update);
+    GitEntityFilePath gitEntityFilePath = GitSyncSdkUtils.getRootFolderAndFilePath(newFilePath);
+    Update update = new Update()
+                        .set(InputSetEntityKeys.filePath, gitEntityFilePath.getFilePath())
+                        .set(InputSetEntityKeys.rootFolder, gitEntityFilePath.getRootFolder());
+    return inputSetRepository.update(inputSetEntity.getAccountId(), inputSetEntity.getOrgIdentifier(),
+        inputSetEntity.getProjectIdentifier(), criteria, update);
   }
 }

@@ -278,4 +278,11 @@ public class GitAwarePersistenceNewImpl implements GitAwarePersistence {
     }
     return new Criteria();
   }
+
+  @Override
+  public Criteria makeCriteriaGitAware(
+      String accountId, String orgIdentifier, String projectIdentifier, Class entityClass, Criteria criteria) {
+    Criteria gitSyncCriteria = getCriteriaWithGitSync(projectIdentifier, orgIdentifier, accountId, entityClass);
+    return criteria == null ? gitSyncCriteria : new Criteria().andOperator(criteria, gitSyncCriteria);
+  }
 }

@@ -13,13 +13,16 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.encryption.Scope;
 import io.harness.gitsync.common.beans.YamlGitConfig;
 
+import com.mongodb.client.result.UpdateResult;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.data.repository.CrudRepository;
 
 @HarnessRepo
 @OwnedBy(HarnessTeam.DX)
-public interface YamlGitConfigRepository extends CrudRepository<YamlGitConfig, String> {
+public interface YamlGitConfigRepository extends CrudRepository<YamlGitConfig, String>, YamlGitConfigRepositoryCustom {
   Long deleteByAccountIdAndOrgIdentifierAndProjectIdentifierAndScopeAndIdentifier(
       String accountId, String organizationIdentifier, String projectIdentifier, Scope scope, String identifier);
 
@@ -44,4 +47,6 @@ public interface YamlGitConfigRepository extends CrudRepository<YamlGitConfig, S
 
   Long deleteByAccountIdAndOrgIdentifierAndProjectIdentifier(
       String accountIdentifier, String orgIdentifier, String projectIdentifier);
+
+  UpdateResult update(Query query, Update update);
 }
