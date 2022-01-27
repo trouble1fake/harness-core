@@ -476,7 +476,7 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
                                        securityStepInfo.getConnectorRef(), true))
                                    .build())
         .containerResourceParams(
-            getStepContainerResource(securityStepInfo.getResources(), "Plugin", identifier, accountId))
+            getStepContainerResource(securityStepInfo.getResources(), "Security", identifier, accountId))
         .isHarnessManagedImage(securityStepInfo.isHarnessManagedImage())
         .ports(Collections.singletonList(port))
         .containerType(CIContainerType.PLUGIN)
