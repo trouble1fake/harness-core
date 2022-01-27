@@ -77,7 +77,6 @@ import static io.harness.utils.MemoryPerformanceUtils.memoryUsage;
 import static java.lang.Boolean.TRUE;
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.time.Duration.ofMillis;
 import static java.time.Duration.ofMinutes;
 import static java.time.Duration.ofSeconds;
 import static java.util.Arrays.asList;
@@ -298,6 +297,9 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   private static final int LOCAL_HEARTBEAT_INTERVAL = 10;
   private static final String TOKEN = "[TOKEN]";
   private static final String SEQ = "[SEQ]";
+
+  // Using json body start '{' as task even marker, since only task events only contains json body.
+  private static final String TASK_EVENT_MARKER = "{";
 
   private static final String HOST_NAME = getLocalHostName();
   private static final String DELEGATE_NAME =
@@ -903,6 +905,11 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   }
 
   private void handleMessageSubmit(String message) {
+    if (StringUtils.startsWith(message, TASK_EVENT_MARKER)) {
+      log.info("New Task event received: " + message);
+      systemExecutor.submit(() -> dispatchDelegateTaskAsync(message));
+      return;
+    }
     if (log.isDebugEnabled()) {
       log.debug("^^MSG: " + message);
     }
@@ -960,15 +967,6 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     } else if (StringUtils.contains(message, REVOKED_TOKEN.name())) {
       log.warn("Delegate used revoked token. It will be frozen and drained.");
       freeze();
-    } else if (!StringUtils.equals(message, "X")) {
-      if (log.isDebugEnabled()) {
-        log.debug("Executing: Event:{}, message:[{}]", Event.MESSAGE.name(), message);
-      }
-      try {
-        processDelegateTaskEvent(JsonUtils.asObject(message, DelegateTaskEvent.class));
-      } catch (Throwable e) {
-        log.error("Exception while decoding task", e);
-      }
     }
   }
 
@@ -1861,19 +1859,35 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     }
   }
 
-  private void dispatchDelegateTask(DelegateTaskEvent delegateTaskEvent) {
-    if (!shouldContactManager()) {
-      return;
+  private void dispatchDelegateTaskAsync(String message) {
+    log.debug("Executing: Event:{}, message:[{}]", Event.MESSAGE.name(), message);
+    try {
+      DelegateTaskEvent delegateTaskEvent = JsonUtils.asObject(message, DelegateTaskEvent.class);
+      try (TaskLogContext ignore = new TaskLogContext(delegateTaskEvent.getDelegateTaskId(), OVERRIDE_ERROR)) {
+        if (!(delegateTaskEvent instanceof DelegateTaskAbortEvent)) {
+          dispatchDelegateTask(delegateTaskEvent);
+        } else {
+          abortDelegateTask((DelegateTaskAbortEvent) delegateTaskEvent);
+        }
+      }
+    } catch (Exception e) {
+      log.error("Exception while decoding task", e);
     }
+  }
 
-    log.info("DelegateTaskEvent received - {}", delegateTaskEvent);
-
+  private void dispatchDelegateTask(DelegateTaskEvent delegateTaskEvent) {
     String delegateTaskId = delegateTaskEvent.getDelegateTaskId();
     if (delegateTaskId == null) {
       log.warn("Delegate task id cannot be null");
       return;
     }
 
+    if (!shouldContactManager()) {
+      log.info("Dropping task, self destruct in progress: " + delegateTaskEvent.getDelegateTaskId());
+      return;
+    }
+
+    log.info("DelegateTaskEvent received - {}", delegateTaskEvent);
     if (frozen.get()) {
       log.info(
           "Delegate process with detected time out of sync or with revoked token is running. Won't acquire tasks.");
@@ -1891,23 +1905,17 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     }
 
     if (currentlyAcquiringTasks.contains(delegateTaskId)) {
-      if (log.isDebugEnabled()) {
-        log.debug("Task [DelegateTaskEvent: {}] currently acquiring. Don't acquire again", delegateTaskEvent);
-      }
+      log.info("Task [DelegateTaskEvent: {}] currently acquiring. Don't acquire again", delegateTaskEvent);
       return;
     }
 
     if (currentlyValidatingTasks.containsKey(delegateTaskId)) {
-      if (log.isDebugEnabled()) {
-        log.debug("Task [DelegateTaskEvent: {}] already validating. Don't validate again", delegateTaskEvent);
-      }
+      log.info("Task [DelegateTaskEvent: {}] already validating. Don't validate again", delegateTaskEvent);
       return;
     }
 
     if (currentlyExecutingTasks.containsKey(delegateTaskId)) {
-      if (log.isDebugEnabled()) {
-        log.debug("Task [DelegateTaskEvent: {}] already acquired. Don't acquire again", delegateTaskEvent);
-      }
+      log.info("Task [DelegateTaskEvent: {}] already acquired. Don't acquire again", delegateTaskEvent);
       return;
     }
 
@@ -1926,19 +1934,12 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
 
       currentlyAcquiringTasks.add(delegateTaskId);
 
-      // Delay response if already working on many tasks
-      sleep(ofMillis(100 * Math.min(currentlyExecutingTasks.size() + currentlyValidatingTasks.size(), 10)));
-
-      if (log.isDebugEnabled()) {
-        log.debug("Try to acquire DelegateTask - accountId: {}", accountId);
-      }
+      log.debug("Try to acquire DelegateTask - accountId: {}", accountId);
 
       DelegateTaskPackage delegateTaskPackage = executeRestCall(
           delegateAgentManagerClient.acquireTask(delegateId, delegateTaskId, accountId, delegateInstanceId));
       if (delegateTaskPackage == null || delegateTaskPackage.getData() == null) {
-        if (log.isDebugEnabled()) {
-          log.debug("Delegate task data not available - accountId: {}", delegateTaskEvent.getAccountId());
-        }
+        log.debug("Delegate task data not available - accountId: {}", delegateTaskEvent.getAccountId());
         return;
       }
 
@@ -2080,14 +2081,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   private void executeTask(@NotNull DelegateTaskPackage delegateTaskPackage) {
     TaskData taskData = delegateTaskPackage.getData();
 
-    if (currentlyExecutingTasks.containsKey(delegateTaskPackage.getDelegateTaskId())) {
-      log.info("Already executing task");
-      return;
-    }
-
-    if (log.isDebugEnabled()) {
-      log.debug("DelegateTask acquired - accountId: {}, taskType: {}", accountId, taskData.getTaskType());
-    }
+    log.debug("DelegateTask acquired - accountId: {}, taskType: {}", accountId, taskData.getTaskType());
     Pair<String, Set<String>> activitySecrets = obtainActivitySecrets(delegateTaskPackage);
     Optional<LogSanitizer> sanitizer = getLogSanitizer(activitySecrets);
     ILogStreamingTaskClient logStreamingTaskClient = getLogStreamingTaskClient(activitySecrets, delegateTaskPackage);
@@ -2110,7 +2104,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     ExecutorService executorService = selectExecutorService(taskData);
     Future taskFuture = executorService.submit(delegateRunnableTask);
     if (taskFuture.isCancelled()) {
-      log.warn("Task future in executeTask: done:{}, cancelled:{}", taskFuture.isDone(), taskFuture.isCancelled());
+      log.warn("Task future in executeTask, cancelled");
     }
     currentlyExecutingFutures.put(delegateTaskPackage.getDelegateTaskId(), taskFuture);
     updateCounterIfLessThanCurrent(maxExecutingFuturesCount, currentlyExecutingFutures.size());
@@ -2303,7 +2297,9 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         }
         return true;
       } else {
-        log.info("Task is already being executed");
+        // We should have already checked this before acquiring this task. If we here, than we
+        // should log an error and abort execution.
+        log.error("Task is already being executed");
         return false;
       }
     };

@@ -200,8 +200,10 @@ public class HarnessResourceGroupResource {
             description = "This fetches the list of Resource Groups filtered by multiple fields.")
       })
   public ResponseDTO<PageResponse<ResourceGroupResponse>>
-  list(@RequestBody(description = "Filter Resource Groups based on multiple parameters", required = true)
-       @NotNull ResourceGroupFilterDTO resourceGroupFilterDTO, @BeanParam PageRequest pageRequest) {
+  list(@RequestBody(description = "Filter Resource Groups based on multiple parameters",
+           required = true) @NotNull ResourceGroupFilterDTO resourceGroupFilterDTO,
+      @Parameter(description = ACCOUNT_PARAM_MESSAGE, required = true) @NotNull
+      @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier, @BeanParam PageRequest pageRequest) {
     accessControlClient.checkForAccessOrThrow(
         ResourceScope.of(resourceGroupFilterDTO.getAccountIdentifier(), resourceGroupFilterDTO.getOrgIdentifier(),
             resourceGroupFilterDTO.getProjectIdentifier()),

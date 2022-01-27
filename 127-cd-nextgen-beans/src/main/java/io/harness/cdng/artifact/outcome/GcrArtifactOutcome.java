@@ -26,9 +26,6 @@ import org.springframework.data.annotation.TypeAlias;
 @TypeAlias("gcrArtifactOutcome")
 @JsonTypeName("gcrArtifactOutcome")
 @OwnedBy(CDC)
-// TODO : Create a shared Module b/w pipline and CD/CI where these entities can go to and eventually We need to
-// deprecate that module 878-pms-coupling
-// @TargetModule(878-pms-coupling)
 @RecasterAlias("io.harness.ngpipeline.artifact.bean.GcrArtifactOutcome")
 public class GcrArtifactOutcome implements ArtifactOutcome {
   /** Docker hub registry connector. */

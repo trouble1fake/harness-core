@@ -68,7 +68,8 @@ public class ResourceGroupResourceImpl implements Resource {
                                                         .build();
     List<ResourceGroupResponse> resourceGroups =
         NGRestUtils
-            .getResponse(resourceGroupClient.getFilteredResourceGroups(resourceGroupFilterDTO, 0, resourceIds.size()))
+            .getResponse(resourceGroupClient.getFilteredResourceGroups(
+                resourceGroupFilterDTO, scope.getAccountIdentifier(), 0, resourceIds.size()))
             .getContent();
     Set<Object> validResourceIds =
         resourceGroups.stream().map(e -> e.getResourceGroup().getIdentifier()).collect(Collectors.toSet());
