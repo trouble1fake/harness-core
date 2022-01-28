@@ -20,4 +20,5 @@ public interface YamlTypes {
   String SPEC = "spec";
   String APPROVAL_INPUTS = "approverInputs";
   String APPROVERS = "approvers";
+  String STEPS = "steps";
 }

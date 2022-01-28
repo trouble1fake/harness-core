@@ -28,6 +28,7 @@ import io.harness.execution.ExecutionModeUtils;
 import io.harness.execution.IdentityNodeExecutionMetadata;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.NodeExecution.NodeExecutionKeys;
+import io.harness.graph.stepDetail.service.PmsGraphStepDetailsService;
 import io.harness.logging.AutoLogContext;
 import io.harness.plan.IdentityPlanNode;
 import io.harness.pms.contracts.advisers.AdviseType;
@@ -70,11 +71,13 @@ public class IdentityNodeExecutionStrategy
   @Inject private IdentityNodeResumeHelper identityNodeResumeHelper;
   @Inject private TransactionHelper transactionHelper;
   @Inject @Named("EngineExecutorService") private ExecutorService executorService;
+  @Inject PmsGraphStepDetailsService pmsGraphStepDetailsService;
 
   private String SERVICE_NAME_IDENTITY = ModuleType.PMS.name().toLowerCase();
 
   private void setNodeExecutionParameters(Update update, NodeExecution originalExecution) {
     setUnset(update, NodeExecutionKeys.resolvedStepParameters, originalExecution.getResolvedStepParameters());
+    // Todo: Remove this after one month
     setUnset(update, NodeExecutionKeys.resolvedInputs, originalExecution.getResolvedInputs());
     setUnset(update, NodeExecutionKeys.mode, originalExecution.getMode());
     setUnset(update, NodeExecutionKeys.nodeRunInfo, originalExecution.getNodeRunInfo());
@@ -133,7 +136,10 @@ public class IdentityNodeExecutionStrategy
 
       Update update = new Update();
       setNodeExecutionParameters(update, originalExecution);
-
+      if (originalExecution.getResolvedInputs() == null) {
+        pmsGraphStepDetailsService.copyStepDetailsForRetry(
+            ambiance.getPlanExecutionId(), originalExecution.getUuid(), newNodeExecutionId);
+      }
       // If Node is skipped then call the adviser response handler straight away
       if (originalExecution.getStatus() == Status.SKIPPED) {
         NodeExecution newNodeExecution = nodeExecutionService.updateStatusWithUpdate(

@@ -88,6 +88,8 @@ import io.harness.gitsync.interceptor.GitSyncBranchContext;
 import io.harness.gitsync.persistance.GitSyncSdkService;
 import io.harness.gitsync.scm.EntityObjectIdUtils;
 import io.harness.gitsync.sdk.EntityGitDetailsMapper;
+import io.harness.gitsync.utils.GitEntityFilePath;
+import io.harness.gitsync.utils.GitSyncSdkUtils;
 import io.harness.manage.GlobalContextManager;
 import io.harness.ng.beans.PageRequest;
 import io.harness.ng.core.BaseNGAccess;
@@ -539,9 +541,14 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
                             .and(ConnectorKeys.identifier)
                             .is(connectorDTO.getConnectorInfo().getIdentifier());
 
-    Update update = new Update().set(ConnectorKeys.filePath, newFilePath);
+    GitEntityFilePath gitEntityFilePath = GitSyncSdkUtils.getRootFolderAndFilePath(newFilePath);
+    Update update = new Update()
+                        .set(ConnectorKeys.filePath, gitEntityFilePath.getFilePath())
+                        .set(ConnectorKeys.rootFolder, gitEntityFilePath.getRootFolder());
     return getResponse(accountIdentifier, connectorDTO.getConnectorInfo().getOrgIdentifier(),
-        connectorDTO.getConnectorInfo().getProjectIdentifier(), connectorRepository.update(criteria, update));
+        connectorDTO.getConnectorInfo().getProjectIdentifier(),
+        connectorRepository.update(accountIdentifier, connectorDTO.getConnectorInfo().getOrgIdentifier(),
+            connectorDTO.getConnectorInfo().getProjectIdentifier(), criteria, update));
   }
 
   private void deleteTheExistingReferences(

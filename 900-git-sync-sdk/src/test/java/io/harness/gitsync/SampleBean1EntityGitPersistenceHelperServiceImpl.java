@@ -114,12 +114,5 @@ public class SampleBean1EntityGitPersistenceHelperServiceImpl
   }
 
   @Override
-  public SampleBean1 updateFilePath(String accountIdentifier, String yaml, String prevFilePath, String newFilePath) {
-    return null;
-  }
-
-  @Override
-  public SampleBean1 updateEntityFilePath(String accountIdentifier, String yaml, String newFilePath) {
-    return null;
-  }
+  public void updateFilePath(String accountIdentifier, String yaml, String prevFilePath, String newFilePath) {}
 }
