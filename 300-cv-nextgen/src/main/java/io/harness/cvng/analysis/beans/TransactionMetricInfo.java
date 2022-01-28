@@ -39,11 +39,13 @@ public class TransactionMetricInfo implements Comparable<TransactionMetricInfo> 
   public int compareTo(@NotNull TransactionMetricInfo o) {
     int result = Integer.compare(
         o.getTransactionMetric().getRisk().getValue(), this.getTransactionMetric().getRisk().getValue());
-    if (result == 0)
+    if (result == 0) {
       result =
           this.getTransactionMetric().getTransactionName().compareTo(o.getTransactionMetric().getTransactionName());
-    if (result == 0)
+    }
+    if (result == 0) {
       result = this.getTransactionMetric().getMetricName().compareTo(o.getTransactionMetric().getMetricName());
+    }
     return result;
   }
 }
