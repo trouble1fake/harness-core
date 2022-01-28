@@ -38,7 +38,7 @@ public class DynatraceMetricPackValidationRequest extends DynatraceRequest {
   @Override
   public Map<String, Object> fetchDslEnvVariables() {
     Map<String, Object> commonEnvVariables = super.fetchDslEnvVariables();
-    commonEnvVariables.put("from", "now-3h");
+    commonEnvVariables.put("from", "now-1h");
     commonEnvVariables.put("resolution", "1m");
     String serviceMethodsIdsParam;
 

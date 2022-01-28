@@ -151,7 +151,7 @@ public class DynatraceHealthSourceSpecTest extends CvNextGenTestBase {
     assertThat(cvConfig.getFullyQualifiedIdentifier()).isEqualTo(IDENTIFIER);
     assertThat(cvConfig.getProductName()).isEqualTo(FEATURE);
     assertThat(cvConfig.getMonitoringSourceName()).isEqualTo(HEALTH_SOURCE_NAME);
-    assertThat(cvConfig.getServiceEntityId()).isEqualTo(DYNATRACE_ENTITY_SERVICE_ID);
+    assertThat(cvConfig.getDynatraceServiceId()).isEqualTo(DYNATRACE_ENTITY_SERVICE_ID);
     assertThat(cvConfig.getMetricPack().getAccountId()).isEqualTo(mockedProjectParams.getAccountIdentifier());
     assertThat(cvConfig.getMetricPack().getOrgIdentifier()).isEqualTo(mockedProjectParams.getOrgIdentifier());
     assertThat(cvConfig.getMetricPack().getDataSourceType()).isEqualTo(DataSourceType.DYNATRACE);

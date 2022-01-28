@@ -12,7 +12,7 @@ import java.util.Set;
 
 public interface DynatraceService extends DataSourceConnectivityChecker {
   List<DynatraceServiceDTO> getAllServices(
-      ProjectParams projectParams, String connectorIdentifier, String filter, String tracingId);
+      ProjectParams projectParams, String connectorIdentifier, String tracingId);
 
   List<DynatraceMetricDTO> getAllMetrics(ProjectParams projectParams, String connectorIdentifier, String tracingId);
 

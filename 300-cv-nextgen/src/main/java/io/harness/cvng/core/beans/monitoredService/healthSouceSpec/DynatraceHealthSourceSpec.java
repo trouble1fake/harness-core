@@ -106,8 +106,8 @@ public class DynatraceHealthSourceSpec extends HealthSourceSpec {
                                        .connectorIdentifier(getConnectorRef())
                                        .monitoringSourceName(name)
                                        .productName(feature)
-                                       .serviceName(serviceName)
-                                       .serviceEntityId(serviceId)
+                                       .dynatraceServiceName(serviceName)
+                                       .dynatraceServiceId(serviceId)
                                        .serviceMethodIds(serviceMethodIds)
                                        .envIdentifier(environmentRef)
                                        .serviceIdentifier(serviceRef)
@@ -134,8 +134,8 @@ public class DynatraceHealthSourceSpec extends HealthSourceSpec {
                                    .connectorIdentifier(getConnectorRef())
                                    .monitoringSourceName(name)
                                    .productName(feature)
-                                   .serviceName(serviceName)
-                                   .serviceEntityId(serviceId)
+                                   .dynatraceServiceName(serviceName)
+                                   .dynatraceServiceId(serviceId)
                                    .envIdentifier(environmentRef)
                                    .serviceIdentifier(serviceRef)
                                    .groupName(metricDefinitionList.get(0).getGroupName())
@@ -151,7 +151,6 @@ public class DynatraceHealthSourceSpec extends HealthSourceSpec {
 
   private Key getKeyFromCVConfig(DynatraceCVConfig cvConfig) {
     return Key.builder()
-        .serviceName(cvConfig.getServiceName())
         .metricPack(cvConfig.getMetricPack())
         .groupName(cvConfig.getGroupName())
         .build();
@@ -161,7 +160,6 @@ public class DynatraceHealthSourceSpec extends HealthSourceSpec {
   @Builder
   private static class Key {
     String groupName;
-    String serviceName;
     String serviceId;
     MetricPack metricPack;
   }

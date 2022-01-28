@@ -53,14 +53,14 @@ public class DynatraceResource {
   public ResponseDTO<List<DynatraceServiceDTO>> getDynatraceServices(@NotNull @QueryParam("accountId") String accountId,
       @NotNull @QueryParam("connectorIdentifier") final String connectorIdentifier,
       @QueryParam("orgIdentifier") @NotNull String orgIdentifier,
-      @QueryParam("projectIdentifier") @NotNull String projectIdentifier, @QueryParam("filter") String filter,
+      @QueryParam("projectIdentifier") @NotNull String projectIdentifier,
       @NotNull @QueryParam("tracingId") String tracingId) {
     return ResponseDTO.newResponse(dynatraceService.getAllServices(ProjectParams.builder()
                                                                        .projectIdentifier(projectIdentifier)
                                                                        .orgIdentifier(orgIdentifier)
                                                                        .accountIdentifier(accountId)
                                                                        .build(),
-        connectorIdentifier, filter, tracingId));
+        connectorIdentifier, tracingId));
   }
 
   @GET

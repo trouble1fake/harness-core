@@ -1,5 +1,10 @@
 package io.harness.cvng.core.entities;
 
+import static io.harness.cvng.core.utils.ErrorMessageUtils.generateErrorMessageFromParam;
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import io.harness.cvng.beans.CVMonitoringCategory;
 import io.harness.cvng.beans.DataSourceType;
 import io.harness.cvng.beans.TimeSeriesMetricType;
@@ -31,16 +36,23 @@ import org.mongodb.morphia.query.UpdateOperations;
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class DynatraceCVConfig extends MetricCVConfig {
-  private String serviceName;
-  private String serviceEntityId;
+  private String dynatraceServiceName;
+  private String dynatraceServiceId;
   private String groupName;
   private List<DynatraceMetricInfo> metricInfos;
   private HealthSourceQueryType queryType;
   private List<String> serviceMethodIds;
-  private List<String> serviceMethodGroupIds;
 
   @Override
-  protected void validateParams() {}
+  protected void validateParams() {
+    checkNotNull(dynatraceServiceName, generateErrorMessageFromParam(DynatraceCVConfigKeys.dynatraceServiceName));
+    checkNotNull(dynatraceServiceId, generateErrorMessageFromParam(DynatraceCVConfigKeys.dynatraceServiceId));
+
+    if (isEmpty(metricInfos)) {
+      // if there are no custom metrics, serviceMethodIds are required
+      checkNotNull(serviceMethodIds, generateErrorMessageFromParam(DynatraceCVConfigKeys.serviceMethodIds));
+    }
+  }
 
   @Override
   public DataSourceType getType() {
@@ -99,8 +111,8 @@ public class DynatraceCVConfig extends MetricCVConfig {
     public void setUpdateOperations(
         UpdateOperations<DynatraceCVConfig> updateOperations, DynatraceCVConfig dynatraceCVConfig) {
       setCommonOperations(updateOperations, dynatraceCVConfig);
-      updateOperations.set(DynatraceCVConfigKeys.serviceName, dynatraceCVConfig.getServiceName())
-          .set(DynatraceCVConfigKeys.serviceEntityId, dynatraceCVConfig.getServiceEntityId());
+      updateOperations.set(DynatraceCVConfigKeys.dynatraceServiceName, dynatraceCVConfig.getDynatraceServiceName())
+          .set(DynatraceCVConfigKeys.dynatraceServiceId, dynatraceCVConfig.getDynatraceServiceId());
     }
   }
 

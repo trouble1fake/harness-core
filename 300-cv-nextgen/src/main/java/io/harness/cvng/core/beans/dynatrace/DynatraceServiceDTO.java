@@ -13,5 +13,4 @@ public class DynatraceServiceDTO {
   @NonNull String displayName;
   @NonNull String entityId;
   List<String> serviceMethodIds;
-  List<String> serviceGroupIds;
 }

@@ -58,8 +58,8 @@ public class DynatraceCollectionInfoMapperTest extends CvNextGenTestBase {
     @SuppressWarnings("unchecked")
     DynatraceCVConfig dynatraceCVConfig = builderFactory.dynatraceCVConfigBuilder()
                                               .metricInfos(Collections.singletonList(metricInfo))
-                                              .serviceEntityId(MOCKED_SERVICE_ENTITY_ID)
-                                              .serviceName(MOCKED_SERVICE_ENTITY_NAME)
+                                              .dynatraceServiceId(MOCKED_SERVICE_ENTITY_ID)
+                                              .dynatraceServiceName(MOCKED_SERVICE_ENTITY_NAME)
                                               .build();
     dynatraceCVConfig.setMetricPack(metricPack);
     DynatraceDataCollectionInfo collectionInfoResult =
@@ -99,7 +99,7 @@ public class DynatraceCollectionInfoMapperTest extends CvNextGenTestBase {
     DynatraceCVConfig dynatraceCVConfig =
         builderFactory.dynatraceCVConfigBuilder()
             .metricInfos(Arrays.asList(customMetricDefinition1, customMetricDefinition2))
-            .serviceEntityId(MOCKED_SERVICE_ENTITY_ID)
+            .dynatraceServiceId(MOCKED_SERVICE_ENTITY_ID)
             .build();
     dynatraceCVConfig.setMetricPack(metricPack);
 
@@ -155,8 +155,8 @@ public class DynatraceCollectionInfoMapperTest extends CvNextGenTestBase {
 
     DynatraceCVConfig dynatraceCVConfig = builderFactory.dynatraceCVConfigBuilder()
                                               .metricInfos(Collections.singletonList(metricInfo))
-                                              .serviceEntityId(MOCKED_SERVICE_ENTITY_NAME)
-                                              .serviceName(MOCKED_SERVICE_ENTITY_NAME)
+                                              .dynatraceServiceId(MOCKED_SERVICE_ENTITY_NAME)
+                                              .dynatraceServiceName(MOCKED_SERVICE_ENTITY_NAME)
                                               .build();
     dynatraceCVConfig.setMetricPack(metricPack);
     return classUnderTest.toDataCollectionInfo(Collections.singletonList(dynatraceCVConfig), serviceLevelIndicator);

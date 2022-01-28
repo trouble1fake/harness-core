@@ -28,56 +28,59 @@ import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class DynatraceServiceImpl
     implements DynatraceService, DataCollectionRequestResultExtractor<DynatraceConnectorDTO> {
   @Inject private OnboardingService onboardingService;
 
   @Override
   public List<DynatraceServiceDTO> getAllServices(
-      ProjectParams projectParams, String connectorIdentifier, String filter, String tracingId) {
+      ProjectParams projectParams, String connectorIdentifier, String tracingId) {
     Instant now = Instant.now();
-    DataCollectionRequest<DynatraceConnectorDTO> request =
+    DynatraceServiceListRequest request =
         // we are getting active services in the last 6 months
         DynatraceServiceListRequest.builder()
             .from(now.minus(Duration.ofDays(6 * 30L)).toEpochMilli())
             .to(now.toEpochMilli())
             .type(DataCollectionRequestType.DYNATRACE_SERVICE_LIST_REQUEST)
             .build();
-
+    log.debug("Created {} request with params: from {}, to {}", request.getType(), request.getFrom(), request.getTo());
     Type type = new TypeToken<List<DynatraceServiceDTO>>() {}.getType();
     return performRequestAndGetDataResult(
-        request, onboardingService, type, projectParams, connectorIdentifier, tracingId);
+        request, onboardingService, type, projectParams, connectorIdentifier, tracingId, log);
   }
 
   @Override
   public List<DynatraceMetricDTO> getAllMetrics(
       ProjectParams projectParams, String connectorIdentifier, String tracingId) {
-    DataCollectionRequest<DynatraceConnectorDTO> request =
+    DynatraceMetricListRequest request =
         DynatraceMetricListRequest.builder().type(DataCollectionRequestType.DYNATRACE_METRIC_LIST_REQUEST).build();
-
+    log.debug("Created {} request...", request.getType());
     Type type = new TypeToken<List<DynatraceMetricDTO>>() {}.getType();
     return performRequestAndGetDataResult(
-        request, onboardingService, type, projectParams, connectorIdentifier, tracingId);
+        request, onboardingService, type, projectParams, connectorIdentifier, tracingId, log);
   }
 
   @Override
   public DynatraceServiceDTO getServiceDetails(
       ProjectParams projectParams, String connectorIdentifier, String serviceEntityId, String tracingId) {
-    DataCollectionRequest<DynatraceConnectorDTO> request =
-        DynatraceServiceDetailsRequest.builder()
-            .serviceId(serviceEntityId)
-            .type(DataCollectionRequestType.DYNATRACE_SERVICE_DETAILS_REQUEST)
-            .build();
-
+    DynatraceServiceDetailsRequest request = DynatraceServiceDetailsRequest.builder()
+                                                 .serviceId(serviceEntityId)
+                                                 .type(DataCollectionRequestType.DYNATRACE_SERVICE_DETAILS_REQUEST)
+                                                 .build();
+    log.debug("Created {} request with params: serviceId {}", request.getType(), request.getServiceId());
     Type type = new TypeToken<DynatraceServiceDTO>() {}.getType();
     return performRequestAndGetDataResult(
-        request, onboardingService, type, projectParams, connectorIdentifier, tracingId);
+        request, onboardingService, type, projectParams, connectorIdentifier, tracingId, log);
   }
 
   @Override
   public Set<MetricPackValidationResponse> validateData(ProjectParams projectParams, String connectorIdentifier,
       List<String> serviceMethodsIds, List<MetricPackDTO> metricPacks, String tracingId) {
+    log.debug("Dynatrace MetricPack validateData called. Number of MetricPacks: {}.", metricPacks.size());
+
     Set<MetricPackValidationResponse> metricPackValidationResponses = new HashSet<>();
     metricPacks.forEach(metricPack -> {
       DataCollectionRequest<DynatraceConnectorDTO> request =
@@ -87,9 +90,11 @@ public class DynatraceServiceImpl
               .type(DataCollectionRequestType.DYNATRACE_VALIDATION_REQUEST)
               .build();
 
+      log.debug("Created {} request for MetricPack: {}", request.getType(), metricPack.getIdentifier());
+
       Type type = new TypeToken<List<MetricValidationResponse>>() {}.getType();
       List<MetricValidationResponse> validationResponses = performRequestAndGetDataResult(
-          request, onboardingService, type, projectParams, connectorIdentifier, tracingId);
+          request, onboardingService, type, projectParams, connectorIdentifier, tracingId, log);
 
       MetricPackValidationResponseBuilder metricPackValidationResponseBuilder =
           MetricPackValidationResponse.builder()
@@ -99,8 +104,16 @@ public class DynatraceServiceImpl
       MetricPackValidationResponse metricPackValidationResponse =
           metricPackValidationResponseBuilder.overallStatus(ThirdPartyApiResponseStatus.SUCCESS).build();
       metricPackValidationResponse.updateStatus();
+
+      log.debug(
+          "Retrieved single metric validation responses for MetricPack: {}. Response list size: {}. Validation overallStatus: {}",
+          metricPack.getIdentifier(), validationResponses.size(), metricPackValidationResponse.getOverallStatus());
+
       metricPackValidationResponses.add(metricPackValidationResponse);
     });
+
+    log.debug(
+        "Successfully collected MetricPacks validation responses. List size: {}", metricPackValidationResponses.size());
 
     return metricPackValidationResponses;
   }
@@ -109,18 +122,18 @@ public class DynatraceServiceImpl
   public List<TimeSeriesSampleDTO> fetchSampleData(ProjectParams projectParams, String connectorIdentifier,
       String serviceId, String metricSelector, String tracingId) {
     Instant now = Instant.now();
-    DataCollectionRequest<DynatraceConnectorDTO> request =
-        DynatraceSampleDataRequest.builder()
-            .from(now.minus(Duration.ofMinutes(60)).toEpochMilli())
-            .to(now.toEpochMilli())
-            .serviceId(serviceId)
-            .metricSelector(metricSelector)
-            .type(DataCollectionRequestType.DYNATRACE_SAMPLE_DATA_REQUEST)
-            .build();
-
+    DynatraceSampleDataRequest request = DynatraceSampleDataRequest.builder()
+                                             .from(now.minus(Duration.ofMinutes(60)).toEpochMilli())
+                                             .to(now.toEpochMilli())
+                                             .serviceId(serviceId)
+                                             .metricSelector(metricSelector)
+                                             .type(DataCollectionRequestType.DYNATRACE_SAMPLE_DATA_REQUEST)
+                                             .build();
+    log.debug("Created {} request with params: serviceId {}, metricSelector: {}, from: {}, to: {}", request.getType(),
+        request.getServiceId(), request.getMetricSelector(), request.getFrom(), request.getType());
     Type type = new TypeToken<List<TimeSeriesSampleDTO>>() {}.getType();
     return performRequestAndGetDataResult(
-        request, onboardingService, type, projectParams, connectorIdentifier, tracingId);
+        request, onboardingService, type, projectParams, connectorIdentifier, tracingId, log);
   }
 
   @Override
@@ -131,6 +144,6 @@ public class DynatraceServiceImpl
                        .orgIdentifier(orgIdentifier)
                        .projectIdentifier(projectIdentifier)
                        .build(),
-        connectorIdentifier, null, tracingId);
+        connectorIdentifier, tracingId);
   }
 }
