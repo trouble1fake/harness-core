@@ -38,6 +38,7 @@ import io.harness.exception.exceptionmanager.ExceptionManager;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.NodeExecution.NodeExecutionKeys;
 import io.harness.execution.NodeExecutionMetadata;
+import io.harness.graph.stepDetail.service.PmsGraphStepDetailsService;
 import io.harness.logging.AutoLogContext;
 import io.harness.plan.PlanNode;
 import io.harness.pms.contracts.advisers.AdviseType;
@@ -96,6 +97,7 @@ public class PlanNodeExecutionStrategy
   @Inject private OrchestrationEngine orchestrationEngine;
   @Inject private PmsOutcomeService outcomeService;
   @Inject @Named("EngineExecutorService") private ExecutorService executorService;
+  @Inject PmsGraphStepDetailsService pmsGraphStepDetailsService;
 
   @Override
   public NodeExecution triggerNode(Ambiance ambiance, PlanNode node, NodeExecutionMetadata metadata) {
@@ -121,6 +123,9 @@ public class PlanNodeExecutionStrategy
             .module(node.getServiceName())
             .name(node.getName())
             .skipGraphType(node.getSkipGraphType())
+            .identifier(node.getIdentifier())
+            .stepType(node.getStepType())
+            .nodeId(node.getUuid())
             .build();
     NodeExecution save = nodeExecutionService.save(nodeExecution);
     // TODO: Should add to an execution queue rather than submitting straight to thread pool
@@ -312,12 +317,12 @@ public class PlanNodeExecutionStrategy
         pmsEngineExpressionService.resolve(ambiance, node.getStepInputs(), skipUnresolvedExpressionsCheck);
     log.info("Step Parameters and Inputs Resolution complete");
 
-    nodeExecutionService.updateV2(nodeExecutionId, ops -> {
-      setUnset(ops, NodeExecutionKeys.resolvedStepParameters, resolvedStepParameters);
-      setUnset(ops, NodeExecutionKeys.resolvedInputs,
-          PmsStepParameters.parse(
-              OrchestrationMapBackwardCompatibilityUtils.extractToOrchestrationMap(resolvedStepInputs)));
-    });
+    nodeExecutionService.updateV2(
+        nodeExecutionId, ops -> { setUnset(ops, NodeExecutionKeys.resolvedStepParameters, resolvedStepParameters); });
+
+    pmsGraphStepDetailsService.addStepInputs(nodeExecutionId, ambiance.getPlanExecutionId(),
+        PmsStepParameters.parse(
+            OrchestrationMapBackwardCompatibilityUtils.extractToOrchestrationMap(resolvedStepInputs)));
   }
 
   private ExecutionCheck performPreFacilitationChecks(Ambiance ambiance, PlanNode planNode) {

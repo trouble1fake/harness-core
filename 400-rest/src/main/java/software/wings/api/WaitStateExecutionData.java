@@ -16,7 +16,6 @@ import static io.harness.annotations.dev.HarnessTeam.CDC;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
-import io.harness.pms.sdk.core.data.Outcome;
 
 import software.wings.sm.StateExecutionData;
 
@@ -31,7 +30,7 @@ import java.util.Map;
 @OwnedBy(CDC)
 @JsonTypeName("waitStateExecutionData")
 @TargetModule(HarnessModule._870_CG_ORCHESTRATION)
-public class WaitStateExecutionData extends StateExecutionData implements Outcome {
+public class WaitStateExecutionData extends StateExecutionData {
   private long duration;
   private long wakeupTs;
   private String resumeId;

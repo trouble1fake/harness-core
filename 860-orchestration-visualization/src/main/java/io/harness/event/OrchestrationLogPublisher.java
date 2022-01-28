@@ -86,4 +86,10 @@ public class OrchestrationLogPublisher
     createAndHandleEventLog(stepDetailsUpdateInfo.getPlanExecutionId(), stepDetailsUpdateInfo.getNodeExecutionId(),
         OrchestrationEventType.STEP_DETAILS_UPDATE);
   }
+
+  @Override
+  public void onStepInputsAdd(StepDetailsUpdateInfo stepDetailsUpdateInfo) {
+    createAndHandleEventLog(stepDetailsUpdateInfo.getPlanExecutionId(), stepDetailsUpdateInfo.getNodeExecutionId(),
+        OrchestrationEventType.STEP_INPUTS_UPDATE);
+  }
 }

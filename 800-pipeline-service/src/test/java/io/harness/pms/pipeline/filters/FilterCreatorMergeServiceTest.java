@@ -13,6 +13,7 @@ import static io.harness.rule.OwnerRule.SAHIL;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -57,6 +58,7 @@ public class FilterCreatorMergeServiceTest extends PipelineServiceTestBase {
   private static String ACCOUNT_ID = "accountId";
   private static String PROJECT_ID = "projectId";
   private static String ORG_ID = "orgId";
+  private static String IDENTIFIER = "pipeline";
 
   private static final String pipelineYaml = "pipeline:\n"
       + "  identifier: p1\n"
@@ -137,11 +139,13 @@ public class FilterCreatorMergeServiceTest extends PipelineServiceTestBase {
     doReturn(FilterCreationBlobResponse.newBuilder().build())
         .when(filterCreatorMergeService)
         .obtainFiltersRecursively(any(), any(), any(), any());
+    doNothing().when(pipelineSetupUsageHelper).deleteExistingSetupUsages(ACCOUNT_ID, ORG_ID, PROJECT_ID, IDENTIFIER);
     PipelineEntity pipelineEntity = PipelineEntity.builder()
                                         .yaml(pipelineYaml)
                                         .accountId(ACCOUNT_ID)
                                         .projectIdentifier(PROJECT_ID)
                                         .orgIdentifier(ORG_ID)
+                                        .identifier(IDENTIFIER)
                                         .build();
     FilterCreatorMergeServiceResponse filterCreatorMergeServiceResponse =
         filterCreatorMergeService.getPipelineInfo(pipelineEntity);

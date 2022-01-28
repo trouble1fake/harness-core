@@ -9,6 +9,8 @@ package io.harness.serializer.kryo;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.build.BuildStatusUpdateParameter;
+import io.harness.beans.build.BuildUpdateType;
 import io.harness.beans.build.CIPipelineDetails;
 import io.harness.beans.build.PublishedArtifact;
 import io.harness.beans.dependencies.CIServiceInfo;
@@ -167,5 +169,8 @@ public class CIBeansKryoRegistrar implements KryoRegistrar {
     kryo.register(VmInfraSpec.Type.class, 110102);
     kryo.register(VmPoolYaml.class, 110103);
     kryo.register(VmPoolYamlSpec.class, 110104);
+
+    kryo.register(BuildUpdateType.class, 390003);
+    kryo.register(BuildStatusUpdateParameter.class, 390004);
   }
 }

@@ -76,7 +76,7 @@ public class NodeStartHelper {
   }
 
   private void sendEvent(NodeExecution nodeExecution, ByteString passThroughData) {
-    PlanNode planNode = planService.fetchNode(nodeExecution.getAmbiance().getPlanId(), nodeExecution.getNodeId());
+    PlanNode planNode = planService.fetchNode(nodeExecution.getAmbiance().getPlanId(), nodeExecution.nodeId());
     NodeStartEvent nodeStartEvent = NodeStartEvent.newBuilder()
                                         .setAmbiance(nodeExecution.getAmbiance())
                                         .addAllRefObjects(planNode.getRefObjects())

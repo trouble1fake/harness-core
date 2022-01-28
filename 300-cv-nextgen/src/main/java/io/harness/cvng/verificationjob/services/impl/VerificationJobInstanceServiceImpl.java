@@ -346,6 +346,11 @@ public class VerificationJobInstanceServiceImpl implements VerificationJobInstan
     return verificationJobInstanceIds;
   }
 
+  @Override
+  public List<ProgressLog> getProgressLogs(String verificationJobInstanceId) {
+    return getVerificationJobInstance(verificationJobInstanceId).getProgressLogs();
+  }
+
   private void updateStatusIfDone(String verificationJobInstanceId) {
     VerificationJobInstance verificationJobInstance = getVerificationJobInstance(verificationJobInstanceId);
     if (verificationJobInstance.getExecutionStatus() != ExecutionStatus.RUNNING) {

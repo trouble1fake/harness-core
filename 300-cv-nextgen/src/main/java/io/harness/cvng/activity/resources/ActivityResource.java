@@ -97,9 +97,12 @@ public class ActivityResource {
         DeploymentTimeSeriesAnalysisFilter.builder()
             .healthSourceIdentifiers(healthSourceIdentifiers)
             .filter(filter)
-            .anomalous(anomalousMetricsOnly)
+            .anomalousMetricsOnly(anomalousMetricsOnly)
             .hostName(hostName)
             .build();
+    if (deploymentTimeSeriesAnalysisFilter.filterByHostName()) {
+      deploymentTimeSeriesAnalysisFilter.setHostNames(Arrays.asList(deploymentTimeSeriesAnalysisFilter.getHostName()));
+    }
 
     return new RestResponse(activityService.getDeploymentActivityTimeSeriesData(
         accountId, activityId, deploymentTimeSeriesAnalysisFilter, pageParams));

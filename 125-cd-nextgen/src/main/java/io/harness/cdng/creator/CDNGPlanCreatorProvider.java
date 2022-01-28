@@ -16,6 +16,8 @@ import io.harness.cdng.creator.plan.artifact.PrimaryArtifactPlanCreator;
 import io.harness.cdng.creator.plan.artifact.SideCarArtifactPlanCreator;
 import io.harness.cdng.creator.plan.artifact.SideCarListPlanCreator;
 import io.harness.cdng.creator.plan.execution.CDExecutionPMSPlanCreator;
+import io.harness.cdng.creator.plan.manifest.IndividualManifestPlanCreator;
+import io.harness.cdng.creator.plan.manifest.ManifestsPlanCreator;
 import io.harness.cdng.creator.plan.rollback.ExecutionStepsRollbackPMSPlanCreator;
 import io.harness.cdng.creator.plan.service.ServicePlanCreator;
 import io.harness.cdng.creator.plan.stage.DeploymentStagePMSPlanCreator;
@@ -74,6 +76,8 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
     planCreators.add(new PrimaryArtifactPlanCreator());
     planCreators.add(new SideCarListPlanCreator());
     planCreators.add(new SideCarArtifactPlanCreator());
+    planCreators.add(new ManifestsPlanCreator());
+    planCreators.add(new IndividualManifestPlanCreator());
     injectorUtils.injectMembers(planCreators);
     return planCreators;
   }
