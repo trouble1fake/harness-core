@@ -9,7 +9,6 @@ package io.harness.pms.opa.service;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.beans.EmbeddedUser;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.exception.InvalidRequestException;
 import io.harness.opaclient.OpaUtils;
@@ -23,6 +22,8 @@ import io.harness.pms.pipeline.PipelineEntity;
 import io.harness.pms.pipeline.service.PMSPipelineService;
 import io.harness.pms.plan.execution.beans.PipelineExecutionSummaryEntity;
 import io.harness.pms.plan.execution.service.PMSExecutionService;
+import io.harness.security.PrincipalHelper;
+import io.harness.security.dto.Principal;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -60,9 +61,10 @@ public class PMSOpaServiceImpl implements PMSOpaService {
     }
     PipelineOpaEvaluationContextBuilder pipelineBuilder =
         PipelineOpaEvaluationContext.builder().pipeline(OpaUtils.extractObjectFromYamlString(pipelineYaml, "pipeline"));
-    EmbeddedUser embeddedUser = currentUserHelper.getFromSecurityContextFromPrincipal();
-    UserOpaEvaluationContextBuilder userBuilder =
-        UserOpaEvaluationContext.builder().email(embeddedUser.getEmail()).name(embeddedUser.getName());
+    Principal principal = currentUserHelper.getPrincipalFromSecurityContext();
+    UserOpaEvaluationContextBuilder userBuilder = UserOpaEvaluationContext.builder()
+                                                      .email(PrincipalHelper.getEmail(principal))
+                                                      .name(PrincipalHelper.getIdentifier(principal));
 
     pipelineBuilder.user(userBuilder.build());
     pipelineBuilder.action(action);

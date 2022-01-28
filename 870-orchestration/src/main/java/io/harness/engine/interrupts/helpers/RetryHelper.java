@@ -127,6 +127,7 @@ public class RetryHelper {
         .endTs(null)
         .initialWaitDuration(null)
         .resolvedStepParameters(null)
+        .resolvedParams(null)
         .notifyId(nodeExecution.getNotifyId())
         .parentId(nodeExecution.getParentId())
         .nextId(nodeExecution.getNextId())
@@ -142,6 +143,12 @@ public class RetryHelper {
         .retryIds(retryIds)
         .oldRetry(false)
         .originalNodeExecutionId(nodeExecution.getOriginalNodeExecutionId())
+        .module(nodeExecution.module())
+        .name(nodeExecution.name())
+        .skipGraphType(nodeExecution.skipGraphType())
+        .identifier(nodeExecution.identifier())
+        .stepType(nodeExecution.stepType())
+        .nodeId(nodeExecution.nodeId())
         .build();
   }
 }

@@ -46,7 +46,7 @@ public class BudgetUtils {
   public static final String INVALID_PERSPECTIVE_ID_EXCEPTION = "Invalid perspective id";
   public static final String INVALID_BUDGET_ID_EXCEPTION = "Invalid budget id";
   private static final String UNDEFINED_BUDGET = "undefined";
-  private static final String UNDEFINED_PERSPECTIVE = "undefined";
+  public static final String UNDEFINED_PERSPECTIVE = "undefined";
   private static final String DEFAULT_TIMEZONE = "GMT";
   public static final long ONE_DAY_MILLIS = 86400000;
   public static final String DEFAULT_TIME_UNIT = "days";
@@ -180,6 +180,13 @@ public class BudgetUtils {
   public static String getPerspectiveIdForBudget(Budget budget) {
     if (isPerspectiveBudget(budget)) {
       return budget.getScope().getEntityIds().get(0);
+    }
+    return UNDEFINED_PERSPECTIVE;
+  }
+
+  public static String getPerspectiveNameForBudget(Budget budget) {
+    if (isPerspectiveBudget(budget)) {
+      return budget.getScope().getEntityNames().get(0);
     }
     return UNDEFINED_PERSPECTIVE;
   }

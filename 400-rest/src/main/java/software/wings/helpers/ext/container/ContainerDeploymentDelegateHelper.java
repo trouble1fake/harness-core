@@ -29,6 +29,7 @@ import software.wings.beans.GcpConfig;
 import software.wings.beans.KubernetesClusterConfig;
 import software.wings.beans.SettingAttribute;
 import software.wings.cloudprovider.gke.GkeClusterService;
+import software.wings.delegatetasks.ExceptionMessageSanitizer;
 import software.wings.helpers.ext.azure.AzureHelperService;
 import software.wings.helpers.ext.k8s.request.K8sClusterConfig;
 import software.wings.service.impl.ContainerServiceParams;
@@ -117,6 +118,8 @@ public class ContainerDeploymentDelegateHelper {
     if (settingAttribute.getValue() instanceof KubernetesClusterConfig) {
       KubernetesClusterConfig kubernetesClusterConfig = (KubernetesClusterConfig) settingAttribute.getValue();
       encryptionService.decrypt(kubernetesClusterConfig, encryptedDataDetails, false);
+      ExceptionMessageSanitizer.storeAllSecretsForSanitizing(kubernetesClusterConfig, encryptedDataDetails);
+
       kubernetesConfig = kubernetesClusterConfig.createKubernetesConfig(namespace);
     } else if (settingAttribute.getValue() instanceof GcpConfig) {
       kubernetesConfig =
@@ -144,6 +147,7 @@ public class ContainerDeploymentDelegateHelper {
     if (cloudProvider instanceof KubernetesClusterConfig) {
       KubernetesClusterConfig kubernetesClusterConfig = (KubernetesClusterConfig) cloudProvider;
       encryptionService.decrypt(kubernetesClusterConfig, encryptedDataDetails, isInstanceSync);
+      ExceptionMessageSanitizer.storeAllSecretsForSanitizing(kubernetesClusterConfig, encryptedDataDetails);
       kubernetesConfig = kubernetesClusterConfig.createKubernetesConfig(namespace);
     } else if (cloudProvider instanceof GcpConfig) {
       kubernetesConfig = gkeClusterService.getCluster((GcpConfig) cloudProvider, encryptedDataDetails,

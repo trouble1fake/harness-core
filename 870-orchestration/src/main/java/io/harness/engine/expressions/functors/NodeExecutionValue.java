@@ -19,11 +19,13 @@ import io.harness.engine.pms.data.PmsSweepingOutputService;
 import io.harness.execution.NodeExecution;
 import io.harness.expression.LateBindingValue;
 import io.harness.pms.contracts.ambiance.Ambiance;
+import io.harness.pms.contracts.ambiance.Level;
 import io.harness.pms.execution.utils.AmbianceUtils;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import lombok.Builder;
 import lombok.Value;
@@ -72,8 +74,8 @@ public class NodeExecutionValue implements LateBindingValue {
   }
 
   private boolean canAdd(NodeExecution nodeExecution) {
-    return !nodeExecution.getNode().isSkipExpressionChain()
-        && EmptyPredicate.isNotEmpty(AmbianceUtils.obtainStepIdentifier(nodeExecution.getAmbiance()))
+    Level level = Objects.requireNonNull(AmbianceUtils.obtainCurrentLevel(nodeExecution.getAmbiance()));
+    return !level.getSkipExpressionChain() && EmptyPredicate.isNotEmpty(level.getIdentifier())
         && !nodeExecution.isOldRetry();
   }
 

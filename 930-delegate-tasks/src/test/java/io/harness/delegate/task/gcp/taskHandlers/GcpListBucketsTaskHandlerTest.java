@@ -66,7 +66,7 @@ public class GcpListBucketsTaskHandlerTest extends CategoryTest {
   @Mock private Storage.Buckets.List bucketsList;
 
   private final List<EncryptedDataDetail> encryptionDetails =
-      Collections.singletonList(EncryptedDataDetail.builder().build());
+      Collections.singletonList(EncryptedDataDetail.builder().fieldName("serviceToken").build());
   private final char[] serviceAccountFileContent = "{\"project_id\": \"test_sa\"}".toCharArray();
 
   @Before

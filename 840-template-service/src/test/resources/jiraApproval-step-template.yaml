@@ -1,0 +1,26 @@
+template:
+  projectIdentifier: projId
+  orgIdentifier: orgId
+  identifier: jiraApprovalTemplate
+  versionLabel: 1
+  name: template1
+  type: Step
+  spec:
+    type: JiraApproval
+    spec:
+      connectorRef: <+input>
+      issueKey: <+input>
+      approvalCriteria:
+        type: KeyValues
+        spec:
+          matchAnyCondition: true
+          conditions:
+            - key: Status
+              operator: equals
+              value: Done
+      rejectionCriteria:
+        type: KeyValues
+        spec:
+          matchAnyCondition: true
+          conditions: []
+      timeout: 1d

@@ -35,4 +35,6 @@ public interface CVNGStepTaskService {
       Integer label, DeploymentLogAnalysisFilter deploymentLogAnalysisFilter, PageParams pageParams);
   List<String> getTransactionNames(String accountId, String callBackId);
   List<String> getNodeNames(String accountId, String callBackId);
+
+  Object getExecutionLogs(String accountId, String callBackId);
 }

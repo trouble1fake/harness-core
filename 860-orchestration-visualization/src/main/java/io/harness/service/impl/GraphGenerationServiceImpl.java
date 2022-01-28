@@ -100,6 +100,9 @@ public class GraphGenerationServiceImpl implements GraphGenerationService {
           } else if (orchestrationEventType == OrchestrationEventType.STEP_DETAILS_UPDATE) {
             orchestrationGraph = stepDetailsUpdateEventHandler.handleEvent(
                 planExecutionId, orchestrationEventLog.getNodeExecutionId(), orchestrationGraph);
+          } else if (orchestrationEventType == OrchestrationEventType.STEP_INPUTS_UPDATE) {
+            orchestrationGraph = stepDetailsUpdateEventHandler.handleStepInputEvent(
+                planExecutionId, orchestrationEventLog.getNodeExecutionId(), orchestrationGraph);
           } else {
             String nodeExecutionId = orchestrationEventLog.getNodeExecutionId();
             if (processedNodeExecutionIds.contains(nodeExecutionId)) {
@@ -108,7 +111,7 @@ public class GraphGenerationServiceImpl implements GraphGenerationService {
             processedNodeExecutionIds.add(nodeExecutionId);
             NodeExecution nodeExecution = nodeExecutionService.get(nodeExecutionId);
             if (OrchestrationUtils.isStageNode(nodeExecution)
-                && nodeExecution.getNode().getNodeType() == NodeType.IDENTITY_PLAN_NODE
+                && nodeExecution.getNodeType() == NodeType.IDENTITY_PLAN_NODE
                 && StatusUtils.isFinalStatus(nodeExecution.getStatus())) {
               pmsExecutionSummaryService.updateStageOfIdentityType(planExecutionId, executionSummaryUpdate);
             } else {

@@ -452,7 +452,7 @@ public class TimeSeriesDashboardServiceImplTest extends CvNextGenTestBase {
 
     TimeSeriesAnalysisFilter timeSeriesAnalysisFilter = TimeSeriesAnalysisFilter.builder()
                                                             .filter(null)
-                                                            .anomalous(true)
+                                                            .anomalousMetricsOnly(true)
                                                             .healthSourceIdentifiers(healthSourceIdentifiers)
                                                             .build();
 
@@ -471,7 +471,7 @@ public class TimeSeriesDashboardServiceImplTest extends CvNextGenTestBase {
 
     timeSeriesAnalysisFilter = TimeSeriesAnalysisFilter.builder()
                                    .filter(null)
-                                   .anomalous(true)
+                                   .anomalousMetricsOnly(true)
                                    .healthSourceIdentifiers(Arrays.asList("some-identifier"))
                                    .build();
 
@@ -504,7 +504,7 @@ public class TimeSeriesDashboardServiceImplTest extends CvNextGenTestBase {
 
     TimeSeriesAnalysisFilter timeSeriesAnalysisFilter = TimeSeriesAnalysisFilter.builder()
                                                             .filter(null)
-                                                            .anomalous(true)
+                                                            .anomalousMetricsOnly(true)
                                                             .healthSourceIdentifiers(healthSourceIdentifiers)
                                                             .build();
 

@@ -29,6 +29,7 @@ import java.util.Set;
  * @author rktummala on 06/05/2018
  */
 public interface UsageRestrictionsService {
+  enum UsageRestrictionsClient { CONNECTORS, SECRETS_MANAGEMENT, ALL }
   /**
    *
    * @param appEnvRestrictions
@@ -190,7 +191,7 @@ public interface UsageRestrictionsService {
   /**
    * Purge all the usage restriction references to application/environments that no longer exists.
    */
-  int purgeDanglingAppEnvReferences(String accountId);
+  int purgeDanglingAppEnvReferences(String accountId, UsageRestrictionsClient usageRestrictionsClient);
 
   /**
    * Remove all references to an application or an environment in the usage restrictions. This operation is usually

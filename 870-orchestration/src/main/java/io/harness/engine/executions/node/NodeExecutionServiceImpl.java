@@ -261,7 +261,7 @@ public class NodeExecutionServiceImpl implements NodeExecutionService {
                             .setAmbiance(nodeExecution.getAmbiance())
                             .setStatus(nodeExecution.getStatus())
                             .setEventType(OrchestrationEventType.NODE_EXECUTION_START)
-                            .setServiceName(nodeExecution.getNode().getServiceName());
+                            .setServiceName(nodeExecution.module());
 
       if (nodeExecution.getResolvedStepParameters() != null) {
         builder.setStepParameters(nodeExecution.getResolvedStepParametersBytes());
@@ -272,6 +272,8 @@ public class NodeExecutionServiceImpl implements NodeExecutionService {
           NodeExecutionStartObserver::onNodeStart, NodeStartInfo.builder().nodeExecution(nodeExecution).build());
       return nodeExecution1;
     } else {
+      nodeExecutionStartSubject.fireInform(
+          NodeExecutionStartObserver::onNodeStart, NodeStartInfo.builder().nodeExecution(nodeExecution).build());
       return mongoTemplate.save(nodeExecution);
     }
   }
@@ -509,7 +511,7 @@ public class NodeExecutionServiceImpl implements NodeExecutionService {
                                .setStatus(nodeExecution.getStatus())
                                .setStepParameters(nodeExecution.getResolvedStepParametersBytes())
                                .setEventType(orchestrationEventType)
-                               .setServiceName(nodeExecution.getNode().getServiceName())
+                               .setServiceName(nodeExecution.module())
                                .setTriggerPayload(triggerPayload);
 
     updateEventIfCausedByAutoAbortThroughTrigger(nodeExecution, orchestrationEventType, eventBuilder);
@@ -615,11 +617,12 @@ public class NodeExecutionServiceImpl implements NodeExecutionService {
   private Map<String, String> mapNodeExecutionUuidWithPlanNodeUuid(List<NodeExecution> nodeExecutionList) {
     Map<String, String> uuidMapper = new HashMap<>();
     for (NodeExecution nodeExecution : nodeExecutionList) {
-      uuidMapper.put(nodeExecution.getNodeId(), nodeExecution.getUuid());
+      uuidMapper.put(nodeExecution.nodeId(), nodeExecution.getUuid());
     }
     return uuidMapper;
   }
 
+  // TODO optimize this to remove n+1 queries
   public List<RetryStageInfo> fetchStageDetailFromNodeExecution(List<NodeExecution> nodeExecutionList) {
     List<RetryStageInfo> stageDetails = new ArrayList<>();
 
@@ -628,12 +631,11 @@ public class NodeExecutionServiceImpl implements NodeExecutionService {
     }
 
     for (NodeExecution nodeExecution : nodeExecutionList) {
-      Node node = nodeExecution.getNode();
       String nextId = nodeExecution.getNextId();
       String parentId = nodeExecution.getParentId();
       RetryStageInfo stageDetail = RetryStageInfo.builder()
-                                       .name(node.getName())
-                                       .identifier(node.getIdentifier())
+                                       .name(nodeExecution.name())
+                                       .identifier(nodeExecution.identifier())
                                        .parentId(parentId)
                                        .createdAt(nodeExecution.getCreatedAt())
                                        .status(ExecutionStatus.getExecutionStatus(nodeExecution.getStatus()))

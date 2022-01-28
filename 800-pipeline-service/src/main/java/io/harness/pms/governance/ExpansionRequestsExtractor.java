@@ -89,6 +89,7 @@ public class ExpansionRequestsExtractor {
         ExpansionRequest request = ExpansionRequest.builder()
                                        .module(namespace.peek())
                                        .fqn(node.getYamlPath() + PATH_SEP + key)
+                                       .key(key)
                                        .fieldValue(value)
                                        .build();
         serviceCalls.add(request);
@@ -115,7 +116,15 @@ public class ExpansionRequestsExtractor {
     YamlNode internalNode = pipelineNode.getFieldOrThrow(YAMLFieldNameConstants.PIPELINE).getNode();
     List<YamlNode> stagesList = internalNode.getFieldOrThrow(YAMLFieldNameConstants.STAGES).getNode().asArray();
     for (YamlNode stageNode : stagesList) {
-      getServiceCallsForStage(stageNode, localFQNRequestMetadata, serviceCalls);
+      if (stageNode.getField(YAMLFieldNameConstants.PARALLEL) != null) {
+        YamlNode parallelNode = stageNode.getFieldOrThrow(YAMLFieldNameConstants.PARALLEL).getNode();
+        List<YamlNode> parallelStages = parallelNode.asArray();
+        for (YamlNode parallelStage : parallelStages) {
+          getServiceCallsForStage(parallelStage, localFQNRequestMetadata, serviceCalls);
+        }
+      } else {
+        getServiceCallsForStage(stageNode, localFQNRequestMetadata, serviceCalls);
+      }
     }
   }
 
@@ -158,6 +167,7 @@ public class ExpansionRequestsExtractor {
         ExpansionRequest expansionRequest = ExpansionRequest.builder()
                                                 .module(e.getModule())
                                                 .fqn(yamlPath)
+                                                .key(localPath)
                                                 .fieldValue(currNode.getCurrJsonNode())
                                                 .build();
         serviceCalls.add(expansionRequest);

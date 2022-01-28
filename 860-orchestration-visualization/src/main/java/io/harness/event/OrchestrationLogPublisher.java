@@ -12,6 +12,8 @@ import static io.harness.data.structure.HarnessStringUtils.emptyIfNull;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.OrchestrationEventLog;
+import io.harness.engine.observers.NodeExecutionStartObserver;
+import io.harness.engine.observers.NodeStartInfo;
 import io.harness.engine.observers.NodeStatusUpdateObserver;
 import io.harness.engine.observers.NodeUpdateInfo;
 import io.harness.engine.observers.NodeUpdateObserver;
@@ -38,7 +40,8 @@ import java.time.OffsetDateTime;
 @OwnedBy(HarnessTeam.PIPELINE)
 @Singleton
 public class OrchestrationLogPublisher
-    implements NodeUpdateObserver, NodeStatusUpdateObserver, PlanStatusUpdateObserver, StepDetailsUpdateObserver {
+    implements NodeUpdateObserver, NodeStatusUpdateObserver, PlanStatusUpdateObserver, StepDetailsUpdateObserver,
+               NodeExecutionStartObserver {
   @Inject private OrchestrationEventLogRepository orchestrationEventLogRepository;
   @Inject @Named(EventsFrameworkConstants.ORCHESTRATION_LOG) private Producer producer;
 
@@ -82,8 +85,20 @@ public class OrchestrationLogPublisher
   }
 
   @Override
+  public void onNodeStart(NodeStartInfo nodeStartInfo) {
+    createAndHandleEventLog(nodeStartInfo.getNodeExecution().getPlanExecutionId(),
+        nodeStartInfo.getNodeExecution().getUuid(), OrchestrationEventType.NODE_EXECUTION_START);
+  }
+
+  @Override
   public void onStepDetailsUpdate(StepDetailsUpdateInfo stepDetailsUpdateInfo) {
     createAndHandleEventLog(stepDetailsUpdateInfo.getPlanExecutionId(), stepDetailsUpdateInfo.getNodeExecutionId(),
         OrchestrationEventType.STEP_DETAILS_UPDATE);
+  }
+
+  @Override
+  public void onStepInputsAdd(StepDetailsUpdateInfo stepDetailsUpdateInfo) {
+    createAndHandleEventLog(stepDetailsUpdateInfo.getPlanExecutionId(), stepDetailsUpdateInfo.getNodeExecutionId(),
+        OrchestrationEventType.STEP_INPUTS_UPDATE);
   }
 }

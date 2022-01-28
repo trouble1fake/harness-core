@@ -7,39 +7,54 @@
 
 package software.wings.delegatetasks;
 
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.expression.SecretString.SECRET_MASK;
+import static io.harness.reflection.ReflectionUtils.getFieldByName;
 
 import static org.apache.commons.lang3.StringUtils.replaceEach;
 
-import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.annotations.dev.TargetModule;
+import io.harness.beans.DecryptableEntity;
+import io.harness.encryption.SecretRefData;
+import io.harness.secret.SecretSanitizerThreadLocal;
+import io.harness.security.encryption.EncryptedDataDetail;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
 @OwnedBy(HarnessTeam.CDP)
-@TargetModule(HarnessModule._930_DELEGATE_TASKS)
+@Slf4j
 public class ExceptionMessageSanitizer {
-  public static void sanitizeException(Throwable ex, List<String> secrets)
-      throws NoSuchFieldException, IllegalAccessException {
-    Throwable exception = ex;
+  public static Exception sanitizeException(Exception ex, Set<String> secrets) {
+    if (isEmpty(secrets)) {
+      return ex;
+    }
+    Exception exception = ex;
     while (exception != null) {
       sanitizeExceptionInternal(exception, secrets);
-      exception = exception.getCause();
+      exception = (Exception) exception.getCause();
     }
+    return ex;
   }
 
-  protected static void sanitizeExceptionInternal(Throwable exception, List<String> secrets)
-      throws NoSuchFieldException, IllegalAccessException {
+  public static Exception sanitizeException(Exception ex) {
+    Set<String> secrets = SecretSanitizerThreadLocal.get();
+    return sanitizeException(ex, secrets);
+  }
+
+  @SneakyThrows
+  protected static void sanitizeExceptionInternal(Exception exception, Set<String> secrets) {
     String message = exception.getMessage();
     String updatedMessage = sanitizeMessage(message, secrets);
     updateExceptionMessage(exception, updatedMessage);
   }
 
-  protected static String sanitizeMessage(String message, List<String> secrets) {
+  protected static String sanitizeMessage(String message, Set<String> secrets) {
     ArrayList<String> secretMasks = new ArrayList<>();
     ArrayList<String> secretValues = new ArrayList<>();
     for (String secret : secrets) {
@@ -59,6 +74,33 @@ public class ExceptionMessageSanitizer {
       detailMessageField.set(exception, message);
     } finally {
       detailMessageField.setAccessible(false);
+    }
+  }
+
+  public static void storeAllSecretsForSanitizing(
+      DecryptableEntity object, List<EncryptedDataDetail> encryptedDataDetails) {
+    if (isEmpty(encryptedDataDetails)) {
+      return;
+    }
+    for (EncryptedDataDetail encryptedDataDetail : encryptedDataDetails) {
+      Field f = getFieldByName(object.getClass(), encryptedDataDetail.getFieldName());
+      if (f == null) {
+        log.warn("Could not find field {} in class {}", encryptedDataDetail.getFieldName(), object.getClass());
+        continue;
+      }
+      try {
+        f.setAccessible(true);
+        if (f.getType() == SecretRefData.class) {
+          SecretRefData secretRefData = (SecretRefData) f.get(object);
+          SecretSanitizerThreadLocal.add(String.valueOf(secretRefData.getDecryptedValue()));
+        } else {
+          SecretSanitizerThreadLocal.add(String.valueOf((char[]) f.get(object)));
+        }
+
+        f.setAccessible(false);
+      } catch (IllegalAccessException ex) {
+        log.error("Error while trying to store secret", ex);
+      }
     }
   }
 }

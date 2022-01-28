@@ -45,6 +45,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 
 @OwnedBy(HarnessTeam.DX)
@@ -69,15 +70,18 @@ public class SetupUsageChangeEventMessageListener implements MessageListener {
     log.info("Processing the setup usage crud event with the id {}", messageId);
     try (AutoLogContext ignore1 = new NgEventLogContext(messageId, OVERRIDE_ERROR)) {
       Map<String, String> metadataMap = message.getMessage().getMetadataMap();
-      if (!metadataMap.containsKey(REFERRED_ENTITY_TYPE) || !handledByNgCore(metadataMap.get(REFERRED_ENTITY_TYPE))) {
+      if (metadataMap.containsKey(REFERRED_ENTITY_TYPE) && !handledByNgCore(metadataMap.get(REFERRED_ENTITY_TYPE))) {
         return false;
       }
       final GitEntityInfo newBranch = getGitEntityInfoFromMessage(message);
       try (GlobalContextManager.GlobalContextGuard guard = GlobalContextManager.ensureGlobalContextGuard()) {
         GlobalContextManager.upsertGlobalContextRecord(GitSyncBranchContext.builder().gitBranchInfo(newBranch).build());
-        final EntityType entityTypeFromProto = EventProtoToEntityHelper.getEntityTypeFromProto(
-            EntityTypeProtoEnum.valueOf(metadataMap.get(REFERRED_ENTITY_TYPE)));
-        log.info("Event received for entityType: [{}]", entityTypeFromProto.getYamlName());
+        EntityType entityTypeFromProto = null;
+        if (metadataMap.containsKey(REFERRED_ENTITY_TYPE)) {
+          entityTypeFromProto = EventProtoToEntityHelper.getEntityTypeFromProto(
+              EntityTypeProtoEnum.valueOf(metadataMap.get(REFERRED_ENTITY_TYPE)));
+          log.info("Event received for entityType: [{}]", entityTypeFromProto.getYamlName());
+        }
         if (metadataMap.containsKey(EventsFrameworkMetadataConstants.ACTION)) {
           switch (metadataMap.get(EventsFrameworkMetadataConstants.ACTION)) {
             case EventsFrameworkMetadataConstants.FLUSH_CREATE_ACTION:
@@ -116,7 +120,8 @@ public class SetupUsageChangeEventMessageListener implements MessageListener {
         deleteRequestDTO.getReferredByEntityFQN(), referredEntityTypeFromChannel);
   }
 
-  private Boolean processCreateAction(EntitySetupUsageCreateV2DTO setupUsageCreateDTO, EntityType entityType) {
+  private Boolean processCreateAction(
+      EntitySetupUsageCreateV2DTO setupUsageCreateDTO, @Nullable EntityType entityType) {
     if (setupUsageCreateDTO == null) {
       return false;
     }

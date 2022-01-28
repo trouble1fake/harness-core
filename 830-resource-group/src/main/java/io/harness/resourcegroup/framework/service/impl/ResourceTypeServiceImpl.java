@@ -34,10 +34,12 @@ public class ResourceTypeServiceImpl implements ResourceTypeService {
     this.resources = resources;
   }
 
-  private static ResourceType toResourceType(Resource resource) {
+  private static ResourceType toResourceType(Resource resource, ScopeLevel scopeLevel) {
     return ResourceType.builder()
         .name(resource.getType())
-        .validatorTypes(new ArrayList<>(resource.getSelectorKind()))
+        .validatorTypes(resource.getSelectorKind().get(scopeLevel) == null
+                ? new ArrayList<>()
+                : new ArrayList<>(resource.getSelectorKind().get(scopeLevel)))
         .build();
   }
 
@@ -50,7 +52,7 @@ public class ResourceTypeServiceImpl implements ResourceTypeService {
     return ResourceTypeMapper.toDTO(resources.values()
                                         .stream()
                                         .filter(resource -> resource.getValidScopeLevels().contains(scopeLevel))
-                                        .map(ResourceTypeServiceImpl::toResourceType)
+                                        .map(resource -> toResourceType(resource, scopeLevel))
                                         .collect(Collectors.toList()));
   }
 }

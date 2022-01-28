@@ -30,9 +30,6 @@ public interface YamlGitConfigService {
 
   YamlGitConfigDTO get(String projectId, String orgId, String accountId, String identifier);
 
-  YamlGitConfigDTO getByFolderIdentifierAndIsEnabled(
-      String projectIdentifier, String orgIdentifier, String accountId, String folderId);
-
   List<YamlGitConfigDTO> list(String projectIdentifier, String orgIdentifier, String accountId);
 
   YamlGitConfigDTO updateDefault(
@@ -51,4 +48,7 @@ public interface YamlGitConfigService {
   YamlGitConfigDTO getByProjectIdAndRepo(String accountId, String orgId, String projectId, String repo);
 
   boolean deleteAll(String accountIdentifier, String orgIdentifier, String projectIdentifier);
+
+  void updateTheConnectorRepoAndBranch(String accountIdentifier, String orgIdentifier, String projectIdentifier,
+      String yamlGitConfigIdentifier, String repo, String branch);
 }

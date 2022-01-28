@@ -9,6 +9,7 @@ package io.harness.execution;
 
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.data.structure.HarnessStringUtils.emptyIfNull;
 
 import io.harness.annotation.StoreIn;
@@ -34,6 +35,8 @@ import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.execution.failure.FailureInfo;
 import io.harness.pms.contracts.execution.run.NodeRunInfo;
 import io.harness.pms.contracts.execution.skip.SkipInfo;
+import io.harness.pms.contracts.steps.SkipType;
+import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.data.OrchestrationMap;
 import io.harness.pms.data.stepparameters.PmsStepParameters;
 import io.harness.pms.execution.utils.AmbianceUtils;
@@ -90,9 +93,10 @@ public class NodeExecution implements PersistentEntity, UuidAccess, PmsNodeExecu
   @Builder.Default @FdTtlIndex Date validUntil = Date.from(OffsetDateTime.now().plusMonths(TTL_MONTHS).toInstant());
 
   // Resolved StepParameters stored just before invoking step.
-  Map<String, Object> resolvedStepParameters;
-  Map<String, Object> resolvedStepInputs;
-  PmsStepParameters resolvedInputs;
+  @Deprecated Map<String, Object> resolvedStepParameters;
+  @Deprecated PmsStepParameters resolvedInputs;
+
+  PmsStepParameters resolvedParams;
 
   // For Wait Notify
   String notifyId;
@@ -121,8 +125,8 @@ public class NodeExecution implements PersistentEntity, UuidAccess, PmsNodeExecu
   List<String> timeoutInstanceIds;
   TimeoutDetails timeoutDetails;
 
+  // Todo: Move unitProgress and progressData to another collection
   @Singular @Deprecated List<UnitProgress> unitProgresses;
-
   Map<String, Object> progressData;
 
   AdviserResponse adviserResponse;
@@ -133,6 +137,13 @@ public class NodeExecution implements PersistentEntity, UuidAccess, PmsNodeExecu
   // If this is a retry node then this field is populated
   String originalNodeExecutionId;
 
+  @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE) SkipType skipGraphType;
+  @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE) String module;
+  @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE) String name;
+  @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE) StepType stepType;
+  @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE) String nodeId;
+  @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE) String identifier;
+
   public ExecutableResponse obtainLatestExecutableResponse() {
     if (isEmpty(executableResponses)) {
       return null;
@@ -141,13 +152,59 @@ public class NodeExecution implements PersistentEntity, UuidAccess, PmsNodeExecu
   }
 
   @Override
-  public String getNodeId() {
+  public String nodeId() {
+    if (isNotEmpty(nodeId)) {
+      return nodeId;
+    }
     return AmbianceUtils.obtainCurrentSetupId(ambiance);
   }
 
   @Override
   public NodeType getNodeType() {
     return NodeType.valueOf(AmbianceUtils.obtainNodeType(ambiance));
+  }
+
+  // For this release keeping this to fetched from plan node clear from next release
+  // This should be changed from getting it via current level
+  public SkipType skipGraphType() {
+    if (isNotEmpty(module)) {
+      return skipGraphType;
+    }
+    return planNode.getSkipGraphType();
+  }
+
+  // For this release keeping this to fetched from plan node clear from next release
+  // This should be changed from getting it via current level
+  public String module() {
+    if (isNotEmpty(module)) {
+      return module;
+    }
+    return planNode.getServiceName();
+  }
+
+  public String name() {
+    if (isNotEmpty(name)) {
+      return name;
+    }
+    return planNode.getName();
+  }
+
+  public String getPlanExecutionId() {
+    return ambiance.getPlanExecutionId();
+  }
+
+  public StepType stepType() {
+    if (stepType != null) {
+      return stepType;
+    }
+    return AmbianceUtils.getCurrentStepType(ambiance);
+  }
+
+  public String identifier() {
+    if (isNotEmpty(identifier)) {
+      return identifier;
+    }
+    return AmbianceUtils.obtainStepIdentifier(ambiance);
   }
 
   @UtilityClass
@@ -247,15 +304,19 @@ public class NodeExecution implements PersistentEntity, UuidAccess, PmsNodeExecu
   }
 
   public PmsStepParameters getPmsStepParameters() {
-    if (resolvedStepInputs != null) {
-      return PmsStepParameters.parse(
-          OrchestrationMapBackwardCompatibilityUtils.extractToOrchestrationMap(resolvedStepInputs));
-    }
     return PmsStepParameters.parse(resolvedInputs);
   }
 
   public OrchestrationMap getPmsProgressData() {
     return OrchestrationMapBackwardCompatibilityUtils.extractToOrchestrationMap(progressData);
+  }
+
+  public PmsStepParameters getResolvedStepParameters() {
+    if (resolvedStepParameters != null) {
+      return PmsStepParameters.parse(
+          OrchestrationMapBackwardCompatibilityUtils.extractToOrchestrationMap(resolvedStepParameters));
+    }
+    return resolvedParams;
   }
 
   public <T extends Node> T getNode() {

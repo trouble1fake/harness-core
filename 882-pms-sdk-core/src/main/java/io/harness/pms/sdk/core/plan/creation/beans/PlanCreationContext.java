@@ -95,4 +95,24 @@ public class PlanCreationContext implements AsyncCreatorContext {
     });
     return stepFields;
   }
+
+  public List<YamlField> getStepYamlFieldsFromStepsAsCurrentYamlField() {
+    List<YamlNode> yamlNodes =
+        Optional.of(Preconditions.checkNotNull(getCurrentField()).getNode().asArray()).orElse(Collections.emptyList());
+    List<YamlField> stepFields = new LinkedList<>();
+
+    yamlNodes.forEach(yamlNode -> {
+      YamlField stepField = yamlNode.getField(YAMLFieldNameConstants.STEP);
+      YamlField stepGroupField = yamlNode.getField(YAMLFieldNameConstants.STEP_GROUP);
+      YamlField parallelStepField = yamlNode.getField(YAMLFieldNameConstants.PARALLEL);
+      if (stepField != null) {
+        stepFields.add(stepField);
+      } else if (stepGroupField != null) {
+        stepFields.add(stepGroupField);
+      } else if (parallelStepField != null) {
+        stepFields.add(parallelStepField);
+      }
+    });
+    return stepFields;
+  }
 }

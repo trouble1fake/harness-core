@@ -17,7 +17,6 @@ import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.pms.advise.AdviserResponseHandler;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.NodeExecution.NodeExecutionKeys;
-import io.harness.plan.PlanNode;
 import io.harness.pms.contracts.advisers.AdviserResponse;
 import io.harness.pms.contracts.advisers.InterventionWaitAdvise;
 import io.harness.pms.contracts.execution.Status;
@@ -61,13 +60,12 @@ public class InterventionWaitAdviserResponseHandler implements AdviserResponseHa
         ops
         -> ops.set(NodeExecutionKeys.adviserTimeoutInstanceIds, Arrays.asList(instance.getUuid())),
         EnumSet.noneOf(Status.class));
-    PlanNode planNode = nodeExecution.getNode();
     eventEmitter.emitEvent(OrchestrationEvent.newBuilder()
                                .setEventType(OrchestrationEventType.INTERVENTION_WAIT_START)
                                .setAmbiance(nodeExecution.getAmbiance())
                                .setStatus(nodeExecution.getStatus())
                                .setStepParameters(nodeExecution.getResolvedStepParametersBytes())
-                               .setServiceName(planNode.getServiceName())
+                               .setServiceName(nodeExecution.module())
                                .build());
   }
 

@@ -101,7 +101,9 @@ public class ArtifactoryClientImpl {
       }
       throw NestedExceptionUtils.hintWithExplanationException(
           "The server could have failed authenticate. Please check your credentials", errorMessage,
-          new ArtifactoryServerException(errorMessage, ErrorCode.INVALID_ARTIFACT_SERVER, USER));
+          new ArtifactoryServerException(
+              "Request to server failed with status code: " + artifactoryResponse.getStatusLine().getStatusCode(),
+              ErrorCode.INVALID_ARTIFACT_SERVER, USER));
     }
   }
 

@@ -58,6 +58,14 @@ public class RedisNodeAdviseEventPublisherTest extends OrchestrationTestBase {
   @Category(UnitTests.class)
   public void shouldTestPublishEvent() {
     String planExecutionId = generateUuid();
+    PlanNode planNode =
+        PlanNode.builder()
+            .uuid(generateUuid())
+            .identifier("IDENTIFIER")
+            .adviserObtainment(
+                AdviserObtainment.newBuilder().setType(AdviserType.newBuilder().setType("type").buildPartial()).build())
+            .serviceName("serviceName")
+            .build();
     NodeExecution nodeExecution =
         NodeExecution.builder()
             .uuid(generateUuid())
@@ -78,24 +86,17 @@ public class RedisNodeAdviseEventPublisherTest extends OrchestrationTestBase {
                     .build()))
             .status(Status.RUNNING)
             .retryIds(new ArrayList<>())
-            .planNode(PlanNode.builder()
-                          .adviserObtainment(AdviserObtainment.newBuilder()
-                                                 .setType(AdviserType.newBuilder().setType("type").buildPartial())
-                                                 .build())
-                          .serviceName("serviceName")
-                          .build())
+            .planNode(planNode)
             .build();
 
     String eventId = generateUuid();
 
-    when(nodeExecutionService.get(any())).thenReturn(nodeExecution);
     when(eventSender.sendEvent(any(), any(), any(), anyString(), anyBoolean())).thenReturn(eventId);
 
-    String actualEventId = publisher.publishEvent(nodeExecution.getUuid(), Status.ABORTED);
+    String actualEventId = publisher.publishEvent(nodeExecution, planNode, Status.ABORTED);
 
     assertThat(actualEventId).isEqualTo(eventId);
 
-    verify(nodeExecutionService).get(anyString());
     verify(eventSender).sendEvent(any(), any(), any(), anyString(), anyBoolean());
   }
 }
