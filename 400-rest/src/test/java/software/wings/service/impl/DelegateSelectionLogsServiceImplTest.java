@@ -57,6 +57,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -108,16 +109,30 @@ public class DelegateSelectionLogsServiceImplTest extends WingsBaseTest {
   public void shouldLogEligibleDelegatesToExecuteTask() {
     String taskId = generateUuid();
     String accountId = generateUuid();
-    String delegateId = generateUuid();
-    delegateSelectionLogsService.logEligibleDelegatesToExecuteTask(Sets.newHashSet(delegateId), accountId, taskId);
+    String delegate = generateUuid();
+    Set<String> delegateIds = Sets.newHashSet(delegate);
+
+    delegateSelectionLogsService.logEligibleDelegatesToExecuteTask(delegateIds, accountId, taskId);
     List<DelegateSelectionLogParams> delegateSelectionLogParams =
         delegateSelectionLogsService.fetchTaskSelectionLogs(accountId, taskId);
 
     assertThat(delegateSelectionLogParams).isNotEmpty();
     assertThat(delegateSelectionLogParams.size()).isEqualTo(1);
     assertThat(delegateSelectionLogParams.get(0).getConclusion()).isEqualTo(SELECTED);
-    assertThat(delegateSelectionLogParams.get(0).getMessage()).startsWith(ELIGIBLE_DELEGATES);
+    assertThat(delegateSelectionLogParams.get(0).getMessage()).isEqualTo(ELIGIBLE_DELEGATES + " : " + delegateIds);
     assertThat(delegateSelectionLogParams.get(0).getEventTimestamp()).isNotNull();
+  }
+
+  @Test
+  @Owner(developers = JENNY)
+  @Category(UnitTests.class)
+  public void shouldNotLogEligibleDelegates() {
+    assertThatCode(() -> delegateSelectionLogsService.logEligibleDelegatesToExecuteTask(null, null, null))
+        .doesNotThrowAnyException();
+    assertThatCode(()
+                       -> delegateSelectionLogsService.logEligibleDelegatesToExecuteTask(
+                           Sets.newHashSet(), anyString(), anyString()))
+        .doesNotThrowAnyException();
   }
 
   @Test
@@ -194,32 +209,12 @@ public class DelegateSelectionLogsServiceImplTest extends WingsBaseTest {
   @Test
   @Owner(developers = JENNY)
   @Category(UnitTests.class)
-  public void shouldLogNoEligibleAvailableDelegates() {
-    String taskId = generateUuid();
-    String accountId = generateUuid();
-
-    delegateSelectionLogsService.logNoEligibleDelegatesToExecuteTask(accountId, taskId);
-  }
-
-  @Test
-  @Owner(developers = JENNY)
-  @Category(UnitTests.class)
   public void shouldNotGenerateSelectionLog() {
     String accountId = generateUuid();
     String taskId = generateUuid();
     when(featureFlagService.isEnabled(any(), anyString())).thenReturn(true);
     when(featureFlagService.isEnabled(DELEGATE_SELECTION_LOGS_DISABLED, accountId)).thenReturn(true);
     assertThat(persistence.get(DelegateSelectionLog.class, taskId)).isNull();
-  }
-
-  @Test
-  @Owner(developers = JENNY)
-  @Category(UnitTests.class)
-  public void shouldNotLogNoEligibleAvailableDelegates() {
-    assertThatCode(() -> delegateSelectionLogsService.logNoEligibleDelegatesToExecuteTask(null, null))
-        .doesNotThrowAnyException();
-    assertThatCode(() -> delegateSelectionLogsService.logNoEligibleDelegatesToExecuteTask(null, null))
-        .doesNotThrowAnyException();
   }
 
   @Test

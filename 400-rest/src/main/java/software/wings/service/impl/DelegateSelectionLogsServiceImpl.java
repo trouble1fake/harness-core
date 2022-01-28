@@ -31,6 +31,7 @@ import software.wings.service.intfc.DelegateService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.fabric8.utils.Lists;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,19 +66,18 @@ public class DelegateSelectionLogsServiceImpl implements DelegateSelectionLogsSe
   public static final String NO_ELIGIBLE_DELEGATES = "No eligible delegate(s) in account to execute task";
   public static final String ELIGIBLE_DELEGATES = "Delegate(s) eligible to execute task";
   public static final String BROADCASTING_DELEGATES = "Broadcasting to delegate(s)";
-  public static final String CAN_NOT_ASSIGN_TASK_GROUP =
-      "Cannot assign task due to unsupported task type for delegate(s)";
+  public static final String CAN_NOT_ASSIGN_TASK_GROUP = "Delegate(s) not supported for task type";
   public static final String CAN_NOT_ASSIGN_CG_NG_TASK_GROUP =
       "Cannot assign - CG task to CG Delegate only and NG task to NG delegate(s)";
-  public static final String CAN_NOT_ASSIGN_DELEGATE_SCOPE_GROUP =
-      "Cannot assign due to task abstraction value mismatch with delegate scope for delegate(s)";
-  public static final String CAN_NOT_ASSIGN_PROFILE_SCOPE_GROUP =
-      "Cannot assign due to profile scope mismatch with task for delegate(s)";
-  public static final String CAN_NOT_ASSIGN_SELECTOR_TASK_GROUP =
-      "Cannot assign due to mismatch in task selector(s) with selector(s) in delegate(s)";
+  public static final String CAN_NOT_ASSIGN_DELEGATE_SCOPE_GROUP = "Delegate scope(s) mismatched";
+  public static final String CAN_NOT_ASSIGN_PROFILE_SCOPE_GROUP = "Delegate profile scope(s) mismatched ";
+  public static final String CAN_NOT_ASSIGN_SELECTOR_TASK_GROUP = "No matching selector(s)";
   public static final String CAN_NOT_ASSIGN_OWNER = "Cannot match task owner with delegate owner";
   public static final String TASK_VALIDATION_FAILED =
       "No eligible delegate was able to confirm that it has the capability to execute ";
+
+  public static final List<String> selectionLogOrder =
+      Lists.newArrayList(SELECTED, NON_SELECTED, BROADCAST, ASSIGNED, REJECTED, INFO);
 
   @Override
   public void save(DelegateSelectionLog selectionLog) {
@@ -192,7 +192,15 @@ public class DelegateSelectionLogsServiceImpl implements DelegateSelectionLogsSe
                                                                .filter(DelegateSelectionLogKeys.accountId, accountId)
                                                                .filter(DelegateSelectionLogKeys.taskId, taskId)
                                                                .asList();
-    return delegateSelectionLogsList.stream().map(this::buildSelectionLogParams).collect(Collectors.toList());
+    Map<String, List<DelegateSelectionLog>> logs =
+        delegateSelectionLogsList.stream().collect(Collectors.groupingBy(DelegateSelectionLog::getConclusion));
+    List<DelegateSelectionLog> delegateSelectionLogList = new ArrayList<>();
+    for (String assessment : selectionLogOrder) {
+      if (logs.containsKey(assessment)) {
+        delegateSelectionLogList.addAll(logs.get(assessment));
+      }
+    }
+    return delegateSelectionLogList.stream().map(this::buildSelectionLogParams).collect(Collectors.toList());
   }
 
   @Override
@@ -227,7 +235,7 @@ public class DelegateSelectionLogsServiceImpl implements DelegateSelectionLogsSe
     DelegateSelectionLog delegateSelectionLog = persistence.createQuery(DelegateSelectionLog.class)
                                                     .filter(DelegateSelectionLogKeys.accountId, accountId)
                                                     .filter(DelegateSelectionLogKeys.taskId, taskId)
-                                                    .filter(DelegateSelectionLogKeys.conclusion, SELECTED)
+                                                    .filter(DelegateSelectionLogKeys.conclusion, ASSIGNED)
                                                     .get();
     if (delegateSelectionLog == null) {
       return Optional.empty();
