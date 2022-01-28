@@ -17,6 +17,7 @@ import io.harness.cvng.servicelevelobjective.beans.DayOfWeek;
 import io.harness.cvng.servicelevelobjective.beans.SLOCalenderType;
 import io.harness.cvng.servicelevelobjective.beans.SLOTargetType;
 import io.harness.cvng.servicelevelobjective.beans.ServiceLevelIndicatorType;
+import io.harness.data.structure.CollectionUtils;
 import io.harness.mongo.index.CompoundMongoIndex;
 import io.harness.mongo.index.MongoIndex;
 import io.harness.ng.DbAliases;
@@ -87,6 +88,16 @@ public class ServiceLevelObjective
   private Double sloTargetPercentage;
   public ZoneOffset getZoneOffset() {
     return ZoneOffset.UTC; // hardcoding it to UTC for now. We need to ask it from user.
+  }
+
+  public int getActiveErrorBudgetMinutes(List<Double> errorBudgetIncrementPercentages, LocalDateTime currentDateTime) {
+    int errorBudgetMinutes = getTotalErrorBudgetMinutes(currentDateTime);
+    return CollectionUtils.emptyIfNull(errorBudgetIncrementPercentages)
+               .stream()
+               .map(incrementPercentage -> (errorBudgetMinutes * incrementPercentage) / 100)
+               .mapToInt(minutes -> minutes.intValue())
+               .sum()
+        + errorBudgetMinutes;
   }
 
   public int getTotalErrorBudgetMinutes(LocalDateTime currentDateTime) {

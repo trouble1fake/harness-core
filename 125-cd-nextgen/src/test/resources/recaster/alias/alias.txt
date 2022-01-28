@@ -1,5 +1,4 @@
 io.harness.cdng.k8s.K8sCanaryStepParameters
-io.harness.ngpipeline.status.BuildStatusUpdateParameter
 io.harness.cdng.provision.terraform.TerraformStepConfigurationParameters
 io.harness.cdng.infra.yaml.K8sGcpInfrastructure
 io.harness.cdng.provision.terraform.steps.rolllback.TerraformRollbackStepInfo
@@ -230,3 +229,5 @@ io.harness.steps.approval.step.servicenow.ServiceNowApprovalOutcome
 io.harness.steps.approval.step.servicenow.ServiceNowApprovalSpecParameters
 io.harness.steps.approval.step.servicenow.ServiceNowApprovalStepInfo
 io.harness.cdng.creator.plan.stage.DeploymentStageNode
+io.harness.steps.approval.stage.ApprovalStageNode
+io.harness.cf.pipeline.FeatureFlagStageNode

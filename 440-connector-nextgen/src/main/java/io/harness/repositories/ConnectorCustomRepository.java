@@ -59,5 +59,6 @@ public interface ConnectorCustomRepository {
 
   long count(Criteria criteria);
 
-  Connector update(Criteria criteria, Update update);
+  Connector update(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, Criteria criteria, Update update);
 }

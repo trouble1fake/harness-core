@@ -221,3 +221,5 @@ Gaurav Jain gaurav.jain@harness.io
 Trunapushpa trunapushpa.surkar@harness.io
 David Warren david.warren@harness.io
 Shivam Negi shivam.negi@harness.io
+Vitalie Safronovici vitalie.safronovici@harness.io
+

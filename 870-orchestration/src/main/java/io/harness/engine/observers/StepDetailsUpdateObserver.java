@@ -13,4 +13,5 @@ import io.harness.annotations.dev.OwnedBy;
 @OwnedBy(HarnessTeam.PIPELINE)
 public interface StepDetailsUpdateObserver {
   void onStepDetailsUpdate(StepDetailsUpdateInfo stepDetailsUpdateInfo);
+  void onStepInputsAdd(StepDetailsUpdateInfo stepDetailsUpdateInfo);
 }
