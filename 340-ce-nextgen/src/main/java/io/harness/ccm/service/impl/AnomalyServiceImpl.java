@@ -8,12 +8,14 @@
 package io.harness.ccm.service.impl;
 
 import io.harness.ccm.budget.utils.BudgetUtils;
+import io.harness.ccm.commons.constants.AnomalyFieldConstants;
 import io.harness.ccm.commons.dao.anomaly.AnomalyDao;
 import io.harness.ccm.commons.entities.anomaly.AnomalyData;
 import io.harness.ccm.commons.entities.anomaly.AnomalyFeedback;
 import io.harness.ccm.commons.entities.anomaly.AnomalyQueryDTO;
 import io.harness.ccm.commons.entities.anomaly.PerspectiveAnomalyData;
 import io.harness.ccm.commons.utils.AnomalyQueryBuilder;
+import io.harness.ccm.commons.utils.TimeUtils;
 import io.harness.ccm.graphql.dto.perspectives.PerspectiveQueryDTO;
 import io.harness.ccm.service.intf.AnomalyService;
 import io.harness.timescaledb.tables.pojos.Anomalies;
@@ -34,6 +36,9 @@ public class AnomalyServiceImpl implements AnomalyService {
 
   private static final Integer DEFAULT_LIMIT = 100;
   private static final Integer DEFAULT_OFFSET = 0;
+  private static final String ANOMALY_RELATIVE_TIME_TEMPLATE = "since %s %s";
+  private static final String STATUS_RELATIVE_TIME_TEMPLATE = "%s %s ago";
+  private static final String SEPARATOR = "/";
 
   @Override
   public List<AnomalyData> listAnomalies(@NonNull String accountIdentifier, AnomalyQueryDTO anomalyQuery) {
@@ -73,12 +78,16 @@ public class AnomalyServiceImpl implements AnomalyService {
     return AnomalyData.builder()
         .id(anomaly.getId())
         .time(anomalyTime)
-        .anomalyRelativeTime(getAnomalyRelativeTime(anomalyTime))
+        .anomalyRelativeTime(getRelativeTime(anomalyTime, ANOMALY_RELATIVE_TIME_TEMPLATE))
         .actualAmount(anomaly.getActualcost())
         .expectedAmount(anomaly.getExpectedcost())
         .trend(getAnomalyTrend(anomaly.getActualcost(), anomaly.getExpectedcost()))
         .resourceName(getResourceName(anomaly))
         .resourceInfo(getResourceInfo(anomaly))
+        // Todo : Remove default assignment when status column is added to anomaly table
+        .status("Open")
+        .statusRelativeTime(getRelativeTime(anomalyTime, STATUS_RELATIVE_TIME_TEMPLATE))
+        .cloudProvider(getCloudProvider(anomaly))
         .build();
   }
 
@@ -94,8 +103,19 @@ public class AnomalyServiceImpl implements AnomalyService {
         .build();
   }
 
-  private String getAnomalyRelativeTime(long anomalyTime) {
-    return "";
+  private String getRelativeTime(long anomalyTime, String template) {
+    long currentTime = System.currentTimeMillis();
+    long timeDiff = currentTime - anomalyTime;
+    long days = timeDiff / TimeUtils.ONE_DAY_MILLIS;
+    if (days != 0) {
+      return days > 1 ? String.format(template, days, "days") : String.format(template, 1, "day");
+    }
+    long hours = timeDiff / TimeUtils.ONE_HOUR_MILLIS;
+    if (hours != 0) {
+      return hours > 1 ? String.format(template, days, "hours") : String.format(template, 1, "hour");
+    }
+    long minutes = timeDiff / TimeUtils.ONE_MINUTE_MILLIS;
+    return minutes > 1 ? String.format(template, minutes, "minutes") : String.format(template, 1, "minute");
   }
 
   private Double getAnomalyTrend(Double actualCost, Double expectedCost) {
@@ -103,10 +123,48 @@ public class AnomalyServiceImpl implements AnomalyService {
   }
 
   private String getResourceName(Anomalies anomaly) {
+    StringBuilder builder = new StringBuilder();
+    if (anomaly.getClustername() != null) {
+      builder.append(anomaly.getClustername());
+      if (anomaly.getNamespace() != null) {
+        builder.append(SEPARATOR);
+        builder.append(anomaly.getNamespace());
+      }
+      if (anomaly.getWorkloadname() != null) {
+        builder.append(SEPARATOR);
+        builder.append(anomaly.getWorkloadname());
+      }
+      return builder.toString();
+    }
     return "";
   }
 
   private String getResourceInfo(Anomalies anomaly) {
+    StringBuilder builder = new StringBuilder();
+    if (anomaly.getClustername() != null) {
+      builder.append(AnomalyFieldConstants.CLUSTER);
+      if (anomaly.getNamespace() != null) {
+        builder.append(SEPARATOR);
+        builder.append(AnomalyFieldConstants.NAMESPACE);
+      }
+      if (anomaly.getWorkloadname() != null) {
+        builder.append(SEPARATOR);
+        builder.append(AnomalyFieldConstants.WORKLOAD);
+      }
+      return builder.toString();
+    }
+
+    return "";
+  }
+
+  private String getCloudProvider(Anomalies anomaly) {
+    if (anomaly.getClustername() != null) {
+      return AnomalyFieldConstants.CLUSTER.toUpperCase();
+    } else if (anomaly.getAwsaccount() != null) {
+      return AnomalyFieldConstants.AWS;
+    } else if (anomaly.getGcpproject() != null) {
+      return AnomalyFieldConstants.GCP;
+    }
     return "";
   }
 

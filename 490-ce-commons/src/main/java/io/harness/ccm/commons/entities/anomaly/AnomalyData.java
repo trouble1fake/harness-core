@@ -31,6 +31,7 @@ public class AnomalyData {
   String status;
   String statusRelativeTime;
   String comment;
+  String cloudProvider;
   Double anomalyScore;
   AnomalyFeedback userFeedback;
 }

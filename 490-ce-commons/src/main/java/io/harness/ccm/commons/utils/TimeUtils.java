@@ -18,6 +18,10 @@ import lombok.NonNull;
 
 @Singleton
 public class TimeUtils {
+  public static final long ONE_DAY_MILLIS = 86400000L;
+  public static final long ONE_HOUR_MILLIS = 3600000L;
+  public static final long ONE_MINUTE_MILLIS = 60000L;
+
   public Calendar getDefaultCalendar() {
     return Calendar.getInstance(TIME_ZONE);
   }
