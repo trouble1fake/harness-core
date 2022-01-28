@@ -18,6 +18,7 @@ import java.util.List;
 
 public interface CEViewService {
   CEView save(CEView ceView);
+  CEView clone(String accountId, String perspectiveId, String clonePerspectiveName);
 
   double getActualCostForPerspectiveBudget(String accountId, String perspectiveId);
 

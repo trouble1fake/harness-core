@@ -52,6 +52,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
@@ -309,5 +310,31 @@ public class PerspectiveResource {
     budgetService.deleteBudgetsForPerspective(accountId, perspectiveId);
 
     return ResponseDTO.newResponse("Successfully deleted the view");
+  }
+
+  @POST
+  @Path("clone/{perspectiveId}")
+  @Timed
+  @ExceptionMetered
+  @Consumes(MediaType.APPLICATION_JSON)
+  @ApiOperation(value = "Clone perspective", nickname = "clonePerspective")
+  @FeatureRestrictionCheck(FeatureRestrictionName.PERSPECTIVES)
+  @LogAccountIdentifier
+  @Operation(operationId = "clonePerspective", description = "Clone the Perspective corresponding to the identifier.",
+      summary = "Create a Perspective",
+      responses =
+      {
+        @io.swagger.v3.oas.annotations.responses.
+        ApiResponse(description = "Returns the cloned CEView object with all the rules and filters",
+            content = { @Content(mediaType = MediaType.APPLICATION_JSON) })
+      })
+  public ResponseDTO<CEView>
+  create(@Parameter(required = true, description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
+             NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier @NotNull @Valid String accountId,
+      @Parameter(required = true, description = "Unique identifier for the Perspective") @PathParam(
+          "perspectiveId") String perspectiveId,
+      @Valid @NotNull @Parameter(required = true, description = "Name for the Perspective clone") @QueryParam(
+          "cloneName") String cloneName) {
+    return ResponseDTO.newResponse(updateTotalCost(ceViewService.clone(accountId, perspectiveId, cloneName)));
   }
 }

@@ -110,6 +110,17 @@ public class CEViewServiceImpl implements CEViewService {
   }
 
   @Override
+  public CEView clone(String accountId, String perspectiveId, String clonePerspectiveName) {
+    CEView view = get(perspectiveId);
+    view.setName(clonePerspectiveName);
+    view.setCreatedBy(null);
+    view.setCreatedAt(0);
+    view.setUuid(null);
+    view.setViewType(ViewType.CUSTOMER);
+    return save(view);
+  }
+
+  @Override
   public Double getLastMonthCostForPerspective(String accountId, String perspectiveId) {
     if (this.get(perspectiveId) == null) {
       throw new InvalidRequestException(BudgetUtils.INVALID_PERSPECTIVE_ID_EXCEPTION);
