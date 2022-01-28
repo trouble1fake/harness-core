@@ -142,7 +142,7 @@ public abstract class GenericStepPMSPlanCreator implements PartialPlanCreator<St
                     .build())
             .skipUnresolvedExpressionsCheck(stepElement.getStepSpecType().skipUnresolvedExpressionsCheck())
             .build();
-    return PlanCreationResponse.builder().node(stepPlanNode.getUuid(), stepPlanNode).build();
+    return PlanCreationResponse.builder().planNode(stepPlanNode).build();
   }
 
   public static boolean containsOnlyAllErrorsInSomeConfig(List<FailureStrategyConfig> stageFailureStrategies) {

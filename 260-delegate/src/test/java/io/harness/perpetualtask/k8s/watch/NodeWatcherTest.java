@@ -82,15 +82,16 @@ public class NodeWatcherTest extends CategoryTest {
   private static final UrlPattern NODE_URL_MATCHING = urlMatching("^/api/v1/nodes.*");
 
   @Captor ArgumentCaptor<Map<String, String>> mapArgumentCaptor;
-  @Rule public WireMockRule wireMockRule = new WireMockRule(65223);
+  @Rule public WireMockRule wireMockRule = new WireMockRule(0);
 
   @Before
   public void setUp() throws Exception {
-    ApiClient apiClient = new ClientBuilder().setBasePath("http://localhost:" + wireMockRule.port()).build();
+    ApiClient apiClient =
+        new ClientBuilder().setBasePath("http://localhost:" + wireMockRule.port()).build().setReadTimeout(0);
 
     eventPublisher = mock(EventPublisher.class);
 
-    sharedInformerFactory = new SharedInformerFactory();
+    sharedInformerFactory = new SharedInformerFactory(apiClient);
     nodeWatcher = new NodeWatcher(apiClient,
         ClusterDetails.builder()
             .clusterName("clusterName")

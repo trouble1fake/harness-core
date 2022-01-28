@@ -11,6 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.PL;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cache.HarnessCacheManager;
+import io.harness.security.encryption.EncryptedRecordData;
 import io.harness.version.VersionInfoManager;
 
 import software.wings.beans.ApiKeyEntry;
@@ -30,6 +31,7 @@ import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import javax.cache.Cache;
 import javax.cache.expiry.AccessedExpiryPolicy;
+import javax.cache.expiry.CreatedExpiryPolicy;
 import javax.cache.expiry.Duration;
 
 @OwnedBy(PL)
@@ -44,6 +46,7 @@ public class ManagerCacheRegistrar extends AbstractModule {
   public static final String APIKEY_RESTRICTION_CACHE = "apiKeyRestrictionCache";
   public static final String WHITELIST_CACHE = "whitelistCache";
   public static final String PRIMARY_CACHE_PREFIX = "primary_";
+  public static final String SECRET_TOKEN_CACHE = "secretTokenCache";
 
   @Provides
   @Named(AUTH_TOKEN_CACHE)
@@ -115,6 +118,15 @@ public class ManagerCacheRegistrar extends AbstractModule {
         AccessedExpiryPolicy.factoryOf(Duration.ONE_HOUR), versionInfoManager.getVersionInfo().getBuildNo());
   }
 
+  @Provides
+  @Named(SECRET_TOKEN_CACHE)
+  @Singleton
+  public Cache<String, EncryptedRecordData> getSecretTokenCache(
+      HarnessCacheManager harnessCacheManager, VersionInfoManager versionInfoManager) {
+    return harnessCacheManager.getCache(SECRET_TOKEN_CACHE, String.class, EncryptedRecordData.class,
+        CreatedExpiryPolicy.factoryOf(Duration.TEN_MINUTES), versionInfoManager.getVersionInfo().getBuildNo());
+  }
+
   @Override
   protected void configure() {
     registerRequiredBindings();
@@ -141,6 +153,8 @@ public class ManagerCacheRegistrar extends AbstractModule {
     }, Names.named(APIKEY_RESTRICTION_CACHE)));
     mapBinder.addBinding(WHITELIST_CACHE).to(Key.get(new TypeLiteral<Cache<String, WhitelistConfig>>() {
     }, Names.named(WHITELIST_CACHE)));
+    mapBinder.addBinding(SECRET_TOKEN_CACHE).to(Key.get(new TypeLiteral<Cache<String, EncryptedRecordData>>() {
+    }, Names.named(SECRET_TOKEN_CACHE)));
   }
 
   private void registerRequiredBindings() {

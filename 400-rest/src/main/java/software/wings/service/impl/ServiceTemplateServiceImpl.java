@@ -436,7 +436,7 @@ public class ServiceTemplateServiceImpl implements ServiceTemplateService {
   }
 
   private void populateKustomizePatches(ServiceTemplate serviceTemplate) {
-    if (featureFlagService.isEnabled(FeatureName.VARIABLE_SUPPORT_FOR_KUSTOMIZE, serviceTemplate.getAccountId())) {
+    if (featureFlagService.isEnabled(FeatureName.KUSTOMIZE_PATCHES_CG, serviceTemplate.getAccountId())) {
       ApplicationManifest kustomizePatchesManifest =
           applicationManifestService.getAppManifest(serviceTemplate.getAppId(), serviceTemplate.getEnvId(),
               serviceTemplate.getServiceId(), AppManifestKind.KUSTOMIZE_PATCHES);
