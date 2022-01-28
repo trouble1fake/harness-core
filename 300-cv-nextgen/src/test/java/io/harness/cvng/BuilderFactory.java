@@ -89,6 +89,8 @@ import io.harness.cvng.dashboard.entities.HeatMap.HeatMapRisk;
 import io.harness.cvng.servicelevelobjective.beans.ErrorBudgetRisk;
 import io.harness.cvng.servicelevelobjective.beans.SLIMetricType;
 import io.harness.cvng.servicelevelobjective.beans.SLIMissingDataType;
+import io.harness.cvng.servicelevelobjective.beans.SLOErrorBudgetResetDTO;
+import io.harness.cvng.servicelevelobjective.beans.SLOErrorBudgetResetDTO.SLOErrorBudgetResetDTOBuilder;
 import io.harness.cvng.servicelevelobjective.beans.SLOTarget;
 import io.harness.cvng.servicelevelobjective.beans.SLOTargetType;
 import io.harness.cvng.servicelevelobjective.beans.ServiceLevelIndicatorDTO;
@@ -702,6 +704,13 @@ public class BuilderFactory {
         .healthSourceRef("healthSourceIdentifier")
         .monitoredServiceRef(context.serviceIdentifier + "_" + context.getEnvIdentifier())
         .userJourneyRef("userJourney");
+  }
+
+  public SLOErrorBudgetResetDTOBuilder getSLOErrorBudgetResetDTOBuilder() {
+    return SLOErrorBudgetResetDTO.builder()
+        .serviceLevelObjectiveIdentifier("slo")
+        .errorBudgetIncrementPercentage(10.0)
+        .reason("reason");
   }
 
   public ServiceLevelObjectiveBuilder getServiceLevelObjectiveBuilder() {

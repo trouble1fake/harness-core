@@ -2,7 +2,7 @@
 #
 # Build the ci-scm docker image using:
 # > bazel build --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 //product/ci/scm/...
-# > docker build -t harness/ci-scm:<tag> -f product/ci/scm/Dockerfile $(bazel info bazel-bin)/product/ci/scm/
+# > docker build -t harness/ci-scm:<tag> -f product/ci/scm/docker/Dockerfile $(bazel info bazel-bin)/product/ci/scm/
 
 # First stage
 FROM alpine:3.12

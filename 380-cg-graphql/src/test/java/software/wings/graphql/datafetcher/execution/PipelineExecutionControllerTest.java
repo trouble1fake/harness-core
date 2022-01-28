@@ -65,7 +65,9 @@ import software.wings.beans.Service;
 import software.wings.beans.Variable;
 import software.wings.beans.VariableType;
 import software.wings.beans.WorkflowExecution;
+import software.wings.beans.appmanifest.ApplicationManifest;
 import software.wings.beans.appmanifest.HelmChart;
+import software.wings.beans.appmanifest.StoreType;
 import software.wings.beans.artifact.Artifact;
 import software.wings.beans.artifact.ArtifactStream;
 import software.wings.beans.artifact.CustomArtifactStream;
@@ -96,6 +98,7 @@ import software.wings.graphql.schema.type.QLPipelineExecution;
 import software.wings.graphql.schema.type.QLPipelineExecution.QLPipelineExecutionBuilder;
 import software.wings.infra.InfrastructureDefinition;
 import software.wings.service.impl.security.auth.AuthHandler;
+import software.wings.service.intfc.ApplicationManifestService;
 import software.wings.service.intfc.ArtifactService;
 import software.wings.service.intfc.ArtifactStreamService;
 import software.wings.service.intfc.AuthService;
@@ -140,6 +143,7 @@ public class PipelineExecutionControllerTest extends WingsBaseTest {
   @Mock ArtifactService artifactService;
   @Mock ArtifactStreamService artifactStreamService;
   @Mock HelmChartService helmChartService;
+  @Mock ApplicationManifestService applicationManifestService;
   @Inject @InjectMocks PipelineExecutionController pipelineExecutionController = new PipelineExecutionController();
 
   private static final String ENVIRONMENT_DEV_ID = "ENV_DEV_ID";
@@ -1051,6 +1055,8 @@ public class PipelineExecutionControllerTest extends WingsBaseTest {
         .thenReturn(HelmChart.builder().uuid(HELM_CHART_ID).build());
     when(helmChartService.get(APP_ID, HELM_CHART_ID + 2))
         .thenReturn(HelmChart.builder().uuid(HELM_CHART_ID + 2).build());
+    when(applicationManifestService.getAppManifestByName(APP_ID, null, SERVICE_ID, APP_MANIFEST_NAME))
+        .thenReturn(ApplicationManifest.builder().storeType(StoreType.HelmChartRepo).build());
 
     QLStartExecutionPayload startExecutionPayload =
         pipelineExecutionController.startPipelineExecution(qlStartExecutionInput, MutationContext.builder().build());
@@ -1136,6 +1142,8 @@ public class PipelineExecutionControllerTest extends WingsBaseTest {
         .thenReturn(HelmChart.builder().uuid(HELM_CHART_ID).build());
     when(helmChartService.get(APP_ID, HELM_CHART_ID + 2))
         .thenReturn(HelmChart.builder().uuid(HELM_CHART_ID + 2).build());
+    when(applicationManifestService.getAppManifestByName(APP_ID, null, SERVICE_ID, APP_MANIFEST_NAME))
+        .thenReturn(ApplicationManifest.builder().storeType(StoreType.HelmChartRepo).build());
 
     assertThatThrownBy(()
                            -> pipelineExecutionController.startPipelineExecution(

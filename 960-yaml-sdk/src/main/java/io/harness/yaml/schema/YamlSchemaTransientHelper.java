@@ -54,7 +54,7 @@ public class YamlSchemaTransientHelper {
     }
   };
 
-  public static final Set<String> allV2Stages = ImmutableSet.of("Deployment", "Approval", "CI");
+  public static final Set<String> allV2Stages = ImmutableSet.of("Deployment", "Approval", "CI", "FeatureFlag");
 
   public void deleteSpecNodeInStageElementConfig(JsonNode stageElementConfig) {
     JsonNodeUtils.deletePropertiesInJsonNode((ObjectNode) stageElementConfig.get(PROPERTIES_NODE), "spec");

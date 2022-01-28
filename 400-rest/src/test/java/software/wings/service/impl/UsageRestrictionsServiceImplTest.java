@@ -22,6 +22,7 @@ import static software.wings.security.EnvFilter.FilterType.PROD;
 import static software.wings.security.EnvFilter.FilterType.SELECTED;
 import static software.wings.security.PermissionAttribute.PermissionType.ALL_APP_ENTITIES;
 import static software.wings.security.PermissionAttribute.PermissionType.ENV;
+import static software.wings.service.intfc.UsageRestrictionsService.UsageRestrictionsClient.ALL;
 import static software.wings.utils.WingsTestConstants.ACCOUNT_ID;
 import static software.wings.utils.WingsTestConstants.APP_ID;
 import static software.wings.utils.WingsTestConstants.ENTITY_ID;
@@ -1167,8 +1168,8 @@ public class UsageRestrictionsServiceImplTest extends CategoryTest {
 
     when(appService.exist(APP_ID_1)).thenReturn(false);
 
-    int count = usageRestrictionsService.purgeDanglingAppEnvReferences(ACCOUNT_ID);
-    assertThat(count).isEqualTo(1);
+    int count = usageRestrictionsService.purgeDanglingAppEnvReferences(ACCOUNT_ID, ALL);
+    assertThat(count).isEqualTo(2);
     assertThat(usageRestrictions.getAppEnvRestrictions()).isEmpty();
     verify(settingsService, times(1)).updateUsageRestrictionsInternal(anyString(), any(UsageRestrictions.class));
   }

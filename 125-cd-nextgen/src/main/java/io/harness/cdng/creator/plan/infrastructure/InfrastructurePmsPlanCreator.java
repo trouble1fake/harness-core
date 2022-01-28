@@ -10,7 +10,6 @@ package io.harness.cdng.creator.plan.infrastructure;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.advisers.RollbackCustomAdviser;
-import io.harness.cdng.creator.plan.CDPlanCreatorUtils;
 import io.harness.cdng.creator.plan.PlanCreatorConstants;
 import io.harness.cdng.creator.plan.stage.DeploymentStageConfig;
 import io.harness.cdng.infra.steps.InfraSectionStepParameters;
@@ -234,26 +233,18 @@ public class InfrastructurePmsPlanCreator {
     YamlField infraDefField = infraField.getNode().getField(YamlTypes.INFRASTRUCTURE_DEF);
     YamlField provisionerYamlField = infraDefField.getNode().getField(YAMLFieldNameConstants.PROVISIONER);
     YamlField stepsYamlField = provisionerYamlField.getNode().getField(YAMLFieldNameConstants.STEPS);
-    List<YamlNode> stepYamlNodes = stepsYamlField.getNode().asArray();
 
     // Add each step dependency
     LinkedHashMap<String, PlanCreationResponse> responseMap = new LinkedHashMap<>();
-    List<YamlField> stepYamlFields = PlanCreatorUtils.getStepYamlFields(stepYamlNodes);
-    for (YamlField stepYamlField : stepYamlFields) {
-      Map<String, YamlField> stepYamlFieldMap = new HashMap<>();
-      stepYamlFieldMap.put(stepYamlField.getNode().getUuid(), stepYamlField);
-      responseMap.put(stepYamlField.getNode().getUuid(),
-          PlanCreationResponse.builder().dependencies(DependenciesUtils.toDependenciesProto(stepYamlFieldMap)).build());
-    }
 
-    // Add Steps Node
-    PlanNode stepsNode = CDPlanCreatorUtils.getCdStepsNode(
-        stepsYamlField.getNode().getUuid(), stepYamlFields.get(0).getNode().getUuid(), "Provisioner Steps Element");
-    responseMap.put(stepsNode.getUuid(), PlanCreationResponse.builder().node(stepsNode.getUuid(), stepsNode).build());
+    Map<String, YamlField> stepsYamlFieldMap = new HashMap<>();
+    stepsYamlFieldMap.put(stepsYamlField.getNode().getUuid(), stepsYamlField);
+    responseMap.put(stepsYamlField.getNode().getUuid(),
+        PlanCreationResponse.builder().dependencies(DependenciesUtils.toDependenciesProto(stepsYamlFieldMap)).build());
 
     // Add provisioner Node
-    PlanNode provisionerPlanNode =
-        getProvisionerPlanNode(provisionerYamlField, stepsNode.getUuid(), infraStepNodeId, kryoSerializer);
+    PlanNode provisionerPlanNode = getProvisionerPlanNode(
+        provisionerYamlField, stepsYamlField.getNode().getUuid(), infraStepNodeId, kryoSerializer);
     responseMap.put(provisionerPlanNode.getUuid(),
         PlanCreationResponse.builder().node(provisionerPlanNode.getUuid(), provisionerPlanNode).build());
 
