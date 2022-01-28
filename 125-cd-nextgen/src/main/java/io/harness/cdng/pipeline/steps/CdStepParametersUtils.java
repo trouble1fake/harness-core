@@ -15,6 +15,7 @@ import io.harness.cdng.pipeline.CdAbstractStepNode;
 import io.harness.common.ParameterFieldHelper;
 import io.harness.data.structure.CollectionUtils;
 import io.harness.plancreator.steps.common.StageElementParameters;
+import io.harness.plancreator.steps.common.StageElementParameters.StageElementParametersBuilder;
 import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.plancreator.steps.common.StepElementParameters.StepElementParametersBuilder;
 import io.harness.pms.tags.TagUtils;
@@ -43,11 +44,10 @@ public class CdStepParametersUtils {
     return stepBuilder;
   }
 
-  public StageElementParameters.StageElementParametersBuilder getStageParameters(
-      DeploymentAbstractStageNode stageNode) {
+  public StageElementParametersBuilder getStageParameters(DeploymentAbstractStageNode stageNode) {
     TagUtils.removeUuidFromTags(stageNode.getTags());
 
-    StageElementParameters.StageElementParametersBuilder stageBuilder = StageElementParameters.builder();
+    StageElementParametersBuilder stageBuilder = StageElementParameters.builder();
     stageBuilder.name(stageNode.getName());
     stageBuilder.identifier(stageNode.getIdentifier());
     stageBuilder.description(ParameterFieldHelper.getParameterFieldHandleValueNull(stageNode.getDescription()));
