@@ -5016,7 +5016,7 @@ plain_artifacts = [
     "io.swagger.core.v3:swagger-models:2.1.2",
     "io.swagger.core.v3:swagger-integration:2.1.2",
     "com.google.code.gson:gson:2.8.6",
-    "org.jetbrains.kotlin:kotlin-stdlib:1.3.72",
+#    "org.jetbrains.kotlin:kotlin-stdlib:1.3.72",
     "au.com.dius:pact-jvm-provider-junit5_2.12:3.5.24",
 ]
 
@@ -5161,8 +5161,10 @@ maven_install(
 #        maven_test_artifact("au.com.dius:pact-jvm-provider-junit5_2.12:3.5.24"),
 #        maven_test_artifact("org.jetbrains.kotlin:kotlin-stdlib:1.3.72"),
 #        maven_test_artifact("au.com.dius.pact:consumer:4.3.4"),
-#        maven_test_artifact("au.com.dius.pact.core:model:4.3.4"),
-#        maven_test_artifact("au.com.dius:pact-jvm-consumer-java8_2.12:3.5.21")
+##        maven_test_artifact("au.com.dius.pact.core:model:4.3.4"),
+#        maven_test_artifact("au.com.dius:pact-jvm-consumer-junit_2.11:3.5.0"),
+#        maven_test_artifact("au.com.dius:pact-jvm-consumer-junit5:4.0.9"),
+#        maven_test_artifact("au.com.dius:pact-jvm-consumer-java8:4.0.9"),
     ],
     excluded_artifacts = [],
     maven_install_json = "//project:main_maven_install.json",

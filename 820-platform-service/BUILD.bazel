@@ -379,7 +379,7 @@ java_binary(
         "@maven//:ru_vyarus_guice_validator",
         "@maven//:software_amazon_ion_ion_java",
 #        "@maven//:com_google_code_gson_gson",
-        "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
+#        "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
     ],
 )
 
@@ -765,12 +765,14 @@ java_library(
         "@maven//:ru_vyarus_guice_validator",
         "@maven//:software_amazon_ion_ion_java",
         "@maven//:au_com_dius_pact_jvm_consumer_junit",
+#        "@maven//:au_com_dius_pact_jvm_consumer_junit_2_11",
 #        "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
 #        "@maven//:au_com_dius_pact_consumer",
 #        "@maven//:au_com_dius_pact_core_model",
 #        "@maven//:au_com_dius_pact_jvm_consumer_java8_2_12"
 #        "@maven//:au_com_dius_pact_jvm_consumer_junit_2_12"
-
+#        "@maven//:au_com_dius_pact_jvm_consumer_junit5",
+#        "@maven//:au_com_dius_pact_jvm_consumer_java8",
     ],
 )
 

@@ -23,12 +23,15 @@
     <logger name="org.zeroturnaround" level="WARN"/>
     <logger name="au.com.dius.consumer" level="DEBUG"/>
     <logger name="au.com.dius.pact.core" level="DEBUG"/>
+    <root level="${LOGGING_LEVEL:-DEBUG}">
+        <appender-ref ref="stdout"/>
+    </root>
 
 
     <root level="${LOGGING_LEVEL:-INFO}">
         <appender-ref ref="stdout"/>
     </root>
-    <root level="${LOGGING_LEVEL:-DEBUG}">
+    <root level="DEBUG">
         <appender-ref ref="CONSOLE"/>
     </root>
 
