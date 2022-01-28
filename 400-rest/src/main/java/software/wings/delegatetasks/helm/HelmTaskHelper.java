@@ -352,7 +352,7 @@ public class HelmTaskHelper {
   }
 
   public void addRepo(String repoName, String repoDisplayName, String chartRepoUrl, String username, char[] password,
-                      String chartDirectory, HelmVersion helmVersion, long timeoutInMillis, String tempDir) {
+      String chartDirectory, HelmVersion helmVersion, long timeoutInMillis, String tempDir) {
     helmTaskHelperBase.addRepo(repoName, repoDisplayName, chartRepoUrl, username, password, chartDirectory, helmVersion,
         timeoutInMillis, tempDir);
   }
