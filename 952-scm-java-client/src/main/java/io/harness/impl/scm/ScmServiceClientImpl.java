@@ -646,8 +646,6 @@ public class ScmServiceClientImpl implements ScmServiceClient {
       request.setPagination(PageRequest.newBuilder().setPage(response.getPagination().getNext()).build());
     } while (response.getPagination().getNext() != 0);
 
-    log.info("CompareCommits Response from SCM: {}", response);
-
     return CompareCommitsResponse.newBuilder().addAllFiles(prFiles).build();
   }
 
