@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+
 import org.hibernate.validator.constraints.NotEmpty;
 import ru.vyarus.guice.validator.group.annotation.ValidationGroups;
 
@@ -188,5 +190,5 @@ public interface PipelineService extends OwnedByApplication {
    */
   void savePipelines(@NotEmpty List<Pipeline> pipelines, boolean skipValidations);
 
-  Set<String> getUserGroups(@NotEmpty Pipeline pipeline);
+  Set<String> getUserGroups(Pipeline pipeline);
 }
