@@ -521,7 +521,7 @@ public class NGTemplateServiceImpl implements NGTemplateService {
                             .is(templateEntity.getProjectIdentifier())
                             .and(TemplateEntityKeys.identifier)
                             .is(templateEntity.getIdentifier())
-                            .and(TemplateEntityKeys.version)
+                            .and(TemplateEntityKeys.versionLabel)
                             .is(templateEntity.getVersionLabel());
 
     GitEntityFilePath gitEntityFilePath = GitSyncSdkUtils.getRootFolderAndFilePath(newFilePath);
