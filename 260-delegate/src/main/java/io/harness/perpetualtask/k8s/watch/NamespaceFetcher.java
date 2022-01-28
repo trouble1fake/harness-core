@@ -7,8 +7,6 @@
 
 package io.harness.perpetualtask.k8s.watch;
 
-import static io.harness.perpetualtask.k8s.utils.ResourceVersionMatch.NOT_OLDER_THAN;
-
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
@@ -41,7 +39,7 @@ public class NamespaceFetcher {
         sharedInformerFactory
             .sharedIndexInformerFor((CallGeneratorParams callGeneratorParams)
                                         -> this.coreV1Api.listNamespaceCall(null, null, null, null, null, null,
-                                            callGeneratorParams.resourceVersion, NOT_OLDER_THAN,
+                                            callGeneratorParams.resourceVersion, null,
                                             callGeneratorParams.timeoutSeconds, callGeneratorParams.watch, null),
                 V1Namespace.class, V1NamespaceList.class)
             .getIndexer();
