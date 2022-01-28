@@ -13,26 +13,33 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.creator.plan.infrastructure.InfrastructurePmsPlanCreator;
 import io.harness.cdng.pipeline.PipelineInfrastructure;
 import io.harness.cdng.pipeline.beans.DeploymentStageStepParameters;
+import io.harness.cdng.pipeline.steps.CdStepParametersUtils;
 import io.harness.cdng.pipeline.steps.DeploymentStageStep;
 import io.harness.cdng.visitor.YamlTypes;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.exception.InvalidRequestException;
-import io.harness.plancreator.stages.GenericStagePlanCreatorV2;
-import io.harness.plancreator.stages.stage.AbstractStageNode;
+import io.harness.plancreator.stages.AbstractStagePlanCreator;
 import io.harness.plancreator.steps.GenericStepPMSPlanCreator;
 import io.harness.plancreator.steps.common.SpecParameters;
+import io.harness.plancreator.steps.common.StageElementParameters;
 import io.harness.plancreator.utils.CommonPlanCreatorUtils;
+import io.harness.pms.contracts.facilitators.FacilitatorObtainment;
+import io.harness.pms.contracts.facilitators.FacilitatorType;
 import io.harness.pms.contracts.plan.Dependencies;
 import io.harness.pms.contracts.plan.Dependency;
 import io.harness.pms.contracts.steps.StepType;
+import io.harness.pms.execution.OrchestrationFacilitatorType;
+import io.harness.pms.execution.utils.SkipInfoUtils;
 import io.harness.pms.sdk.core.plan.PlanNode;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationContext;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationResponse;
+import io.harness.pms.sdk.core.plan.creation.yaml.StepOutcomeGroup;
 import io.harness.pms.yaml.DependenciesUtils;
 import io.harness.pms.yaml.YAMLFieldNameConstants;
 import io.harness.pms.yaml.YamlField;
 import io.harness.pms.yaml.YamlNode;
 import io.harness.serializer.KryoSerializer;
+import io.harness.when.utils.RunInfoUtils;
 import io.harness.yaml.core.failurestrategy.FailureStrategyConfig;
 
 import com.google.common.base.Preconditions;
@@ -44,9 +51,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import lombok.SneakyThrows;
 
 @OwnedBy(CDC)
-public class DeploymentStagePMSPlanCreatorV2 extends GenericStagePlanCreatorV2<DeploymentStageNode> {
+public class DeploymentStagePMSPlanCreatorV2 extends AbstractStagePlanCreator<DeploymentStageNode> {
   @Inject private KryoSerializer kryoSerializer;
 
   @Override
@@ -67,6 +75,32 @@ public class DeploymentStagePMSPlanCreatorV2 extends GenericStagePlanCreatorV2<D
   @Override
   public Class<DeploymentStageNode> getFieldClass() {
     return DeploymentStageNode.class;
+  }
+
+  @SneakyThrows
+  @Override
+  public PlanNode createPlanForParentNode(
+      PlanCreationContext ctx, DeploymentStageNode stageNode, List<String> childrenNodeIds) {
+    StageElementParameters.StageElementParametersBuilder stageParameters =
+        CdStepParametersUtils.getStageParameters(stageNode);
+    YamlField specField =
+        Preconditions.checkNotNull(ctx.getCurrentField().getNode().getField(YAMLFieldNameConstants.SPEC));
+    stageParameters.specConfig(getSpecParameters(specField.getNode().getUuid(), ctx, stageNode));
+    return PlanNode.builder()
+        .uuid(stageNode.getUuid())
+        .name(stageNode.getName())
+        .identifier(stageNode.getIdentifier())
+        .group(StepOutcomeGroup.STAGE.name())
+        .stepParameters(stageParameters.build())
+        .stepType(getStepType(stageNode))
+        .skipCondition(SkipInfoUtils.getSkipCondition(stageNode.getSkipCondition()))
+        .whenCondition(RunInfoUtils.getRunCondition(stageNode.getWhen()))
+        .facilitatorObtainment(
+            FacilitatorObtainment.newBuilder()
+                .setType(FacilitatorType.newBuilder().setType(OrchestrationFacilitatorType.CHILD).build())
+                .build())
+        .adviserObtainments(getAdviserObtainmentFromMetaData(ctx.getCurrentField()))
+        .build();
   }
 
   public Dependencies getDependenciesForService(
@@ -171,7 +205,7 @@ public class DeploymentStagePMSPlanCreatorV2 extends GenericStagePlanCreatorV2<D
     return planCreationResponseMap;
   }
 
-  private void validateFailureStrategy(AbstractStageNode stageNode) {
+  private void validateFailureStrategy(DeploymentStageNode stageNode) {
     // Failure strategy should be present.
     List<FailureStrategyConfig> stageFailureStrategies = stageNode.getFailureStrategies();
     if (EmptyPredicate.isEmpty(stageFailureStrategies)) {

@@ -8,28 +8,21 @@
 package io.harness.plancreator.stages;
 
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
-import static io.harness.pms.yaml.YAMLFieldNameConstants.STAGES;
 
-import io.harness.advisers.nextstep.NextStepAdviserParameters;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.data.structure.EmptyPredicate;
-import io.harness.plancreator.stages.stage.AbstractStageNode;
 import io.harness.plancreator.steps.common.SpecParameters;
 import io.harness.plancreator.steps.common.StageElementParameters.StageElementParametersBuilder;
 import io.harness.plancreator.steps.common.StepParametersUtils;
-import io.harness.pms.contracts.advisers.AdviserObtainment;
-import io.harness.pms.contracts.advisers.AdviserType;
 import io.harness.pms.contracts.facilitators.FacilitatorObtainment;
 import io.harness.pms.contracts.facilitators.FacilitatorType;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.OrchestrationFacilitatorType;
 import io.harness.pms.execution.utils.SkipInfoUtils;
-import io.harness.pms.sdk.core.adviser.OrchestrationAdviserTypes;
 import io.harness.pms.sdk.core.plan.PlanNode;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationContext;
-import io.harness.pms.sdk.core.plan.creation.creators.ChildrenPlanCreator;
 import io.harness.pms.sdk.core.plan.creation.yaml.StepOutcomeGroup;
 import io.harness.pms.yaml.YAMLFieldNameConstants;
 import io.harness.pms.yaml.YamlField;
@@ -38,9 +31,6 @@ import io.harness.when.utils.RunInfoUtils;
 
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
-import com.google.protobuf.ByteString;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -49,7 +39,7 @@ import lombok.SneakyThrows;
 
 @OwnedBy(PIPELINE)
 @TargetModule(HarnessModule._882_PMS_SDK_CORE)
-public abstract class GenericStagePlanCreatorV2<T extends AbstractStageNode> extends ChildrenPlanCreator<T> {
+public abstract class AbstractPmsStagePlanCreator<T extends PmsAbstractStageNode> extends AbstractStagePlanCreator<T> {
   @Inject private KryoSerializer kryoSerializer;
 
   public abstract Set<String> getSupportedStageTypes();
@@ -96,24 +86,4 @@ public abstract class GenericStagePlanCreatorV2<T extends AbstractStageNode> ext
   /**
    * Adds the nextStepAdviser to the given node if it is not the end stage
    */
-  private List<AdviserObtainment> getAdviserObtainmentFromMetaData(YamlField stageField) {
-    List<AdviserObtainment> adviserObtainments = new ArrayList<>();
-    if (stageField != null && stageField.getNode() != null) {
-      // if parent is parallel, then we need not add nextStepAdvise as all the executions will happen in parallel
-      if (stageField.checkIfParentIsParallel(STAGES)) {
-        return adviserObtainments;
-      }
-      YamlField siblingField = stageField.getNode().nextSiblingFromParentArray(
-          stageField.getName(), Arrays.asList(YAMLFieldNameConstants.STAGE, YAMLFieldNameConstants.PARALLEL));
-      if (siblingField != null && siblingField.getNode().getUuid() != null) {
-        adviserObtainments.add(
-            AdviserObtainment.newBuilder()
-                .setType(AdviserType.newBuilder().setType(OrchestrationAdviserTypes.NEXT_STEP.name()).build())
-                .setParameters(ByteString.copyFrom(kryoSerializer.asBytes(
-                    NextStepAdviserParameters.builder().nextNodeId(siblingField.getNode().getUuid()).build())))
-                .build());
-      }
-    }
-    return adviserObtainments;
-  }
 }
