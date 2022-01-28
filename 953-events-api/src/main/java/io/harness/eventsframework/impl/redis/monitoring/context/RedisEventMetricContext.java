@@ -16,9 +16,8 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.eventsframework.impl.redis.monitoring.dto.RedisEventMetricDTO;
 
-import java.lang.reflect.Field;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.ThreadContext;
@@ -27,24 +26,22 @@ import org.apache.logging.log4j.ThreadContext;
 @OwnedBy(HarnessTeam.PL)
 @Slf4j
 public class RedisEventMetricContext implements AutoCloseable {
+  Map<String, String> contextKeysMap = new HashMap<>();
+
   public RedisEventMetricContext(RedisEventMetricDTO redisEventMetricDTO) {
     if (isNotEmpty(redisEventMetricDTO.getAccountId())) {
-      ThreadContext.put(METRIC_LABEL_PREFIX + ACCOUNT_IDENTIFIER_METRICS_KEY, redisEventMetricDTO.getAccountId());
+      updateThreadContext(METRIC_LABEL_PREFIX + ACCOUNT_IDENTIFIER_METRICS_KEY, redisEventMetricDTO.getAccountId());
     }
-    ThreadContext.put(METRIC_LABEL_PREFIX + STREAM_NAME_METRICS_KEY, redisEventMetricDTO.getStreamName());
-  }
-
-  private void removeFromContext(Class clazz) {
-    Field[] fields = clazz.getDeclaredFields();
-    Set<String> names = new HashSet<>();
-    for (Field field : fields) {
-      names.add(METRIC_LABEL_PREFIX + field.getName());
-    }
-    ThreadContext.removeAll(names);
+    updateThreadContext(METRIC_LABEL_PREFIX + STREAM_NAME_METRICS_KEY, redisEventMetricDTO.getStreamName());
   }
 
   @Override
   public void close() {
-    removeFromContext(RedisEventMetricContext.class);
+    ThreadContext.removeAll(contextKeysMap.keySet());
+  }
+
+  private void updateThreadContext(String key, String value) {
+    ThreadContext.put(key, value);
+    contextKeysMap.put(key, value);
   }
 }

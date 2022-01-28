@@ -24,6 +24,7 @@ import io.kubernetes.client.openapi.models.V1Job;
 import io.kubernetes.client.openapi.models.V1ReplicaSet;
 import io.kubernetes.client.openapi.models.V1StatefulSet;
 import io.kubernetes.client.openapi.models.V1beta1CronJob;
+import io.kubernetes.client.util.ClientBuilder;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -40,13 +41,15 @@ public class SharedInformerFactoryFactoryTest extends CategoryTest {
   @Owner(developers = AVMOHAN)
   @Category(UnitTests.class)
   public void createSharedInformerFactory() throws Exception {
-    ApiClient apiClient = mock(ApiClient.class);
+    ApiClient apiClient = new ClientBuilder().build().setReadTimeout(0);
+
     ClusterDetails clusterDetails = ClusterDetails.builder()
                                         .clusterName("my-k8s-cluster")
                                         .cloudProviderId("123454")
                                         .clusterId("423t123")
                                         .kubeSystemUid("8823a382-37b8-459d-a522-4444b3dbb159")
                                         .build();
+
     assertThat(sharedInformerFactoryFactory.createSharedInformerFactory(apiClient, clusterDetails))
         .isNotNull()
         .satisfies(sharedInformerFactory -> {

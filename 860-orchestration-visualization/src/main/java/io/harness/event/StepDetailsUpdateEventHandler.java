@@ -11,13 +11,19 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.OrchestrationGraph;
 import io.harness.graph.stepDetail.service.PmsGraphStepDetailsService;
+import io.harness.pms.contracts.ambiance.Level;
+import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.data.stepdetails.PmsStepDetails;
 import io.harness.pms.data.stepparameters.PmsStepParameters;
+import io.harness.pms.execution.utils.AmbianceUtils;
+import io.harness.pms.plan.execution.beans.PipelineExecutionSummaryEntity;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.util.Map;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.mongodb.core.query.Update;
 
 @Singleton
 @Slf4j
@@ -25,12 +31,20 @@ import lombok.extern.slf4j.Slf4j;
 public class StepDetailsUpdateEventHandler {
   @Inject PmsGraphStepDetailsService pmsGraphStepDetailsService;
 
-  public OrchestrationGraph handleEvent(
-      String planExecutionId, String nodeExecutionId, OrchestrationGraph orchestrationGraph) {
+  public OrchestrationGraph handleEvent(String planExecutionId, String nodeExecutionId,
+      OrchestrationGraph orchestrationGraph, Update summaryEntityUpdate) {
     try {
       Map<String, PmsStepDetails> stepDetails =
           pmsGraphStepDetailsService.getStepDetails(planExecutionId, nodeExecutionId);
       orchestrationGraph.getAdjacencyList().getGraphVertexMap().get(nodeExecutionId).setStepDetails(stepDetails);
+      Level currentLevel = AmbianceUtils.obtainCurrentLevel(
+          orchestrationGraph.getAdjacencyList().getGraphVertexMap().get(nodeExecutionId).getAmbiance());
+      if (Objects.equals(currentLevel.getStepType().getStepCategory(), StepCategory.STAGE)) {
+        String stageUuid = currentLevel.getSetupId();
+        summaryEntityUpdate.set(
+            PipelineExecutionSummaryEntity.PlanExecutionSummaryKeys.layoutNodeMap + "." + stageUuid + ".stepDetails",
+            stepDetails);
+      }
       return orchestrationGraph;
     } catch (Exception e) {
       log.error("Graph update for Step Details update event failed for node [{}]", nodeExecutionId, e);

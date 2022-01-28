@@ -20,6 +20,7 @@ import io.harness.expression.ImageSecretFunctor;
 import io.harness.ff.FeatureFlagService;
 import io.harness.secretmanagerclient.services.api.SecretManagerClientService;
 import io.harness.security.SimpleEncryption;
+import io.harness.security.encryption.EncryptedRecordData;
 
 import software.wings.expression.NgSecretManagerFunctor.NgSecretManagerFunctorBuilder;
 import software.wings.service.impl.artifact.ArtifactCollectionUtils;
@@ -29,6 +30,7 @@ import software.wings.service.intfc.security.ManagerDecryptionService;
 import software.wings.service.intfc.security.SecretManager;
 
 import java.util.Map;
+import javax.cache.Cache;
 import lombok.Value;
 
 @OwnedBy(CDC)
@@ -43,7 +45,8 @@ public class ManagerPreExecutionExpressionEvaluator extends ExpressionEvaluator 
       ConfigService configService, ArtifactCollectionUtils artifactCollectionUtils,
       FeatureFlagService featureFlagService, ManagerDecryptionService managerDecryptionService,
       SecretManager secretManager, String accountId, String workflowExecutionId, int expressionFunctorToken,
-      SecretManagerClientService ngSecretService, Map<String, String> taskSetupAbstractions) {
+      SecretManagerClientService ngSecretService, Map<String, String> taskSetupAbstractions,
+      Cache<String, EncryptedRecordData> secretsCache) {
     String appId = taskSetupAbstractions == null ? null : taskSetupAbstractions.get(Cd1SetupFields.APP_ID_FIELD);
     String envId = taskSetupAbstractions == null ? null : taskSetupAbstractions.get(Cd1SetupFields.ENV_ID_FIELD);
     String serviceTemplateId =
@@ -73,6 +76,7 @@ public class ManagerPreExecutionExpressionEvaluator extends ExpressionEvaluator 
                                .featureFlagService(featureFlagService)
                                .managerDecryptionService(managerDecryptionService)
                                .secretManager(secretManager)
+                               .secretsCache(secretsCache)
                                .accountId(accountId)
                                .appId(appId)
                                .envId(envId)
