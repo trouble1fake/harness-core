@@ -352,9 +352,9 @@ public class HelmTaskHelper {
   }
 
   public void addRepo(String repoName, String repoDisplayName, String chartRepoUrl, String username, char[] password,
-      String chartDirectory, HelmVersion helmVersion, long timeoutInMillis, boolean useRepoFlags, String tempDir) {
+                      String chartDirectory, HelmVersion helmVersion, long timeoutInMillis, String tempDir) {
     helmTaskHelperBase.addRepo(repoName, repoDisplayName, chartRepoUrl, username, password, chartDirectory, helmVersion,
-        timeoutInMillis, useRepoFlags, tempDir);
+        timeoutInMillis, tempDir);
   }
 
   public void addRepo(String repoName, String repoDisplayName, String chartRepoUrl, String username, char[] password,
@@ -369,7 +369,8 @@ public class HelmTaskHelper {
 
     helmTaskHelperBase.addRepo(helmChartConfigParams.getRepoName(), helmChartConfigParams.getRepoDisplayName(),
         httpHelmRepoConfig.getChartRepoUrl(), httpHelmRepoConfig.getUsername(), httpHelmRepoConfig.getPassword(),
-        chartDirectory, helmChartConfigParams.getHelmVersion(), timeoutInMillis, false);
+        chartDirectory, helmChartConfigParams.getHelmVersion(), timeoutInMillis,
+        helmChartConfigParams.isUseRepoFlags());
     helmTaskHelperBase.fetchChartFromRepo(helmChartConfigParams.getRepoName(),
         helmChartConfigParams.getRepoDisplayName(), helmChartConfigParams.getChartName(),
         helmChartConfigParams.getChartVersion(), chartDirectory, helmChartConfigParams.getHelmVersion(),
@@ -406,7 +407,7 @@ public class HelmTaskHelper {
   }
 
   public void updateRepo(String repoName, String workingDirectory, HelmVersion helmVersion, long timeoutInMillis) {
-    helmTaskHelperBase.updateRepo(repoName, workingDirectory, helmVersion, timeoutInMillis, false, EMPTY);
+    helmTaskHelperBase.updateRepo(repoName, workingDirectory, helmVersion, timeoutInMillis, EMPTY);
   }
 
   /*
@@ -492,7 +493,7 @@ public class HelmTaskHelper {
           timeoutInMillis, useRepoFlags, tempDir);
       addRepo(helmChartConfigParams.getRepoName(), helmChartConfigParams.getRepoDisplayName(),
           httpHelmRepoConfig.getChartRepoUrl(), httpHelmRepoConfig.getUsername(), httpHelmRepoConfig.getPassword(),
-          destinationDirectory, helmChartConfigParams.getHelmVersion(), timeoutInMillis, useRepoFlags, tempDir);
+          destinationDirectory, helmChartConfigParams.getHelmVersion(), timeoutInMillis, tempDir);
 
       String command = fetchHelmChartVersionsCommand(helmChartConfigParams.getHelmVersion(),
           helmChartConfigParams.getChartName(), helmChartConfigParams.getRepoName(), destinationDirectory);

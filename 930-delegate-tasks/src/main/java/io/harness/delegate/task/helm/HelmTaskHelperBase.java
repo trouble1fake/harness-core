@@ -139,13 +139,13 @@ public class HelmTaskHelperBase {
   }
 
   public void addRepo(String repoName, String repoDisplayName, String chartRepoUrl, String username, char[] password,
-      String chartDirectory, HelmVersion helmVersion, long timeoutInMillis, boolean useRepoFlag, String tempDir) {
+      String chartDirectory, HelmVersion helmVersion, long timeoutInMillis, String tempDir) {
     Map<String, String> environment = new HashMap<>();
     String repoAddCommand =
         getHttpRepoAddCommand(repoName, chartRepoUrl, username, password, chartDirectory, helmVersion);
     String repoAddCommandForLogging =
         getHttpRepoAddCommandForLogging(repoName, chartRepoUrl, username, password, chartDirectory, helmVersion);
-    if (useRepoFlag) {
+    if (!isEmpty(tempDir)) {
       environment.putIfAbsent(HELM_CACHE_HOME,
           HELM_CACHE_HOME_PATH.replace(REPO_NAME, repoName).replace(HELM_CACHE_HOME_PLACEHOLDER, tempDir));
       repoAddCommand = addRepoFlags(repoAddCommand, repoName, tempDir);
@@ -167,13 +167,13 @@ public class HelmTaskHelperBase {
       String chartDirectory, HelmVersion helmVersion, long timeoutInMillis, boolean useRepoFlags) {
     if (!useRepoFlags) {
       addRepo(repoName, repoDisplayName, chartRepoUrl, username, password, chartDirectory, helmVersion, timeoutInMillis,
-          false, EMPTY);
+          EMPTY);
       return;
     }
     String dir = RESOURCE_DIR_BASE + "/cache";
-    addRepo(repoName, repoDisplayName, chartRepoUrl, username, password, chartDirectory, helmVersion, timeoutInMillis,
-        true, dir);
-    updateRepo(repoName, chartDirectory, helmVersion, timeoutInMillis, useRepoFlags, dir);
+    addRepo(
+        repoName, repoDisplayName, chartRepoUrl, username, password, chartDirectory, helmVersion, timeoutInMillis, dir);
+    updateRepo(repoName, chartDirectory, helmVersion, timeoutInMillis, dir);
   }
 
   private String getHttpRepoAddCommand(String repoName, String chartRepoUrl, String username, char[] password,
@@ -713,8 +713,8 @@ public class HelmTaskHelperBase {
     addRepo(storeDelegateConfig.getRepoName(), storeDelegateConfig.getRepoDisplayName(),
         httpHelmConnector.getHelmRepoUrl(), username, password, destinationDirectory, manifest.getHelmVersion(),
         timeoutInMillis, false);
-    updateRepo(storeDelegateConfig.getRepoName(), destinationDirectory, manifest.getHelmVersion(), timeoutInMillis,
-        false, EMPTY);
+    updateRepo(
+        storeDelegateConfig.getRepoName(), destinationDirectory, manifest.getHelmVersion(), timeoutInMillis, EMPTY);
 
     ProcessResult processResult = executeCommand(Collections.emptyMap(),
         fetchHelmChartVersionsCommand(manifest.getHelmVersion(), manifest.getChartName(),
@@ -730,13 +730,13 @@ public class HelmTaskHelperBase {
     return parseHelmVersionsFromOutput(commandOutput, manifest);
   }
 
-  public void updateRepo(String repoName, String workingDirectory, HelmVersion helmVersion, long timeoutInMillis,
-      boolean useRepoFlag, String repoDir) {
+  public void updateRepo(
+      String repoName, String workingDirectory, HelmVersion helmVersion, long timeoutInMillis, String repoDir) {
     try {
       String repoUpdateCommand = getRepoUpdateCommand(repoName, workingDirectory, helmVersion);
       Map<String, String> environment = new HashMap<>();
 
-      if (useRepoFlag) {
+      if (!isEmpty(repoDir)) {
         environment.put(HELM_CACHE_HOME,
             HELM_CACHE_HOME_PATH.replace(REPO_NAME, repoName).replace(HELM_CACHE_HOME_PLACEHOLDER, repoDir));
         repoUpdateCommand = addRepoFlags(repoUpdateCommand, repoName, repoDir);
