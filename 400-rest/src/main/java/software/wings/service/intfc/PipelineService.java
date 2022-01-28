@@ -27,6 +27,7 @@ import software.wings.service.intfc.ownership.OwnedByApplication;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.validation.Valid;
 import org.hibernate.validator.constraints.NotEmpty;
 import ru.vyarus.guice.validator.group.annotation.ValidationGroups;
@@ -186,4 +187,6 @@ public interface PipelineService extends OwnedByApplication {
    *     saving pipelines after very minor and trivial changes only.
    */
   void savePipelines(@NotEmpty List<Pipeline> pipelines, boolean skipValidations);
+
+  Set<String> getUserGroups(@NotEmpty Pipeline pipeline);
 }

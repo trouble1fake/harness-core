@@ -62,6 +62,7 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.exception.UserGroupAlreadyExistException;
 import io.harness.exception.WingsException;
 import io.harness.ff.FeatureFlagService;
+import io.harness.mongo.MongoPersistence;
 import io.harness.persistence.HIterator;
 import io.harness.persistence.HPersistence;
 import io.harness.persistence.UuidAware;
@@ -70,8 +71,10 @@ import io.harness.scheduler.PersistentScheduler;
 import software.wings.beans.Account;
 import software.wings.beans.EntityType;
 import software.wings.beans.Event.Type;
+import software.wings.beans.Pipeline;
 import software.wings.beans.User;
 import software.wings.beans.User.UserKeys;
+import software.wings.beans.UserGroupEntityReference;
 import software.wings.beans.UserInvite;
 import software.wings.beans.notification.NotificationSettings;
 import software.wings.beans.security.AccountPermissions;
@@ -145,6 +148,7 @@ public class UserGroupServiceImpl implements UserGroupService {
 
   @Inject private ExecutorService executors;
   @Inject private WingsPersistence wingsPersistence;
+  @Inject private MongoPersistence mongoPersistence;
   @Inject private UserService userService;
   @Inject private AccountService accountService;
   @Inject private AuthService authService;
@@ -647,6 +651,38 @@ public class UserGroupServiceImpl implements UserGroupService {
         userGroup.setAppPermissions(new HashSet<>());
       }
       userGroup.getAppPermissions().add(applicationTemplatePermission);
+    }
+  }
+
+  public void updateUserGroupParents(Set<String> previousUserGroups, Set<String> currentUserGroups, String accountId,
+      String pipelineId, String appId) {
+    Set<String> parentsToRemove = Sets.difference(previousUserGroups, currentUserGroups);
+    Set<String> parentsToAdd = Sets.difference(currentUserGroups, previousUserGroups);
+
+    for (String id : parentsToRemove) {
+      UserGroup userGroup = Optional.ofNullable(mongoPersistence.get(UserGroup.class, id)).orElse(null);
+      userGroup.removeParent(UserGroupEntityReference.builder()
+                                 .entityType("PIPELINE")
+                                 .id(pipelineId)
+                                 .appId(appId)
+                                 .accountId(accountId)
+                                 .build());
+      UpdateOperations<UserGroup> ops = mongoPersistence.createUpdateOperations(UserGroup.class);
+      setUnset(ops, "parents", userGroup.getParents());
+      mongoPersistence.update(userGroup, ops);
+    }
+
+    for (String id : parentsToAdd) {
+      UserGroup userGroup = Optional.ofNullable(mongoPersistence.get(UserGroup.class, id)).orElse(null);
+      userGroup.addParent(UserGroupEntityReference.builder()
+                              .entityType("PIPELINE")
+                              .id(pipelineId)
+                              .appId(appId)
+                              .accountId(accountId)
+                              .build());
+      UpdateOperations<UserGroup> ops = mongoPersistence.createUpdateOperations(UserGroup.class);
+      setUnset(ops, "parents", userGroup.getParents());
+      mongoPersistence.update(userGroup, ops);
     }
   }
 

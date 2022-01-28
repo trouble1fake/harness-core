@@ -27,9 +27,9 @@ import io.harness.persistence.AccountAccess;
 import io.harness.persistence.NameAccess;
 
 import software.wings.beans.Base;
-import software.wings.beans.EntityReference;
 import software.wings.beans.NotificationChannelType;
 import software.wings.beans.User;
+import software.wings.beans.UserGroupEntityReference;
 import software.wings.beans.notification.NotificationSettings;
 import software.wings.beans.notification.SlackNotificationSetting;
 import software.wings.beans.sso.SSOType;
@@ -141,7 +141,7 @@ public class UserGroup extends Base implements NotificationReceiverInfo, Account
 
   private boolean isDefault;
 
-  @FdIndex private Set<EntityReference> parents = new HashSet<>();
+  @FdIndex private Set<UserGroupEntityReference> parents = new HashSet<>();
 
   // TODO: Should use Builder at the class level itself.
   @Builder
@@ -150,7 +150,7 @@ public class UserGroup extends Base implements NotificationReceiverInfo, Account
       EmbeddedUser createdBy, long createdAt, EmbeddedUser lastUpdatedBy, long lastUpdatedAt, String entityYamlPath,
       boolean isSsoLinked, SSOType linkedSsoType, String linkedSsoId, String linkedSsoDisplayName, String ssoGroupId,
       String ssoGroupName, NotificationSettings notificationSettings, boolean isDefault, boolean importedByScim,
-      Set<EntityReference> parents) {
+      Set<UserGroupEntityReference> parents) {
     super(uuid, appId, createdBy, createdAt, lastUpdatedBy, lastUpdatedAt, entityYamlPath);
     this.name = name;
     this.description = description;
@@ -193,6 +193,7 @@ public class UserGroup extends Base implements NotificationReceiverInfo, Account
         .ssoGroupId(ssoGroupId)
         .ssoGroupName(ssoGroupName)
         .importedByScim(importedByScim)
+        .parents(parents)
         .build();
   }
 
@@ -222,6 +223,7 @@ public class UserGroup extends Base implements NotificationReceiverInfo, Account
         .ssoGroupId(ssoGroupId)
         .ssoGroupName(ssoGroupName)
         .importedByScim(importedByScim)
+        .parents(parents)
         .build();
   }
 
@@ -229,11 +231,11 @@ public class UserGroup extends Base implements NotificationReceiverInfo, Account
     return CollectionUtils.emptyIfNull(members);
   }
 
-  public void addParent(@NotNull EntityReference entityReference) {
+  public void addParent(@NotNull UserGroupEntityReference entityReference) {
     parents.add(entityReference);
   }
 
-  public void removeParent(@NotNull EntityReference entityReference) {
+  public void removeParent(@NotNull UserGroupEntityReference entityReference) {
     parents.remove(entityReference);
   }
 

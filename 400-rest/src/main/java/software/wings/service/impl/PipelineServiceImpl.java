@@ -81,7 +81,6 @@ import software.wings.beans.AccountEvent;
 import software.wings.beans.AccountEventType;
 import software.wings.beans.ArtifactVariable;
 import software.wings.beans.CanaryOrchestrationWorkflow;
-import software.wings.beans.EntityReference;
 import software.wings.beans.EntityType;
 import software.wings.beans.Event.Type;
 import software.wings.beans.FailureStrategy;
@@ -99,7 +98,6 @@ import software.wings.beans.WorkflowExecution;
 import software.wings.beans.WorkflowExecution.WorkflowExecutionKeys;
 import software.wings.beans.deployment.DeploymentMetadata;
 import software.wings.beans.deployment.DeploymentMetadata.Include;
-import software.wings.beans.security.UserGroup;
 import software.wings.beans.trigger.Trigger;
 import software.wings.beans.trigger.Trigger.TriggerKeys;
 import software.wings.dl.WingsPersistence;
@@ -282,8 +280,8 @@ public class PipelineServiceImpl implements PipelineService {
 
     Set<String> currentUserGroups = getUserGroups(updatedPipeline);
 
-    UpdateUserGroupParents(previousUserGroups, currentUserGroups, accountId, updatedPipeline.getUuid(),
-        updatedPipeline.getName(), updatedPipeline.getAppId());
+    userGroupService.updateUserGroupParents(
+        previousUserGroups, currentUserGroups, accountId, updatedPipeline.getUuid(), updatedPipeline.getAppId());
 
     //    updateUserGroupsParentField(updatedPipeline, accountId, updatedPipeline.getUuid(), updatedPipeline.getName(),
     //    updatedPipeline.getAppId());
@@ -472,7 +470,7 @@ public class PipelineServiceImpl implements PipelineService {
       return true;
     });
     if (successful) {
-      UpdateUserGroupParents(previousUserGroups, new HashSet<>(), accountId, pipelineId, pipelineName, appId);
+      userGroupService.updateUserGroupParents(previousUserGroups, new HashSet<>(), accountId, pipelineId, appId);
     }
     return successful;
   }
@@ -1740,8 +1738,8 @@ public class PipelineServiceImpl implements PipelineService {
 
       Set<String> currentUserGroups = getUserGroups(pipeline);
 
-      UpdateUserGroupParents(
-          new HashSet<>(), currentUserGroups, accountId, pipeline.getUuid(), pipeline.getName(), pipeline.getAppId());
+      userGroupService.updateUserGroupParents(
+          new HashSet<>(), currentUserGroups, accountId, pipeline.getUuid(), pipeline.getAppId());
 
       // TODO: remove this when all the needed verification is done from validatePipeline
       new StateMachine(pipeline, workflowService.stencilMap(pipeline.getAppId()));
@@ -2072,7 +2070,7 @@ public class PipelineServiceImpl implements PipelineService {
     notNullCheck("Orchestration workflow does not exist", workflow.getOrchestrationWorkflow(), USER);
   }
 
-  private Set<String> getUserGroups(Pipeline pipeline) {
+  public Set<String> getUserGroups(Pipeline pipeline) {
     if (pipeline.getPipelineStages() == null) {
       return new HashSet<>();
     }
@@ -2091,26 +2089,6 @@ public class PipelineServiceImpl implements PipelineService {
       }
     }
     return userGroups;
-  }
-
-  private void UpdateUserGroupParents(Set<String> previousUserGroups, Set<String> currentUserGroups, String accountId,
-      String pipelineId, String pipelineName, String appId) {
-    Set<String> parentsToRemove = Sets.difference(previousUserGroups, currentUserGroups);
-    Set<String> parentsToAdd = Sets.difference(currentUserGroups, previousUserGroups);
-
-    for (String id : parentsToRemove) {
-      UserGroup userGroup = Optional.ofNullable(mongoPersistence.get(UserGroup.class, id)).orElse(null);
-      userGroup.removeParent(
-          EntityReference.builder().name(pipelineName).id(pipelineId).entityType("pipeline").appId(appId).build());
-      mongoPersistence.save(userGroup);
-    }
-
-    for (String id : parentsToAdd) {
-      UserGroup userGroup = Optional.ofNullable(mongoPersistence.get(UserGroup.class, id)).orElse(null);
-      userGroup.addParent(
-          EntityReference.builder().name(pipelineName).id(pipelineId).entityType("pipeline").appId(appId).build());
-      mongoPersistence.save(userGroup);
-    }
   }
 
   private boolean shouldBeIgnored(String name) {

@@ -220,4 +220,7 @@ public interface UserGroupService
   void maskCePermissions(UserGroup userGroup);
 
   void maintainTemplatePermissions(UserGroup userGroup);
+
+  void updateUserGroupParents(
+      Set<String> previousUserGroups, Set<String> currentUserGroups, String accountId, String pipelineId, String appId);
 }
