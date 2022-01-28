@@ -40,6 +40,15 @@ public class CIPipelineEndEventHandler implements OrchestrationEventHandler {
 
   private static final String CI_EXECUTED = "ci_built";
   private static final String NODE_EXECUTED = "step_executed";
+  private static final String USED_CODEBASE = "used_codebase";
+  private static final String URL = "url";
+  private static final String BRANCH = "branch";
+  private static final String BUILD_TYPE = "build_type";
+  private static final String PRIVATE_REPO = "private_repo";
+  private static final String REPO_NAME = "repo_name";
+  private static final String STEP_DURATION = "step_execution_duration";
+  private static final String STEP_TYPE = "step_execution_type";
+  private static final String STEP_ID = "step_execution_id";
 
   @Override
   public void handleEvent(OrchestrationEvent event) {
@@ -76,20 +85,20 @@ public class CIPipelineEndEventHandler implements OrchestrationEventHandler {
     InitializeStepInfo initializeStepInfo = (InitializeStepInfo) stepElementParameters.getSpec();
     BaseNGAccess baseNGAccess = retrieveBaseNGAccess(ambiance);
     if (initializeStepInfo != null && initializeStepInfo.getCiCodebase() != null) {
-      ciBuiltMap.put("used_codebase", true);
+      ciBuiltMap.put(USED_CODEBASE, true);
       if (initializeStepInfo.getCiCodebase().getConnectorRef() != null) {
         ConnectorDetails connectorDetails =
             connectorUtils.getConnectorDetails(baseNGAccess, initializeStepInfo.getCiCodebase().getConnectorRef());
-        ciBuiltMap.put("url", connectorUtils.retrieveURL(connectorDetails));
+        ciBuiltMap.put(URL, connectorUtils.retrieveURL(connectorDetails));
       }
     } else {
-      ciBuiltMap.put("used_codebase", false);
+      ciBuiltMap.put(USED_CODEBASE, false);
     }
 
-    ciBuiltMap.put("branch", moduleInfo.getBranch());
-    ciBuiltMap.put("build_type", moduleInfo.getBuildType());
-    ciBuiltMap.put("private_repo", moduleInfo.getIsPrivateRepo());
-    ciBuiltMap.put("repo_name", moduleInfo.getRepoName());
+    ciBuiltMap.put(BRANCH, moduleInfo.getBranch());
+    ciBuiltMap.put(BUILD_TYPE, moduleInfo.getBuildType());
+    ciBuiltMap.put(PRIVATE_REPO, moduleInfo.getIsPrivateRepo());
+    ciBuiltMap.put(REPO_NAME, moduleInfo.getRepoName());
     telemetryReporter.sendTrackEvent(CI_EXECUTED, identity, accountId, ciBuiltMap,
         Collections.singletonMap(AMPLITUDE, true), io.harness.telemetry.Category.GLOBAL,
         io.harness.telemetry.TelemetryOption.builder().sendForCommunity(false).build());
@@ -99,9 +108,9 @@ public class CIPipelineEndEventHandler implements OrchestrationEventHandler {
     List<NodeExecution> nodeExecutionList = nodeExecutionService.fetchNodeExecutions(planExecutionId);
     for (NodeExecution nodeExecution : nodeExecutionList) {
       HashMap<String, Object> nodeExecutedMap = new HashMap<>();
-      nodeExecutedMap.put("step_execution_id", nodeExecution.getOriginalNodeExecutionId());
-      nodeExecutedMap.put("step_execution_duration", (nodeExecution.getEndTs() - nodeExecution.getStartTs()) / 1000);
-      nodeExecutedMap.put("step_execution_type", nodeExecution.getNodeType());
+      nodeExecutedMap.put(STEP_ID, nodeExecution.getOriginalNodeExecutionId());
+      nodeExecutedMap.put(STEP_DURATION, (nodeExecution.getEndTs() - nodeExecution.getStartTs()) / 1000);
+      nodeExecutedMap.put(STEP_TYPE, nodeExecution.getNodeType());
       telemetryReporter.sendTrackEvent(NODE_EXECUTED, identity, accountId, nodeExecutedMap,
           Collections.singletonMap(AMPLITUDE, true), io.harness.telemetry.Category.GLOBAL,
           io.harness.telemetry.TelemetryOption.builder().sendForCommunity(false).build());
