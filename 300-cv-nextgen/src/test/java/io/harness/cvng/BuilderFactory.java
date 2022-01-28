@@ -204,6 +204,24 @@ public class BuilderFactory {
         .resolvedJob(getVerificationJob());
   }
 
+  public VerificationJobInstanceBuilder verificationJobInstanceBuilderWithMultipleCVConfigs() {
+    CVConfig cvConfig1 = appDynamicsCVConfigBuilder().uuid(generateUuid()).build();
+    CVConfig cvConfig2 = appDynamicsCVConfigBuilder().uuid(generateUuid()).build();
+    Map<String, CVConfig> cvConfigMap = new HashMap<String, CVConfig>() {
+      {
+        put(cvConfig1.getUuid(), cvConfig1);
+        put(cvConfig2.getUuid(), cvConfig2);
+      }
+    };
+    return VerificationJobInstance.builder()
+        .accountId(context.getAccountId())
+        .deploymentStartTime(clock.instant().minus(Duration.ofMinutes(2)))
+        .startTime(clock.instant())
+        .cvConfigMap(cvConfigMap)
+        .dataCollectionDelay(Duration.ofMinutes(2))
+        .resolvedJob(getVerificationJob());
+  }
+
   public SLOHealthIndicatorBuilder sLOHealthIndicatorBuilder() {
     return SLOHealthIndicator.builder()
         .accountId(context.getAccountId())
