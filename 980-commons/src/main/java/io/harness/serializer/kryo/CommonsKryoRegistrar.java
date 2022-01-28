@@ -15,6 +15,7 @@ import io.harness.exception.ArtifactServerException;
 import io.harness.exception.ArtifactoryServerException;
 import io.harness.exception.AuthenticationException;
 import io.harness.exception.AuthorizationException;
+import io.harness.exception.AzureServiceException;
 import io.harness.exception.ConnectException;
 import io.harness.exception.ContextException;
 import io.harness.exception.DelegateErrorHandlerException;
@@ -116,5 +117,6 @@ public class CommonsKryoRegistrar implements KryoRegistrar {
     kryo.register(GitOperationException.class, 980017);
     kryo.register(TerraformCommandExecutionException.class, 980018);
     kryo.register(SimpleEncryption.class, 980019);
+    kryo.register(AzureServiceException.class, 980020);
   }
 }
