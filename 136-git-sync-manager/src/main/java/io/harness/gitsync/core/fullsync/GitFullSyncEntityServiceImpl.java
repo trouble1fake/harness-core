@@ -167,4 +167,15 @@ public class GitFullSyncEntityServiceImpl implements GitFullSyncEntityService {
     return gitFullSyncEntityRepository.count(
         getCriteria(accountIdentifier, orgIdentifier, projectIdentifier, gitFullSyncEntityInfoFilterDTO));
   }
+
+  @Override
+  public void updateStatus(String accountId, String uuid, GitFullSyncEntityInfo.SyncStatus status) {
+    Criteria criteria = new Criteria();
+    criteria.and(GitFullSyncEntityInfoKeys.uuid).is(uuid);
+    criteria.and(GitFullSyncEntityInfoKeys.accountIdentifier).is(accountId);
+    Update update = new Update();
+    update.set(GitFullSyncEntityInfoKeys.syncStatus, status);
+    update.push(GitFullSyncEntityInfoKeys.errorMessage, null);
+    gitFullSyncEntityRepository.update(criteria, update);
+  }
 }

@@ -14,6 +14,7 @@ import io.harness.dto.FailureInfoDTO;
 import io.harness.pms.contracts.execution.ExecutionErrorInfo;
 import io.harness.pms.contracts.execution.run.NodeRunInfo;
 import io.harness.pms.contracts.execution.skip.SkipInfo;
+import io.harness.pms.data.stepdetails.PmsStepDetails;
 import io.harness.pms.execution.ExecutionStatus;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -52,4 +53,5 @@ public class GraphLayoutNodeDTO {
   Boolean barrierFound;
   @Deprecated ExecutionErrorInfo failureInfo;
   FailureInfoDTO failureInfoDTO;
+  private Map<String, PmsStepDetails> stepDetails;
 }

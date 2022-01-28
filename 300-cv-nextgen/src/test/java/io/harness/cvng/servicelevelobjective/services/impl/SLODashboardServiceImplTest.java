@@ -9,6 +9,7 @@ package io.harness.cvng.servicelevelobjective.services.impl;
 
 import static io.harness.cvng.servicelevelobjective.entities.SLIRecord.SLIState.BAD;
 import static io.harness.cvng.servicelevelobjective.entities.SLIRecord.SLIState.GOOD;
+import static io.harness.rule.OwnerRule.ABHIJITH;
 import static io.harness.rule.OwnerRule.KAMAL;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,6 +33,7 @@ import io.harness.cvng.servicelevelobjective.entities.SLIRecord.SLIRecordParam;
 import io.harness.cvng.servicelevelobjective.entities.ServiceLevelIndicator;
 import io.harness.cvng.servicelevelobjective.services.api.SLIRecordService;
 import io.harness.cvng.servicelevelobjective.services.api.SLODashboardService;
+import io.harness.cvng.servicelevelobjective.services.api.SLOErrorBudgetResetService;
 import io.harness.cvng.servicelevelobjective.services.api.ServiceLevelIndicatorService;
 import io.harness.cvng.servicelevelobjective.services.api.ServiceLevelObjectiveService;
 import io.harness.ng.beans.PageResponse;
@@ -56,6 +58,8 @@ public class SLODashboardServiceImplTest extends CvNextGenTestBase {
   @Inject private MetricPackService metricPackService;
   @Inject private SLIRecordService sliRecordService;
   @Inject private ServiceLevelIndicatorService serviceLevelIndicatorService;
+  @Inject private SLOErrorBudgetResetService sloErrorBudgetResetService;
+
   @Inject private Clock clock;
   private BuilderFactory builderFactory;
   @Before
@@ -124,6 +128,39 @@ public class SLODashboardServiceImplTest extends CvNextGenTestBase {
     assertThat(sloDashboardWidget.getEnvironmentIdentifier()).isEqualTo(monitoredServiceDTO.getEnvironmentRef());
     assertThat(sloDashboardWidget.getServiceName()).isEqualTo("Mocked service name");
     assertThat(sloDashboardWidget.getEnvironmentName()).isEqualTo("Mocked env name");
+  }
+
+  @Test
+  @Owner(developers = ABHIJITH)
+  @Category(UnitTests.class)
+  public void testGetSloDashboardWidgets_withSLOErrorBudgetReset() {
+    String monitoredServiceIdentifier = "monitoredServiceIdentifier";
+    MonitoredServiceDTO monitoredServiceDTO =
+        builderFactory.monitoredServiceDTOBuilder().identifier(monitoredServiceIdentifier).build();
+    HealthSource healthSource = monitoredServiceDTO.getSources().getHealthSources().iterator().next();
+    monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceDTO);
+    ServiceLevelObjectiveDTO serviceLevelObjective = builderFactory.getServiceLevelObjectiveDTOBuilder()
+                                                         .monitoredServiceRef(monitoredServiceIdentifier)
+                                                         .healthSourceRef(healthSource.getIdentifier())
+                                                         .build();
+
+    serviceLevelObjectiveService.create(builderFactory.getProjectParams(), serviceLevelObjective);
+    sloErrorBudgetResetService.resetErrorBudget(builderFactory.getProjectParams(),
+        builderFactory.getSLOErrorBudgetResetDTOBuilder()
+            .serviceLevelObjectiveIdentifier(serviceLevelObjective.getIdentifier())
+            .build());
+    PageResponse<SLODashboardWidget> pageResponse =
+        sloDashboardService.getSloDashboardWidgets(builderFactory.getProjectParams(),
+            SLODashboardApiFilter.builder().build(), PageParams.builder().page(0).size(4).build());
+    assertThat(pageResponse.getPageItemCount()).isEqualTo(1);
+    assertThat(pageResponse.getTotalItems()).isEqualTo(1);
+    List<SLODashboardWidget> sloDashboardWidgets = pageResponse.getContent();
+    assertThat(sloDashboardWidgets).hasSize(1);
+    SLODashboardWidget sloDashboardWidget = sloDashboardWidgets.get(0);
+
+    assertThat(sloDashboardWidget.getErrorBudgetRemaining())
+        .isEqualTo(9504); // 30 days - 30*24*60 - 20% -> 8640 -> 8640*0.1 -> 9504
+    assertThat(sloDashboardWidget.getErrorBudgetRemainingPercentage()).isCloseTo(100, offset(0.0001));
   }
 
   @Test

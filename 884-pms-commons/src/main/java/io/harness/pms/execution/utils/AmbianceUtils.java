@@ -49,6 +49,16 @@ public class AmbianceUtils {
     return builder.addLevels(level).build();
   }
 
+  public static String getRuntimeIdForGivenCategory(@NonNull Ambiance ambiance, StepCategory category) {
+    Optional<Level> stageLevel = Optional.empty();
+    for (Level level : ambiance.getLevelsList()) {
+      if (level.getStepType().getStepCategory() == category) {
+        stageLevel = Optional.of(level);
+      }
+    }
+    return stageLevel.get().getRuntimeId();
+  }
+
   public static Ambiance cloneForChild(@NonNull Ambiance ambiance, @NonNull Level level) {
     Ambiance.Builder builder = cloneBuilder(ambiance, ambiance.getLevelsList().size());
     if (level.getStepType().getStepCategory() == StepCategory.STAGE) {

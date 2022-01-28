@@ -11,6 +11,7 @@ import static io.harness.batch.processing.ccm.CCMJobConstants.ACCOUNT_ID;
 import static io.harness.rule.OwnerRule.HANTANG;
 
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -37,6 +38,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobParameter;
@@ -63,7 +65,7 @@ public class CeProductMetricsTaskletTest extends CategoryTest {
   @Mock private CloudToHarnessMappingService cloudToHarnessMappingService;
   @Mock private CeCloudMetricsService ceCloudMetricsService;
   @Mock private ProductMetricsService productMetricsService;
-  @InjectMocks private CeProductMetricsTasklet ceProductMetricsTasklet;
+  @Spy @InjectMocks private CeProductMetricsTasklet ceProductMetricsTasklet;
 
   @Before
   public void setup() throws IOException {
@@ -78,6 +80,7 @@ public class CeProductMetricsTaskletTest extends CategoryTest {
 
     when(batchMainConfig.getSegmentConfig()).thenReturn(segmentConfig);
     when(cloudToHarnessMappingService.getAccountInfoFromId(eq(accountId))).thenReturn(account);
+    doNothing().when(ceProductMetricsTasklet).nextGenInstrumentation(ACCOUNT_ID);
   }
 
   @Test

@@ -14,7 +14,6 @@ import static com.fasterxml.jackson.annotation.JsonTypeInfo.Id.NAME;
 
 import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.plancreator.stages.stage.AbstractStageNode;
 import io.harness.plancreator.stages.stage.StageInfoConfig;
 import io.harness.steps.StepSpecTypeConstants;
 
@@ -35,7 +34,7 @@ import org.springframework.data.annotation.TypeAlias;
 @TypeAlias("IntegrationStageNode")
 @OwnedBy(CI)
 @RecasterAlias("io.harness.beans.stages.IntegrationStageNode")
-public class IntegrationStageNode extends AbstractStageNode {
+public class IntegrationStageNode extends IntegrationAbstractStageNode {
   @JsonProperty("type") @NotNull StepType type = StepType.CI;
 
   @JsonProperty("spec")

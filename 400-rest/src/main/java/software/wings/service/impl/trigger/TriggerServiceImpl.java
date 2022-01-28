@@ -8,6 +8,7 @@
 package software.wings.service.impl.trigger;
 
 import static io.harness.annotations.dev.HarnessTeam.CDC;
+import static io.harness.beans.FeatureName.BYPASS_HELM_FETCH;
 import static io.harness.beans.FeatureName.GITHUB_WEBHOOK_AUTHENTICATION;
 import static io.harness.beans.OrchestrationWorkflowType.BUILD;
 import static io.harness.beans.WorkflowType.ORCHESTRATION;
@@ -2251,8 +2252,11 @@ public class TriggerServiceImpl implements TriggerService {
         helmChartService.getManifestByVersionNumber(appManifest.getAccountId(), appManifestId, versionNumber);
 
     if (helmChart == null) {
+      if (featureFlagService.isEnabled(BYPASS_HELM_FETCH, appManifest.getAccountId())) {
+        return helmChartService.createHelmChartWithVersionForAppManifest(appManifest, versionNumber);
+      }
       helmChart = helmChartService.fetchByChartVersion(
-          appManifest.getAccountId(), appId, appManifest.getServiceId(), appManifest.getName(), versionNumber);
+          appManifest.getAccountId(), appId, appManifest.getServiceId(), appManifest.getUuid(), versionNumber);
     }
     notNullCheck("Helm chart with given version number doesn't exist", helmChart, USER);
     return helmChart;

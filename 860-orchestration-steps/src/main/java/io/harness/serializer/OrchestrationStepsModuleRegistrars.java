@@ -12,6 +12,7 @@ import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 import io.harness.EntityType;
 import io.harness.ModuleType;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.cf.pipeline.FeatureFlagStageNode;
 import io.harness.morphia.MorphiaRegistrar;
 import io.harness.plancreator.pipeline.PipelineConfig;
 import io.harness.plancreator.steps.barrier.BarrierStepNode;
@@ -25,7 +26,6 @@ import io.harness.serializer.kryo.OrchestrationStepsKryoRegistrar;
 import io.harness.serializer.kryo.YamlKryoRegistrar;
 import io.harness.serializer.morphia.NotificationClientRegistrars;
 import io.harness.serializer.morphia.OrchestrationStepsMorphiaRegistrar;
-import io.harness.steps.approval.stage.ApprovalStageConfig;
 import io.harness.steps.approval.stage.ApprovalStageNode;
 import io.harness.steps.approval.step.harness.HarnessApprovalStepNode;
 import io.harness.steps.approval.step.jira.JiraApprovalStepNode;
@@ -118,7 +118,11 @@ public class OrchestrationStepsModuleRegistrars {
                    .availableAtProjectLevel(true)
                    .availableAtOrgLevel(false)
                    .availableAtAccountLevel(false)
-                   .clazz(ApprovalStageConfig.class)
+                   .clazz(FeatureFlagStageNode.class)
+                   .yamlSchemaMetadata(YamlSchemaMetadata.builder()
+                                           .modulesSupported(ImmutableList.of(ModuleType.PMS))
+                                           .yamlGroup(YamlGroup.builder().group(StepCategory.STAGE.name()).build())
+                                           .build())
                    .build())
           .add(YamlSchemaRootClass.builder()
                    .entityType(EntityType.HTTP_STEP)

@@ -12,6 +12,7 @@ import static io.harness.annotations.dev.HarnessTeam.DX;
 import static io.harness.data.structure.CollectionUtils.emptyIfNull;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+import static io.harness.gitsync.core.beans.GitFullSyncEntityInfo.SyncStatus.FAILED;
 
 import io.harness.EntityType;
 import io.harness.Microservice;
@@ -105,10 +106,10 @@ public class GitFullSyncProcessorServiceImpl implements io.harness.gitsync.core.
       String errorMsg = "";
       errorMsg = fullSyncFileResponse.getErrorMsg();
       if (isNotEmpty(errorMsg)) {
-        gitFullSyncEntityService.markQueuedOrFailed(fullSyncEntityInfo.getUuid(),
-            fullSyncEntityInfo.getAccountIdentifier(), fullSyncEntityInfo.getRetryCount(), MAX_RETRY_COUNT, errorMsg);
-      } else {
         anyFilesFailed = true;
+        gitFullSyncEntityService.updateStatus(
+            fullSyncEntityInfo.getUuid(), fullSyncEntityInfo.getAccountIdentifier(), FAILED);
+      } else {
         gitFullSyncEntityService.markSuccessful(
             fullSyncEntityInfo.getUuid(), fullSyncEntityInfo.getAccountIdentifier());
       }
@@ -166,6 +167,7 @@ public class GitFullSyncProcessorServiceImpl implements io.harness.gitsync.core.
       }
       List<GitFullSyncEntityInfo> allEntitiesToBeSynced =
           gitFullSyncEntityService.list(fullSyncJob.getAccountIdentifier(), fullSyncJob.getMessageId());
+      markTheGitFullSyncEntityAsQueued(allEntitiesToBeSynced);
       boolean processingFailed = false;
       final List<FullSyncFilesGroupedByMsvc> fullSyncFilesGroupedByMsvcs =
           sortTheFilesInTheProcessingOrder(allEntitiesToBeSynced);
@@ -186,10 +188,19 @@ public class GitFullSyncProcessorServiceImpl implements io.harness.gitsync.core.
       if (!processingFailed && fullSyncJob.isCreatePullRequest()) {
         createAPullRequest(fullSyncJob);
       }
+    } catch (Exception ex) {
+      log.error("Encountered error while doing full sync", ex);
     } finally {
       SecurityContextBuilder.unsetCompleteContext();
     }
     log.info("Completed full sync for the job {}", fullSyncJob.getMessageId());
+  }
+
+  private void markTheGitFullSyncEntityAsQueued(List<GitFullSyncEntityInfo> allEntitiesToBeSynced) {
+    for (GitFullSyncEntityInfo gitFullSyncEntityInfo : allEntitiesToBeSynced) {
+      gitFullSyncEntityService.updateStatus(gitFullSyncEntityInfo.getAccountIdentifier(),
+          gitFullSyncEntityInfo.getUuid(), GitFullSyncEntityInfo.SyncStatus.QUEUED);
+    }
   }
 
   private void setTheRepoBranchForTheGitSyncConnector(

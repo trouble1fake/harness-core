@@ -19,6 +19,7 @@ import io.harness.annotations.ExposeInternalException;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cvng.core.beans.params.ProjectParams;
+import io.harness.cvng.servicelevelobjective.beans.SLOErrorBudgetResetDTO;
 import io.harness.cvng.servicelevelobjective.beans.ServiceLevelObjectiveDTO;
 import io.harness.cvng.servicelevelobjective.beans.ServiceLevelObjectiveFilter;
 import io.harness.cvng.servicelevelobjective.beans.ServiceLevelObjectiveResponse;
@@ -34,6 +35,7 @@ import com.google.inject.Inject;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import java.util.List;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.BeanParam;
@@ -159,5 +161,45 @@ public class ServiceLevelObjectiveResource {
                                       .projectIdentifier(projectIdentifier)
                                       .build();
     return new RestResponse<>(serviceLevelObjectiveService.get(projectParams, identifier));
+  }
+
+  @POST
+  @Timed
+  @ExceptionMetered
+  @Path("{identifier}/resetErrorBudget")
+  @ApiOperation(value = "reset Error budget history", nickname = "resetErrorBudget")
+  @NGAccessControlCheck(resourceType = SLO, permission = VIEW_PERMISSION)
+  public RestResponse<SLOErrorBudgetResetDTO> resetErrorBudget(
+      @ApiParam(required = true) @NotNull @QueryParam("accountId") @AccountIdentifier String accountId,
+      @ApiParam(required = true) @NotNull @QueryParam("orgIdentifier") @OrgIdentifier String orgIdentifier,
+      @ApiParam(required = true) @NotNull @QueryParam("projectIdentifier") @ResourceIdentifier String projectIdentifier,
+      @ApiParam(required = true) @NotNull @PathParam("identifier") @ResourceIdentifier String sloIdentifier,
+      @NotNull @Valid @Body SLOErrorBudgetResetDTO sloErrorBudgetResetDTO) {
+    ProjectParams projectParams = ProjectParams.builder()
+                                      .accountIdentifier(accountId)
+                                      .orgIdentifier(orgIdentifier)
+                                      .projectIdentifier(projectIdentifier)
+                                      .build();
+    sloErrorBudgetResetDTO.setServiceLevelObjectiveIdentifier(sloIdentifier);
+    return new RestResponse<>(serviceLevelObjectiveService.resetErrorBudget(projectParams, sloErrorBudgetResetDTO));
+  }
+
+  @GET
+  @Timed
+  @ExceptionMetered
+  @Path("{identifier}/errorBudgetResetHistory")
+  @ApiOperation(value = "get error budget reset History", nickname = "getErrorBudgetResetHistory")
+  @NGAccessControlCheck(resourceType = SLO, permission = VIEW_PERMISSION)
+  public RestResponse<List<SLOErrorBudgetResetDTO>> getErrorBudgetResetHistory(
+      @ApiParam(required = true) @NotNull @QueryParam("accountId") @AccountIdentifier String accountId,
+      @ApiParam(required = true) @NotNull @QueryParam("orgIdentifier") @OrgIdentifier String orgIdentifier,
+      @ApiParam(required = true) @NotNull @QueryParam("projectIdentifier") @ResourceIdentifier String projectIdentifier,
+      @ApiParam(required = true) @NotNull @PathParam("identifier") @ResourceIdentifier String sloIdentifier) {
+    ProjectParams projectParams = ProjectParams.builder()
+                                      .accountIdentifier(accountId)
+                                      .orgIdentifier(orgIdentifier)
+                                      .projectIdentifier(projectIdentifier)
+                                      .build();
+    return new RestResponse<>(serviceLevelObjectiveService.getErrorBudgetResetHistory(projectParams, sloIdentifier));
   }
 }

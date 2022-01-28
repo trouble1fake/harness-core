@@ -81,6 +81,7 @@ import io.harness.cvng.dashboard.entities.HeatMap;
 import io.harness.cvng.migration.beans.CVNGSchema;
 import io.harness.cvng.servicelevelobjective.entities.RatioServiceLevelIndicator;
 import io.harness.cvng.servicelevelobjective.entities.SLIRecord;
+import io.harness.cvng.servicelevelobjective.entities.SLOErrorBudgetReset;
 import io.harness.cvng.servicelevelobjective.entities.SLOHealthIndicator;
 import io.harness.cvng.servicelevelobjective.entities.ServiceLevelIndicator;
 import io.harness.cvng.servicelevelobjective.entities.ServiceLevelObjective;
@@ -200,6 +201,7 @@ public class CVNextGenMorphiaRegister implements MorphiaRegistrar {
     set.add(SLIRecord.class);
     set.add(SideKick.class);
     set.add(DynatraceCVConfig.class);
+    set.add(SLOErrorBudgetReset.class);
   }
 
   @Override
