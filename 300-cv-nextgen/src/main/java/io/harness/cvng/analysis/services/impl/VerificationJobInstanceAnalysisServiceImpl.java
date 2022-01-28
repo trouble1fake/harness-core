@@ -114,8 +114,7 @@ public class VerificationJobInstanceAnalysisServiceImpl implements VerificationJ
   public CanaryBlueGreenAdditionalInfo getCanaryBlueGreenAdditionalInfo(
       String accountId, VerificationJobInstance verificationJobInstance) {
     List<TransactionMetricInfo> transactionMetricInfoList =
-        deploymentTimeSeriesAnalysisService.getMetricsWithoutFiltersAndPagination(
-            accountId, verificationJobInstance.getUuid());
+        deploymentTimeSeriesAnalysisService.getTransactionMetricInfos(accountId, verificationJobInstance.getUuid());
     List<DeploymentTimeSeriesAnalysis> deploymentTimeSeriesAnalysis =
         deploymentTimeSeriesAnalysisService.getLatestDeploymentTimeSeriesAnalysis(
             accountId, verificationJobInstance.getUuid(), DeploymentTimeSeriesAnalysisFilter.builder().build());

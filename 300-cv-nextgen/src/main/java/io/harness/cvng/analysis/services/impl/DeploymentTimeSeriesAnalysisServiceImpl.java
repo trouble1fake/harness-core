@@ -214,8 +214,7 @@ public class DeploymentTimeSeriesAnalysisServiceImpl implements DeploymentTimeSe
   }
 
   @Override
-  public List<TransactionMetricInfo> getMetricsWithoutFiltersAndPagination(
-      String accountId, String verificationJobInstanceId) {
+  public List<TransactionMetricInfo> getTransactionMetricInfos(String accountId, String verificationJobInstanceId) {
     return getMetrics(accountId, verificationJobInstanceId, DeploymentTimeSeriesAnalysisFilter.builder().build());
   }
 

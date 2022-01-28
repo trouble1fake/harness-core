@@ -24,7 +24,7 @@ public interface DeploymentTimeSeriesAnalysisService {
   void save(DeploymentTimeSeriesAnalysis deploymentTimeSeriesAnalysis);
   TransactionMetricInfoSummaryPageDTO getMetrics(String accountId, String verificationJobInstanceId,
       DeploymentTimeSeriesAnalysisFilter deploymentTimeSeriesAnalysisFilter, PageParams pageParams);
-  List<TransactionMetricInfo> getMetricsWithoutFiltersAndPagination(String accountId, String verificationJobInstanceId);
+  List<TransactionMetricInfo> getTransactionMetricInfos(String accountId, String verificationJobInstanceId);
   List<DeploymentTimeSeriesAnalysis> getAnalysisResults(String verificationTaskId);
   Optional<Risk> getRecentHighestRiskScore(String accountId, String verificationJobInstanceId);
 

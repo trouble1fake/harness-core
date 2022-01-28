@@ -78,8 +78,10 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.apache.commons.lang3.reflect.FieldUtils;
@@ -834,10 +836,17 @@ public class VerificationJobInstanceAnalysisServiceImplTest extends CvNextGenTes
   }
 
   private VerificationJobInstance createVerificationJobInstanceWithMultipleCVConfigs(VerificationJob verificationJob) {
-    return builderFactory.verificationJobInstanceBuilderWithMultipleCVConfigs()
-        .deploymentStartTime(Instant.now())
-        .startTime(Instant.now())
+    CVConfig cvConfig1 = builderFactory.appDynamicsCVConfigBuilder().uuid(generateUuid()).build();
+    CVConfig cvConfig2 = builderFactory.appDynamicsCVConfigBuilder().uuid(generateUuid()).build();
+    Map<String, CVConfig> cvConfigMap = new HashMap<String, CVConfig>() {
+      {
+        put(cvConfig1.getUuid(), cvConfig1);
+        put(cvConfig2.getUuid(), cvConfig2);
+      }
+    };
+    return builderFactory.verificationJobInstanceBuilder()
         .resolvedJob(verificationJob)
+        .cvConfigMap(cvConfigMap)
         .build();
   }
 
