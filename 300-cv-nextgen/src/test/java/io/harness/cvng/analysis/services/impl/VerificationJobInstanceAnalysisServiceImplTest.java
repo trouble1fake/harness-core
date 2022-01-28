@@ -975,9 +975,4 @@ public class VerificationJobInstanceAnalysisServiceImplTest extends CvNextGenTes
   private HostSummary createHostSummary(String host, ResultSummary resultSummary) {
     return HostSummary.builder().host(host).resultSummary(resultSummary).build();
   }
-
-  private CVConfig createCVConfig() {
-    CVConfig cvConfig = builderFactory.appDynamicsCVConfigBuilder().build();
-    return cvConfigService.save(cvConfig);
-  }
 }
