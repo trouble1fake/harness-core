@@ -71,7 +71,6 @@ import io.harness.scheduler.PersistentScheduler;
 import software.wings.beans.Account;
 import software.wings.beans.EntityType;
 import software.wings.beans.Event.Type;
-import software.wings.beans.Pipeline;
 import software.wings.beans.User;
 import software.wings.beans.User.UserKeys;
 import software.wings.beans.UserGroupEntityReference;
