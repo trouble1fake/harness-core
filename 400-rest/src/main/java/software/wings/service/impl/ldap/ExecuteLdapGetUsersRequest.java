@@ -72,6 +72,8 @@ public class ExecuteLdapGetUsersRequest implements Function<LdapGetUsersRequest,
     }
 
     if (searchResult != null) { // Scenario when search result
+      log.info("The search result for baseDN {} and searchfilter {} found is {}", ldapUserConfig.getBaseDN(),
+          ldapUserConfig.getSearchFilter(), searchResult);
       searchStatus = Status.SUCCESS;
     }
 

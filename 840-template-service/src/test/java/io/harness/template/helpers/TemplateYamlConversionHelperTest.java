@@ -12,8 +12,6 @@ import static io.harness.ng.core.template.TemplateEntityConstants.STEP;
 import static io.harness.rule.OwnerRule.INDER;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.when;
 
 import io.harness.TemplateServiceTestBase;
 import io.harness.annotations.dev.HarnessTeam;
@@ -29,18 +27,17 @@ import io.harness.template.handler.TemplateYamlConversionHandler;
 import io.harness.template.handler.TemplateYamlConversionHandlerRegistry;
 
 import com.google.common.io.Resources;
+import com.google.inject.Inject;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 
 @OwnedBy(HarnessTeam.CDC)
 public class TemplateYamlConversionHelperTest extends TemplateServiceTestBase {
-  @InjectMocks TemplateYamlConversionHelper templateYamlConversionHelper;
-  @Mock TemplateYamlConversionHandlerRegistry templateYamlConversionHandlerRegistry;
+  @Inject TemplateYamlConversionHelper templateYamlConversionHelper;
+  @Inject TemplateYamlConversionHandlerRegistry templateYamlConversionHandlerRegistry;
 
   private String readFile(String filename) {
     ClassLoader classLoader = getClass().getClassLoader();
@@ -55,7 +52,7 @@ public class TemplateYamlConversionHelperTest extends TemplateServiceTestBase {
   @Owner(developers = INDER)
   @Category(UnitTests.class)
   public void testConvertStepTemplateYamlToPMSUnderstandableYaml() {
-    when(templateYamlConversionHandlerRegistry.obtain(STEP)).thenReturn(new TemplateYamlConversionHandler());
+    templateYamlConversionHandlerRegistry.register(STEP, new TemplateYamlConversionHandler());
     String filename = "template-step.yaml";
     String yaml = readFile(filename);
     String newYaml = templateYamlConversionHelper.convertTemplateYamlToPMSUnderstandableYaml(
@@ -68,7 +65,7 @@ public class TemplateYamlConversionHelperTest extends TemplateServiceTestBase {
   @Owner(developers = INDER)
   @Category(UnitTests.class)
   public void testConvertStageTemplateYamlToPMSUnderstandableYaml() {
-    when(templateYamlConversionHandlerRegistry.obtain(STAGE)).thenReturn(new TemplateYamlConversionHandler());
+    templateYamlConversionHandlerRegistry.register(STAGE, new TemplateYamlConversionHandler());
     String filename = "stage-template.yaml";
     String yaml = readFile(filename);
     String newYaml = templateYamlConversionHelper.convertTemplateYamlToPMSUnderstandableYaml(
@@ -81,7 +78,7 @@ public class TemplateYamlConversionHelperTest extends TemplateServiceTestBase {
   @Owner(developers = INDER)
   @Category(UnitTests.class)
   public void testDummyParallelYamlConversionHandler() {
-    when(templateYamlConversionHandlerRegistry.obtain(any())).thenReturn(new DummyParallelYamlConversionHandler());
+    templateYamlConversionHandlerRegistry.register(STAGE, new DummyParallelYamlConversionHandler());
     String filename = "stage-template.yaml";
     String yaml = readFile(filename);
     String newYaml = templateYamlConversionHelper.convertTemplateYamlToPMSUnderstandableYaml(
@@ -94,7 +91,7 @@ public class TemplateYamlConversionHelperTest extends TemplateServiceTestBase {
   @Owner(developers = INDER)
   @Category(UnitTests.class)
   public void testDummyReplaceYamlConversionHandler() {
-    when(templateYamlConversionHandlerRegistry.obtain(any())).thenReturn(new DummyReplaceYamlConversionHandler());
+    templateYamlConversionHandlerRegistry.register(STAGE, new DummyReplaceYamlConversionHandler());
     String filename = "stage-template.yaml";
     String yaml = readFile(filename);
     String newYaml = templateYamlConversionHelper.convertTemplateYamlToPMSUnderstandableYaml(

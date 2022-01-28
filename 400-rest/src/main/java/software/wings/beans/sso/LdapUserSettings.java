@@ -33,6 +33,7 @@ public class LdapUserSettings implements LdapUserConfig {
   @JsonProperty @NotBlank String baseDN;
   @JsonProperty @NotBlank String searchFilter = LdapConstants.DEFAULT_USER_SEARCH_FILTER;
   @JsonProperty @NotBlank String uidAttr = "uid";
+  @JsonProperty @NotBlank String samAccountNameAttr = "samAccountName";
   @JsonProperty @NotBlank String emailAttr = "mail";
   @JsonProperty @NotBlank String displayNameAttr = "cn";
   @JsonProperty @NotBlank String groupMembershipAttr = "memberOf";
@@ -73,6 +74,6 @@ public class LdapUserSettings implements LdapUserConfig {
   @JsonIgnore
   @Override
   public String[] getReturnAttrs() {
-    return new String[] {emailAttr, displayNameAttr, uidAttr};
+    return new String[] {emailAttr, displayNameAttr, uidAttr, samAccountNameAttr};
   }
 }

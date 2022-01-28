@@ -7,6 +7,8 @@
 
 package io.harness.migrations.all;
 
+import static software.wings.service.intfc.UsageRestrictionsService.UsageRestrictionsClient.ALL;
+
 import io.harness.migrations.Migration;
 import io.harness.persistence.HIterator;
 
@@ -31,7 +33,7 @@ public class DanglingAppEnvReferenceRemovalMigration implements Migration {
       while (accountHIterator.hasNext()) {
         Account account = accountHIterator.next();
         try {
-          int purgeCount = usageRestrictionsService.purgeDanglingAppEnvReferences(account.getUuid());
+          int purgeCount = usageRestrictionsService.purgeDanglingAppEnvReferences(account.getUuid(), ALL);
           log.info(
               "{} usage restrictions referring to non-existent application/environment have been fixed in account {}",
               purgeCount, account.getUuid());

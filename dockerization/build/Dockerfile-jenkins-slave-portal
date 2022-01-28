@@ -19,7 +19,7 @@ ENV PATH ${PATH}:/opt/gsutil
 RUN yum update -y \
     && yum upgrade -y \
     && yum install -y hostname unzip wget mongodb-org-shell \
-    && yum install -y https://packages.endpoint.com/rhel/7/os/x86_64/endpoint-repo-1.9-1.x86_64.rpm \
+    #&& yum install -y https://packages.endpoint.com/rhel/7/os/x86_64/endpoint-repo-1.9-1.x86_64.rpm \
     && yum install -y git \
     && git --version \
     && curl -o gsutil.tar.gz https://storage.googleapis.com/pub/gsutil.tar.gz \
@@ -52,7 +52,7 @@ RUN yum group install -y "Development Tools" \
     && yum install -y zlib-devel \
     && yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
     && yum install -y jq \
-    && yum install -y moreutils \
+    && yum install -y moreutils bc \
     && scl enable devtoolset-7 bash \
     && wget https://archive.apache.org/dist/maven/maven-3/3.6.1/binaries/apache-maven-3.6.1-bin.tar.gz \
     && tar -xf apache-maven-3.6.1-bin.tar.gz && mv apache-maven-3.6.1/ /usr/local/src/apache-maven \
