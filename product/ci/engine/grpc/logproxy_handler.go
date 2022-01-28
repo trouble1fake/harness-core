@@ -13,9 +13,9 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/wings-software/portal/product/ci/common/external"
-	pb "github.com/wings-software/portal/product/ci/engine/proto"
-	"github.com/wings-software/portal/product/log-service/stream"
+	"github.com/harness/harness-core/product/ci/common/external"
+	pb "github.com/harness/harness-core/product/ci/engine/proto"
+	"github.com/harness/harness-core/product/log-service/stream"
 	"go.uber.org/zap"
 )
 

@@ -20,7 +20,7 @@ import (
 	"github.com/drone/go-scm/scm/transport"
 
 	"github.com/drone/go-scm/scm/transport/oauth2"
-	pb "github.com/wings-software/portal/product/ci/scm/proto"
+	pb "github.com/harness/harness-core/product/ci/scm/proto"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

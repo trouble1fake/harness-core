@@ -10,7 +10,7 @@ go_library(
         "stream.go",
         "tail.go",
     ],
-    importpath = "github.com/wings-software/portal/product/log-service/cli/stream",
+    importpath = "github.com/harness/harness-core/product/log-service/cli/stream",
     visibility = ["//visibility:public"],
     deps = [
         "//product/log-service/client",

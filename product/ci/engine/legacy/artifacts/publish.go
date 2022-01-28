@@ -13,12 +13,12 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/wings-software/portal/commons/go/lib/awsutils"
-	"github.com/wings-software/portal/commons/go/lib/filesystem"
-	"github.com/wings-software/portal/commons/go/lib/jfrogutils"
-	"github.com/wings-software/portal/commons/go/lib/kaniko"
-	"github.com/wings-software/portal/commons/go/lib/utils"
-	pb "github.com/wings-software/portal/product/ci/engine/proto"
+	"github.com/harness/harness-core/commons/go/lib/awsutils"
+	"github.com/harness/harness-core/commons/go/lib/filesystem"
+	"github.com/harness/harness-core/commons/go/lib/jfrogutils"
+	"github.com/harness/harness-core/commons/go/lib/kaniko"
+	"github.com/harness/harness-core/commons/go/lib/utils"
+	pb "github.com/harness/harness-core/product/ci/engine/proto"
 	"go.uber.org/zap"
 )
 

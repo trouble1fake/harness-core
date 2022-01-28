@@ -8,7 +8,7 @@ go_library(
         "server.go",
         "tiproxy_handler.go",
     ],
-    importpath = "github.com/wings-software/portal/product/ci/engine/grpc",
+    importpath = "github.com/harness/harness-core/product/ci/engine/grpc",
     visibility = ["//visibility:public"],
     deps = [
         "//commons/go/lib/filesystem",

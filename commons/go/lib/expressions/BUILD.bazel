@@ -3,6 +3,6 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "expressions",
     srcs = ["jexl.go"],
-    importpath = "github.com/wings-software/portal/commons/go/lib/expressions",
+    importpath = "github.com/harness/harness-core/commons/go/lib/expressions",
     visibility = ["//visibility:public"],
 )

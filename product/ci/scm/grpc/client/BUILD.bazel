@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "client",
     srcs = ["scm_client.go"],
-    importpath = "github.com/wings-software/portal/product/ci/scm/grpc/client",
+    importpath = "github.com/harness/harness-core/product/ci/scm/grpc/client",
     visibility = ["//visibility:public"],
     deps = [
         "//product/ci/scm/proto",

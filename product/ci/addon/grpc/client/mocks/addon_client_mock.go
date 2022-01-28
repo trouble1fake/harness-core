@@ -11,7 +11,7 @@ package grpcclient
 
 import (
 	gomock "github.com/golang/mock/gomock"
-	proto "github.com/wings-software/portal/product/ci/addon/proto"
+	proto "github.com/harness/harness-core/product/ci/addon/proto"
 	reflect "reflect"
 )
 

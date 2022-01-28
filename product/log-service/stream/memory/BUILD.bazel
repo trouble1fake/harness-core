@@ -7,7 +7,7 @@ go_library(
         "stream.go",
         "sub.go",
     ],
-    importpath = "github.com/wings-software/portal/product/log-service/stream/memory",
+    importpath = "github.com/harness/harness-core/product/log-service/stream/memory",
     visibility = ["//visibility:public"],
     deps = ["//product/log-service/stream"],
 )

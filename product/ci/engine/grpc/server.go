@@ -11,7 +11,7 @@ import (
 	"net"
 	"time"
 
-	pb "github.com/wings-software/portal/product/ci/engine/proto"
+	pb "github.com/harness/harness-core/product/ci/engine/proto"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )

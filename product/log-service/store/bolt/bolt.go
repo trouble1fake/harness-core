@@ -17,7 +17,7 @@ import (
 	"io/ioutil"
 	"time"
 
-	"github.com/wings-software/portal/product/log-service/store"
+	"github.com/harness/harness-core/product/log-service/store"
 
 	bolt "go.etcd.io/bbolt"
 )

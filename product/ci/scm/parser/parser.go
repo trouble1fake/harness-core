@@ -20,9 +20,9 @@ import (
 	"github.com/drone/go-scm/scm/driver/gitlab"
 	"github.com/drone/go-scm/scm/driver/gogs"
 	"github.com/drone/go-scm/scm/driver/stash"
-	"github.com/wings-software/portal/commons/go/lib/utils"
-	"github.com/wings-software/portal/product/ci/scm/converter"
-	pb "github.com/wings-software/portal/product/ci/scm/proto"
+	"github.com/harness/harness-core/commons/go/lib/utils"
+	"github.com/harness/harness-core/product/ci/scm/converter"
+	pb "github.com/harness/harness-core/product/ci/scm/proto"
 	"go.uber.org/zap"
 
 	"google.golang.org/grpc/codes"

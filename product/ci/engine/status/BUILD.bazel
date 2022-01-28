@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "status",
     srcs = ["step_status.go"],
-    importpath = "github.com/wings-software/portal/product/ci/engine/status",
+    importpath = "github.com/harness/harness-core/product/ci/engine/status",
     visibility = ["//visibility:public"],
     deps = [
         "//910-delegate-task-grpc-service/src/main/proto/io/harness/task/service",

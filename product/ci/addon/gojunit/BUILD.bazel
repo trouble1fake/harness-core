@@ -9,7 +9,7 @@ go_library(
         "parse.go",
         "types.go",
     ],
-    importpath = "github.com/wings-software/portal/product/ci/addon/gojunit",
+    importpath = "github.com/harness/harness-core/product/ci/addon/gojunit",
     visibility = ["//visibility:public"],
     deps = ["//product/ci/ti-service/types"],
 )

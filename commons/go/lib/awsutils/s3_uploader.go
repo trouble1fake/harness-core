@@ -14,10 +14,10 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/opentracing/opentracing-go"
-	"github.com/wings-software/portal/commons/go/lib/filesystem"
-	"github.com/wings-software/portal/commons/go/lib/logs"
-	"github.com/wings-software/portal/commons/go/lib/utils"
-	xtrace "github.com/wings-software/portal/commons/go/lib/x/trace"
+	"github.com/harness/harness-core/commons/go/lib/filesystem"
+	"github.com/harness/harness-core/commons/go/lib/logs"
+	"github.com/harness/harness-core/commons/go/lib/utils"
+	xtrace "github.com/harness/harness-core/commons/go/lib/x/trace"
 
 	"go.uber.org/zap"
 )

@@ -11,9 +11,9 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	"github.com/wings-software/portal/commons/go/lib/logs"
-	"github.com/wings-software/portal/product/ci/addon/grpc"
-	mgrpcserver "github.com/wings-software/portal/product/ci/addon/grpc/mocks"
+	"github.com/harness/harness-core/commons/go/lib/logs"
+	"github.com/harness/harness-core/product/ci/addon/grpc"
+	mgrpcserver "github.com/harness/harness-core/product/ci/addon/grpc/mocks"
 	"go.uber.org/zap"
 )
 

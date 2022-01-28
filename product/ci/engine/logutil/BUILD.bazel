@@ -6,7 +6,7 @@ go_library(
         "grpc_remote_client.go",
         "grpc_remote_logger.go",
     ],
-    importpath = "github.com/wings-software/portal/product/ci/engine/logutil",
+    importpath = "github.com/harness/harness-core/product/ci/engine/logutil",
     visibility = ["//visibility:public"],
     deps = [
         "//commons/go/lib/logs",

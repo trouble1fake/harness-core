@@ -6,8 +6,8 @@
 package stream
 
 import (
-	"github.com/wings-software/portal/product/log-service/client"
-	"github.com/wings-software/portal/product/log-service/stream"
+	"github.com/harness/harness-core/product/log-service/client"
+	"github.com/harness/harness-core/product/log-service/stream"
 
 	"gopkg.in/alecthomas/kingpin.v2"
 )

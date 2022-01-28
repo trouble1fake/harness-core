@@ -18,9 +18,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wings-software/portal/commons/go/lib/logs"
-	"github.com/wings-software/portal/product/log-service/client"
-	"github.com/wings-software/portal/product/log-service/stream"
+	"github.com/harness/harness-core/commons/go/lib/logs"
+	"github.com/harness/harness-core/product/log-service/client"
+	"github.com/harness/harness-core/product/log-service/stream"
 )
 
 const (

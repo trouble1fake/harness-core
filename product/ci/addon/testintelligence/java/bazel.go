@@ -8,9 +8,9 @@ package java
 import (
 	"context"
 	"fmt"
-	"github.com/wings-software/portal/commons/go/lib/exec"
-	"github.com/wings-software/portal/commons/go/lib/filesystem"
-	"github.com/wings-software/portal/product/ci/ti-service/types"
+	"github.com/harness/harness-core/commons/go/lib/exec"
+	"github.com/harness/harness-core/commons/go/lib/filesystem"
+	"github.com/harness/harness-core/product/ci/ti-service/types"
 	"go.uber.org/zap"
 	"strings"
 	"time"

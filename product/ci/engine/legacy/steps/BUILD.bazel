@@ -11,7 +11,7 @@ go_library(
         "runtests.go",
         "save_cache.go",
     ],
-    importpath = "github.com/wings-software/portal/product/ci/engine/legacy/steps",
+    importpath = "github.com/harness/harness-core/product/ci/engine/legacy/steps",
     visibility = ["//visibility:public"],
     deps = [
         "//commons/go/lib/archive",

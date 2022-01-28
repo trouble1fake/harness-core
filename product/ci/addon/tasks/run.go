@@ -12,10 +12,10 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/wings-software/portal/commons/go/lib/exec"
-	"github.com/wings-software/portal/commons/go/lib/filesystem"
-	"github.com/wings-software/portal/commons/go/lib/utils"
-	pb "github.com/wings-software/portal/product/ci/engine/proto"
+	"github.com/harness/harness-core/commons/go/lib/exec"
+	"github.com/harness/harness-core/commons/go/lib/filesystem"
+	"github.com/harness/harness-core/commons/go/lib/utils"
+	pb "github.com/harness/harness-core/product/ci/engine/proto"
 	"go.uber.org/zap"
 )
 

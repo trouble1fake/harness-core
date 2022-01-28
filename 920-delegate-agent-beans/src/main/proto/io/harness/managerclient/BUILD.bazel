@@ -16,7 +16,7 @@ proto_library(
 
 go_proto_library(
     name = "920_delegate_agent_beans_go_proto",
-    importpath = "github.com/wings-software/portal/920-delegate-agent-beans/src/main/proto/io/harness/managerclient",
+    importpath = "github.com/harness/harness-core/920-delegate-agent-beans/src/main/proto/io/harness/managerclient",
     proto = ":920_delegate_agent_beans_proto",
     visibility = ["//visibility:public"],
 )
@@ -24,6 +24,6 @@ go_proto_library(
 go_library(
     name = "managerclient",
     embed = [":920_delegate_agent_beans_go_proto"],
-    importpath = "github.com/wings-software/portal/920-delegate-agent-beans/src/main/proto/io/harness/managerclient",
+    importpath = "github.com/harness/harness-core/920-delegate-agent-beans/src/main/proto/io/harness/managerclient",
     visibility = ["//visibility:public"],
 )

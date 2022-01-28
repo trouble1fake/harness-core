@@ -10,8 +10,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/wings-software/portal/product/log-service/logger"
-	"github.com/wings-software/portal/product/log-service/store"
+	"github.com/harness/harness-core/product/log-service/logger"
+	"github.com/harness/harness-core/product/log-service/store"
 )
 
 // HandleUpload returns an http.HandlerFunc that uploads

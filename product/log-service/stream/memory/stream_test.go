@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/wings-software/portal/product/log-service/stream"
-	streampkg "github.com/wings-software/portal/product/log-service/stream"
+	"github.com/harness/harness-core/product/log-service/stream"
+	streampkg "github.com/harness/harness-core/product/log-service/stream"
 )
 
 func TestStream(t *testing.T) {

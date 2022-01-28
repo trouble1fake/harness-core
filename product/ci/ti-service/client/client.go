@@ -7,7 +7,7 @@ package client
 
 import (
 	"context"
-	"github.com/wings-software/portal/product/ci/ti-service/types"
+	"github.com/harness/harness-core/product/ci/ti-service/types"
 )
 
 // Error represents a json-encoded API error.

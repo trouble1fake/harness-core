@@ -9,7 +9,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/wings-software/portal/product/log-service/stream"
+	"github.com/harness/harness-core/product/log-service/stream"
 )
 
 // this is the amount of items that are stored in memory

@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/wings-software/portal/product/ci/ti-service/types"
+	"github.com/harness/harness-core/product/ci/ti-service/types"
 )
 
 func TestExamplesInTheWild(t *testing.T) {

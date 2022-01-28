@@ -8,7 +8,7 @@ go_library(
         "helper.go",
         "maven.go",
     ],
-    importpath = "github.com/wings-software/portal/product/ci/addon/testintelligence/java",
+    importpath = "github.com/harness/harness-core/product/ci/addon/testintelligence/java",
     visibility = ["//visibility:public"],
     deps = [
         "//commons/go/lib/exec",

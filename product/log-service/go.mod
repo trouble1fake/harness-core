@@ -1,4 +1,4 @@
-module github.com/wings-software/portal/product/log-service
+module github.com/harness/harness-core/product/log-service
 
 go 1.14
 

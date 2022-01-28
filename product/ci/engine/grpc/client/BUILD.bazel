@@ -7,7 +7,7 @@ go_library(
         "logproxy_client.go",
         "tiproxy_client.go",
     ],
-    importpath = "github.com/wings-software/portal/product/ci/engine/grpc/client",
+    importpath = "github.com/harness/harness-core/product/ci/engine/grpc/client",
     visibility = ["//visibility:public"],
     deps = [
         "//product/ci/engine/proto",

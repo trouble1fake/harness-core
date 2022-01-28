@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "bolt",
     srcs = ["bolt.go"],
-    importpath = "github.com/wings-software/portal/product/log-service/store/bolt",
+    importpath = "github.com/harness/harness-core/product/log-service/store/bolt",
     visibility = ["//visibility:public"],
     deps = [
         "//product/log-service/store",

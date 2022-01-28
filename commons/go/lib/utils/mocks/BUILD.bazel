@@ -6,7 +6,7 @@ go_library(
         "backoff_factory_mock.go",
         "backoff_mock.go",
     ],
-    importpath = "github.com/wings-software/portal/commons/go/lib/utils/mocks",
+    importpath = "github.com/harness/harness-core/commons/go/lib/utils/mocks",
     visibility = ["//visibility:public"],
     deps = [
         "@com_github_cenkalti_backoff_v4//:backoff",

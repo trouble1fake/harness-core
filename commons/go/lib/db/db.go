@@ -12,7 +12,7 @@ import (
 
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
-	logger "github.com/wings-software/portal/commons/go/lib/logs"
+	logger "github.com/harness/harness-core/commons/go/lib/logs"
 	"go.uber.org/zap"
 )
 

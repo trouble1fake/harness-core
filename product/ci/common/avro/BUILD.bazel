@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "avro",
     srcs = ["avro.go"],
-    importpath = "github.com/wings-software/portal/product/ci/common/avro",
+    importpath = "github.com/harness/harness-core/product/ci/common/avro",
     visibility = ["//visibility:public"],
     deps = [
         "//product/ci/common/avro/schema/callgraph",

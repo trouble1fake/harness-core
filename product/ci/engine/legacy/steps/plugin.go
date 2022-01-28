@@ -11,10 +11,10 @@ import (
 
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"github.com/pkg/errors"
-	"github.com/wings-software/portal/commons/go/lib/utils"
-	addonpb "github.com/wings-software/portal/product/ci/addon/proto"
-	"github.com/wings-software/portal/product/ci/engine/output"
-	pb "github.com/wings-software/portal/product/ci/engine/proto"
+	"github.com/harness/harness-core/commons/go/lib/utils"
+	addonpb "github.com/harness/harness-core/product/ci/addon/proto"
+	"github.com/harness/harness-core/product/ci/engine/output"
+	pb "github.com/harness/harness-core/product/ci/engine/proto"
 	"go.uber.org/zap"
 )
 

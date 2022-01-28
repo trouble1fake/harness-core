@@ -5,7 +5,7 @@
 package junit
 
 import (
-	"github.com/wings-software/portal/product/ci/ti-service/types"
+	"github.com/harness/harness-core/product/ci/ti-service/types"
 )
 
 // Totals contains aggregated results across a set of test runs. Is usually

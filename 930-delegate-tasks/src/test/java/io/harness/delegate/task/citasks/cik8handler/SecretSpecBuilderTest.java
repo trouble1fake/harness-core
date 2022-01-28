@@ -70,7 +70,7 @@ public class SecretSpecBuilderTest extends CategoryTest {
   private static final String registryUrl = "https://index.docker.io/v1/";
   private static final String userName = "usr";
   private static final String password = "pwd";
-  private static final String gitRepoUrl = "https://github.com/wings-software/portal.git";
+  private static final String gitRepoUrl = "https://github.com/harness/harness-core.git";
   private static final String gitSecretName = "hs-wings-software-portal-hs";
   private static final String encryptedKey = "encryptedKey";
   private static final String passwordRefId = "git_password";

@@ -16,16 +16,16 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	mexec "github.com/wings-software/portal/commons/go/lib/exec"
-	"github.com/wings-software/portal/commons/go/lib/filesystem"
-	"github.com/wings-software/portal/commons/go/lib/logs"
-	pb "github.com/wings-software/portal/product/ci/engine/proto"
+	mexec "github.com/harness/harness-core/commons/go/lib/exec"
+	"github.com/harness/harness-core/commons/go/lib/filesystem"
+	"github.com/harness/harness-core/commons/go/lib/logs"
+	pb "github.com/harness/harness-core/product/ci/engine/proto"
 	"go.uber.org/zap"
-	//"github.com/wings-software/portal/product/ci/addon/testreports"
-	//mreports "github.com/wings-software/portal/product/ci/addon/testreports/mocks"
-	//ticlient "github.com/wings-software/portal/product/ci/ti-service/client"
-	//mclient "github.com/wings-software/portal/product/ci/ti-service/client/mocks"
-	//"github.com/wings-software/portal/product/ci/ti-service/types"
+	//"github.com/harness/harness-core/product/ci/addon/testreports"
+	//mreports "github.com/harness/harness-core/product/ci/addon/testreports/mocks"
+	//ticlient "github.com/harness/harness-core/product/ci/ti-service/client"
+	//mclient "github.com/harness/harness-core/product/ci/ti-service/client/mocks"
+	//"github.com/harness/harness-core/product/ci/ti-service/types"
 )
 
 func TestExecuteSuccess(t *testing.T) {

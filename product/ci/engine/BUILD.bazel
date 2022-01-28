@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
 go_library(
     name = "engine_lib",
     srcs = ["main.go"],
-    importpath = "github.com/wings-software/portal/product/ci/engine",
+    importpath = "github.com/harness/harness-core/product/ci/engine",
     visibility = ["//:__pkg__"],
     deps = [
         "//commons/go/lib/logs",

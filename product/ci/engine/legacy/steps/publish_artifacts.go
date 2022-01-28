@@ -14,11 +14,11 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/wings-software/portal/commons/go/lib/filesystem"
-	"github.com/wings-software/portal/commons/go/lib/utils"
-	"github.com/wings-software/portal/product/ci/engine/legacy/artifacts"
-	"github.com/wings-software/portal/product/ci/engine/output"
-	pb "github.com/wings-software/portal/product/ci/engine/proto"
+	"github.com/harness/harness-core/commons/go/lib/filesystem"
+	"github.com/harness/harness-core/commons/go/lib/utils"
+	"github.com/harness/harness-core/product/ci/engine/legacy/artifacts"
+	"github.com/harness/harness-core/product/ci/engine/output"
+	pb "github.com/harness/harness-core/product/ci/engine/proto"
 	"go.uber.org/zap"
 )
 

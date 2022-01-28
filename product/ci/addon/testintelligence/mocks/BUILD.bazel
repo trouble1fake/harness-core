@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "mocks",
     srcs = ["runner_mock.go"],
-    importpath = "github.com/wings-software/portal/product/ci/addon/testintelligence/mocks",
+    importpath = "github.com/harness/harness-core/product/ci/addon/testintelligence/mocks",
     visibility = ["//visibility:public"],
     deps = [
         "//product/ci/ti-service/types",

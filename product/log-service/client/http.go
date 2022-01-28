@@ -21,8 +21,8 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/wings-software/portal/product/log-service/logger"
-	"github.com/wings-software/portal/product/log-service/stream"
+	"github.com/harness/harness-core/product/log-service/logger"
+	"github.com/harness/harness-core/product/log-service/stream"
 )
 
 var _ Client = (*HTTPClient)(nil)

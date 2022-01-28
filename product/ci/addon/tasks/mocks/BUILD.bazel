@@ -6,7 +6,7 @@ go_library(
         "plugin_mock.go",
         "run_mock.go",
     ],
-    importpath = "github.com/wings-software/portal/product/ci/addon/tasks/mocks",
+    importpath = "github.com/harness/harness-core/product/ci/addon/tasks/mocks",
     visibility = ["//visibility:public"],
     deps = [
         "//product/ci/engine/proto",

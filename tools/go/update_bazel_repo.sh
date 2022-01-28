@@ -22,7 +22,7 @@
 #$ cd ci/addon #cd to the application folder where main.go is located
 #$ go mod init <module-name>   <-- this generates go.mod and go.sum
 #update go.mod by adding the following line to point to local repository:
-#  replace github.com/wings-software/portal/commons/go/lib => ../../../commons/go/lib
+#  replace github.com/harness/harness-core/commons/go/lib => ../../../commons/go/lib
 #(the above replace is needed only if you are outside the module you want to import)
 #go get <-- this updates go.mod
 

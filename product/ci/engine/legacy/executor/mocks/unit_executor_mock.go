@@ -12,8 +12,8 @@ package executor
 import (
 	context "context"
 	gomock "github.com/golang/mock/gomock"
-	output "github.com/wings-software/portal/product/ci/engine/output"
-	proto "github.com/wings-software/portal/product/ci/engine/proto"
+	output "github.com/harness/harness-core/product/ci/engine/output"
+	proto "github.com/harness/harness-core/product/ci/engine/proto"
 	reflect "reflect"
 )
 

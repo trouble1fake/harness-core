@@ -13,9 +13,9 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	"github.com/wings-software/portal/commons/go/lib/logs"
-	"github.com/wings-software/portal/product/ci/engine/output"
-	pb "github.com/wings-software/portal/product/ci/engine/proto"
+	"github.com/harness/harness-core/commons/go/lib/logs"
+	"github.com/harness/harness-core/product/ci/engine/output"
+	pb "github.com/harness/harness-core/product/ci/engine/proto"
 	"go.uber.org/zap"
 )
 

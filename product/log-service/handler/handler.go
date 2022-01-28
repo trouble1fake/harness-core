@@ -9,10 +9,10 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/wings-software/portal/product/log-service/config"
-	"github.com/wings-software/portal/product/log-service/logger"
-	"github.com/wings-software/portal/product/log-service/store"
-	"github.com/wings-software/portal/product/log-service/stream"
+	"github.com/harness/harness-core/product/log-service/config"
+	"github.com/harness/harness-core/product/log-service/logger"
+	"github.com/harness/harness-core/product/log-service/store"
+	"github.com/harness/harness-core/product/log-service/stream"
 
 	"github.com/go-chi/chi"
 )

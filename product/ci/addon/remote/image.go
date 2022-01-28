@@ -8,9 +8,9 @@ package remote
 import (
 	"context"
 
-	"github.com/wings-software/portal/product/ci/engine/consts"
-	grpcclient "github.com/wings-software/portal/product/ci/engine/grpc/client"
-	pb "github.com/wings-software/portal/product/ci/engine/proto"
+	"github.com/harness/harness-core/product/ci/engine/consts"
+	grpcclient "github.com/harness/harness-core/product/ci/engine/grpc/client"
+	pb "github.com/harness/harness-core/product/ci/engine/proto"
 	"go.uber.org/zap"
 )
 

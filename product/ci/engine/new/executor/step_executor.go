@@ -12,10 +12,10 @@ import (
 	"io"
 	"time"
 
-	statuspb "github.com/wings-software/portal/910-delegate-task-grpc-service/src/main/proto/io/harness/task/service"
-	"github.com/wings-software/portal/product/ci/engine/output"
-	pb "github.com/wings-software/portal/product/ci/engine/proto"
-	"github.com/wings-software/portal/product/ci/engine/status"
+	statuspb "github.com/harness/harness-core/910-delegate-task-grpc-service/src/main/proto/io/harness/task/service"
+	"github.com/harness/harness-core/product/ci/engine/output"
+	pb "github.com/harness/harness-core/product/ci/engine/proto"
+	"github.com/harness/harness-core/product/ci/engine/status"
 	"go.uber.org/zap"
 	grpcstatus "google.golang.org/grpc/status"
 )

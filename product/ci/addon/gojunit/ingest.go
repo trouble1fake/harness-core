@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wings-software/portal/product/ci/ti-service/types"
+	"github.com/harness/harness-core/product/ci/ti-service/types"
 )
 
 // findSuites performs a depth-first search through the XML document, and

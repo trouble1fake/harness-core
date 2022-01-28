@@ -15,7 +15,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/wings-software/portal/product/ci/ti-service/types"
+	"github.com/harness/harness-core/product/ci/ti-service/types"
 	"go.uber.org/zap"
 )
 

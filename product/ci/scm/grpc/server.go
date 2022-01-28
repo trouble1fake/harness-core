@@ -12,7 +12,7 @@ import (
 
 	"github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
-	pb "github.com/wings-software/portal/product/ci/scm/proto"
+	pb "github.com/harness/harness-core/product/ci/scm/proto"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"

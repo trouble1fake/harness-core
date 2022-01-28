@@ -7,7 +7,7 @@ go_library(
         "stage_executor.go",
         "unit_executor.go",
     ],
-    importpath = "github.com/wings-software/portal/product/ci/engine/legacy/executor",
+    importpath = "github.com/harness/harness-core/product/ci/engine/legacy/executor",
     visibility = ["//visibility:public"],
     deps = [
         "//910-delegate-task-grpc-service/src/main/proto/io/harness/task/service",

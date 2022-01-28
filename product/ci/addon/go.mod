@@ -1,10 +1,10 @@
-module github.com/wings-software/portal/product/ci/addon
+module github.com/harness/harness-core/product/ci/addon
 
 go 1.14
 
-replace github.com/wings-software/portal/commons/go/lib => ../../../commons/go/lib
+replace github.com/harness/harness-core/commons/go/lib => ../../../commons/go/lib
 
-replace github.com/wings-software/portal/product/log-service => ../../../product/log-service
+replace github.com/harness/harness-core/product/log-service => ../../../product/log-service
 
 require (
 	github.com/Azure/azure-pipeline-go v0.2.2 // indirect
@@ -47,11 +47,11 @@ require (
 	github.com/timakin/bodyclose v0.0.0-20200424151742-cb6215831a94 // indirect
 	github.com/tj/assert v0.0.0-20171129193455-018094318fb0
 	github.com/vdemeester/k8s-pkg-credentialprovider v1.18.1-0.20201019120933-f1d16962a4db
-	github.com/wings-software/portal v0.0.0-20210601143423-52a763a1cb90
-	github.com/wings-software/portal/commons/go/lib v0.0.0-00010101000000-000000000000
-	github.com/wings-software/portal/product/ci/engine v0.0.0-20210601143423-52a763a1cb90
-	github.com/wings-software/portal/product/ci/ti-service v0.0.0-20210601143423-52a763a1cb90
-	github.com/wings-software/portal/product/log-service v0.0.0-00010101000000-000000000000 // indirect
+	github.com/harness/harness-core v0.0.0-20210601143423-52a763a1cb90
+	github.com/harness/harness-core/commons/go/lib v0.0.0-00010101000000-000000000000
+	github.com/harness/harness-core/product/ci/engine v0.0.0-20210601143423-52a763a1cb90
+	github.com/harness/harness-core/product/ci/ti-service v0.0.0-20210601143423-52a763a1cb90
+	github.com/harness/harness-core/product/log-service v0.0.0-00010101000000-000000000000 // indirect
 	github.com/xanzy/go-gitlab v0.32.0 // indirect
 	go.uber.org/zap v1.16.0
 	golang.org/x/net v0.0.0-20201110031124-69a78807bb2b

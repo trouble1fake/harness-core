@@ -8,7 +8,7 @@ go_library(
         "loggable_cmd.go",
         "utils.go",
     ],
-    importpath = "github.com/wings-software/portal/commons/go/lib/utils",
+    importpath = "github.com/harness/harness-core/commons/go/lib/utils",
     visibility = ["//visibility:public"],
     deps = [
         "@cc_mvdan_sh_v3//syntax",

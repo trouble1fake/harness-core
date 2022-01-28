@@ -9,7 +9,7 @@ package testintelligence
 
 import (
 	"context"
-	"github.com/wings-software/portal/product/ci/ti-service/types"
+	"github.com/harness/harness-core/product/ci/ti-service/types"
 )
 
 //go:generate mockgen -source runner.go -package=testintelligence -destination mocks/runner_mock.go TestRunner

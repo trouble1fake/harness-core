@@ -13,7 +13,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/wings-software/portal/product/log-service/stream"
+	"github.com/harness/harness-core/product/log-service/stream"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"

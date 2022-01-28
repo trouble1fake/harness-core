@@ -6,11 +6,11 @@
 package grpc
 
 import (
-	"github.com/wings-software/portal/product/ci/scm/file"
-	"github.com/wings-software/portal/product/ci/scm/git"
-	"github.com/wings-software/portal/product/ci/scm/parser"
-	pb "github.com/wings-software/portal/product/ci/scm/proto"
-	"github.com/wings-software/portal/product/ci/scm/repo"
+	"github.com/harness/harness-core/product/ci/scm/file"
+	"github.com/harness/harness-core/product/ci/scm/git"
+	"github.com/harness/harness-core/product/ci/scm/parser"
+	pb "github.com/harness/harness-core/product/ci/scm/proto"
+	"github.com/harness/harness-core/product/ci/scm/repo"
 	"go.uber.org/zap"
 	"golang.org/x/net/context"
 )

@@ -14,13 +14,13 @@ import (
 
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"github.com/pkg/errors"
-	"github.com/wings-software/portal/commons/go/lib/utils"
-	caddon "github.com/wings-software/portal/product/ci/addon/grpc/client"
-	addonpb "github.com/wings-software/portal/product/ci/addon/proto"
-	"github.com/wings-software/portal/product/ci/common/external"
-	"github.com/wings-software/portal/product/ci/engine/output"
-	pb "github.com/wings-software/portal/product/ci/engine/proto"
-	"github.com/wings-software/portal/product/ci/ti-service/types"
+	"github.com/harness/harness-core/commons/go/lib/utils"
+	caddon "github.com/harness/harness-core/product/ci/addon/grpc/client"
+	addonpb "github.com/harness/harness-core/product/ci/addon/proto"
+	"github.com/harness/harness-core/product/ci/common/external"
+	"github.com/harness/harness-core/product/ci/engine/output"
+	pb "github.com/harness/harness-core/product/ci/engine/proto"
+	"github.com/harness/harness-core/product/ci/ti-service/types"
 	"go.uber.org/zap"
 )
 

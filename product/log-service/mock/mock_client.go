@@ -12,8 +12,8 @@ package mock
 import (
 	context "context"
 	gomock "github.com/golang/mock/gomock"
-	client "github.com/wings-software/portal/product/log-service/client"
-	stream "github.com/wings-software/portal/product/log-service/stream"
+	client "github.com/harness/harness-core/product/log-service/client"
+	stream "github.com/harness/harness-core/product/log-service/stream"
 	io "io"
 	reflect "reflect"
 )

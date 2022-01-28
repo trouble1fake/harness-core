@@ -12,7 +12,7 @@ package mocks
 import (
 	context "context"
 	gomock "github.com/golang/mock/gomock"
-	types "github.com/wings-software/portal/product/ci/ti-service/types"
+	types "github.com/harness/harness-core/product/ci/ti-service/types"
 	reflect "reflect"
 )
 

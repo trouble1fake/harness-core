@@ -9,9 +9,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/wings-software/portal/commons/go/lib/expressions"
-	"github.com/wings-software/portal/product/ci/addon/remote"
-	pb "github.com/wings-software/portal/product/ci/engine/proto"
+	"github.com/harness/harness-core/commons/go/lib/expressions"
+	"github.com/harness/harness-core/product/ci/addon/remote"
+	pb "github.com/harness/harness-core/product/ci/engine/proto"
 	"go.uber.org/zap"
 )
 

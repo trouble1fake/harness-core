@@ -9,7 +9,7 @@ go_library(
         "run_mock.go",
         "save_cache_mock.go",
     ],
-    importpath = "github.com/wings-software/portal/product/ci/engine/legacy/steps/mocks",
+    importpath = "github.com/harness/harness-core/product/ci/engine/legacy/steps/mocks",
     visibility = ["//visibility:public"],
     deps = [
         "//product/ci/engine/output",

@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "runtests",
     srcs = ["runtests.go"],
-    importpath = "github.com/wings-software/portal/product/ci/engine/new/executor/runtests",
+    importpath = "github.com/harness/harness-core/product/ci/engine/new/executor/runtests",
     visibility = ["//visibility:public"],
     deps = [
         "//commons/go/lib/utils",

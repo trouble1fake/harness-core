@@ -9,7 +9,7 @@ go_library(
         "pr.go",
         "push.go",
     ],
-    importpath = "github.com/wings-software/portal/product/ci/scm/converter",
+    importpath = "github.com/harness/harness-core/product/ci/scm/converter",
     visibility = ["//visibility:public"],
     deps = [
         "//product/ci/scm/proto",

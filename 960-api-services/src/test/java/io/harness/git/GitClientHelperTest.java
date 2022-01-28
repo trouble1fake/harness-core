@@ -181,7 +181,7 @@ public class GitClientHelperTest extends CategoryTest {
   @Owner(developers = HARSH)
   @Category(UnitTests.class)
   public void testGetOwnerFromHTTPURL() {
-    final String repoName = GitClientHelper.getGitOwner("https://github.com/wings-software/portal.git", false);
+    final String repoName = GitClientHelper.getGitOwner("https://github.com/harness/harness-core.git", false);
     assertThat(repoName).isEqualTo("wings-software");
   }
 
@@ -198,7 +198,7 @@ public class GitClientHelperTest extends CategoryTest {
   @Owner(developers = HARSH)
   @Category(UnitTests.class)
   public void testGetREPOFromHTTPURL() {
-    final String repoName = GitClientHelper.getGitRepo("https://github.com/wings-software/portal.git");
+    final String repoName = GitClientHelper.getGitRepo("https://github.com/harness/harness-core.git");
     assertThat(repoName).isEqualTo("portal");
   }
 

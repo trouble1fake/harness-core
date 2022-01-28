@@ -11,8 +11,8 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	"github.com/wings-software/portal/product/ci/scm/grpc"
-	mgrpcserver "github.com/wings-software/portal/product/ci/scm/grpc/mocks"
+	"github.com/harness/harness-core/product/ci/scm/grpc"
+	mgrpcserver "github.com/harness/harness-core/product/ci/scm/grpc/mocks"
 	"go.uber.org/zap"
 )
 

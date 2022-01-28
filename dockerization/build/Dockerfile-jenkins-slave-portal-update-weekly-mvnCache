@@ -12,8 +12,8 @@
 #ARG STEP=dockerization
 
 #RUN cd /root \
-    #&& git clone https://${GITHUB_USERNAME}:${GITHUB_PASSWORD}@github.com/wings-software/portal.git \
-    #&& cd portal \
+    #&& git clone https://${GITHUB_USERNAME}:${GITHUB_PASSWORD}@github.com/harness/harness-core.git \
+    #&& cd harness-core \
     #&& source /etc/profile.d/maven.sh \
     #&& for i in 1 2 3 4 5; do \
           #BUILD_PURPOSE=DEVELOPMENT \

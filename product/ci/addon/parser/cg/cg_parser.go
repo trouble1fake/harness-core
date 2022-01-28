@@ -16,7 +16,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/wings-software/portal/commons/go/lib/filesystem"
+	"github.com/harness/harness-core/commons/go/lib/filesystem"
 )
 
 //Parser reads callgraph file, processes it to extract

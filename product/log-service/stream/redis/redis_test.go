@@ -20,7 +20,7 @@ import (
 	"github.com/elliotchance/redismock/v7"
 	"github.com/go-redis/redis/v7"
 	"github.com/stretchr/testify/assert"
-	"github.com/wings-software/portal/product/log-service/stream"
+	"github.com/harness/harness-core/product/log-service/stream"
 )
 
 var (

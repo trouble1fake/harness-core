@@ -6,7 +6,7 @@
   "deleted": false,
   "forced": false,
   "base_ref": null,
-  "compare": "https://github.com/wings-software/portal/compare/a8c09c20eb47...4ebc6e9e4899",
+  "compare": "https://github.com/harness/harness-core/compare/a8c09c20eb47...4ebc6e9e4899",
   "commits": [
     {
       "id": "4ebc6e9e489979a29ca17b8da0c29d9f6803a5b9",
@@ -14,7 +14,7 @@
       "distinct": true,
       "message": "Not exposing startTs, endTs, status and errorMsg in email notifications for now (#3119)",
       "timestamp": "2018-08-31T12:58:20-07:00",
-      "url": "https://github.com/wings-software/portal/commit/4ebc6e9e489979a29ca17b8da0c29d9f6803a5b9",
+      "url": "https://github.com/harness/harness-core/commit/4ebc6e9e489979a29ca17b8da0c29d9f6803a5b9",
       "author": {
         "name": "Aaditi Joag",
         "email": "aaditi.joag@harness.io",
@@ -42,7 +42,7 @@
     "distinct": true,
     "message": "Not exposing startTs, endTs, status and errorMsg in email notifications for now (#3119)",
     "timestamp": "2018-08-31T12:58:20-07:00",
-    "url": "https://github.com/wings-software/portal/commit/4ebc6e9e489979a29ca17b8da0c29d9f6803a5b9",
+    "url": "https://github.com/harness/harness-core/commit/4ebc6e9e489979a29ca17b8da0c29d9f6803a5b9",
     "author": {
       "name": "Aaditi Joag",
       "email": "aaditi.joag@harness.io",
@@ -91,10 +91,10 @@
       "site_admin": false
     },
     "private": true,
-    "html_url": "https://github.com/wings-software/portal",
+    "html_url": "https://github.com/harness/harness-core",
     "description": null,
     "fork": false,
-    "url": "https://github.com/wings-software/portal",
+    "url": "https://github.com/harness/harness-core",
     "forks_url": "https://api.github.com/repos/wings-software/portal/forks",
     "keys_url": "https://api.github.com/repos/wings-software/portal/keys{/key_id}",
     "collaborators_url": "https://api.github.com/repos/wings-software/portal/collaborators{/collaborator}",
@@ -134,10 +134,10 @@
     "created_at": 1513981029,
     "updated_at": "2018-08-31T19:03:44Z",
     "pushed_at": 1535745502,
-    "git_url": "git://github.com/wings-software/portal.git",
+    "git_url": "git://github.com/harness/harness-core.git",
     "ssh_url": "git@github.com:wings-software/portal.git",
-    "clone_url": "https://github.com/wings-software/portal.git",
-    "svn_url": "https://github.com/wings-software/portal",
+    "clone_url": "https://github.com/harness/harness-core.git",
+    "svn_url": "https://github.com/harness/harness-core",
     "homepage": null,
     "size": 334779,
     "stargazers_count": 5,

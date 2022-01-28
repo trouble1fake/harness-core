@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 	"os"
 
-	client "github.com/wings-software/portal/product/log-service/client"
+	client "github.com/harness/harness-core/product/log-service/client"
 
 	"gopkg.in/alecthomas/kingpin.v2"
 )

@@ -1,4 +1,4 @@
-module github.com/wings-software/portal/product/ci/common/avro
+module github.com/harness/harness-core/product/ci/common/avro
 
 go 1.14
 

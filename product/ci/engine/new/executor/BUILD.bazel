@@ -7,7 +7,7 @@ go_library(
         "async_executor.go",
         "step_executor.go",
     ],
-    importpath = "github.com/wings-software/portal/product/ci/engine/new/executor",
+    importpath = "github.com/harness/harness-core/product/ci/engine/new/executor",
     visibility = ["//visibility:public"],
     deps = [
         "//910-delegate-task-grpc-service/src/main/proto/io/harness/task/service",

@@ -14,11 +14,11 @@ import (
 
 	"github.com/gogo/protobuf/jsonpb"
 	"github.com/pkg/errors"
-	pb "github.com/wings-software/portal/960-expression-service/src/main/proto/io/harness/expression/service"
-	"github.com/wings-software/portal/commons/go/lib/expression-service/grpc"
-	jexlexpr "github.com/wings-software/portal/commons/go/lib/expressions"
-	"github.com/wings-software/portal/commons/go/lib/utils"
-	"github.com/wings-software/portal/product/ci/engine/output"
+	pb "github.com/harness/harness-core/960-expression-service/src/main/proto/io/harness/expression/service"
+	"github.com/harness/harness-core/commons/go/lib/expression-service/grpc"
+	jexlexpr "github.com/harness/harness-core/commons/go/lib/expressions"
+	"github.com/harness/harness-core/commons/go/lib/utils"
+	"github.com/harness/harness-core/product/ci/engine/output"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/metadata"
 )

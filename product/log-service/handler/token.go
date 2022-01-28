@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/dchest/authcookie"
-	"github.com/wings-software/portal/product/log-service/config"
+	"github.com/harness/harness-core/product/log-service/config"
 )
 
 const defaultTokenExpiryTime = 48 * time.Hour

@@ -15,7 +15,7 @@ go_library(
         "writer.go",
         "writer_mock.go",
     ],
-    importpath = "github.com/wings-software/portal/commons/go/lib/logs",
+    importpath = "github.com/harness/harness-core/commons/go/lib/logs",
     visibility = ["//visibility:public"],
     deps = [
         "@com_github_blendle_zapdriver//:zapdriver",

@@ -8,7 +8,7 @@ package gitclient
 import (
 	"testing"
 
-	pb "github.com/wings-software/portal/product/ci/scm/proto"
+	pb "github.com/harness/harness-core/product/ci/scm/proto"
 )
 
 func Test_getValidRef(t *testing.T) {

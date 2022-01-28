@@ -7,7 +7,7 @@ go_library(
         "jexl.go",
         "secret.go",
     ],
-    importpath = "github.com/wings-software/portal/product/ci/addon/resolver",
+    importpath = "github.com/harness/harness-core/product/ci/addon/resolver",
     visibility = ["//visibility:public"],
     deps = [
         "//commons/go/lib/expressions",

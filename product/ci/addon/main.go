@@ -13,13 +13,13 @@ import (
 	"os"
 
 	"github.com/alexflint/go-arg"
-	"github.com/wings-software/portal/commons/go/lib/logs"
-	"github.com/wings-software/portal/commons/go/lib/metrics"
-	"github.com/wings-software/portal/product/ci/addon/grpc"
-	addonlogs "github.com/wings-software/portal/product/ci/addon/logs"
-	"github.com/wings-software/portal/product/ci/addon/services"
-	"github.com/wings-software/portal/product/ci/common/external"
-	"github.com/wings-software/portal/product/ci/engine/logutil"
+	"github.com/harness/harness-core/commons/go/lib/logs"
+	"github.com/harness/harness-core/commons/go/lib/metrics"
+	"github.com/harness/harness-core/product/ci/addon/grpc"
+	addonlogs "github.com/harness/harness-core/product/ci/addon/logs"
+	"github.com/harness/harness-core/product/ci/addon/services"
+	"github.com/harness/harness-core/product/ci/common/external"
+	"github.com/harness/harness-core/product/ci/engine/logutil"
 	"go.uber.org/zap"
 )
 

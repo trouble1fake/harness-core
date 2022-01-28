@@ -10,7 +10,7 @@ import (
 	"net"
 	"time"
 
-	pb "github.com/wings-software/portal/product/ci/addon/proto"
+	pb "github.com/harness/harness-core/product/ci/addon/proto"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )

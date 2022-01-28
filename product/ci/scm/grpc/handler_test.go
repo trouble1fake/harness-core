@@ -14,8 +14,8 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	"github.com/wings-software/portal/commons/go/lib/logs"
-	pb "github.com/wings-software/portal/product/ci/scm/proto"
+	"github.com/harness/harness-core/commons/go/lib/logs"
+	pb "github.com/harness/harness-core/product/ci/scm/proto"
 	"go.uber.org/zap"
 	"golang.org/x/net/context"
 )

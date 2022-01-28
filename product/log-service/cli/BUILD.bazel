@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "cli",
     srcs = ["cli.go"],
-    importpath = "github.com/wings-software/portal/product/log-service/cli",
+    importpath = "github.com/harness/harness-core/product/log-service/cli",
     visibility = ["//visibility:public"],
     deps = [
         "//product/log-service/cli/server",

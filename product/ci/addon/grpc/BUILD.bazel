@@ -6,7 +6,7 @@ go_library(
         "handler.go",
         "server.go",
     ],
-    importpath = "github.com/wings-software/portal/product/ci/addon/grpc",
+    importpath = "github.com/harness/harness-core/product/ci/addon/grpc",
     visibility = ["//visibility:public"],
     deps = [
         "//commons/go/lib/logs",

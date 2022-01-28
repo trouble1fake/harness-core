@@ -11,9 +11,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	"github.com/wings-software/portal/commons/go/lib/awsutils/mocks"
-	"github.com/wings-software/portal/commons/go/lib/filesystem"
-	"github.com/wings-software/portal/commons/go/lib/logs"
+	"github.com/harness/harness-core/commons/go/lib/awsutils/mocks"
+	"github.com/harness/harness-core/commons/go/lib/filesystem"
+	"github.com/harness/harness-core/commons/go/lib/logs"
 	"go.uber.org/zap"
 	"io"
 

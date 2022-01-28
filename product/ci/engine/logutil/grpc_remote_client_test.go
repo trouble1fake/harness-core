@@ -11,9 +11,9 @@ import (
 	"encoding/json"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	grpcclient "github.com/wings-software/portal/product/ci/engine/grpc/client"
-	mclient "github.com/wings-software/portal/product/ci/engine/grpc/client/mocks"
-	"github.com/wings-software/portal/product/log-service/stream"
+	grpcclient "github.com/harness/harness-core/product/ci/engine/grpc/client"
+	mclient "github.com/harness/harness-core/product/ci/engine/grpc/client/mocks"
+	"github.com/harness/harness-core/product/log-service/stream"
 	"go.uber.org/zap"
 	"testing"
 )

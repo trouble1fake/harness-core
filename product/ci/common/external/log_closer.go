@@ -12,7 +12,7 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/wings-software/portal/commons/go/lib/logs"
+	"github.com/harness/harness-core/commons/go/lib/logs"
 )
 
 var (

@@ -15,11 +15,11 @@ import (
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"go.uber.org/zap"
 
-	"github.com/wings-software/portal/product/ci/engine/consts"
-	grpcclient "github.com/wings-software/portal/product/ci/engine/grpc/client"
-	pb "github.com/wings-software/portal/product/ci/engine/proto"
-	"github.com/wings-software/portal/product/log-service/client"
-	"github.com/wings-software/portal/product/log-service/stream"
+	"github.com/harness/harness-core/product/ci/engine/consts"
+	grpcclient "github.com/harness/harness-core/product/ci/engine/grpc/client"
+	pb "github.com/harness/harness-core/product/ci/engine/proto"
+	"github.com/harness/harness-core/product/log-service/client"
+	"github.com/harness/harness-core/product/log-service/stream"
 )
 
 const (

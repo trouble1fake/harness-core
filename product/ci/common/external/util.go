@@ -13,12 +13,12 @@ import (
 	"os"
 	"strings"
 
-	"github.com/wings-software/portal/commons/go/lib/exec"
-	"github.com/wings-software/portal/commons/go/lib/logs"
-	plogs "github.com/wings-software/portal/product/ci/common/logs"
-	ticlient "github.com/wings-software/portal/product/ci/ti-service/client"
-	"github.com/wings-software/portal/product/ci/ti-service/types"
-	"github.com/wings-software/portal/product/log-service/client"
+	"github.com/harness/harness-core/commons/go/lib/exec"
+	"github.com/harness/harness-core/commons/go/lib/logs"
+	plogs "github.com/harness/harness-core/product/ci/common/logs"
+	ticlient "github.com/harness/harness-core/product/ci/ti-service/client"
+	"github.com/harness/harness-core/product/ci/ti-service/types"
+	"github.com/harness/harness-core/product/log-service/client"
 	"go.uber.org/zap"
 )
 

@@ -7,7 +7,7 @@ go_library(
         "filesystem_mock.go",
         "path_resolver.go",
     ],
-    importpath = "github.com/wings-software/portal/commons/go/lib/filesystem",
+    importpath = "github.com/harness/harness-core/commons/go/lib/filesystem",
     visibility = ["//visibility:public"],
     deps = [
         "//commons/go/lib/logs",

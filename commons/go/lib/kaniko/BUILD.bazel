@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "kaniko",
     srcs = ["publisher.go"],
-    importpath = "github.com/wings-software/portal/commons/go/lib/kaniko",
+    importpath = "github.com/harness/harness-core/commons/go/lib/kaniko",
     visibility = ["//visibility:public"],
     deps = [
         "//commons/go/lib/filesystem",

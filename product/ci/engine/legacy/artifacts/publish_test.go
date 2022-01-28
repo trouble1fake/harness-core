@@ -15,11 +15,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 
-	"github.com/wings-software/portal/commons/go/lib/filesystem"
-	"github.com/wings-software/portal/commons/go/lib/kaniko"
-	kaniko_mock "github.com/wings-software/portal/commons/go/lib/kaniko/mocks"
-	"github.com/wings-software/portal/commons/go/lib/logs"
-	pb "github.com/wings-software/portal/product/ci/engine/proto"
+	"github.com/harness/harness-core/commons/go/lib/filesystem"
+	"github.com/harness/harness-core/commons/go/lib/kaniko"
+	kaniko_mock "github.com/harness/harness-core/commons/go/lib/kaniko/mocks"
+	"github.com/harness/harness-core/commons/go/lib/logs"
+	pb "github.com/harness/harness-core/product/ci/engine/proto"
 )
 
 func Test_validatePublishArtifactRequest(t *testing.T) {

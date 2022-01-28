@@ -10,8 +10,8 @@ package main
 */
 import (
 	"github.com/alexflint/go-arg"
-	"github.com/wings-software/portal/commons/go/lib/logs"
-	"github.com/wings-software/portal/product/ci/scm/grpc"
+	"github.com/harness/harness-core/commons/go/lib/logs"
+	"github.com/harness/harness-core/product/ci/scm/grpc"
 	"go.uber.org/zap"
 )
 

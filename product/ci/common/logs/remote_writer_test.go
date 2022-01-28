@@ -13,11 +13,11 @@ import (
 	gomock "github.com/golang/mock/gomock"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
-	"github.com/wings-software/portal/commons/go/lib/logs"
+	"github.com/harness/harness-core/commons/go/lib/logs"
 
-	"github.com/wings-software/portal/product/log-service/client"
-	"github.com/wings-software/portal/product/log-service/mock"
-	"github.com/wings-software/portal/product/log-service/stream"
+	"github.com/harness/harness-core/product/log-service/client"
+	"github.com/harness/harness-core/product/log-service/mock"
+	"github.com/harness/harness-core/product/log-service/stream"
 )
 
 func Test_GetRemoteWriter_Success(t *testing.T) {

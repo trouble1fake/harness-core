@@ -7,7 +7,7 @@ package converter
 
 import (
 	"github.com/drone/go-scm/scm"
-	pb "github.com/wings-software/portal/product/ci/scm/proto"
+	pb "github.com/harness/harness-core/product/ci/scm/proto"
 )
 
 // ConvertBranchHook converts scm.PullRequestHook to protobuf object

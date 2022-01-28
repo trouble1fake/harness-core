@@ -8,12 +8,12 @@ package grpc
 import (
 	"io"
 
-	"github.com/wings-software/portal/commons/go/lib/images"
-	"github.com/wings-software/portal/product/ci/engine/legacy/jexl"
-	"github.com/wings-software/portal/product/ci/engine/legacy/state"
-	"github.com/wings-software/portal/product/ci/engine/new/executor"
-	"github.com/wings-software/portal/product/ci/engine/output"
-	pb "github.com/wings-software/portal/product/ci/engine/proto"
+	"github.com/harness/harness-core/commons/go/lib/images"
+	"github.com/harness/harness-core/product/ci/engine/legacy/jexl"
+	"github.com/harness/harness-core/product/ci/engine/legacy/state"
+	"github.com/harness/harness-core/product/ci/engine/new/executor"
+	"github.com/harness/harness-core/product/ci/engine/output"
+	pb "github.com/harness/harness-core/product/ci/engine/proto"
 	"go.uber.org/zap"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"

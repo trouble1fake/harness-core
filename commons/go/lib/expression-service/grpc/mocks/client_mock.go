@@ -11,7 +11,7 @@ package grpc
 
 import (
 	gomock "github.com/golang/mock/gomock"
-	service "github.com/wings-software/portal/960-expression-service/src/main/proto/io/harness/expression/service"
+	service "github.com/harness/harness-core/960-expression-service/src/main/proto/io/harness/expression/service"
 	reflect "reflect"
 )
 

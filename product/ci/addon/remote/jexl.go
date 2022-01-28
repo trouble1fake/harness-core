@@ -8,8 +8,8 @@ package remote
 import (
 	"context"
 
-	"github.com/wings-software/portal/product/ci/engine/consts"
-	pb "github.com/wings-software/portal/product/ci/engine/proto"
+	"github.com/harness/harness-core/product/ci/engine/consts"
+	pb "github.com/harness/harness-core/product/ci/engine/proto"
 	"go.uber.org/zap"
 )
 

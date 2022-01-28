@@ -9,9 +9,9 @@ import (
 	"context"
 	"os"
 
-	"github.com/wings-software/portal/product/log-service/cli/server"
-	"github.com/wings-software/portal/product/log-service/cli/store"
-	"github.com/wings-software/portal/product/log-service/cli/stream"
+	"github.com/harness/harness-core/product/log-service/cli/server"
+	"github.com/harness/harness-core/product/log-service/cli/store"
+	"github.com/harness/harness-core/product/log-service/cli/stream"
 
 	"gopkg.in/alecthomas/kingpin.v2"
 )

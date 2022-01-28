@@ -11,7 +11,7 @@ import (
 	"io/ioutil"
 
 	"github.com/pkg/errors"
-	pb "github.com/wings-software/portal/product/ci/engine/proto"
+	pb "github.com/harness/harness-core/product/ci/engine/proto"
 )
 
 type (

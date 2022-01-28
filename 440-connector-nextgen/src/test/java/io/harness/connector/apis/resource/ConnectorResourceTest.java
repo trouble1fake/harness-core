@@ -189,7 +189,7 @@ public class ConnectorResourceTest extends CategoryTest {
   public void testGitRepoConnectionResourceTest() {
     ResponseDTO<ConnectorValidationResult> validationResult =
         connectorResource.testGitRepoConnection("accountIdentifier", "orgIdentifier", "projectIdentifier",
-            "connectorIdentifier", "https://github.com/wings-software/portal.git");
+            "connectorIdentifier", "https://github.com/harness/harness-core.git");
     Mockito.verify(connectorService, times(1)).testGitRepoConnection(any(), any(), any(), any(), any());
   }
 

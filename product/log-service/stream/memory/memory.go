@@ -13,7 +13,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/wings-software/portal/product/log-service/stream"
+	"github.com/harness/harness-core/product/log-service/stream"
 )
 
 var _ stream.Stream = (*Streamer)(nil)

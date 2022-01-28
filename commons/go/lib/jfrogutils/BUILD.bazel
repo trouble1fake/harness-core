@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "jfrogutils",
     srcs = ["artifactory.go"],
-    importpath = "github.com/wings-software/portal/commons/go/lib/jfrogutils",
+    importpath = "github.com/harness/harness-core/commons/go/lib/jfrogutils",
     visibility = ["//visibility:public"],
     deps = [
         "//commons/go/lib/utils",

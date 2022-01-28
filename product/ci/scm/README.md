@@ -21,7 +21,7 @@
 3. go private EG `~/,zshrc`
 
     ```BASH
-    export GOPRIVATE=github.com/wings-software/portal
+    export GOPRIVATE=github.com/harness/harness-core
     ```
 
 4. Only open the scm folder in vscode `portal/product/ci/scm`, do not open from the portal root.
@@ -29,7 +29,7 @@
 6. If you change the proto file you will need to run `bazelisk build //product/ci/scm/proto/...` to re-create the go file `scm.pb.go`. Then you can copy this file to `portal/product/ci/scm`.
 
     ```BASH
-    cp /home/tp/.cache/bazel/_bazel_tp/529a9f5eb5d3c3de90f20271ededd500/execroot/harness_monorepo/bazel-out/k8-fastbuild/bin/product/ci/scm/proto/linux_amd64_stripped/ciscmpb_go_proto%/github.com/wings-software/portal/product/ci/scm/proto/scm.pb.go ~/workspace/portal/product/ci/scm/proto
+    cp /home/tp/.cache/bazel/_bazel_tp/529a9f5eb5d3c3de90f20271ededd500/execroot/harness_monorepo/bazel-out/k8-fastbuild/bin/product/ci/scm/proto/linux_amd64_stripped/ciscmpb_go_proto%/github.com/harness/harness-core/product/ci/scm/proto/scm.pb.go ~/workspace/portal/product/ci/scm/proto
     ```
 
 7. If you change code dependencies you will need to re-run gazelle again to update the `BUILD.bazel` files in `portal/product/ci/scm`.
@@ -43,8 +43,8 @@ index bdfe753b01..2bef85919d 100644
         github.com/sourcegraph/jsonrpc2 v0.0.0-20200429184054-15c2290dcb37 // indirect
         github.com/stretchr/testify v1.6.1
         github.com/vdemeester/k8s-pkg-credentialprovider v1.18.1-0.20201019120933-f1d16962a4db
--       github.com/wings-software/portal/product/log-service v0.0.0-00010101000000-000000000000
-+//     github.com/wings-software/portal/product/log-service v0.0.0-00010101000000-000000000000
+-       github.com/harness/harness-core/product/log-service v0.0.0-00010101000000-000000000000
++//     github.com/harness/harness-core/product/log-service v0.0.0-00010101000000-000000000000
         go.uber.org/zap v1.15.0
         golang.org/x/tools v0.0.0-20201105220310-78b158585360 // indirect
         google.golang.org/api v0.24.0

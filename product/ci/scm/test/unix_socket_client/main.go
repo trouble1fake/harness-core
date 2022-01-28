@@ -13,7 +13,7 @@ import (
 	"os"
 	"time"
 
-	pb "github.com/wings-software/portal/product/ci/scm/proto"
+	pb "github.com/harness/harness-core/product/ci/scm/proto"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )

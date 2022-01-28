@@ -6,7 +6,7 @@
 package main
 
 import (
-	"github.com/wings-software/portal/product/log-service/cli"
+	"github.com/harness/harness-core/product/log-service/cli"
 
 	_ "github.com/joho/godotenv/autoload"
 )

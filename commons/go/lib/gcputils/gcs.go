@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"cloud.google.com/go/storage"
-	"github.com/wings-software/portal/commons/go/lib/filesystem"
-	"github.com/wings-software/portal/commons/go/lib/utils"
+	"github.com/harness/harness-core/commons/go/lib/filesystem"
+	"github.com/harness/harness-core/commons/go/lib/utils"
 	"go.uber.org/zap"
 	"google.golang.org/api/option"
 )

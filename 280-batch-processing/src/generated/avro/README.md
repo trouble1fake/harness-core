@@ -7,5 +7,5 @@ hello@:~/harness/portal:> java -jar ~/Downloads/avro-tools-1.9.1.jar compile sch
 
 ---
 **Why is it not yet migrated to bazel**
->This was the PR for avro plugin in bazel -> https://github.com/wings-software/portal/pull/21636/files
+>This was the PR for avro plugin in bazel -> https://github.com/harness/harness-core/pull/21636/files
 the plugin required this argument with bazel build --incompatible_restrict_string_escapes=false which was creating some issue with bazel_script, that's why it wasn't merged

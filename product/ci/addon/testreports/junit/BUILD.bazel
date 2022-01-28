@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "junit",
     srcs = ["junit.go"],
-    importpath = "github.com/wings-software/portal/product/ci/addon/testreports/junit",
+    importpath = "github.com/harness/harness-core/product/ci/addon/testreports/junit",
     visibility = ["//visibility:public"],
     deps = [
         "//commons/go/lib/filesystem",

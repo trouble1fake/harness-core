@@ -9,10 +9,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/mattn/go-zglob"
-	"github.com/wings-software/portal/commons/go/lib/filesystem"
-	gojunit "github.com/wings-software/portal/product/ci/addon/gojunit"
-	"github.com/wings-software/portal/product/ci/addon/testreports"
-	"github.com/wings-software/portal/product/ci/ti-service/types"
+	"github.com/harness/harness-core/commons/go/lib/filesystem"
+	gojunit "github.com/harness/harness-core/product/ci/addon/gojunit"
+	"github.com/harness/harness-core/product/ci/addon/testreports"
+	"github.com/harness/harness-core/product/ci/ti-service/types"
 	"go.uber.org/zap"
 )
 

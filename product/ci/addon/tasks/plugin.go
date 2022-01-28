@@ -12,13 +12,13 @@ import (
 	"os"
 	"time"
 
-	"github.com/wings-software/portal/commons/go/lib/exec"
-	"github.com/wings-software/portal/commons/go/lib/images"
-	"github.com/wings-software/portal/commons/go/lib/utils"
-	"github.com/wings-software/portal/product/ci/addon/artifact"
-	"github.com/wings-software/portal/product/ci/addon/remote"
-	"github.com/wings-software/portal/product/ci/addon/resolver"
-	pb "github.com/wings-software/portal/product/ci/engine/proto"
+	"github.com/harness/harness-core/commons/go/lib/exec"
+	"github.com/harness/harness-core/commons/go/lib/images"
+	"github.com/harness/harness-core/commons/go/lib/utils"
+	"github.com/harness/harness-core/product/ci/addon/artifact"
+	"github.com/harness/harness-core/product/ci/addon/remote"
+	"github.com/harness/harness-core/product/ci/addon/resolver"
+	pb "github.com/harness/harness-core/product/ci/engine/proto"
 	"go.uber.org/zap"
 )
 

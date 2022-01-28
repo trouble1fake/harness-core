@@ -13,7 +13,7 @@ proto_library(
 go_proto_library(
     name = "ciscmpb_go_proto",
     compilers = ["@io_bazel_rules_go//proto:go_grpc"],
-    importpath = "github.com/wings-software/portal/product/ci/scm/proto",
+    importpath = "github.com/harness/harness-core/product/ci/scm/proto",
     proto = ":ciscmpb_proto",
     visibility = ["//visibility:public"],
 )
@@ -21,7 +21,7 @@ go_proto_library(
 go_library(
     name = "proto",
     embed = [":ciscmpb_go_proto"],
-    importpath = "github.com/wings-software/portal/product/ci/scm/proto",
+    importpath = "github.com/harness/harness-core/product/ci/scm/proto",
     visibility = ["//visibility:public"],
 )
 

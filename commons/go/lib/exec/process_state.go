@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/wings-software/portal/commons/go/lib/logs"
+	"github.com/harness/harness-core/commons/go/lib/logs"
 )
 
 //go:generate mockgen -source process_state.go -destination process_state_mock.go -package exec ProcessState

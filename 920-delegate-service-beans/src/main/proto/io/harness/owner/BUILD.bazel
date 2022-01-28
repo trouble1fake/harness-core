@@ -12,7 +12,7 @@ proto_library(
 
 go_proto_library(
     name = "920_delegate_service_beans_go_proto",
-    importpath = "github.com/wings-software/portal/920-delegate-service-beans/src/main/proto/io/harness/owner",
+    importpath = "github.com/harness/harness-core/920-delegate-service-beans/src/main/proto/io/harness/owner",
     proto = ":920_delegate_service_beans_proto",
     visibility = ["//visibility:public"],
 )
@@ -20,6 +20,6 @@ go_proto_library(
 go_library(
     name = "owner",
     embed = [":920_delegate_service_beans_go_proto"],
-    importpath = "github.com/wings-software/portal/920-delegate-service-beans/src/main/proto/io/harness/owner",
+    importpath = "github.com/harness/harness-core/920-delegate-service-beans/src/main/proto/io/harness/owner",
     visibility = ["//visibility:public"],
 )

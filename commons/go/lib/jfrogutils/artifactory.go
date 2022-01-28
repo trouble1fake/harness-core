@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wings-software/portal/commons/go/lib/utils"
+	"github.com/harness/harness-core/commons/go/lib/utils"
 	"go.uber.org/zap"
 )
 

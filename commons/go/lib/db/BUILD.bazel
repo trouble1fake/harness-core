@@ -10,7 +10,7 @@ go_library(
         "tx.go",
         "utils.go",
     ],
-    importpath = "github.com/wings-software/portal/commons/go/lib/db",
+    importpath = "github.com/harness/harness-core/commons/go/lib/db",
     visibility = ["//visibility:public"],
     deps = [
         "//commons/go/lib/logs",

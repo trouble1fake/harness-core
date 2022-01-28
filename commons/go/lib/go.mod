@@ -1,4 +1,4 @@
-module github.com/wings-software/portal/commons/go/lib
+module github.com/harness/harness-core/commons/go/lib
 
 go 1.14
 

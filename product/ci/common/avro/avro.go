@@ -10,7 +10,7 @@ import (
 	"github.com/linkedin/goavro/v2"
 	"github.com/pkg/errors"
 
-	cg "github.com/wings-software/portal/product/ci/common/avro/schema/callgraph"
+	cg "github.com/harness/harness-core/product/ci/common/avro/schema/callgraph"
 )
 
 //Serialzer is the interface for encoding and decoding structs

@@ -13,7 +13,7 @@ import (
 	"sync"
 
 	"github.com/hashicorp/go-multierror"
-	"github.com/wings-software/portal/commons/go/lib/logs"
+	"github.com/harness/harness-core/commons/go/lib/logs"
 )
 
 //go:generate mockgen -source filesystem.go -destination filesystem_mock.go -package filesystem FileSystem File
