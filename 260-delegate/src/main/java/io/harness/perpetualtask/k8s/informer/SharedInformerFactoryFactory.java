@@ -7,6 +7,8 @@
 
 package io.harness.perpetualtask.k8s.informer;
 
+import static io.harness.perpetualtask.k8s.utils.ResourceVersionMatch.NOT_OLDER_THAN;
+
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
@@ -68,9 +70,10 @@ public class SharedInformerFactoryFactory {
   private void addHandlerForCronJob(SharedInformerFactory factory, ApiClient apiClient, ClusterDetails clusterDetails) {
     BatchV1beta1Api batchV1beta1Api = new BatchV1beta1Api(apiClient);
     factory
-        .sharedIndexInformerFor((CallGeneratorParams params)
-                                    -> batchV1beta1Api.listCronJobForAllNamespacesCall(null, null, null, null, null,
-                                        null, params.resourceVersion, params.timeoutSeconds, params.watch, null),
+        .sharedIndexInformerFor(
+            (CallGeneratorParams params)
+                -> batchV1beta1Api.listCronJobForAllNamespacesCall(null, null, null, null, null, null,
+                    params.resourceVersion, NOT_OLDER_THAN, params.timeoutSeconds, params.watch, null),
             V1beta1CronJob.class, V1beta1CronJobList.class)
         .addEventHandler(new V1beta1CronJobHandler(eventPublisher, clusterDetails));
   }
@@ -78,9 +81,10 @@ public class SharedInformerFactoryFactory {
   private void addHandlerForJob(SharedInformerFactory factory, ApiClient apiClient, ClusterDetails clusterDetails) {
     BatchV1Api batchV1Api = new BatchV1Api(apiClient);
     factory
-        .sharedIndexInformerFor((CallGeneratorParams params)
-                                    -> batchV1Api.listJobForAllNamespacesCall(null, null, null, null, null, null,
-                                        params.resourceVersion, params.timeoutSeconds, params.watch, null),
+        .sharedIndexInformerFor(
+            (CallGeneratorParams params)
+                -> batchV1Api.listJobForAllNamespacesCall(null, null, null, null, null, null, params.resourceVersion,
+                    NOT_OLDER_THAN, params.timeoutSeconds, params.watch, null),
             V1Job.class, V1JobList.class)
         .addEventHandler(new V1JobHandler(eventPublisher, clusterDetails));
   }
@@ -89,9 +93,10 @@ public class SharedInformerFactoryFactory {
       SharedInformerFactory factory, ApiClient apiClient, ClusterDetails clusterDetails) {
     AppsV1Api appsV1Api = new AppsV1Api(apiClient);
     factory
-        .sharedIndexInformerFor((CallGeneratorParams params)
-                                    -> appsV1Api.listStatefulSetForAllNamespacesCall(null, null, null, null, null, null,
-                                        params.resourceVersion, params.timeoutSeconds, params.watch, null),
+        .sharedIndexInformerFor(
+            (CallGeneratorParams params)
+                -> appsV1Api.listStatefulSetForAllNamespacesCall(null, null, null, null, null, null,
+                    params.resourceVersion, NOT_OLDER_THAN, params.timeoutSeconds, params.watch, null),
             V1StatefulSet.class, V1StatefulSetList.class)
         .addEventHandler(new V1StatefulSetHandler(eventPublisher, clusterDetails));
   }
@@ -100,9 +105,10 @@ public class SharedInformerFactoryFactory {
       SharedInformerFactory factory, ApiClient apiClient, ClusterDetails clusterDetails) {
     AppsV1Api appsV1Api = new AppsV1Api(apiClient);
     factory
-        .sharedIndexInformerFor((CallGeneratorParams params)
-                                    -> appsV1Api.listDaemonSetForAllNamespacesCall(null, null, null, null, null, null,
-                                        params.resourceVersion, params.timeoutSeconds, params.watch, null),
+        .sharedIndexInformerFor(
+            (CallGeneratorParams params)
+                -> appsV1Api.listDaemonSetForAllNamespacesCall(null, null, null, null, null, null,
+                    params.resourceVersion, NOT_OLDER_THAN, params.timeoutSeconds, params.watch, null),
             V1DaemonSet.class, V1DaemonSetList.class)
         .addEventHandler(new V1DaemonSetHandler(eventPublisher, clusterDetails));
   }
@@ -111,9 +117,10 @@ public class SharedInformerFactoryFactory {
       SharedInformerFactory factory, ApiClient apiClient, ClusterDetails clusterDetails) {
     AppsV1Api appsV1Api = new AppsV1Api(apiClient);
     factory
-        .sharedIndexInformerFor((CallGeneratorParams params)
-                                    -> appsV1Api.listDeploymentForAllNamespacesCall(null, null, null, null, null, null,
-                                        params.resourceVersion, params.timeoutSeconds, params.watch, null),
+        .sharedIndexInformerFor(
+            (CallGeneratorParams params)
+                -> appsV1Api.listDeploymentForAllNamespacesCall(null, null, null, null, null, null,
+                    params.resourceVersion, NOT_OLDER_THAN, params.timeoutSeconds, params.watch, null),
             V1Deployment.class, V1DeploymentList.class)
         .addEventHandler(new V1DeploymentHandler(eventPublisher, clusterDetails));
   }
@@ -122,9 +129,10 @@ public class SharedInformerFactoryFactory {
       SharedInformerFactory factory, ApiClient apiClient, ClusterDetails clusterDetails) {
     AppsV1Api appsV1Api = new AppsV1Api(apiClient);
     factory
-        .sharedIndexInformerFor((CallGeneratorParams params)
-                                    -> appsV1Api.listReplicaSetForAllNamespacesCall(null, null, null, null, null, null,
-                                        params.resourceVersion, params.timeoutSeconds, params.watch, null),
+        .sharedIndexInformerFor(
+            (CallGeneratorParams params)
+                -> appsV1Api.listReplicaSetForAllNamespacesCall(null, null, null, null, null, null,
+                    params.resourceVersion, NOT_OLDER_THAN, params.timeoutSeconds, params.watch, null),
             V1ReplicaSet.class, V1ReplicaSetList.class)
         .addEventHandler(new V1ReplicaSetHandler(eventPublisher, clusterDetails));
   }

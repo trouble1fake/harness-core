@@ -5193,21 +5193,6 @@ load("@maven//:defs.bzl", "pinned_maven_install")
 pinned_maven_install()
 
 maven_install(
-    name = "ccm",
-    artifacts = [
-        "io.kubernetes:client-java-api:9.0.2",
-        "io.kubernetes:client-java-extended:9.0.2",
-        "io.kubernetes:client-java-proto:9.0.2",
-        "io.kubernetes:client-java:9.0.2",
-    ],
-    repositories = [
-        "http://jfrogdev.dev.harness.io:80/artifactory/portal-maven",
-        "https://harness.jfrog.io/harness/thirdparty-annonymous",
-    ],
-    version_conflict_policy = "pinned",
-)
-
-maven_install(
     name = "ce_nextgen",
     artifacts = [
         "com.graphql-java:graphql-java:16.2",

@@ -7,6 +7,8 @@
 
 package io.harness.perpetualtask.datacollection.k8s;
 
+import static io.harness.perpetualtask.k8s.utils.ResourceVersionMatch.NOT_OLDER_THAN;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cvng.beans.K8ActivityDataCollectionInfo;
@@ -54,9 +56,10 @@ public class ChangeIntelSharedInformerFactory {
         ChangeIntelReplicaSetHandler.builder().accountId(accountId).dataCollectionInfo(dataCollectionInfo).build();
     injector.injectMembers(handler);
     factory
-        .sharedIndexInformerFor((CallGeneratorParams params)
-                                    -> appsV1Api.listReplicaSetForAllNamespacesCall(null, null, null, null, null, null,
-                                        params.resourceVersion, params.timeoutSeconds, params.watch, null),
+        .sharedIndexInformerFor(
+            (CallGeneratorParams params)
+                -> appsV1Api.listReplicaSetForAllNamespacesCall(null, null, null, null, null, null,
+                    params.resourceVersion, NOT_OLDER_THAN, params.timeoutSeconds, params.watch, null),
             V1ReplicaSet.class, V1ReplicaSetList.class)
         .addEventHandler(handler);
   }
@@ -68,9 +71,10 @@ public class ChangeIntelSharedInformerFactory {
         ChangeIntelDeploymentHandler.builder().accountId(accountId).dataCollectionInfo(dataCollectionInfo).build();
     injector.injectMembers(handler);
     factory
-        .sharedIndexInformerFor((CallGeneratorParams params)
-                                    -> appsV1Api.listDeploymentForAllNamespacesCall(null, null, null, null, null, null,
-                                        params.resourceVersion, params.timeoutSeconds, params.watch, null),
+        .sharedIndexInformerFor(
+            (CallGeneratorParams params)
+                -> appsV1Api.listDeploymentForAllNamespacesCall(null, null, null, null, null, null,
+                    params.resourceVersion, NOT_OLDER_THAN, params.timeoutSeconds, params.watch, null),
             V1Deployment.class, V1DeploymentList.class)
         .addEventHandler(handler);
   }
@@ -82,9 +86,10 @@ public class ChangeIntelSharedInformerFactory {
         ChangeIntelConfigMapHandler.builder().accountId(accountId).dataCollectionInfo(dataCollectionInfo).build();
     injector.injectMembers(handler);
     factory
-        .sharedIndexInformerFor((CallGeneratorParams params)
-                                    -> coreV1Api.listConfigMapForAllNamespacesCall(null, null, null, null, null, null,
-                                        params.resourceVersion, params.timeoutSeconds, params.watch, null),
+        .sharedIndexInformerFor(
+            (CallGeneratorParams params)
+                -> coreV1Api.listConfigMapForAllNamespacesCall(null, null, null, null, null, null,
+                    params.resourceVersion, NOT_OLDER_THAN, params.timeoutSeconds, params.watch, null),
             V1ConfigMap.class, V1ConfigMapList.class)
         .addEventHandler(handler);
   }
@@ -96,9 +101,10 @@ public class ChangeIntelSharedInformerFactory {
         ChangeIntelPodHandler.builder().accountId(accountId).dataCollectionInfo(dataCollectionInfo).build();
     injector.injectMembers(handler);
     factory
-        .sharedIndexInformerFor((CallGeneratorParams params)
-                                    -> coreV1Api.listPodForAllNamespacesCall(null, null, null, null, null, null,
-                                        params.resourceVersion, params.timeoutSeconds, params.watch, null),
+        .sharedIndexInformerFor(
+            (CallGeneratorParams params)
+                -> coreV1Api.listPodForAllNamespacesCall(null, null, null, null, null, null, params.resourceVersion,
+                    NOT_OLDER_THAN, params.timeoutSeconds, params.watch, null),
             V1Pod.class, V1PodList.class)
         .addEventHandler(handler);
   }
@@ -110,9 +116,10 @@ public class ChangeIntelSharedInformerFactory {
         ChangeIntelStatefulSetHandler.builder().accountId(accountId).dataCollectionInfo(dataCollectionInfo).build();
     injector.injectMembers(handler);
     factory
-        .sharedIndexInformerFor((CallGeneratorParams params)
-                                    -> appsV1Api.listStatefulSetForAllNamespacesCall(null, null, null, null, null, null,
-                                        params.resourceVersion, params.timeoutSeconds, params.watch, null),
+        .sharedIndexInformerFor(
+            (CallGeneratorParams params)
+                -> appsV1Api.listStatefulSetForAllNamespacesCall(null, null, null, null, null, null,
+                    params.resourceVersion, NOT_OLDER_THAN, params.timeoutSeconds, params.watch, null),
             V1StatefulSet.class, V1StatefulSetList.class)
         .addEventHandler(handler);
   }
