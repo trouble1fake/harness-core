@@ -7,10 +7,6 @@
 
 package io.harness.delegate.metrics;
 
-import static io.harness.delegate.metrics.DelegateMetricsConstants.CURRENTLY_ACQUIRING_TASKS;
-import static io.harness.delegate.metrics.DelegateMetricsConstants.CURRENTLY_EXECUTING_FUTURES;
-import static io.harness.delegate.metrics.DelegateMetricsConstants.CURRENTLY_EXECUTING_TASKS;
-import static io.harness.delegate.metrics.DelegateMetricsConstants.CURRENTLY_VALIDATING_TASKS;
 import static io.harness.delegate.metrics.DelegateMetricsConstants.DELEGATE_AGENT_METRIC_MAP;
 
 import io.harness.delegate.service.DelegateAgentService;
@@ -35,23 +31,13 @@ public class DelegateAgentMetrics {
   @Inject private DelegateAgentService delegateService;
 
   public void scheduleDelegateAgentMetricsPoll() {
-    executorService.scheduleWithFixedDelay(this::recordMetric, 30, METRICS_POLL_DELAY_SECONDS, TimeUnit.SECONDS);
+    executorService.scheduleWithFixedDelay(this::recordMetric, 60, METRICS_POLL_DELAY_SECONDS, TimeUnit.SECONDS);
   }
 
   @VisibleForTesting
   void recordMetric() {
     try {
-      TaskExecutionMetrics taskExecutionMetrics = delegateService.getTaskExecutionMetrics();
-      String delegateName = taskExecutionMetrics.getDelegateName();
-      metricRegistry.recordGaugeValue(
-          CURRENTLY_ACQUIRING_TASKS, new String[] {delegateName}, taskExecutionMetrics.getCurrentlyAcquiringTasks());
-      metricRegistry.recordGaugeValue(
-          CURRENTLY_VALIDATING_TASKS, new String[] {delegateName}, taskExecutionMetrics.getCurrentlyValidatingTasks());
-      metricRegistry.recordGaugeValue(
-          CURRENTLY_EXECUTING_TASKS, new String[] {delegateName}, taskExecutionMetrics.getCurrentlyExecutingTasks());
-      metricRegistry.recordGaugeValue(CURRENTLY_EXECUTING_FUTURES, new String[] {delegateName},
-          taskExecutionMetrics.getCurrentlyExecutingFutures());
-
+      delegateService.recordMetrics();
     } catch (Exception e) {
       log.error("Could not record metrics.", e);
     }

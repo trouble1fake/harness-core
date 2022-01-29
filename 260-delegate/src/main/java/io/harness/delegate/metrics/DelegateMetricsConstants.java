@@ -15,23 +15,21 @@ import java.util.Map;
 public class DelegateMetricsConstants {
   public static Map<String, DelegateMetricDetails> DELEGATE_AGENT_METRIC_MAP = Maps.newHashMap();
 
-  public static final String CURRENTLY_ACQUIRING_TASKS = "acquiring_tasks";
-  public static final String CURRENTLY_VALIDATING_TASKS = "validating_tasks";
-  public static final String CURRENTLY_EXECUTING_TASKS = "executing_tasks";
-  public static final String CURRENTLY_EXECUTING_FUTURES = "executing_futures";
   public static final String TASK_EXECUTION_TIME = "task_execution_time";
-  public static final String TASK_ACQUIRE_TIME = "task_acquire_time";
+  public static final String TASK_EXECUTION_COUNT = "task_execution_count";
+  public static final String TASKS_IN_QUEUE_COUNT = "tasks_in_queue_count";
+  public static final String TASKS_QUEUED = "tasks_queued";
+  public static final String TASK_TIMEOUT = "task_timeout";
 
   private static final String DELEGATE_NAME_LABEL = "delegate_name";
   private static final String TASK_TYPE_LABEL = "task_type";
 
   static {
-    put(CURRENTLY_ACQUIRING_TASKS, create("Number of the tasks being acquired", DELEGATE_NAME_LABEL));
-    put(CURRENTLY_VALIDATING_TASKS, create("Number of the tasks being validated", DELEGATE_NAME_LABEL));
-    put(CURRENTLY_EXECUTING_TASKS, create("Number of the tasks being executed", DELEGATE_NAME_LABEL));
-    put(CURRENTLY_EXECUTING_FUTURES, create("Number of the java runnable futures being executed", DELEGATE_NAME_LABEL));
-    put(TASK_EXECUTION_TIME, create("Time needed to execute the task ", DELEGATE_NAME_LABEL, TASK_TYPE_LABEL));
-    put(TASK_ACQUIRE_TIME, create("Time needed to acquire the task ", DELEGATE_NAME_LABEL));
+    put(TASK_EXECUTION_TIME, create("Time needed to execute the task.", DELEGATE_NAME_LABEL, TASK_TYPE_LABEL));
+    put(TASK_EXECUTION_COUNT, create("Number of tasks in execution.", DELEGATE_NAME_LABEL));
+    put(TASKS_IN_QUEUE_COUNT, create("Number of tasks in the queue.", DELEGATE_NAME_LABEL));
+    put(TASKS_QUEUED, create("Number of tasks queued.", DELEGATE_NAME_LABEL));
+    put(TASK_TIMEOUT, create("Number of tasks timed out.", DELEGATE_NAME_LABEL, TASK_TYPE_LABEL));
   }
 
   private static void put(String metricName, DelegateMetricDetails metricDetails) {

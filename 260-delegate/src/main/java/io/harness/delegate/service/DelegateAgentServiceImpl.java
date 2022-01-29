@@ -57,8 +57,11 @@ import static io.harness.delegate.message.MessageConstants.WATCHER_PROCESS;
 import static io.harness.delegate.message.MessageConstants.WATCHER_VERSION;
 import static io.harness.delegate.message.MessengerType.DELEGATE;
 import static io.harness.delegate.message.MessengerType.WATCHER;
-import static io.harness.delegate.metrics.DelegateMetricsConstants.TASK_ACQUIRE_TIME;
+import static io.harness.delegate.metrics.DelegateMetricsConstants.TASKS_IN_QUEUE_COUNT;
+import static io.harness.delegate.metrics.DelegateMetricsConstants.TASKS_QUEUED;
+import static io.harness.delegate.metrics.DelegateMetricsConstants.TASK_EXECUTION_COUNT;
 import static io.harness.delegate.metrics.DelegateMetricsConstants.TASK_EXECUTION_TIME;
+import static io.harness.delegate.metrics.DelegateMetricsConstants.TASK_TIMEOUT;
 import static io.harness.eraro.ErrorCode.EXPIRED_TOKEN;
 import static io.harness.eraro.ErrorCode.INVALID_TOKEN;
 import static io.harness.eraro.ErrorCode.REVOKED_TOKEN;
@@ -126,7 +129,6 @@ import io.harness.delegate.expression.DelegateExpressionEvaluator;
 import io.harness.delegate.logging.DelegateStackdriverLogAppender;
 import io.harness.delegate.message.Message;
 import io.harness.delegate.message.MessageService;
-import io.harness.delegate.metrics.TaskExecutionMetrics;
 import io.harness.delegate.task.AbstractDelegateRunnableTask;
 import io.harness.delegate.task.ActivityAccess;
 import io.harness.delegate.task.Cd1ApplicationAccess;
@@ -916,7 +918,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
           if (!(delegateTaskEvent instanceof DelegateTaskAbortEvent)) {
             dispatchDelegateTaskAsync(delegateTaskEvent);
           } else {
-            taskExecutor.submit(() -> abortDelegateTask((DelegateTaskAbortEvent) delegateTaskEvent));
+            abortDelegateTask((DelegateTaskAbortEvent) delegateTaskEvent);
           }
         }
       } catch (Exception e) {
@@ -927,7 +929,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     if (log.isDebugEnabled()) {
       log.debug("^^MSG: " + message);
     }
-    taskExecutor.submit(() -> handleMessage(message));
+    handleMessage(message);
   }
 
   @SuppressWarnings("PMD")
@@ -1877,6 +1879,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       return;
     }
 
+    metricRegistry.recordGaugeInc(TASKS_QUEUED, new String[] {DELEGATE_NAME});
     Future taskFuture = taskExecutor.submit(() -> dispatchDelegateTask(delegateTaskEvent));
     log.info("Task submitted for execution");
 
@@ -1887,6 +1890,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
 
   private void dispatchDelegateTask(DelegateTaskEvent delegateTaskEvent) {
     log.info("DelegateTaskEvent received - {}", delegateTaskEvent);
+    metricRegistry.recordGaugeDec(TASKS_QUEUED, new String[] {DELEGATE_NAME});
     String delegateTaskId = delegateTaskEvent.getDelegateTaskId();
 
     try {
@@ -1926,7 +1930,6 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         return;
       }
 
-      long acquiringStartTimeMillis = clock.millis();
       currentlyAcquiringTasks.add(delegateTaskId);
 
       log.debug("Try to acquire DelegateTask - accountId: {}", accountId);
@@ -1938,7 +1941,6 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         return;
       }
 
-      TaskData taskData = delegateTaskPackage.getData();
       if (isEmpty(delegateTaskPackage.getDelegateId())) {
         // Not whitelisted. Perform validation.
         // TODO: Remove this once TaskValidation does not use secrets
@@ -1956,8 +1958,6 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         executeTask(delegateTaskPackage);
       }
 
-      metricRegistry.recordGaugeValue(
-          TASK_ACQUIRE_TIME, new String[] {DELEGATE_NAME}, clock.millis() - acquiringStartTimeMillis);
     } catch (IOException e) {
       log.error("Unable to get task for validation", e);
     } finally {
@@ -2053,7 +2053,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     DelegateRunnableTask delegateRunnableTask = delegateTaskFactory.getDelegateRunnableTask(
         TaskType.valueOf(taskData.getTaskType()), delegateTaskPackage, logStreamingTaskClient,
         getPostExecutionFunction(delegateTaskPackage.getDelegateTaskId(), sanitizer.orElse(null),
-            logStreamingTaskClient, delegateExpressionEvaluator, taskData.getTaskType(), clock.millis()),
+            logStreamingTaskClient, delegateExpressionEvaluator),
         getPreExecutionFunction(delegateTaskPackage, sanitizer.orElse(null), logStreamingTaskClient));
     if (delegateRunnableTask instanceof AbstractDelegateRunnableTask) {
       ((AbstractDelegateRunnableTask) delegateRunnableTask).setDelegateHostname(HOST_NAME);
@@ -2064,8 +2064,9 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     // Submit execution for watching this task execution.
     timeoutEnforcement.submit(() -> enforceDelegateTaskTimeout(delegateTaskPackage.getDelegateTaskId(), taskData));
 
-    // Start task execution in same thread.
-    delegateRunnableTask.run();
+    // Start task execution in same thread and measure duration.
+    metricRegistry.recordGaugeDuration(
+        TASK_EXECUTION_TIME, new String[] {DELEGATE_NAME, taskData.getTaskType()}, delegateRunnableTask);
   }
 
   private ILogStreamingTaskClient getLogStreamingTaskClient(
@@ -2265,8 +2266,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   }
 
   private Consumer<DelegateTaskResponse> getPostExecutionFunction(String taskId, LogSanitizer sanitizer,
-      ILogStreamingTaskClient logStreamingTaskClient, DelegateExpressionEvaluator delegateExpressionEvaluator,
-      String taskType, long taskExecutionStartTimeMillis) {
+      ILogStreamingTaskClient logStreamingTaskClient, DelegateExpressionEvaluator delegateExpressionEvaluator) {
     return taskResponse -> {
       if (logStreamingTaskClient != null) {
         try {
@@ -2286,8 +2286,6 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
             resp = delegateAgentManagerClient.sendTaskStatus(delegateId, taskId, accountId, taskResponse).execute();
             if (resp != null && resp.code() >= 200 && resp.code() <= 299) {
               log.info("Task {} response sent to manager", taskId);
-              metricRegistry.recordGaugeValue(TASK_EXECUTION_TIME, new String[] {DELEGATE_NAME, taskType},
-                  clock.millis() - taskExecutionStartTimeMillis);
               return resp;
             } else {
               log.warn("Failed to send response for task {}: {}. {}", taskId, resp == null ? "null" : resp.code(),
@@ -2339,6 +2337,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     }
     if (stillRunning) {
       log.error("Task {} timed out after {} milliseconds", taskId, timeout);
+      metricRegistry.recordGaugeInc(TASK_TIMEOUT, new String[] {DELEGATE_NAME, taskData.getTaskType()});
       Optional.ofNullable(currentlyExecutingFutures.get(taskId).getTaskFuture())
           .ifPresent(future -> future.cancel(true));
     }
@@ -2633,8 +2632,10 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   }
 
   @Override
-  public TaskExecutionMetrics getTaskExecutionMetrics() {
-    return new TaskExecutionMetrics(DELEGATE_NAME, currentlyAcquiringTasks.size(), currentlyValidatingTasks.size(),
-        currentlyExecutingTasks.size(), currentlyExecutingFutures.size());
+  public void recordMetrics() {
+    int tasksInQueueCount = ((ThreadPoolExecutor) taskExecutor).getQueue().size();
+    long tasksExecutionCount = ((ThreadPoolExecutor) taskExecutor).getActiveCount();
+    metricRegistry.recordGaugeValue(TASKS_IN_QUEUE_COUNT, new String[] {DELEGATE_NAME}, tasksInQueueCount);
+    metricRegistry.recordGaugeValue(TASK_EXECUTION_COUNT, new String[] {DELEGATE_NAME}, tasksExecutionCount);
   }
 }

@@ -7,8 +7,6 @@
 
 package io.harness.delegate.service;
 
-import io.harness.delegate.metrics.TaskExecutionMetrics;
-
 public interface DelegateAgentService {
   void run(boolean watched, boolean isServer);
 
@@ -26,5 +24,5 @@ public interface DelegateAgentService {
 
   void shutdown(boolean shouldUnregister) throws InterruptedException;
 
-  TaskExecutionMetrics getTaskExecutionMetrics();
+  void recordMetrics();
 }
