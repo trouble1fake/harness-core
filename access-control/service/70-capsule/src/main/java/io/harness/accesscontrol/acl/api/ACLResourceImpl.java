@@ -45,11 +45,11 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
-@Slf4j
-@OwnedBy(HarnessTeam.PL)
 @AllArgsConstructor(onConstructor = @__({ @Inject }))
 @ValidateOnExecution
 @Singleton
+@Slf4j
+@OwnedBy(HarnessTeam.PL)
 public class ACLResourceImpl implements ACLResource {
   private final ACLService aclService;
   private final AccessControlPreferenceService accessControlPreferenceService;
