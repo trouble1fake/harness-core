@@ -1,7 +1,7 @@
 rulesets = "//tools/config/src/main/resources:harness_pmd_ruleset.xml"
 pmd_tool = "//tools/bazel/pmd:pmd"
 
-def pmd(srcs = ["src/main/**"]):
+def pmd(srcs = ["src/main/**/*"]):
     module_name = native.package_name()
     native.genrule(
         name = "pmd",
