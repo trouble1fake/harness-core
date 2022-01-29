@@ -19,12 +19,14 @@ import io.harness.cdlicense.bean.CgServiceUsage;
 import io.harness.cdlicense.bean.CgServiceUsage.CgServiceUsageBuilder;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import java.util.List;
 import java.util.Map;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Singleton
 public class CgCdLicenseUsageServiceImpl implements CgCdLicenseUsageService {
   @Inject private CgCdLicenseUsageQueryHelper cgCdLicenseUsageQueryHelper;
 

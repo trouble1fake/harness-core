@@ -10,6 +10,7 @@ package software.wings.service.impl;
 import static io.harness.annotations.dev.HarnessModule._955_ACCOUNT_MGMT;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.beans.FeatureName.AUTO_ACCEPT_SAML_ACCOUNT_INVITES;
+import static io.harness.beans.FeatureName.CG_LICENSE_USAGE;
 import static io.harness.beans.PageRequest.PageRequestBuilder.aPageRequest;
 import static io.harness.beans.SearchFilter.Operator.EQ;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
@@ -583,8 +584,9 @@ public class AccountServiceImpl implements AccountService {
     accountDetails.setDefaultExperience(account.getDefaultExperience());
     accountDetails.setCreatedFromNG(account.isCreatedFromNG());
     accountDetails.setActiveServiceCount(workflowExecutionService.getActiveServiceCount(accountId));
-
-    accountDetails.setActiveServicesUsageInfo(cgCdLicenseUsageService.getActiveServiceLicenseUsage(accountId));
+    if (featureFlagService.isEnabled(CG_LICENSE_USAGE, accountId)) {
+      accountDetails.setActiveServicesUsageInfo(cgCdLicenseUsageService.getActiveServiceLicenseUsage(accountId));
+    }
     // Todo: requires input LicenseModel from api request
     //    accountDetails.setLicenseModel(CgLicenseModel.SERVICES);
     return accountDetails;

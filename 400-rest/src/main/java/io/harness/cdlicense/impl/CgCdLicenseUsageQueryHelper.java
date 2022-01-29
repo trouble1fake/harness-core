@@ -23,6 +23,7 @@ import software.wings.beans.Service.ServiceKeys;
 import software.wings.dl.WingsPersistence;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -37,6 +38,7 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Singleton
 public class CgCdLicenseUsageQueryHelper {
   @Inject private TimeScaleDBService timeScaleDBService;
   @Inject private WingsPersistence wingsPersistence;
