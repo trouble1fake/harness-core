@@ -34,6 +34,7 @@ var (
 	publishArtifactsStep = steps.NewPublishArtifactsStep
 	runStep              = steps.NewRunStep
 	pluginStep           = steps.NewPluginStep
+	securityStep         = steps.NewSecurityStep
 	runTests             = steps.NewRunTestsStep
 	sendStepStatus       = status.SendStepStatus
 	newRemoteLogger      = logutil.GetGrpcRemoteLogger
@@ -178,6 +179,12 @@ func (e *unitExecutor) execute(ctx context.Context, step *pb.UnitStep,
 		if err != nil {
 			return nil, numRetries, err
 		}
+	case *pb.UnitStep_Security:
+		e.log.Infow("Security step info", "step", x.Security.String(), "step_id", step.GetId())
+		stepOutput, numRetries, err = runStep(step, e.tmpFilePath, so, e.log).Run(ctx)
+		if err != nil {
+			return nil, numRetries, err
+		}
 	case *pb.UnitStep_RunTests:
 		e.log.Infow("Test intelligence step info", "step", x.RunTests.String(), "step_id", step.GetId())
 		stepOutput, numRetries, err = runTests(step, e.tmpFilePath, so, e.log).Run(ctx)
@@ -237,6 +244,9 @@ func (e *unitExecutor) Cleanup(ctx context.Context, step *pb.UnitStep) error {
 		return e.stopAddonServer(ctx, step.GetId(), uint(port))
 	case *pb.UnitStep_RunTests:
 		port := x.RunTests.GetContainerPort()
+		return e.stopAddonServer(ctx, step.GetId(), uint(port))
+	case *pb.UnitStep_Security:
+		port := x.Security.GetContainerPort()
 		return e.stopAddonServer(ctx, step.GetId(), uint(port))
 	case *pb.UnitStep_Plugin:
 		port := x.Plugin.GetContainerPort()

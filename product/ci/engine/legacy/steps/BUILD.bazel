@@ -10,6 +10,7 @@ go_library(
         "run.go",
         "runtests.go",
         "save_cache.go",
+        "security.go",
     ],
     importpath = "github.com/wings-software/portal/product/ci/engine/legacy/steps",
     visibility = ["//visibility:public"],

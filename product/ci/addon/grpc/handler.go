@@ -32,6 +32,7 @@ var (
 	newRunTask          = tasks.NewRunTask
 	newRunTestsTask     = tasks.NewRunTestsTask
 	newPluginTask       = tasks.NewPluginTask
+	newSecurityTask		= tasks.NewSecurityTask
 )
 
 // NewAddonHandler returns a GRPC handler that implements pb.AddonServer
@@ -68,6 +69,15 @@ func (h *handler) ExecuteStep(ctx context.Context, in *pb.ExecuteStepRequest) (*
 	switch x := in.GetStep().GetStep().(type) {
 	case *enginepb.UnitStep_Run:
 		stepOutput, numRetries, err := newRunTask(in.GetStep(), in.GetPrevStepOutputs(), in.GetTmpFilePath(), rl.BaseLogger,
+			rl.Writer, false, h.log).Run(ctx)
+		response := &pb.ExecuteStepResponse{
+			Output:     stepOutput,
+			NumRetries: numRetries,
+		}
+		err = close(rl.Writer, err)
+		return response, err
+	case *enginepb.UnitStep_Security:
+		stepOutput, numRetries, err := newSecurityTask(in.GetStep(), in.GetPrevStepOutputs(), rl.BaseLogger,
 			rl.Writer, false, h.log).Run(ctx)
 		response := &pb.ExecuteStepResponse{
 			Output:     stepOutput,

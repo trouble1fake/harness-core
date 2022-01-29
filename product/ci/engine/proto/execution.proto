@@ -77,6 +77,19 @@ message PluginStep {
   repeated Report reports = 7;
 }
 
+message SecurityStep {
+  string image = 1;
+  StepContext context = 2;
+  // Deprecated. Port of the container on which plugin step needs to be executed
+  uint32 container_port = 3;
+  // Optional. Entrypoint for plugin step. If empty, it calls docker registry to retrieve the entrypoint
+  repeated string entrypoint = 4;
+  map<string, string> environment = 5;
+  string artifact_file_path = 6;  // file path to store generated artifact file
+  repeated Report reports = 7;
+  repeated string env_var_outputs = 8;  // output variables to export as step outcome
+}
+
 message SaveCacheStep {
   string key = 1;
   repeated string paths = 2;
@@ -97,6 +110,7 @@ message UnitStep {
     PublishArtifactsStep publish_artifacts = 6;
     PluginStep plugin = 9;
     RunTestsStep runTests = 10;
+    SecurityStep security = 15;
   }
   string callback_token = 7;
   string task_id = 8;
