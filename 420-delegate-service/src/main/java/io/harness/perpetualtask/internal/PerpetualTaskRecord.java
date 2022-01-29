@@ -97,6 +97,7 @@ public class PerpetualTaskRecord implements PersistentEntity, UuidAware, Persist
 
   long lastUpdatedAt;
   long createdAt;
+  long failedExecutionCount;
 
   @Override
   public Long obtainNextIteration(String fieldName) {
