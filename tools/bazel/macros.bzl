@@ -74,10 +74,10 @@ def run_analysis(
         run_duplicated = True,
         test_targets = []):
     if run_checkstyle:
-        checkstyle()
+        checkstyle(checkstyle_srcs)
 
     if run_pmd:
-        pmd()
+        pmd(pmd_srcs)
 
     if run_sonar:
         sonarqube_test(test_targets = test_targets)
