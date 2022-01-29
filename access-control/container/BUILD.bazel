@@ -19,12 +19,12 @@ container_image(
 pkg_tar(
     name = "files",
     srcs = [
-        "//access-control/service/config.yml",
-        "//access-control/service/keystore.jks",
+        "//access-control/service/70-capsule/config.yml",
+        "//access-control/service/70-capsule/keystore.jks",
     ],
     files = {
         "@alpn_boot_8.1.13.v20181017//file": "alpn-boot-8.1.13.v20181017.jar",
-        "//access-control/service/66-capsule:module_deploy.jar": "accesscontrol-service-capsule.jar",
+        "//access-control/service/70-capsule:module_deploy.jar": "accesscontrol-service-capsule.jar",
     },
     mode = "0600",
     owner = "65534.65534",

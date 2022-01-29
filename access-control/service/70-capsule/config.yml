@@ -27,7 +27,7 @@ logging:
   loggers:
     org.glassfish.jersey: INFO
     org.glassfish.jersey.server.ServerRuntime.Responder: "OFF"
-    io.debezium.embedded.EmbeddedEngine$EmbeddedConfig: "ON"
+    io.debezium.embedded.EmbeddedEngine$EmbeddedConfig: "OFF"
   appenders:
     - type: console
       threshold: TRACE
@@ -47,7 +47,7 @@ allowedOrigins:
   - "https://127.0.0.1:8000"
 
 mongo:
-  uri: ${MONGO_URI:-mongodb://mongo1:30001,mongo2:30002,mongo3:30003/accesscontrol?replicaSet=devrs}
+  uri: ${MONGO_URI:-mongodb://127.0.0.1:27018,127.0.0.1:27019,127.0.0.1:27020/accesscontrol?replicaSet=rs0}
   connectTimeout: ${MONGO_CONNECT_TIMEOUT:-30000}
   serverSelectionTimeout: ${MONGO_SERVER_SELECTION_TIMEOUT:-90000}
   maxConnectionIdleTime: ${MAX_CONNECTION_IDLE_TIME:-600000}
@@ -178,11 +178,11 @@ notificationConfig:
 aggregatorModuleConfig:
   debezium:
     name: ${DEBEZIUM_NAME:-aggregator}
-    offset.storage.file.filename: ${OFFSET_STORAGE_FILE_FILENAME:-mongodb://mongo1:30001,mongo2:30002,mongo3:30003/accesscontrol?replicaSet=devrs}
+    offset.storage.file.filename: ${OFFSET_STORAGE_FILE_FILENAME:-mongodb://127.0.0.1:27018,127.0.0.1:27019,127.0.0.1:27020/accesscontrol?replicaSet=rs0}
     key.converter.schemas.enable: ${KEY_CONVERTER_SCHEMAS_ENABLE:-false}
     value.converter.schemas.enable: ${VALUE_CONVERTER_SCHEMAS_ENABLE:-false}
     offset.flush.interval.ms: ${OFFSET_FLUSH_INTERVAL_MS:-5000}
-    mongodb.hosts: ${MONGODB_HOSTS:-devrs/mongo1:30001,devrs/mongo2:30002,devrs/mongo3:30003}
+    mongodb.hosts: ${MONGODB_HOSTS:-rs0/localhost:27018,rs0/localhost:27019,rs0/localhost:27020}
     mongodb.name: ${MONGODB_NAME:-access_control_db}
     mongodb.user: ${MONGODB_USER:-""}
     mongodb.password: ${MONGODB_PASSWORD:-""}
