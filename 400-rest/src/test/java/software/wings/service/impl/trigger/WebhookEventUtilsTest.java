@@ -239,7 +239,7 @@ public class WebhookEventUtilsTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void testFullNameFromCloneUrls() {
     assertThat(webhookEventUtils.fullNameFromCloneUrls(
-                   "https://github.com/harness/harness-core.git", "git@github.com:wings-software/portal.git"))
+                   "https://github.com/wings-software/portal.git", "git@github.com:wings-software/portal.git"))
         .isEqualTo("wings-software/portal");
     assertThat(webhookEventUtils.fullNameFromCloneUrls(
                    "http://example.com/mike/diaspora.git", "git@example.com:mike/diaspora.git"))
