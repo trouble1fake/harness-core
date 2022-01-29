@@ -296,13 +296,13 @@ cd ../..
 mkdir -p dist/accesscontrol-service
 cd dist/accesscontrol-service
 
-cp ${HOME}/.bazel-dirs/bin/925-access-control-service/module_deploy.jar accesscontrol-service-capsule.jar
-cp ../../925-access-control-service/config.yml .
-cp ../../925-access-control-service/keystore.jks .
+cp ${HOME}/.bazel-dirs/bin/access-control/service/70-capsule/module_deploy.jar accesscontrol-service-capsule.jar
+cp ../../access-control/service/70-capsule/config.yml .
+cp ../../access-control/service/70-capsule/keystore.jks .
 cp ../../alpn-boot-8.1.13.v20181017.jar .
-cp ../../dockerization/accesscontrol-service/Dockerfile-accesscontrol-service-jenkins-k8-openjdk ./Dockerfile
-cp ../../dockerization/accesscontrol-service/Dockerfile-accesscontrol-service-jenkins-k8-gcr-openjdk ./Dockerfile-gcr
-cp -r ../../dockerization/accesscontrol-service/scripts/ .
+cp ../../access-control/container/Dockerfile-accesscontrol-service-jenkins-k8-openjdk ./Dockerfile
+cp ../../access-control/container/Dockerfile-accesscontrol-service-jenkins-k8-gcr-openjdk ./Dockerfile-gcr
+cp -r ../../access-control/container/scripts/ .
 cp ../../protocol.info .
 echo ${JDK} > jdk.txt
 echo ${VERSION} > version.txt
