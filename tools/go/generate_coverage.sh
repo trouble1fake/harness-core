@@ -30,7 +30,7 @@ echo "Removing any previous existing coverage directory... "
 rm -rf /tmp/symportal
 
 echo "Creating symlinked workspace for go tools to work .. "
-mkdir -p /tmp/symportal/src/github.com/wings-software
+mkdir -p /tmp/symportal/src/github.com/harness
 mkdir -p /tmp/symportal/coverage
 ln -s $PROJECT_ROOT /tmp/symportal/src/github.com/harness/harness-core
 COVERAGE_OUT="/tmp/symportal/coverage/combined_coverage.out"
