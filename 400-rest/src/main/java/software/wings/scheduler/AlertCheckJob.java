@@ -129,7 +129,7 @@ public class AlertCheckJob implements Job {
       }
     }
     if (!isEmpty(delegates)
-        && !delegates.stream().allMatch(
+        && delegates.stream().anyMatch(
             delegate -> System.currentTimeMillis() - delegate.getLastHeartBeat() > MAX_HB_TIMEOUT)) {
       checkIfAnyDelegatesAreDown(accountId, delegates);
     }
@@ -162,6 +162,7 @@ public class AlertCheckJob implements Job {
       if (primaryConnections.contains(delegate.getUuid())) {
         alertService.closeAlert(accountId, GLOBAL_APP_ID, AlertType.DelegatesDown, alertData);
       } else {
+        // we currently dont have notification support in NG
         if (isEmpty(delegate.getDelegateGroupName())) {
           alertService.openAlert(accountId, GLOBAL_APP_ID, AlertType.DelegatesDown, alertData);
         }
