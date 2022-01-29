@@ -85,7 +85,6 @@ def run_analysis(
     if run_duplicated:
         report_duplicated()
 
-
 def maven_test_artifact(artifact):
     entities = artifact.split(":")
     return maven.artifact(
