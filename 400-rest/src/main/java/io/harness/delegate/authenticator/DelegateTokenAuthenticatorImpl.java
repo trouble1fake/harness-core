@@ -135,15 +135,8 @@ public class DelegateTokenAuthenticatorImpl implements DelegateTokenAuthenticato
                                      .field(DelegateTokenKeys.status)
                                      .equal(status);
 
-    boolean result = decryptDelegateTokenByQuery(query, accountId, status, encryptedJWT, false);
-    if (!result) {
-      Query<DelegateNgToken> queryNg = persistence.createQuery(DelegateNgToken.class)
-                                           .field(DelegateNgTokenKeys.accountId)
-                                           .equal(accountId)
-                                           .field(DelegateNgTokenKeys.status)
-                                           .equal(status);
-      result = decryptDelegateTokenByQuery(queryNg, accountId, status, encryptedJWT, true);
-    }
+    boolean result = decryptDelegateTokenByQuery(query, accountId, status, encryptedJWT, false)
+        || decryptDelegateTokenByQuery(query, accountId, status, encryptedJWT, true);
     long time_end = System.currentTimeMillis() - time_start;
     log.debug("Delegate Token verification for accountId {} and status {} has taken {} milliseconds.", accountId,
         status.name(), time_end);
@@ -152,13 +145,13 @@ public class DelegateTokenAuthenticatorImpl implements DelegateTokenAuthenticato
 
   private boolean decryptDelegateTokenByQuery(
       Query query, String accountId, DelegateTokenStatus status, EncryptedJWT encryptedJWT, boolean isNg) {
-    try (HIterator<NameAndValueAccess> records = new HIterator<>(query.fetch())) {
-      for (NameAndValueAccess delegateToken : records) {
+    try (HIterator<DelegateToken> iterator = new HIterator<>(query.fetch())) {
+      while (iterator.hasNext()) {
         try {
           if (isNg) {
-            decryptDelegateToken(encryptedJWT, decodeBase64ToString(delegateToken.getValue()));
+            decryptDelegateToken(encryptedJWT, decodeBase64ToString(iterator.next().getValue()));
           } else {
-            decryptDelegateToken(encryptedJWT, delegateToken.getValue());
+            decryptDelegateToken(encryptedJWT, iterator.next().getValue());
           }
 
           if (DelegateTokenStatus.ACTIVE == status) {
@@ -166,11 +159,11 @@ public class DelegateTokenAuthenticatorImpl implements DelegateTokenAuthenticato
               initGlobalContextGuard(new GlobalContext());
             }
             upsertGlobalContextRecord(
-                DelegateTokenGlobalContextData.builder().tokenName(delegateToken.getName()).build());
+                DelegateTokenGlobalContextData.builder().tokenName(iterator.next().getName()).build());
           }
           return true;
         } catch (Exception e) {
-          log.debug("Fail to decrypt Delegate JWT using delete token {} for the account {}", delegateToken.getName(),
+          log.debug("Fail to decrypt Delegate JWT using delete token {} for the account {}", iterator.next().getName(),
               accountId);
         }
       }
