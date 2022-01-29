@@ -3,12 +3,12 @@ checkstyle_xpath_suppressions = "//tools/checkstyle:checkstyle-xpath-suppression
 checkstyle_xml = "//tools/config/src/main/resources:harness_checks.xml"
 checkstyle_jar = "//tools/checkstyle:checkstyle_deploy.jar"
 
-def checkstyle():
+def checkstyle(srcs = ["src/**/*"]):
     module_name = native.package_name()
 
     native.genrule(
         name = "checkstyle",
-        srcs = native.glob(["src/**/*"]),
+        srcs = native.glob(srcs),
         tags = ["manual", "no-ide", "analysis", "checkstyle"],
         outs = ["checkstyle.xml"],
         visibility = ["//visibility:public"],

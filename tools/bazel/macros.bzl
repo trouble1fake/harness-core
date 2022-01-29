@@ -83,6 +83,27 @@ def run_analysis(
     if run_duplicated:
         report_duplicated()
 
+def run_analysis(
+        checkstyle_srcs,
+        pmd_srcs,
+        run_checkstyle = True,
+        run_pmd = True,
+        run_sonar = True,
+        run_duplicated = True,
+        test_targets = []):
+    if run_checkstyle:
+        checkstyle(checkstyle_srcs)
+
+    if run_pmd:
+        pmd(pmd_srcs)
+
+    if run_sonar:
+        sonarqube_test(test_targets = test_targets)
+
+    if run_duplicated:
+        report_duplicated()
+
+
 def maven_test_artifact(artifact):
     entities = artifact.split(":")
     return maven.artifact(

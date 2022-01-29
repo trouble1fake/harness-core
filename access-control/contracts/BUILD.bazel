@@ -18,4 +18,4 @@ java_library(
     ],
 )
 
-run_analysis()
+run_analysis(["api/src/**/*"], ["api/src/main/**/*"])
