@@ -271,7 +271,7 @@ public class HelmTaskHelperBaseTest extends CategoryTest {
 
     assertThatCode(()
                        -> helmTaskHelperBase.fetchChartFromRepo(
-                           "repo", "repo display", "chart", "1.0.0", "/dir", V3, emptyHelmCommandFlag, 90000))
+                           "repo", "repo display", "chart", "1.0.0", "/dir", V3, emptyHelmCommandFlag, 90000, false))
         .doesNotThrowAnyException();
 
     verify(helmTaskHelperBase, times(1))
@@ -290,7 +290,7 @@ public class HelmTaskHelperBaseTest extends CategoryTest {
 
     assertThatThrownBy(()
                            -> helmTaskHelperBase.fetchChartFromRepo(REPO_NAME, REPO_DISPLAY_NAME, CHART_NAME,
-                               CHART_VERSION, "/dir", V3, emptyHelmCommandFlag, 90000))
+                               CHART_VERSION, "/dir", V3, emptyHelmCommandFlag, 90000, false))
         .isInstanceOf(HelmClientException.class);
 
     verify(helmTaskHelperBase, times(1))
@@ -337,16 +337,16 @@ public class HelmTaskHelperBaseTest extends CategoryTest {
         .addRepo(REPO_NAME, REPO_DISPLAY_NAME, repoUrl, username, password, chartOutput, V3, timeout, false);
     doNothing()
         .when(helmTaskHelperBase)
-        .fetchChartFromRepo(
-            REPO_NAME, REPO_DISPLAY_NAME, CHART_NAME, CHART_VERSION, chartOutput, V3, emptyHelmCommandFlag, timeout);
+        .fetchChartFromRepo(REPO_NAME, REPO_DISPLAY_NAME, CHART_NAME, CHART_VERSION, chartOutput, V3,
+            emptyHelmCommandFlag, timeout, false);
 
     helmTaskHelperBase.downloadChartFilesFromHttpRepo(helmChartManifestDelegateConfig, chartOutput, timeout);
 
     verify(helmTaskHelperBase, times(1))
         .addRepo(REPO_NAME, REPO_DISPLAY_NAME, repoUrl, username, password, chartOutput, V3, timeout, false);
     verify(helmTaskHelperBase, times(1))
-        .fetchChartFromRepo(
-            REPO_NAME, REPO_DISPLAY_NAME, CHART_NAME, CHART_VERSION, chartOutput, V3, emptyHelmCommandFlag, timeout);
+        .fetchChartFromRepo(REPO_NAME, REPO_DISPLAY_NAME, CHART_NAME, CHART_VERSION, chartOutput, V3,
+            emptyHelmCommandFlag, timeout, false);
   }
 
   @Test
@@ -380,16 +380,16 @@ public class HelmTaskHelperBaseTest extends CategoryTest {
         .addRepo(REPO_NAME, REPO_DISPLAY_NAME, repoUrl, null, null, chartOutput, V3, timeout, false);
     doNothing()
         .when(helmTaskHelperBase)
-        .fetchChartFromRepo(
-            REPO_NAME, REPO_DISPLAY_NAME, CHART_NAME, CHART_VERSION, chartOutput, V3, emptyHelmCommandFlag, timeout);
+        .fetchChartFromRepo(REPO_NAME, REPO_DISPLAY_NAME, CHART_NAME, CHART_VERSION, chartOutput, V3,
+            emptyHelmCommandFlag, timeout, false);
 
     helmTaskHelperBase.downloadChartFilesFromHttpRepo(helmChartManifestDelegateConfig, chartOutput, timeout);
 
     verify(helmTaskHelperBase, times(1))
         .addRepo(REPO_NAME, REPO_DISPLAY_NAME, repoUrl, null, null, chartOutput, V3, timeout, false);
     verify(helmTaskHelperBase, times(1))
-        .fetchChartFromRepo(
-            REPO_NAME, REPO_DISPLAY_NAME, CHART_NAME, CHART_VERSION, chartOutput, V3, emptyHelmCommandFlag, timeout);
+        .fetchChartFromRepo(REPO_NAME, REPO_DISPLAY_NAME, CHART_NAME, CHART_VERSION, chartOutput, V3,
+            emptyHelmCommandFlag, timeout, false);
   }
 
   @Test
@@ -499,8 +499,8 @@ public class HelmTaskHelperBaseTest extends CategoryTest {
         .addChartMuseumRepo(REPO_NAME, REPO_DISPLAY_NAME, port, destinationDirectory, V3, timeoutInMillis);
     doNothing()
         .when(helmTaskHelperBase)
-        .fetchChartFromRepo(
-            REPO_NAME, REPO_DISPLAY_NAME, CHART_NAME, CHART_VERSION, destinationDirectory, V3, null, timeoutInMillis);
+        .fetchChartFromRepo(REPO_NAME, REPO_DISPLAY_NAME, CHART_NAME, CHART_VERSION, destinationDirectory, V3, null,
+            timeoutInMillis, false);
 
     helmTaskHelperBase.downloadChartFilesUsingChartMuseum(manifest, destinationDirectory, timeoutInMillis);
 
@@ -509,8 +509,8 @@ public class HelmTaskHelperBaseTest extends CategoryTest {
     verify(helmTaskHelperBase, times(1))
         .addChartMuseumRepo(REPO_NAME, REPO_DISPLAY_NAME, port, destinationDirectory, V3, timeoutInMillis);
     verify(helmTaskHelperBase, times(1))
-        .fetchChartFromRepo(
-            REPO_NAME, REPO_DISPLAY_NAME, CHART_NAME, CHART_VERSION, destinationDirectory, V3, null, timeoutInMillis);
+        .fetchChartFromRepo(REPO_NAME, REPO_DISPLAY_NAME, CHART_NAME, CHART_VERSION, destinationDirectory, V3, null,
+            timeoutInMillis, false);
   }
 
   @Test
