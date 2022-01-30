@@ -10,8 +10,8 @@ package io.harness.artifactory.service;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.artifactory.ArtifactoryConfigRequest;
 import io.harness.artifacts.beans.BuildDetailsInternal;
-import io.harness.nexus.NexusRequest;
 
 import java.util.List;
 
@@ -19,66 +19,46 @@ import java.util.List;
 public interface ArtifactoryRegistryService {
   int MAX_NO_OF_TAGS_PER_IMAGE = 10000;
 
-  List<BuildDetailsInternal> getVersions(NexusRequest nexusConfig, String repoName);
+  /**
+   * Gets builds.
+   *
+   * @param artifactoryConfig      the artifactory config
+   * @param repositoryName         the repository name
+   * @param imageName         the image name
+   * @param repoFormat         the repositroy format (docker,....)
+   * @param maxNumberOfBuilds the max number of builds
+   * @return the builds
+   */
+  List<BuildDetailsInternal> getBuilds(ArtifactoryConfigRequest artifactoryConfig, String repositoryName,
+      String imageName, String repoFormat, int maxNumberOfBuilds);
+  /**
+   * Gets last successful build.
+   *
+   * @param artifactoryConfig       the artifactory config
+   * @param repositoryName          the repository name
+   * @param imageName               the image name
+   * @param repoFormat              the repositroy format (docker,....)
+   * @param tagRegex                the regular expression of tag value
+   * @return the last successful build
+   */
+  BuildDetailsInternal getLastSuccessfulBuildFromRegex(ArtifactoryConfigRequest artifactoryConfig,
+      String repositoryName, String imageName, String repoFormat, String tagRegex);
+  /**
+   * Validates the Image Tag
+   * @param artifactoryConfig       the artifactory config
+   * @param repositoryName          the repository name
+   * @param imageName               the image name
+   * @param repoFormat              the repositroy format (docker,....)
+   * @param tag                     the repositroy iamge tag value
+   */
+  BuildDetailsInternal verifyBuildNumber(ArtifactoryConfigRequest artifactoryConfig, String repositoryName,
+      String imageName, String repoFormat, String tag);
 
-  //  /**
-  //   * Gets builds.
-  //   *
-  //   * @param dockerConfig      the docker config
-  //   * @param imageName         the image name
-  //   * @param maxNumberOfBuilds the max number of builds
-  //   * @return the builds
-  //   */
-  List<BuildDetailsInternal> getBuilds(NexusRequest nexusConfig, String imageName, int maxNumberOfBuilds);
-  //
-  //  /**
-  //   * Gets labels.
-  //   *
-  //   * @param dockerConfig the docker config
-  //   * @param imageName    the image name
-  //   * @param tags         the image tags to find labels of
-  //   * @return the builds
-  //   */
-  //  List<Map<String, String>> getLabels(DockerInternalConfig dockerConfig, String imageName, List<String> tags);
-  //
-  //  /**
-  //   * Gets last successful build.
-  //   *
-  //   * @param dockerConfig the docker config
-  //   * @param imageName    the image name
-  //   * @return the last successful build
-  //   */
-  //  BuildDetailsInternal getLastSuccessfulBuild(DockerInternalConfig dockerConfig, String imageName);
-  //
-  //  /**
-  //   * Gets the last successful build with input as tag regex.
-  //   * @param dockerConfig the docker config
-  //   * @param imageName the image name
-  //   * @param tagRegex tag regex
-  //   * @return the last successful build
-  //   */
-  //  BuildDetailsInternal getLastSuccessfulBuildFromRegex(
-  //      DockerInternalConfig dockerConfig, String imageName, String tagRegex);
-  //
-  //  /**
-  //   * Validates the Image
-  //   * @param dockerConfig the docker config
-  //   * @param imageName the image name
-  //   */
-  //  boolean verifyImageName(DockerInternalConfig dockerConfig, String imageName);
-  //
-  //  /**
-  //   * Validates the Image Tag
-  //   * @param dockerConfig the docker config
-  //   * @param imageName the image name
-  //   */
-  //  BuildDetailsInternal verifyBuildNumber(DockerInternalConfig dockerConfig, String imageName, String tag);
-  //
-  //  /**
-  //   * Validate the credentials
-  //   *
-  //   * @param dockerConfig the docker config
-  //   * @return boolean validate
-  //   */
-  //  boolean validateCredentials(DockerInternalConfig dockerConfig);
+  /**
+   * Validate the credentials
+   *
+   * @param toArtifactoryInternalConfig the artifactory config
+   * @return boolean validate
+   */
+  boolean validateCredentials(ArtifactoryConfigRequest toArtifactoryInternalConfig);
 }

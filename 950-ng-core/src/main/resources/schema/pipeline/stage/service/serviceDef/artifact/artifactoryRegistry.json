@@ -5,7 +5,16 @@
 				"connectorRef": {
 					"type": "string"
 				},
+				"repository": {
+					"type": "string"
+				},
 				"imagePath": {
+					"type": "string"
+				},
+				"repositoryFormat": {
+					"type": "string"
+				},
+				"dockerRepositoryServer": {
 					"type": "string"
 				},
 				"tag": {

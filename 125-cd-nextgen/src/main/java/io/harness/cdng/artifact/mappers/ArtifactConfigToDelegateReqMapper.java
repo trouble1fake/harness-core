@@ -84,7 +84,7 @@ public class ArtifactConfigToDelegateReqMapper {
     return ArtifactDelegateRequestUtils.getNexusArtifactDelegateRequest(artifactConfig.getRepository().getValue(),
         artifactConfig.getRepositoryPort().getValue(), artifactConfig.getImagePath().getValue(),
         artifactConfig.getRepositoryFormat().getValue(), tag, tagRegex, null, connectorRef, nexusConnectorDTO,
-        encryptedDataDetails, ArtifactSourceType.NEXUS_REGISTRY);
+        encryptedDataDetails, ArtifactSourceType.ARTIFACTORY_REGISTRY);
   }
 
   public ArtifactoryArtifactDelegateRequest getArtifactoryArtifactDelegateRequest(
@@ -96,8 +96,9 @@ public class ArtifactConfigToDelegateReqMapper {
     if (EmptyPredicate.isEmpty(tag) && EmptyPredicate.isEmpty(tagRegex)) {
       tagRegex = "\\*";
     }
-    return ArtifactDelegateRequestUtils.getArtifactoryArtifactDelegateRequest(artifactConfig.getImagePath().getValue(),
-        tag, tagRegex, null, connectorRef, artifactoryConnectorDTO, encryptedDataDetails,
-        ArtifactSourceType.ARTIFACTORY_REGISTRY);
+    return ArtifactDelegateRequestUtils.getArtifactoryArtifactDelegateRequest(artifactConfig.getRepository().getValue(),
+        artifactConfig.getImagePath().getValue(), artifactConfig.getRepositoryFormat().getValue(),
+        artifactConfig.getDockerRepositoryServer().getValue(), tag, tagRegex, null, connectorRef,
+        artifactoryConnectorDTO, encryptedDataDetails, ArtifactSourceType.ARTIFACTORY_REGISTRY);
   }
 }

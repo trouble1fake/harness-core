@@ -89,11 +89,14 @@ public class ArtifactDelegateRequestUtils {
         .sourceType(sourceType)
         .build();
   }
-  public ArtifactoryArtifactDelegateRequest getArtifactoryArtifactDelegateRequest(String imagePath, String tag,
-      String tagRegex, List<String> tagsList, String connectorRef, ArtifactoryConnectorDTO artifactoryConnectorDTO,
+  public ArtifactoryArtifactDelegateRequest getArtifactoryArtifactDelegateRequest(String repository, String imagePath,
+      String repositoryFormat, String dockerRepositoryServer, String tag, String tagRegex, List<String> tagsList,
+      String connectorRef, ArtifactoryConnectorDTO artifactoryConnectorDTO,
       List<EncryptedDataDetail> encryptedDataDetails, ArtifactSourceType sourceType) {
     return ArtifactoryArtifactDelegateRequest.builder()
+        .repository(repository)
         .imagePath(trim(imagePath))
+        .repositoryFormat(repositoryFormat)
         .tag(trim(tag))
         .tagRegex(trim(tagRegex))
         .tagsList(tagsList)
@@ -101,6 +104,7 @@ public class ArtifactDelegateRequestUtils {
         .artifactoryConnectorDTO(artifactoryConnectorDTO)
         .encryptedDataDetails(encryptedDataDetails)
         .sourceType(sourceType)
+        .dockerRepositoryServer(dockerRepositoryServer)
         .build();
   }
   private String trim(String str) {

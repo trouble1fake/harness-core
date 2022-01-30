@@ -15,7 +15,9 @@ import io.harness.artifacts.docker.service.DockerRegistryService;
 import io.harness.artifacts.docker.service.DockerRegistryServiceImpl;
 import io.harness.artifacts.gcr.service.GcrApiService;
 import io.harness.artifacts.gcr.service.GcrApiServiceImpl;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactTaskHandler;
 import io.harness.delegate.task.artifacts.docker.DockerArtifactTaskHandler;
+import io.harness.delegate.task.artifacts.nexus.NexusArtifactTaskHandler;
 import io.harness.http.HttpService;
 import io.harness.http.HttpServiceImpl;
 import io.harness.nexus.service.NexusRegistryService;
@@ -33,5 +35,7 @@ public class NGDelegateModule extends AbstractModule {
     bind(GcrApiService.class).to(GcrApiServiceImpl.class);
     bind(HttpService.class).to(HttpServiceImpl.class);
     bind(DockerArtifactTaskHandler.class);
+    bind(NexusArtifactTaskHandler.class);
+    bind(ArtifactoryArtifactTaskHandler.class);
   }
 }

@@ -59,9 +59,24 @@ public class ArtifactoryRegistryArtifactConfig implements ArtifactConfig, Visita
    */
   @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) @Wither ParameterField<String> connectorRef;
   /**
+   * Repo name.
+   */
+  @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) @Wither ParameterField<String> repository;
+  /**
    * Images in repos need to be referenced via a path.
    */
   @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) @Wither ParameterField<String> imagePath;
+  /**
+   * Repo format.
+   */
+  @NotNull
+  @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
+  @Wither
+  ParameterField<String> repositoryFormat;
+  /**
+   * Docker repo server hostname.
+   */
+  @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) @Wither ParameterField<String> dockerRepositoryServer;
   /**
    * Tag refers to exact tag number.
    */
@@ -82,7 +97,7 @@ public class ArtifactoryRegistryArtifactConfig implements ArtifactConfig, Visita
 
   @Override
   public ArtifactSourceType getSourceType() {
-    return ArtifactSourceType.NEXUS_REGISTRY;
+    return ArtifactSourceType.ARTIFACTORY_REGISTRY;
   }
 
   @Override

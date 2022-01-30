@@ -15,20 +15,32 @@ import static io.harness.exception.WingsException.ReportTarget;
 import static io.harness.exception.WingsException.USER;
 import static io.harness.network.Http.connectableHttpUrl;
 
+import static java.util.stream.Collectors.toList;
 import static org.jfrog.artifactory.client.ArtifactoryRequest.ContentType.JSON;
 import static org.jfrog.artifactory.client.ArtifactoryRequest.Method.GET;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.artifact.ArtifactMetadataKeys;
+import io.harness.artifact.ArtifactUtilities;
+import io.harness.artifacts.beans.BuildDetailsInternal;
+import io.harness.artifacts.comparator.BuildDetailsInternalComparatorAscending;
 import io.harness.eraro.ErrorCode;
 import io.harness.exception.ArtifactoryServerException;
+import io.harness.exception.InvalidArtifactServerException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.NestedExceptionUtils;
 import io.harness.exception.WingsException;
 import io.harness.network.Http;
 
+import software.wings.utils.RepositoryFormat;
+
+import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -165,6 +177,65 @@ public class ArtifactoryClientImpl {
   public static String getBaseUrl(ArtifactoryConfigRequest artifactoryConfig) {
     return artifactoryConfig.getArtifactoryUrl().endsWith("/") ? artifactoryConfig.getArtifactoryUrl()
                                                                : artifactoryConfig.getArtifactoryUrl() + "/";
+  }
+
+  public List<BuildDetailsInternal> getArtifactsDetails(ArtifactoryConfigRequest artifactoryConfig,
+      String repositoryName, String imageName, String repoFormat, int maxNumberOfBuilds) throws IOException {
+    log.info("Retrieving artifact tags");
+    List<BuildDetailsInternal> buildDetailsInternals = new ArrayList<>();
+    Artifactory artifactoryClient = getArtifactoryClient(artifactoryConfig);
+
+    if (RepositoryFormat.docker.name().equals(repoFormat)) {
+      ArtifactoryResponse artifactoryResponse =
+          artifactoryClient.restCall(new ArtifactoryRequestImpl()
+                                         .apiUrl("api/docker/" + repositoryName + "/v2/" + imageName + "/tags/list")
+                                         .method(GET)
+                                         .responseType(JSON));
+      handleErrorResponse(artifactoryResponse);
+      Map response = artifactoryResponse.parseBody(Map.class);
+      if (!isEmpty(response)) {
+        List<String> tags = (List<String>) response.get("tags");
+        if (isEmpty(tags)) {
+          log.info("No docker image tags from artifactory url {} and repo key {} and image {}",
+              artifactoryClient.getUri(), repositoryName, imageName);
+          return buildDetailsInternals;
+        }
+
+        String tagUrl = getBaseUrl(artifactoryConfig) + repositoryName + "/" + imageName + "/";
+        String repoName = ArtifactUtilities.getArtifactoryRepositoryName(artifactoryConfig.getArtifactoryUrl(),
+            artifactoryConfig.getArtifactoryDockerRepositoryServer(), repositoryName, imageName);
+        buildDetailsInternals = tags.stream()
+                                    .map(tag -> {
+                                      Map<String, String> metadata = new HashMap();
+                                      metadata.put(ArtifactMetadataKeys.IMAGE, repoName + ":" + tag);
+                                      metadata.put(ArtifactMetadataKeys.TAG, tag);
+                                      return BuildDetailsInternal.builder()
+                                          .number(tag)
+                                          .buildUrl(tagUrl + tag)
+                                          .metadata(metadata)
+                                          .uiDisplayName("Tag# " + tag)
+                                          .build();
+                                    })
+                                    .collect(toList());
+        if (tags.size() < 10) {
+          log.info("Retrieving image tags from artifactory url {} and repo key {} and image {} success. Tags {}",
+              artifactoryClient.getUri(), repositoryName, imageName, tags);
+        } else {
+          log.info("Retrieving image tags from artifactory url {} and repo key {} and image {} success. Tags {}",
+              artifactoryClient.getUri(), repositoryName, imageName, tags.size());
+        }
+      } else {
+        log.info("No docker image tags from artifactory url {} and repo key {} and image {}",
+            artifactoryClient.getUri(), repositoryName, imageName);
+        return buildDetailsInternals;
+      }
+    } else {
+      throw NestedExceptionUtils.hintWithExplanationException(
+          "Repository format (Package type) is not 'docker'. Please check you yaml configuration",
+          "Check Artifactory artifact configuration",
+          new InvalidArtifactServerException("Failed to fetch the image tags", WingsException.USER));
+    }
+    return buildDetailsInternals.stream().sorted(new BuildDetailsInternalComparatorAscending()).collect(toList());
   }
 
   @Data

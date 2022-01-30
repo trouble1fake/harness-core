@@ -27,6 +27,7 @@ public class ArtifactoryRequestResponseMapper {
   public ArtifactoryConfigRequest toArtifactoryInternalConfig(ArtifactoryArtifactDelegateRequest request) {
     String password = "";
     String username = "";
+    boolean hasCredentials = false;
     if (request.getArtifactoryConnectorDTO().getAuth() != null
         && request.getArtifactoryConnectorDTO().getAuth().getCredentials() != null) {
       ArtifactoryUsernamePasswordAuthDTO credentials =
@@ -38,11 +39,14 @@ public class ArtifactoryRequestResponseMapper {
       }
       username = FieldWithPlainTextOrSecretValueHelper.getSecretAsStringFromPlainTextOrSecretRef(
           credentials.getUsername(), credentials.getUsernameRef());
+      hasCredentials = true;
     }
     return ArtifactoryConfigRequest.builder()
         .artifactoryUrl(request.getArtifactoryConnectorDTO().getArtifactoryServerUrl())
         .username(username)
         .password(password.toCharArray())
+        .hasCredentials(hasCredentials)
+        .artifactoryDockerRepositoryServer(request.getDockerRepositoryServer())
         .build();
   }
 
@@ -52,7 +56,7 @@ public class ArtifactoryRequestResponseMapper {
         .buildDetails(ArtifactBuildDetailsMapper.toBuildDetailsNG(buildDetailsInternal))
         .imagePath(request.getImagePath())
         .tag(buildDetailsInternal.getNumber())
-        .sourceType(ArtifactSourceType.NEXUS_REGISTRY)
+        .sourceType(ArtifactSourceType.ARTIFACTORY_REGISTRY)
         .build();
   }
 
@@ -64,7 +68,7 @@ public class ArtifactoryRequestResponseMapper {
                    .buildDetails(
                        ArtifactBuildDetailsMapper.toBuildDetailsNG(labelsList.get(i), request.getTagsList().get(i)))
                    .imagePath(request.getImagePath())
-                   .sourceType(ArtifactSourceType.NEXUS_REGISTRY)
+                   .sourceType(ArtifactSourceType.ARTIFACTORY_REGISTRY)
                    .build())
         .collect(Collectors.toList());
   }

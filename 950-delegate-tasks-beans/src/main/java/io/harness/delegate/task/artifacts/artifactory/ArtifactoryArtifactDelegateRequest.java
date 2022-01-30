@@ -34,8 +34,14 @@ import lombok.Value;
 @EqualsAndHashCode(callSuper = false)
 @OwnedBy(HarnessTeam.CDP)
 public class ArtifactoryArtifactDelegateRequest implements ArtifactSourceDelegateRequest {
+  /** Host from where to pull the images */
+  String dockerRepositoryServer;
+  /** Repository name */
+  String repository;
   /** Images in repos need to be referenced via a path. */
   String imagePath;
+  /** Repository format - package type */
+  String repositoryFormat;
   /** Tag refers to exact tag number. */
   String tag;
   /** Tag regex is used to get latest build from builds matching regex. */

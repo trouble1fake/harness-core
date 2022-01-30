@@ -7,19 +7,18 @@
 
 package io.harness.delegate.task.artifacts.artifactory;
 
+import io.harness.artifactory.service.ArtifactoryRegistryService;
 import io.harness.artifacts.beans.BuildDetailsInternal;
 import io.harness.artifacts.comparator.BuildDetailsInternalComparatorDescending;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.task.artifacts.DelegateArtifactTaskHandler;
-import io.harness.delegate.task.artifacts.mappers.NexusRequestResponseMapper;
-import io.harness.delegate.task.artifacts.nexus.NexusArtifactDelegateRequest;
-import io.harness.delegate.task.artifacts.nexus.NexusArtifactDelegateResponse;
+import io.harness.delegate.task.artifacts.mappers.ArtifactoryRequestResponseMapper;
 import io.harness.delegate.task.artifacts.response.ArtifactTaskExecutionResponse;
-import io.harness.nexus.service.NexusRegistryService;
 import io.harness.security.encryption.SecretDecryptionService;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.AccessLevel;
@@ -27,65 +26,53 @@ import lombok.AllArgsConstructor;
 
 @Singleton
 @AllArgsConstructor(access = AccessLevel.PACKAGE, onConstructor = @__({ @Inject }))
-public class ArtifactoryArtifactTaskHandler extends DelegateArtifactTaskHandler<NexusArtifactDelegateRequest> {
-  private final NexusRegistryService nexusRegistryService;
+public class ArtifactoryArtifactTaskHandler extends DelegateArtifactTaskHandler<ArtifactoryArtifactDelegateRequest> {
+  private final ArtifactoryRegistryService artifactoryRegistryService;
   private final SecretDecryptionService secretDecryptionService;
 
-  //  @Override
-  //  public ArtifactTaskExecutionResponse getLastSuccessfulBuild(NexusArtifactDelegateRequest attributesRequest) {
-  //    BuildDetailsInternal lastSuccessfulBuild;
-  //    if (isRegex(attributesRequest)) {
-  //      lastSuccessfulBuild = dockerRegistryService.getLastSuccessfulBuildFromRegex(
-  //          DockerRequestResponseMapper.toDockerInternalConfig(attributesRequest), attributesRequest.getImagePath(),
-  //          attributesRequest.getTagRegex());
-  //    } else {
-  //      lastSuccessfulBuild =
-  //          dockerRegistryService.verifyBuildNumber(DockerRequestResponseMapper.toDockerInternalConfig(attributesRequest),
-  //              attributesRequest.getImagePath(), attributesRequest.getTag());
-  //    }
-  //    DockerArtifactDelegateResponse dockerArtifactDelegateResponse =
-  //        DockerRequestResponseMapper.toDockerResponse(lastSuccessfulBuild, attributesRequest);
-  //    return getSuccessTaskExecutionResponse(Collections.singletonList(dockerArtifactDelegateResponse));
-  //  }
-  //
   @Override
-  public ArtifactTaskExecutionResponse getBuilds(NexusArtifactDelegateRequest attributesRequest) {
-    List<BuildDetailsInternal> builds = nexusRegistryService.getBuilds(
-        NexusRequestResponseMapper.toNexusInternalConfig(attributesRequest), attributesRequest.getRepositoryName(),
-        attributesRequest.getRepositoryPort(), attributesRequest.getImagePath(),
-        attributesRequest.getRepositoryFormat(), NexusRegistryService.MAX_NO_OF_TAGS_PER_IMAGE);
-    List<NexusArtifactDelegateResponse> nexusArtifactDelegateResponseList =
+  public ArtifactTaskExecutionResponse getLastSuccessfulBuild(ArtifactoryArtifactDelegateRequest attributesRequest) {
+    BuildDetailsInternal lastSuccessfulBuild;
+    if (isRegex(attributesRequest)) {
+      lastSuccessfulBuild = artifactoryRegistryService.getLastSuccessfulBuildFromRegex(
+          ArtifactoryRequestResponseMapper.toArtifactoryInternalConfig(attributesRequest),
+          attributesRequest.getRepository(), attributesRequest.getImagePath(), attributesRequest.getRepositoryFormat(),
+          attributesRequest.getTagRegex());
+    } else {
+      lastSuccessfulBuild = artifactoryRegistryService.verifyBuildNumber(
+          ArtifactoryRequestResponseMapper.toArtifactoryInternalConfig(attributesRequest),
+          attributesRequest.getRepository(), attributesRequest.getImagePath(), attributesRequest.getRepositoryFormat(),
+          attributesRequest.getTag());
+    }
+    ArtifactoryArtifactDelegateResponse artifactoryArtifactDelegateResponse =
+        ArtifactoryRequestResponseMapper.toArtifactoryResponse(lastSuccessfulBuild, attributesRequest);
+
+    return getSuccessTaskExecutionResponse(Collections.singletonList(artifactoryArtifactDelegateResponse));
+  }
+
+  @Override
+  public ArtifactTaskExecutionResponse getBuilds(ArtifactoryArtifactDelegateRequest attributesRequest) {
+    List<BuildDetailsInternal> builds = artifactoryRegistryService.getBuilds(
+        ArtifactoryRequestResponseMapper.toArtifactoryInternalConfig(attributesRequest),
+        attributesRequest.getRepository(), attributesRequest.getImagePath(), attributesRequest.getRepositoryFormat(),
+        ArtifactoryRegistryService.MAX_NO_OF_TAGS_PER_IMAGE);
+    List<ArtifactoryArtifactDelegateResponse> artifactoryArtifactDelegateResponseList =
         builds.stream()
             .sorted(new BuildDetailsInternalComparatorDescending())
-            .map(build -> NexusRequestResponseMapper.toNexusResponse(build, attributesRequest))
+            .map(build -> ArtifactoryRequestResponseMapper.toArtifactoryResponse(build, attributesRequest))
             .collect(Collectors.toList());
-    return getSuccessTaskExecutionResponse(nexusArtifactDelegateResponseList);
+    return getSuccessTaskExecutionResponse(artifactoryArtifactDelegateResponseList);
   }
-  //
-  //  @Override
-  //  public ArtifactTaskExecutionResponse getLabels(DockerArtifactDelegateRequest attributesRequest) {
-  //    List<Map<String, String>> labels =
-  //        dockerRegistryService.getLabels(DockerRequestResponseMapper.toDockerInternalConfig(attributesRequest),
-  //            attributesRequest.getImagePath(), attributesRequest.getTagsList());
-  //    return getSuccessTaskExecutionResponse(DockerRequestResponseMapper.toDockerResponse(labels, attributesRequest));
-  //  }
-  //
-  //  @Override
-  //  public ArtifactTaskExecutionResponse validateArtifactServer(DockerArtifactDelegateRequest attributesRequest) {
-  //    boolean isServerValidated = dockerRegistryService.validateCredentials(
-  //        DockerRequestResponseMapper.toDockerInternalConfig(attributesRequest));
-  //    return ArtifactTaskExecutionResponse.builder().isArtifactServerValid(isServerValidated).build();
-  //  }
-  //
-  //  @Override
-  //  public ArtifactTaskExecutionResponse validateArtifactImage(DockerArtifactDelegateRequest attributesRequest) {
-  //    boolean isArtifactImageValid = dockerRegistryService.verifyImageName(
-  //        DockerRequestResponseMapper.toDockerInternalConfig(attributesRequest), attributesRequest.getImagePath());
-  //    return ArtifactTaskExecutionResponse.builder().isArtifactSourceValid(isArtifactImageValid).build();
-  //  }
-  //
+
+  @Override
+  public ArtifactTaskExecutionResponse validateArtifactServer(ArtifactoryArtifactDelegateRequest attributesRequest) {
+    boolean isServerValidated = artifactoryRegistryService.validateCredentials(
+        ArtifactoryRequestResponseMapper.toArtifactoryInternalConfig(attributesRequest));
+    return ArtifactTaskExecutionResponse.builder().isArtifactServerValid(isServerValidated).build();
+  }
+
   private ArtifactTaskExecutionResponse getSuccessTaskExecutionResponse(
-      List<NexusArtifactDelegateResponse> responseList) {
+      List<ArtifactoryArtifactDelegateResponse> responseList) {
     return ArtifactTaskExecutionResponse.builder()
         .artifactDelegateResponses(responseList)
         .isArtifactSourceValid(true)
@@ -93,14 +80,14 @@ public class ArtifactoryArtifactTaskHandler extends DelegateArtifactTaskHandler<
         .build();
   }
 
-  boolean isRegex(NexusArtifactDelegateRequest artifactDelegateRequest) {
+  boolean isRegex(ArtifactoryArtifactDelegateRequest artifactDelegateRequest) {
     return EmptyPredicate.isNotEmpty(artifactDelegateRequest.getTagRegex());
   }
 
-  public void decryptRequestDTOs(NexusArtifactDelegateRequest nexusRequest) {
-    if (nexusRequest.getNexusConnectorDTO().getAuth() != null) {
-      secretDecryptionService.decrypt(
-          nexusRequest.getNexusConnectorDTO().getAuth().getCredentials(), nexusRequest.getEncryptedDataDetails());
+  public void decryptRequestDTOs(ArtifactoryArtifactDelegateRequest artifactoryRequest) {
+    if (artifactoryRequest.getArtifactoryConnectorDTO().getAuth() != null) {
+      secretDecryptionService.decrypt(artifactoryRequest.getArtifactoryConnectorDTO().getAuth().getCredentials(),
+          artifactoryRequest.getEncryptedDataDetails());
     }
   }
 }
