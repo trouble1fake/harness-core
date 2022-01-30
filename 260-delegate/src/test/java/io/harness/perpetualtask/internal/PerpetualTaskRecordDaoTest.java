@@ -118,7 +118,7 @@ public class PerpetualTaskRecordDaoTest extends WingsBaseTest {
   public void testSaveHeartbeat() {
     String taskId = perpetualTaskRecordDao.save(getPerpetualTaskRecord());
     perpetualTaskRecordDao.appointDelegate(taskId, DELEGATE_ID, 0);
-    boolean saveHeartbeat = perpetualTaskRecordDao.saveHeartbeat(taskId, HEARTBEAT_MILLIS);
+    boolean saveHeartbeat = perpetualTaskRecordDao.saveHeartbeat(taskId, HEARTBEAT_MILLIS, 0);
     assertThat(saveHeartbeat).isTrue();
     PerpetualTaskRecord perpetualTaskRecord = perpetualTaskRecordDao.getTask(taskId);
     assertThat(perpetualTaskRecord).isNotNull();

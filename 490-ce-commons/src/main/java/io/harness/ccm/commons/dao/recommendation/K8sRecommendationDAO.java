@@ -35,6 +35,7 @@ import io.harness.ccm.commons.beans.recommendation.K8sServiceProvider;
 import io.harness.ccm.commons.beans.recommendation.NodePoolId;
 import io.harness.ccm.commons.beans.recommendation.NodePoolId.NodePoolIdKeys;
 import io.harness.ccm.commons.beans.recommendation.RecommendationOverviewStats;
+import io.harness.ccm.commons.beans.recommendation.RecommendationTelemetryStats;
 import io.harness.ccm.commons.beans.recommendation.ResourceId;
 import io.harness.ccm.commons.beans.recommendation.ResourceType;
 import io.harness.ccm.commons.beans.recommendation.TotalResourceUsage;
@@ -144,6 +145,17 @@ public class K8sRecommendationDAO {
         .from(CE_RECOMMENDATIONS)
         .where(CE_RECOMMENDATIONS.ACCOUNTID.eq(accountId).and(firstNonNull(condition, DSL.noCondition())))
         .fetchOneInto(RecommendationOverviewStats.class);
+  }
+
+  @RetryOnException(retryCount = RETRY_COUNT, sleepDurationInMilliseconds = SLEEP_DURATION)
+  public List<RecommendationTelemetryStats> fetchRecommendationsTelemetry(@NonNull String accountId) {
+    return dslContext
+        .select(DSL.count().as("count"), sum(CE_RECOMMENDATIONS.MONTHLYCOST).as("totalMonthlyCost"),
+            sum(CE_RECOMMENDATIONS.MONTHLYSAVING).as("totalMonthlySaving"), CE_RECOMMENDATIONS.RESOURCETYPE.as("type"))
+        .from(CE_RECOMMENDATIONS)
+        .where(CE_RECOMMENDATIONS.ACCOUNTID.eq(accountId))
+        .groupBy(CE_RECOMMENDATIONS.RESOURCETYPE)
+        .fetchInto(RecommendationTelemetryStats.class);
   }
 
   @RetryOnException(retryCount = RETRY_COUNT, sleepDurationInMilliseconds = SLEEP_DURATION)

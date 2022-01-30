@@ -116,7 +116,7 @@ public abstract class PMSStepPlanCreatorV2<T extends PmsAbstractStepNode> extend
                     .build())
             .skipUnresolvedExpressionsCheck(stepElement.getStepSpecType().skipUnresolvedExpressionsCheck())
             .build();
-    return PlanCreationResponse.builder().node(stepPlanNode.getUuid(), stepPlanNode).build();
+    return PlanCreationResponse.builder().planNode(stepPlanNode).build();
   }
 
   protected List<AdviserObtainment> getAdviserObtainmentFromMetaData(YamlField currentField) {

@@ -22,7 +22,6 @@ import io.harness.pms.yaml.ParameterField;
 import io.harness.pms.yaml.YamlNode;
 import io.harness.validator.NGRegexValidatorConstants;
 import io.harness.when.beans.StageWhenCondition;
-import io.harness.yaml.core.failurestrategy.FailureStrategyConfig;
 import io.harness.yaml.core.variables.NGVariable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -63,7 +62,6 @@ public abstract class AbstractStageNode {
 
   StageWhenCondition when;
 
-  List<FailureStrategyConfig> failureStrategies;
   List<NGVariable> variables;
   Map<String, String> tags;
 

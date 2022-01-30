@@ -177,7 +177,7 @@ public class GitFullSyncProcessorServiceImpl implements io.harness.gitsync.core.
             fullSyncFilesGroupedByMsvc.getMicroservice());
         FullSyncMsvcProcessingResponse fullSyncMsvcProcessingResponse = processFiles(
             fullSyncFilesGroupedByMsvc.getMicroservice(), fullSyncFilesGroupedByMsvc.getGitFullSyncEntityInfoList());
-        processingFailed = fullSyncMsvcProcessingResponse.isStatusSuccess();
+        processingFailed = !fullSyncMsvcProcessingResponse.isStatusSuccess();
         if (fullSyncFilesGroupedByMsvc.getMicroservice() == Microservice.CORE) {
           setTheRepoBranchForTheGitSyncConnector(fullSyncFilesGroupedByMsvc.getGitFullSyncEntityInfoList(),
               fullSyncMsvcProcessingResponse.getFullSyncFileResponses());
@@ -292,7 +292,8 @@ public class GitFullSyncProcessorServiceImpl implements io.harness.gitsync.core.
                                              .build();
     scmOrchestratorService.processScmRequestUsingConnectorSettings(scmClientFacilitatorService
         -> scmClientFacilitatorService.createPullRequest(createPRRequest),
-        projectIdentifier, orgIdentifier, accountIdentifier, yamlGitConfigDTO.getGitConnectorRef());
+        projectIdentifier, orgIdentifier, accountIdentifier, yamlGitConfigDTO.getGitConnectorRef(),
+        yamlGitConfigDTO.getGitConnectorsRepo(), yamlGitConfigDTO.getGitConnectorsBranch());
   }
 
   private List<FullSyncFilesGroupedByMsvc> sortTheFilesInTheProcessingOrder(

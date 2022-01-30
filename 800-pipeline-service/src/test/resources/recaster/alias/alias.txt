@@ -79,3 +79,4 @@ io.harness.steps.approval.step.servicenow.ServiceNowApprovalSpecParameters
 io.harness.steps.servicenow.approval.ServiceNowApprovalStepNode
 io.harness.steps.approval.step.servicenow.ServiceNowApprovalOutcome
 io.harness.steps.approval.stage.ApprovalStageNode
+io.harness.cf.pipeline.FeatureFlagStageNode
