@@ -170,7 +170,7 @@ public class HelmTaskHelperBase {
           EMPTY);
       return;
     }
-    String dir = Paths.get(RESOURCE_DIR_BASE, "cache").toAbsolutePath().normalize().toString();
+    String dir = Paths.get(RESOURCE_DIR_BASE, repoName, "cache").toAbsolutePath().normalize().toString();
     addRepo(
         repoName, repoDisplayName, chartRepoUrl, username, password, chartDirectory, helmVersion, timeoutInMillis, dir);
     updateRepo(repoName, chartDirectory, helmVersion, timeoutInMillis, dir);
@@ -357,7 +357,7 @@ public class HelmTaskHelperBase {
       executeFetchChartFromRepo(chartName, chartDirectory, repoDisplayName, helmFetchCommand, timeoutInMillis);
       return;
     }
-    String dir = Paths.get(RESOURCE_DIR_BASE, "cache").toAbsolutePath().normalize().toString();
+    String dir = Paths.get(RESOURCE_DIR_BASE, repoName, "cache").toAbsolutePath().normalize().toString();
     executeFetchChartFromRepoUseRepoFlag(
         chartName, chartDirectory, repoDisplayName, helmFetchCommand, timeoutInMillis, repoName, dir);
   }
