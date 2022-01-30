@@ -72,9 +72,9 @@ public class ArtifactDelegateRequestUtils {
         .build();
   }
   public NexusArtifactDelegateRequest getNexusArtifactDelegateRequest(String repositoryName, Integer repositoryPort,
-      String imagePath, String repositoryFormat, String tag, String tagRegex, List<String> tagsList,
-      String connectorRef, NexusConnectorDTO nexusConnectorDTO, List<EncryptedDataDetail> encryptedDataDetails,
-      ArtifactSourceType sourceType) {
+      String imagePath, String repositoryFormat, String dockerRepositoryServer, String tag, String tagRegex,
+      List<String> tagsList, String connectorRef, NexusConnectorDTO nexusConnectorDTO,
+      List<EncryptedDataDetail> encryptedDataDetails, ArtifactSourceType sourceType) {
     return NexusArtifactDelegateRequest.builder()
         .repositoryName(repositoryName)
         .repositoryPort(repositoryPort)
@@ -87,6 +87,7 @@ public class ArtifactDelegateRequestUtils {
         .nexusConnectorDTO(nexusConnectorDTO)
         .encryptedDataDetails(encryptedDataDetails)
         .sourceType(sourceType)
+        .dockerRepositoryServer(dockerRepositoryServer)
         .build();
   }
   public ArtifactoryArtifactDelegateRequest getArtifactoryArtifactDelegateRequest(String repository, String imagePath,

@@ -52,6 +52,7 @@ import org.springframework.data.annotation.TypeAlias;
 @SimpleVisitorHelper(helperClass = ConnectorRefExtractorHelper.class)
 @TypeAlias("nexusRegistryArtifactConfig")
 @OneOfField(fields = {"tag", "tagRegex"})
+@OneOfField(fields = {"repositoryPort", "dockerRepositoryServer"})
 @RecasterAlias("io.harness.cdng.artifact.bean.yaml.NexusRegistryArtifactConfig")
 public class NexusRegistryArtifactConfig implements ArtifactConfig, Visitable, WithConnectorRef {
   /**
@@ -76,10 +77,11 @@ public class NexusRegistryArtifactConfig implements ArtifactConfig, Visitable, W
   /**
    * Repo port.
    */
-  @NotNull
-  @ApiModelProperty(dataType = SwaggerConstants.INTEGER_CLASSPATH)
-  @Wither
-  ParameterField<Integer> repositoryPort;
+  @ApiModelProperty(dataType = SwaggerConstants.INTEGER_CLASSPATH) @Wither ParameterField<Integer> repositoryPort;
+  /**
+   * Docker repo server hostname.
+   */
+  @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) @Wither ParameterField<String> dockerRepositoryServer;
   /**
    * Tag refers to exact tag number.
    */

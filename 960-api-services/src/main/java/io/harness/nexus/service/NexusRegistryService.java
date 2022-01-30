@@ -14,7 +14,6 @@ import io.harness.artifacts.beans.BuildDetailsInternal;
 import io.harness.nexus.NexusRequest;
 
 import java.util.List;
-import java.util.Map;
 
 @OwnedBy(CDP)
 public interface NexusRegistryService {
@@ -32,27 +31,6 @@ public interface NexusRegistryService {
       String repoFormat, int maxNumberOfBuilds);
 
   /**
-   * Gets labels.
-   *
-   * @param nexusConfig the nexus config
-   * @param imageName    the image name
-   * @param tags         the image tags to find labels of
-   * @return the builds
-   */
-  List<Map<String, String>> getLabels(NexusRequest nexusConfig, String repository, Integer port, String imageName,
-      String repositoryFormat, List<String> tags);
-
-  /**
-   * Gets last successful build.
-   *
-   * @param nexusConfig the nexus config
-   * @param imageName    the image name
-   * @return the last successful build
-   */
-  BuildDetailsInternal getLastSuccessfulBuild(
-      NexusRequest nexusConfig, String repository, Integer port, String imageName, String repositoryFormat);
-
-  /**
    * Gets the last successful build with input as tag regex.
    * @param nexusConfig the nexus config
    * @param imageName the image name
@@ -62,13 +40,6 @@ public interface NexusRegistryService {
   BuildDetailsInternal getLastSuccessfulBuildFromRegex(NexusRequest nexusConfig, String repository, Integer port,
       String imageName, String repositoryFormat, String tagRegex);
 
-  //  /**
-  //   * Validates the Image
-  //   * @param nexusConfig the nexus config
-  //   * @param imageName the image name
-  //   */
-  //  boolean verifyImageName(NexusRequest nexusConfig, String repository, String imageName, String repositoryFormat);
-
   /**
    * Validates the Image Tag
    * @param nexusConfig the nexus config
@@ -77,11 +48,11 @@ public interface NexusRegistryService {
   BuildDetailsInternal verifyBuildNumber(
       NexusRequest nexusConfig, String repository, Integer port, String imageName, String repositoryFormat, String tag);
 
-  //  /**
-  //   * Validate the credentials
-  //   *
-  //   * @param nexusConfig the nexus config
-  //   * @return boolean validate
-  //   */
-  //  boolean validateCredentials(NexusRequest nexusConfig);
+  /**
+   * Validate the credentials
+   *
+   * @param nexusConfig the nexus config
+   * @return boolean validate
+   */
+  boolean validateCredentials(NexusRequest nexusConfig);
 }

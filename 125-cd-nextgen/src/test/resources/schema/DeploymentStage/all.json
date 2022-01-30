@@ -351,6 +351,63 @@
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
+    "ArtifactoryRegistryArtifactConfig": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/ArtifactConfig"
+        },
+        {
+          "type": "object",
+          "required": [
+            "connectorRef",
+            "imagePath",
+            "repository",
+            "repositoryFormat"
+          ],
+          "properties": {
+            "connectorRef": {
+              "type": "string"
+            },
+            "dockerRepositoryServer": {
+              "type": "string"
+            },
+            "imagePath": {
+              "type": "string"
+            },
+            "metadata": {
+              "type": "string"
+            },
+            "repository": {
+              "type": "string"
+            },
+            "repositoryFormat": {
+              "type": "string"
+            },
+            "tag": {
+              "type": "string"
+            },
+            "tagRegex": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "oneOf": [
+            {
+              "required": [
+                "tagRegex"
+              ]
+            },
+            {
+              "required": [
+                "tag"
+              ]
+            }
+          ]
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
     "BarrierStepInfo": {
       "allOf": [
         {
@@ -3062,6 +3119,68 @@
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
+    "NexusRegistryArtifactConfig": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/ArtifactConfig"
+        },
+        {
+          "type": "object",
+          "required": [
+            "connectorRef",
+            "imagePath",
+            "repository",
+            "repositoryFormat",
+            "repositoryPort"
+          ],
+          "properties": {
+            "connectorRef": {
+              "type": "string"
+            },
+            "dockerRepositoryServer": {
+              "type": "string"
+            },
+            "imagePath": {
+              "type": "string"
+            },
+            "metadata": {
+              "type": "string"
+            },
+            "repository": {
+              "type": "string"
+            },
+            "repositoryFormat": {
+              "type": "string"
+            },
+            "repositoryPort": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "tag": {
+              "type": "string"
+            },
+            "tagRegex": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "oneOf": [
+            {
+              "required": [
+                "tagRegex"
+              ]
+            },
+            {
+              "required": [
+                "tag"
+              ]
+            }
+          ]
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
     "NumberNGVariable": {
       "allOf": [
         {
@@ -3484,12 +3603,30 @@
           "enum": [
             "DockerRegistry",
             "Gcr",
-            "Ecr"
+            "Ecr",
+            "NexusRegistry",
+            "ArtifactoryRegistry"
           ]
         }
       },
       "$schema": "http://json-schema.org/draft-07/schema#",
       "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "ArtifactoryRegistry"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/ArtifactoryRegistryArtifactConfig"
+              }
+            }
+          }
+        },
         {
           "if": {
             "properties": {
@@ -3534,6 +3671,22 @@
             "properties": {
               "spec": {
                 "$ref": "#/definitions/GcrArtifactConfig"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "NexusRegistry"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/NexusRegistryArtifactConfig"
               }
             }
           }
@@ -4409,12 +4562,30 @@
           "enum": [
             "DockerRegistry",
             "Gcr",
-            "Ecr"
+            "Ecr",
+            "NexusRegistry",
+            "ArtifactoryRegistry"
           ]
         }
       },
       "$schema": "http://json-schema.org/draft-07/schema#",
       "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "ArtifactoryRegistry"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/ArtifactoryRegistryArtifactConfig"
+              }
+            }
+          }
+        },
         {
           "if": {
             "properties": {
@@ -4459,6 +4630,22 @@
             "properties": {
               "spec": {
                 "$ref": "#/definitions/GcrArtifactConfig"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "NexusRegistry"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/NexusRegistryArtifactConfig"
               }
             }
           }

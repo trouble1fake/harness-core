@@ -63,28 +63,6 @@ public class NexusArtifactTaskHandler extends DelegateArtifactTaskHandler<NexusA
     return getSuccessTaskExecutionResponse(nexusArtifactDelegateResponseList);
   }
 
-  //  @Override
-  //  public ArtifactTaskExecutionResponse getLabels(NexusArtifactDelegateRequest attributesRequest) {
-  //    List<Map<String, String>> labels =
-  //        nexusRegistryService.getLabels(NexusRequestResponseMapper.toNexusInternalConfig(attributesRequest),
-  //            attributesRequest.getImagePath(), attributesRequest.getTagsList());
-  //    return getSuccessTaskExecutionResponse(NexusRequestResponseMapper.toNexusResponse(labels, attributesRequest));
-  //  }
-  //
-  //  @Override
-  //  public ArtifactTaskExecutionResponse validateArtifactServer(NexusArtifactDelegateRequest attributesRequest) {
-  //    boolean isServerValidated = nexusRegistryService.validateCredentials(
-  //            NexusRequestResponseMapper.toNexusInternalConfig(attributesRequest));
-  //    return ArtifactTaskExecutionResponse.builder().isArtifactServerValid(isServerValidated).build();
-  //  }
-  //
-  //  @Override
-  //  public ArtifactTaskExecutionResponse validateArtifactImage(NexusArtifactDelegateRequest attributesRequest) {
-  //    boolean isArtifactImageValid = nexusRegistryService.verifyImageName(
-  //            NexusRequestResponseMapper.toNexusInternalConfig(attributesRequest), attributesRequest.getImagePath());
-  //    return ArtifactTaskExecutionResponse.builder().isArtifactSourceValid(isArtifactImageValid).build();
-  //  }
-
   private ArtifactTaskExecutionResponse getSuccessTaskExecutionResponse(
       List<NexusArtifactDelegateResponse> responseList) {
     return ArtifactTaskExecutionResponse.builder()

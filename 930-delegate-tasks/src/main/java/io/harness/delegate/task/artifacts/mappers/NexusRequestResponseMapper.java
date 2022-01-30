@@ -47,6 +47,7 @@ public class NexusRequestResponseMapper {
         .password(password.toCharArray())
         .version(request.getNexusConnectorDTO().getVersion())
         .hasCredentials(hasCredentials)
+        .dockerRepositoryServer(request.getDockerRepositoryServer())
         .build();
   }
 

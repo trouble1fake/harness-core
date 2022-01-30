@@ -231,3 +231,9 @@ io.harness.steps.approval.step.servicenow.ServiceNowApprovalStepInfo
 io.harness.cdng.creator.plan.stage.DeploymentStageNode
 io.harness.steps.approval.stage.ApprovalStageNode
 io.harness.cf.pipeline.FeatureFlagStageNode
+io.harness.cdng.artifact.NexusArtifactSummary
+io.harness.cdng.artifact.outcome.NexusArtifactOutcome
+io.harness.cdng.artifact.outcome.ArtifactoryArtifactOutcome
+io.harness.cdng.artifact.bean.yaml.NexusRegistryArtifactConfig
+io.harness.cdng.artifact.bean.yaml.ArtifactoryRegistryArtifactConfig
+io.harness.cdng.artifact.ArtifactoryArtifactSummary

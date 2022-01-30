@@ -65,24 +65,10 @@ public class NexusArtifactTaskHelper {
               "Fetched " + artifactTaskResponse.getArtifactTaskExecutionResponse().getArtifactDelegateResponses().size()
                   + " artifacts");
           break;
-        case GET_LABELS:
-          saveLogs(executionLogCallback, "Fetching labels");
-          artifactTaskResponse = getSuccessTaskResponse(nexusArtifactTaskHandler.getLabels(attributes));
-          saveLogs(executionLogCallback,
-              "Fetched labels: "
-                  + artifactTaskResponse.getArtifactTaskExecutionResponse().getArtifactDelegateResponses().toString());
-          break;
         case VALIDATE_ARTIFACT_SERVER:
           saveLogs(executionLogCallback, "Validating  Artifact Server");
           artifactTaskResponse = getSuccessTaskResponse(nexusArtifactTaskHandler.validateArtifactServer(attributes));
           saveLogs(executionLogCallback, "validated artifact server: " + registryUrl);
-          break;
-        case VALIDATE_ARTIFACT_SOURCE:
-          saveLogs(executionLogCallback, "Validating Artifact Source");
-          artifactTaskResponse = getSuccessTaskResponse(nexusArtifactTaskHandler.validateArtifactImage(attributes));
-          saveLogs(executionLogCallback,
-              "Artifact Source is valid: " + registryUrl + (registryUrl.endsWith("/") ? "" : "/")
-                  + attributes.getImagePath());
           break;
         default:
           saveLogs(executionLogCallback,

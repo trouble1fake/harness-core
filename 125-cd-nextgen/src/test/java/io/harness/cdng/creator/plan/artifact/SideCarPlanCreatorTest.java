@@ -62,7 +62,11 @@ public class SideCarPlanCreatorTest extends CDNGTestBase {
     assertThat(supportedTypes.get(YamlTypes.SIDECAR_ARTIFACT_CONFIG).contains(ArtifactSourceConstants.ECR_NAME))
         .isEqualTo(true);
     assertThat(supportedTypes.get(YamlTypes.SIDECAR_ARTIFACT_CONFIG).contains(ArtifactSourceConstants.GCR_NAME))
-        .isEqualTo(true);
+            .isEqualTo(true);
+    assertThat(supportedTypes.get(YamlTypes.SIDECAR_ARTIFACT_CONFIG).contains(ArtifactSourceConstants.NEXUS_REGISTRY_NAME))
+            .isEqualTo(true);
+    assertThat(supportedTypes.get(YamlTypes.SIDECAR_ARTIFACT_CONFIG).contains(ArtifactSourceConstants.ARTIFACTORY_REGISTRY_NAME))
+            .isEqualTo(true);
   }
 
   @Test

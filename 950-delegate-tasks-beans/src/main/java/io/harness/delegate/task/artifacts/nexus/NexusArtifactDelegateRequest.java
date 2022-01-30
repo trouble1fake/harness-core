@@ -34,9 +34,11 @@ import lombok.Value;
 @EqualsAndHashCode(callSuper = false)
 @OwnedBy(HarnessTeam.CDP)
 public class NexusArtifactDelegateRequest implements ArtifactSourceDelegateRequest {
+  /** Host from where to pull the images */
+  String dockerRepositoryServer;
   /** Nexus repo name. */
   String repositoryName;
-
+  /** Nexus repository port. */
   Integer repositoryPort;
   /** Images in repos need to be referenced via a path. */
   String imagePath;
