@@ -206,4 +206,6 @@ public interface DelegateService extends OwnedByAccount {
   long getCountOfRegisteredDelegates(String accountId);
 
   long getCountOfConnectedDelegates(String accountId);
+
+  Delegate getDelegateUsingHostName(String accountId, String delegateHostName);
 }

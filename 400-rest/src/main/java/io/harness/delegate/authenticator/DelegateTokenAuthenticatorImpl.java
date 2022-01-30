@@ -21,8 +21,8 @@ import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.context.GlobalContext;
-import io.harness.delegate.beans.DelegateNgToken;
-import io.harness.delegate.beans.DelegateNgToken.DelegateNgTokenKeys;
+import io.harness.delegate.beans.Delegate;
+import io.harness.delegate.beans.DelegateEntityOwner;
 import io.harness.delegate.beans.DelegateToken;
 import io.harness.delegate.beans.DelegateToken.DelegateTokenKeys;
 import io.harness.delegate.beans.DelegateTokenStatus;
@@ -30,15 +30,14 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.exception.InvalidTokenException;
 import io.harness.exception.RevokedTokenException;
 import io.harness.exception.WingsException;
-import io.harness.ff.FeatureFlagService;
 import io.harness.globalcontex.DelegateTokenGlobalContextData;
 import io.harness.manage.GlobalContextManager;
 import io.harness.persistence.HIterator;
 import io.harness.persistence.HPersistence;
-import io.harness.persistence.NameAndValueAccess;
 import io.harness.security.DelegateTokenAuthenticator;
 
 import software.wings.beans.Account;
+import software.wings.service.intfc.DelegateService;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
@@ -64,7 +63,7 @@ import org.mongodb.morphia.query.Query;
 @OwnedBy(DEL)
 @TargetModule(HarnessModule._420_DELEGATE_SERVICE)
 public class DelegateTokenAuthenticatorImpl implements DelegateTokenAuthenticator {
-  @Inject private FeatureFlagService featureFlagService;
+  @Inject private DelegateService delegateService;
   @Inject private HPersistence persistence;
 
   private final LoadingCache<String, String> keyCache =
@@ -153,7 +152,7 @@ public class DelegateTokenAuthenticatorImpl implements DelegateTokenAuthenticato
           } else {
             decryptDelegateToken(encryptedJWT, iterator.next().getValue());
           }
-
+          // checkDelegateIsAtCorrectLevel(accountId,delegateHostName, iterator.next().getOwner());
           if (DelegateTokenStatus.ACTIVE == status) {
             if (!GlobalContextManager.isAvailable()) {
               initGlobalContextGuard(new GlobalContext());
@@ -189,6 +188,15 @@ public class DelegateTokenAuthenticatorImpl implements DelegateTokenAuthenticato
     try {
       encryptedJWT.decrypt(decrypter);
     } catch (JOSEException e) {
+      throw new InvalidTokenException("Invalid delegate token", USER_ADMIN);
+    }
+  }
+
+  private void checkDelegateIsAtCorrectLevel(String accountId, String delegateHostName, DelegateEntityOwner owner) {
+    // Since accountId and delegateName is unique so accountId and delegatgeHostName will also be unique
+    Delegate delegate = delegateService.getDelegateUsingHostName(accountId, delegateHostName);
+    if ((delegate.getOwner() == null && owner != null) || (owner == null && delegate.getOwner() != null)
+        || (owner != delegate.getOwner())) {
       throw new InvalidTokenException("Invalid delegate token", USER_ADMIN);
     }
   }

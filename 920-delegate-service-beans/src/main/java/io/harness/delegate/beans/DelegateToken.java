@@ -67,6 +67,7 @@ public class DelegateToken implements PersistentEntity, UuidAware, CreatedAtAwar
   private long createdAt;
   private DelegateTokenStatus status;
   private String value;
+  private DelegateEntityOwner owner;
 
   @FdTtlIndex private Date validUntil;
 }

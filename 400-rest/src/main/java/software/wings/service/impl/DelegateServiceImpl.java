@@ -1065,6 +1065,15 @@ public class DelegateServiceImpl implements DelegateService {
   @Override
   public DelegateScripts getDelegateScriptsNg(String accountId, String version, String managerHost,
       String verificationHost, String delegateType) throws IOException {
+    String delegateTokenName = EMPTY;
+    DelegateTokenGlobalContextData delegateTokenGlobalContextData =
+        GlobalContextManager.get(DelegateTokenGlobalContextData.TOKEN_NAME);
+    if (delegateTokenGlobalContextData != null) {
+      delegateTokenName = delegateTokenGlobalContextData.getTokenName();
+    } else {
+      log.warn("DelegateTokenGlobalContextData was found null in GlobalContextManager");
+    }
+
     ImmutableMap<String, String> scriptParams = getJarAndScriptRunTimeParamMap(
         TemplateParameters.builder()
             .accountId(accountId)
@@ -1073,6 +1082,7 @@ public class DelegateServiceImpl implements DelegateService {
             .verificationHost(verificationHost)
             .logStreamingServiceBaseUrl(mainConfiguration.getLogStreamingServiceConfig().getBaseUrl())
             .delegateXmx(getDelegateXmx(delegateType))
+            .delegateTokenName(delegateTokenName)
             .build(),
         true);
 
@@ -1438,7 +1448,7 @@ public class DelegateServiceImpl implements DelegateService {
 
   private String getAccountSecret(final TemplateParameters inquiry, final boolean useNgToken) {
     final Account account = accountService.get(inquiry.getAccountId());
-    if (isNotBlank(inquiry.getDelegateTokenName())) {
+    if (isNotEmpty(inquiry.getDelegateTokenName())) {
       if (useNgToken) {
         return delegateNgTokenService.getDelegateTokenValue(inquiry.getAccountId(),
             DelegateEntityOwnerHelper.buildOwner(
@@ -2984,6 +2994,14 @@ public class DelegateServiceImpl implements DelegateService {
         .field(DelegateKeys.lastHeartBeat)
         .lessThan(System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(30))
         .count();
+  }
+
+  @Override
+  public Delegate getDelegateUsingHostName(String accountId, String delegateHostName) {
+    return persistence.createQuery(Delegate.class)
+        .filter(DelegateKeys.accountId, accountId)
+        .filter(DelegateKeys.hostName, delegateHostName)
+        .get();
   }
 
   private boolean hasVersionCheckDisabled(String accountId) {
