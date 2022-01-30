@@ -37,6 +37,7 @@ import io.harness.delegate.beans.DelegateTaskEvent;
 import io.harness.delegate.beans.DelegateTaskPackage;
 import io.harness.delegate.beans.DelegateUnregisterRequest;
 import io.harness.delegate.beans.connector.ConnectorHeartbeatDelegateResponse;
+import io.harness.delegate.service.intfc.DelegateRingService;
 import io.harness.delegate.task.DelegateLogContext;
 import io.harness.delegate.task.TaskLogContext;
 import io.harness.delegate.task.validation.DelegateConnectionResultDetail;
@@ -111,21 +112,21 @@ import org.jetbrains.annotations.NotNull;
 @OwnedBy(DEL)
 @BreakDependencyOn("software.wings.service.impl.instance.InstanceHelper")
 public class DelegateAgentResource {
-  private DelegateService delegateService;
-  private AccountService accountService;
-  private HPersistence persistence;
-  private DelegateRequestRateLimiter delegateRequestRateLimiter;
-  private SubdomainUrlHelperIntfc subdomainUrlHelper;
-  private ArtifactCollectionResponseHandler artifactCollectionResponseHandler;
-  private InstanceHelper instanceHelper;
-  private ManifestCollectionResponseHandler manifestCollectionResponseHandler;
-  private ConnectorHearbeatPublisher connectorHearbeatPublisher;
-  private KryoSerializer kryoSerializer;
-  private ConfigurationController configurationController;
-  private FeatureFlagService featureFlagService;
-  private DelegateTaskServiceClassic delegateTaskServiceClassic;
-  private InstanceSyncResponsePublisher instanceSyncResponsePublisher;
-  private PollingResourceClient pollingResourceClient;
+  private final DelegateService delegateService;
+  private final AccountService accountService;
+  private final HPersistence persistence;
+  private final DelegateRequestRateLimiter delegateRequestRateLimiter;
+  private final SubdomainUrlHelperIntfc subdomainUrlHelper;
+  private final ArtifactCollectionResponseHandler artifactCollectionResponseHandler;
+  private final InstanceHelper instanceHelper;
+  private final ManifestCollectionResponseHandler manifestCollectionResponseHandler;
+  private final ConnectorHearbeatPublisher connectorHearbeatPublisher;
+  private final KryoSerializer kryoSerializer;
+  private final ConfigurationController configurationController;
+  private final DelegateTaskServiceClassic delegateTaskServiceClassic;
+  private final InstanceSyncResponsePublisher instanceSyncResponsePublisher;
+  private final PollingResourceClient pollingResourceClient;
+  private final DelegateRingService delegateRingService;
 
   @Inject
   public DelegateAgentResource(DelegateService delegateService, AccountService accountService, HPersistence persistence,
@@ -135,7 +136,7 @@ public class DelegateAgentResource {
       ConnectorHearbeatPublisher connectorHearbeatPublisher, KryoSerializer kryoSerializer,
       ConfigurationController configurationController, FeatureFlagService featureFlagService,
       DelegateTaskServiceClassic delegateTaskServiceClassic, PollingResourceClient pollingResourceClient,
-      InstanceSyncResponsePublisher instanceSyncResponsePublisher) {
+      InstanceSyncResponsePublisher instanceSyncResponsePublisher, DelegateRingService delegateRingService) {
     this.instanceHelper = instanceHelper;
     this.delegateService = delegateService;
     this.accountService = accountService;
@@ -147,10 +148,10 @@ public class DelegateAgentResource {
     this.connectorHearbeatPublisher = connectorHearbeatPublisher;
     this.kryoSerializer = kryoSerializer;
     this.configurationController = configurationController;
-    this.featureFlagService = featureFlagService;
     this.delegateTaskServiceClassic = delegateTaskServiceClassic;
     this.pollingResourceClient = pollingResourceClient;
     this.instanceSyncResponsePublisher = instanceSyncResponsePublisher;
+    this.delegateRingService = delegateRingService;
   }
 
   @DelegateAuth
@@ -161,7 +162,7 @@ public class DelegateAgentResource {
   public RestResponse<DelegateConfiguration> getDelegateConfiguration(
       @QueryParam("accountId") @NotEmpty String accountId) {
     try (AutoLogContext ignore1 = new AccountLogContext(accountId, OVERRIDE_ERROR)) {
-      DelegateConfiguration configuration = accountService.getDelegateConfiguration(accountId);
+      DelegateConfiguration configuration = delegateRingService.getDelegateConfiguration(accountId);
       String primaryDelegateVersion = configurationController.getPrimaryVersion();
       // Adding primary delegate to the last element of delegate versions.
       if (isNotEmpty(configuration.getDelegateVersions())
@@ -198,7 +199,7 @@ public class DelegateAgentResource {
                           return Any.pack(
                               DelegateVersions.newBuilder()
                                   .addAllDelegateVersion(
-                                      accountService.getDelegateConfiguration(accountId).getDelegateVersions())
+                                      delegateRingService.getDelegateConfiguration(accountId).getDelegateVersions())
                                   .build());
                         } else if (requestEntry.is(HttpsCertRequirementQuery.class)) {
                           return Any.pack(

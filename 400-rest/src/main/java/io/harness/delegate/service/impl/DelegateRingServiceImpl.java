@@ -29,24 +29,24 @@ public class DelegateRingServiceImpl implements DelegateRingService {
 
   @Override
   public String getDelegateImageTag(String accountId) {
-    return (persistence.createQuery(DelegateRing.class)
-                .filter(DelegateRingKeys.ringName, accountService.get(accountId).getRingName())
-                .get())
-        .getDelegateImageTag();
+    DelegateRing delegateRing = getDelegateRing(accountId);
+    return delegateRing.getDelegateImageTag();
   }
 
   @Override
   public String getUpgraderImageTag(String accountId) {
-    return (persistence.createQuery(DelegateRing.class)
-                .filter(DelegateRingKeys.ringName, accountService.get(accountId).getRingName())
-                .get())
-        .getUpgraderImageTag();
+    DelegateRing delegateRing = getDelegateRing(accountId);
+    return delegateRing.getUpgraderImageTag();
   }
 
+  @Override
   public DelegateConfiguration getDelegateConfiguration(String accountId) {
-    return (persistence.createQuery(DelegateRing.class)
-                .filter(DelegateRingKeys.ringName, accountService.get(accountId).getRingName())
-                .get())
-        .getDelegateConfiguration();
+    DelegateRing delegateRing = getDelegateRing(accountId);
+    return delegateRing.getDelegateConfiguration();
+  }
+
+  private DelegateRing getDelegateRing(String accountId) {
+    String ringName = accountService.get(accountId).getRingName();
+    return persistence.createQuery(DelegateRing.class).filter(DelegateRingKeys.ringName, ringName).get();
   }
 }

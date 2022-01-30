@@ -59,6 +59,7 @@ import io.harness.delegate.beans.DelegateTaskEvent;
 import io.harness.delegate.beans.DelegateTaskPackage;
 import io.harness.delegate.beans.DelegateTaskResponse;
 import io.harness.delegate.beans.connector.ConnectorHeartbeatDelegateResponse;
+import io.harness.delegate.service.intfc.DelegateRingService;
 import io.harness.delegate.task.pcf.response.CfCommandExecutionResponse;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ff.FeatureFlagService;
@@ -136,6 +137,7 @@ public class DelegateAgentResourceTest extends CategoryTest {
   private static final DelegateTaskService delegateTaskService = mock(DelegateTaskService.class);
   private static final InstanceSyncResponsePublisher instanceSyncResponsePublisher =
       mock(InstanceSyncResponsePublisher.class);
+  private static final DelegateRingService delegateRingService = mock(DelegateRingService.class);
 
   static {
     artifactCollectionResponseHandler = mock(ArtifactCollectionResponseHandler.class);
@@ -161,7 +163,7 @@ public class DelegateAgentResourceTest extends CategoryTest {
               delegateRequestRateLimiter, subdomainUrlHelper, artifactCollectionResponseHandler,
               instanceSyncResponseHandler, manifestCollectionResponseHandler, connectorHearbeatPublisher,
               kryoSerializer, configurationController, featureFlagService, delegateTaskServiceClassic,
-              pollResourceClient, instanceSyncResponsePublisher))
+              pollResourceClient, instanceSyncResponsePublisher, delegateRingService))
           .instance(new AbstractBinder() {
             @Override
             protected void configure() {
@@ -183,14 +185,14 @@ public class DelegateAgentResourceTest extends CategoryTest {
     List<String> delegateVersions = new ArrayList<>();
     DelegateConfiguration delegateConfiguration =
         DelegateConfiguration.builder().delegateVersions(delegateVersions).build();
-    doReturn(delegateConfiguration).when(accountService).getDelegateConfiguration(ACCOUNT_ID);
+    doReturn(delegateConfiguration).when(delegateRingService).getDelegateConfiguration(ACCOUNT_ID);
     RestResponse<DelegateConfiguration> restResponse =
         RESOURCES.client()
             .target("/agent/delegates/configuration?accountId=" + ACCOUNT_ID)
             .request()
             .get(new GenericType<RestResponse<DelegateConfiguration>>() {});
 
-    verify(accountService, atLeastOnce()).getDelegateConfiguration(ACCOUNT_ID);
+    verify(delegateRingService, atLeastOnce()).getDelegateConfiguration(ACCOUNT_ID);
     assertThat(restResponse.getResource()).isInstanceOf(DelegateConfiguration.class).isNotNull();
     assertThat(restResponse.getResource().getAction()).isNull();
   }
@@ -200,7 +202,7 @@ public class DelegateAgentResourceTest extends CategoryTest {
   @Category(UnitTests.class)
   public void shouldGetDelegateConfigurationWithSelfDestruct() {
     doThrow(new InvalidRequestException("Deleted AccountId: " + ACCOUNT_ID))
-        .when(accountService)
+        .when(delegateRingService)
         .getDelegateConfiguration(ACCOUNT_ID);
     RestResponse<DelegateConfiguration> restResponse =
         RESOURCES.client()

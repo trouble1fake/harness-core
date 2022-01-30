@@ -62,13 +62,16 @@ import io.harness.cvng.beans.ServiceGuardLimitDTO;
 import io.harness.data.structure.UUIDGenerator;
 import io.harness.datahandler.models.AccountDetails;
 import io.harness.delegate.beans.DelegateConfiguration;
+import io.harness.delegate.beans.DelegateRing;
 import io.harness.delegate.beans.DelegateTokenStatus;
+import io.harness.delegate.service.intfc.DelegateRingService;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.UnauthorizedException;
 import io.harness.exception.WingsException;
 import io.harness.ng.core.account.AuthenticationMechanism;
 import io.harness.ng.core.account.DefaultExperience;
+import io.harness.persistence.HPersistence;
 import io.harness.rest.RestResponse;
 import io.harness.rule.Owner;
 import io.harness.service.intfc.DelegateNgTokenService;
@@ -177,8 +180,10 @@ public class AccountServiceTest extends WingsBaseTest {
   @Mock private GovernanceConfigService governanceConfigService;
   @Inject @Named(GovernanceFeature.FEATURE_NAME) private PremiumFeature governanceFeature;
 
+  @Inject private HPersistence persistence;
   @Inject private WingsPersistence wingsPersistence;
   @Inject private DelegateNgTokenService delegateNgTokenService;
+  @Inject private DelegateRingService delegateRingService;
 
   @Rule public ExpectedException thrown = ExpectedException.none();
   private static final String HARNESS_NAME = "Harness";
@@ -558,16 +563,15 @@ public class AccountServiceTest extends WingsBaseTest {
   @Owner(developers = PUNEET)
   @Category(UnitTests.class)
   public void shouldGetDelegateConfiguration() {
-    wingsPersistence.save(anAccount()
-                              .withUuid(GLOBAL_ACCOUNT_ID)
-                              .withCompanyName(HARNESS_NAME)
-                              .withDelegateConfiguration(
-                                  DelegateConfiguration.builder().delegateVersions(asList("globalVersion")).build())
-                              .build());
+    persistence.save(
+        DelegateRing.builder()
+            .ringName("ring3")
+            .delegateConfiguration(DelegateConfiguration.builder().delegateVersions(asList("globalVersion")).build())
+            .build());
 
-    String accountId = wingsPersistence.save(anAccount().withCompanyName(HARNESS_NAME).build());
+    String accountId = wingsPersistence.save(anAccount().withCompanyName(HARNESS_NAME).withRingName("ring3").build());
 
-    assertThat(accountService.getDelegateConfiguration(accountId))
+    assertThat(delegateRingService.getDelegateConfiguration(accountId))
         .hasFieldOrPropertyWithValue("delegateVersions", asList("globalVersion"));
   }
 

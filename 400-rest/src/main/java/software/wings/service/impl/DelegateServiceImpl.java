@@ -701,7 +701,7 @@ public class DelegateServiceImpl implements DelegateService {
 
   @Override
   public DelegateStatus getDelegateStatus(String accountId) {
-    DelegateConfiguration delegateConfiguration = accountService.getDelegateConfiguration(accountId);
+    DelegateConfiguration delegateConfiguration = delegateRingService.getDelegateConfiguration(accountId);
 
     List<Delegate> delegates = persistence.createQuery(Delegate.class)
                                    .filter(DelegateKeys.accountId, accountId)
@@ -720,7 +720,7 @@ public class DelegateServiceImpl implements DelegateService {
 
   @Override
   public DelegateStatus getDelegateStatusWithScalingGroups(String accountId) {
-    DelegateConfiguration delegateConfiguration = accountService.getDelegateConfiguration(accountId);
+    DelegateConfiguration delegateConfiguration = delegateRingService.getDelegateConfiguration(accountId);
 
     List<Delegate> delegatesWithoutScalingGroup = getDelegatesWithoutScalingGroup(accountId);
 
@@ -1522,7 +1522,7 @@ public class DelegateServiceImpl implements DelegateService {
 
       String version;
       if (mainConfiguration.getDeployMode() == DeployMode.KUBERNETES) {
-        List<String> delegateVersions = accountService.getDelegateConfiguration(accountId).getDelegateVersions();
+        List<String> delegateVersions = delegateRingService.getDelegateConfiguration(accountId).getDelegateVersions();
         version = delegateVersions.get(delegateVersions.size() - 1);
       } else {
         version = EMPTY_VERSION;
@@ -1658,7 +1658,7 @@ public class DelegateServiceImpl implements DelegateService {
 
       String version;
       if (mainConfiguration.getDeployMode() == DeployMode.KUBERNETES) {
-        List<String> delegateVersions = accountService.getDelegateConfiguration(accountId).getDelegateVersions();
+        List<String> delegateVersions = delegateRingService.getDelegateConfiguration(accountId).getDelegateVersions();
         version = delegateVersions.get(delegateVersions.size() - 1);
       } else {
         version = EMPTY_VERSION;
@@ -1738,7 +1738,7 @@ public class DelegateServiceImpl implements DelegateService {
 
       String version;
       if (mainConfiguration.getDeployMode() == DeployMode.KUBERNETES) {
-        List<String> delegateVersions = accountService.getDelegateConfiguration(accountId).getDelegateVersions();
+        List<String> delegateVersions = delegateRingService.getDelegateConfiguration(accountId).getDelegateVersions();
         version = delegateVersions.get(delegateVersions.size() - 1);
       } else {
         version = EMPTY_VERSION;
@@ -1791,7 +1791,7 @@ public class DelegateServiceImpl implements DelegateService {
     checkUniquenessOfDelegateName(accountId, delegateName, false);
     String version;
     if (mainConfiguration.getDeployMode() == DeployMode.KUBERNETES) {
-      List<String> delegateVersions = accountService.getDelegateConfiguration(accountId).getDelegateVersions();
+      List<String> delegateVersions = delegateRingService.getDelegateConfiguration(accountId).getDelegateVersions();
       version = delegateVersions.get(delegateVersions.size() - 1);
     } else {
       version = EMPTY_VERSION;
@@ -1840,7 +1840,7 @@ public class DelegateServiceImpl implements DelegateService {
     String version;
     checkUniquenessOfDelegateName(accountId, delegateName, false);
     if (mainConfiguration.getDeployMode() == DeployMode.KUBERNETES) {
-      List<String> delegateVersions = accountService.getDelegateConfiguration(accountId).getDelegateVersions();
+      List<String> delegateVersions = delegateRingService.getDelegateConfiguration(accountId).getDelegateVersions();
       version = delegateVersions.get(delegateVersions.size() - 1);
     } else {
       version = EMPTY_VERSION;
@@ -1878,7 +1878,7 @@ public class DelegateServiceImpl implements DelegateService {
 
       String version;
       if (mainConfiguration.getDeployMode() == DeployMode.KUBERNETES) {
-        List<String> delegateVersions = accountService.getDelegateConfiguration(accountId).getDelegateVersions();
+        List<String> delegateVersions = delegateRingService.getDelegateConfiguration(accountId).getDelegateVersions();
         version = delegateVersions.get(delegateVersions.size() - 1);
       } else {
         version = EMPTY_VERSION;
@@ -3840,7 +3840,7 @@ public class DelegateServiceImpl implements DelegateService {
 
       String version;
       if (mainConfiguration.getDeployMode() == DeployMode.KUBERNETES) {
-        List<String> delegateVersions = accountService.getDelegateConfiguration(accountId).getDelegateVersions();
+        List<String> delegateVersions = delegateRingService.getDelegateConfiguration(accountId).getDelegateVersions();
         version = delegateVersions.get(delegateVersions.size() - 1);
       } else {
         version = EMPTY_VERSION;
@@ -3916,7 +3916,7 @@ public class DelegateServiceImpl implements DelegateService {
       String accountId, String delegateName, DelegateSetupDetails delegateSetupDetails, boolean useNgToken) {
     String version;
     if (mainConfiguration.getDeployMode() == DeployMode.KUBERNETES) {
-      List<String> delegateVersions = accountService.getDelegateConfiguration(accountId).getDelegateVersions();
+      List<String> delegateVersions = delegateRingService.getDelegateConfiguration(accountId).getDelegateVersions();
       version = delegateVersions.get(delegateVersions.size() - 1);
     } else {
       version = EMPTY_VERSION;
