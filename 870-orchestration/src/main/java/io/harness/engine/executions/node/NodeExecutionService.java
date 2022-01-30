@@ -13,7 +13,6 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.engine.executions.retry.RetryStageInfo;
 import io.harness.execution.NodeExecution;
 import io.harness.plan.Node;
-import io.harness.pms.contracts.execution.NodeExecutionProto;
 import io.harness.pms.contracts.execution.Status;
 
 import java.util.EnumSet;
@@ -67,8 +66,6 @@ public interface NodeExecutionService {
       @NonNull String nodeExecutionId, @NonNull Status targetStatus, Update ops, EnumSet<Status> overrideStatusSet);
 
   NodeExecution save(NodeExecution nodeExecution);
-
-  NodeExecution save(NodeExecutionProto nodeExecution);
 
   NodeExecution updateStatusWithUpdate(@NotNull String nodeExecutionId, @NotNull Status status, Update ops,
       EnumSet<Status> overrideStatusSet, Set<String> includedFields, boolean shouldUseProjections);

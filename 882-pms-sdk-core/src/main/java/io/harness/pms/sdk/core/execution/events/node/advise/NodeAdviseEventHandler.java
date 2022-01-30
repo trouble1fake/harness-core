@@ -96,8 +96,8 @@ public class NodeAdviseEventHandler extends PmsBaseEventHandler<AdviseEvent> {
       }
     } catch (Exception ex) {
       log.error("Error while advising execution", ex);
-      sdkNodeExecutionService.handleEventError(
-          NodeExecutionEventType.ADVISE, event.getNotifyId(), NodeExecutionUtils.constructFailureInfo(ex));
+      sdkNodeExecutionService.handleEventError(NodeExecutionEventType.ADVISE, event.getAmbiance(), event.getNotifyId(),
+          NodeExecutionUtils.constructFailureInfo(ex));
     }
   }
 }

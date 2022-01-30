@@ -76,6 +76,7 @@ public final class HeatMap implements UuidAware, CreatedAtAware, AccountAccess, 
   @Id private String uuid;
   private String serviceIdentifier;
   private String envIdentifier;
+  private String monitoredServiceIdentifier;
   private String projectIdentifier;
   private String orgIdentifier;
   private CVMonitoringCategory category;

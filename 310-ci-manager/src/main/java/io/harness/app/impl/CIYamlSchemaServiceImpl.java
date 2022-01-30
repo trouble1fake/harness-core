@@ -18,6 +18,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.app.intfc.CIYamlSchemaService;
 import io.harness.beans.FeatureFlag;
 import io.harness.beans.stages.IntegrationStageConfig;
+import io.harness.beans.stages.IntegrationStageNode;
 import io.harness.encryption.Scope;
 import io.harness.jackson.JsonNodeUtils;
 import io.harness.plancreator.steps.ParallelStepElementConfig;
@@ -57,7 +58,7 @@ import java.util.stream.Collectors;
 
 @OwnedBy(HarnessTeam.CI)
 public class CIYamlSchemaServiceImpl implements CIYamlSchemaService {
-  private static final String INTEGRATION_STAGE_CONFIG = YamlSchemaUtils.getSwaggerName(IntegrationStageConfig.class);
+  private static final String INTEGRATION_STAGE_NODE = YamlSchemaUtils.getSwaggerName(IntegrationStageNode.class);
   private static final String STEP_ELEMENT_CONFIG = YamlSchemaUtils.getSwaggerName(StepElementConfig.class);
   private static final Class<StepElementConfig> STEP_ELEMENT_CONFIG_CLASS = StepElementConfig.class;
   private static final String CI_NAMESPACE = "ci";
@@ -92,8 +93,14 @@ public class CIYamlSchemaServiceImpl implements CIYamlSchemaService {
   @Override
   public List<YamlSchemaWithDetails> getIntegrationStageYamlSchemaWithDetails(
       String accountIdentifier, String projectIdentifier, String orgIdentifier, Scope scope) {
-    return yamlSchemaProvider.getCrossFunctionalStepsSchemaDetails(projectIdentifier, orgIdentifier, scope,
+    List<YamlSchemaWithDetails> yamlSchemaWithDetailsList = yamlSchemaProvider.getCrossFunctionalStepsSchemaDetails(
+        projectIdentifier, orgIdentifier, scope,
         YamlSchemaUtils.getNodeEntityTypesByYamlGroup(yamlSchemaRootClasses, StepCategory.STEP.name()), ModuleType.CI);
+    yamlSchemaWithDetailsList.addAll(
+        yamlSchemaProvider.getCrossFunctionalStepsSchemaDetails(projectIdentifier, orgIdentifier, scope,
+            YamlSchemaUtils.getNodeEntityTypesByYamlGroup(yamlSchemaRootClasses, StepCategory.STAGE.name()),
+            ModuleType.CI));
+    return yamlSchemaWithDetailsList;
   }
 
   @Override
@@ -157,10 +164,11 @@ public class CIYamlSchemaServiceImpl implements CIYamlSchemaService {
 
     return PartialSchemaDTO.builder()
         .namespace(CI_NAMESPACE)
-        .nodeName(INTEGRATION_STAGE_CONFIG)
+        .nodeName(INTEGRATION_STAGE_NODE)
         .schema(partialCiSchema)
         .nodeType(getIntegrationStageTypeName())
         .moduleType(ModuleType.CI)
+        .skipStageSchema(false)
         .build();
   }
 

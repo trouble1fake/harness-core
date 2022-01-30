@@ -22,9 +22,11 @@ import io.harness.delegate.beans.logstreaming.CommandUnitsProgress;
 import io.harness.delegate.beans.logstreaming.ILogStreamingTaskClient;
 import io.harness.delegate.beans.logstreaming.NGDelegateLogCallback;
 import io.harness.delegate.beans.logstreaming.UnitProgressDataMapper;
+import io.harness.delegate.exception.TaskNGDataException;
 import io.harness.delegate.task.AbstractDelegateRunnableTask;
 import io.harness.delegate.task.TaskParameters;
 import io.harness.delegate.task.k8s.HelmChartManifestDelegateConfig;
+import io.harness.exception.ExceptionUtils;
 import io.harness.k8s.K8sCommandUnitConstants;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
@@ -45,6 +47,11 @@ public class HelmValuesFetchTaskNG extends AbstractDelegateRunnableTask {
   }
 
   @Override
+  public boolean isSupportingErrorFramework() {
+    return true;
+  }
+
+  @Override
   public DelegateResponseData run(Object[] parameters) {
     throw new UnsupportedOperationException("This method is deprecated. Use run(TaskParameters) instead.");
   }
@@ -55,8 +62,7 @@ public class HelmValuesFetchTaskNG extends AbstractDelegateRunnableTask {
     CommandUnitsProgress commandUnitsProgress = CommandUnitsProgress.builder().build();
     log.info(format("Running HelmValuesFetchTaskNG for account %s", helmValuesFetchRequest.getAccountId()));
 
-    LogCallback logCallback = new NGDelegateLogCallback(
-        getLogStreamingTaskClient(), K8sCommandUnitConstants.FetchFiles, true, commandUnitsProgress);
+    LogCallback logCallback = getLogCallback(commandUnitsProgress);
     HelmChartManifestDelegateConfig helmChartManifestDelegateConfig =
         helmValuesFetchRequest.getHelmChartManifestDelegateConfig();
     try {
@@ -74,12 +80,16 @@ public class HelmValuesFetchTaskNG extends AbstractDelegateRunnableTask {
           .valuesFileContent(valuesFileContent)
           .build();
     } catch (Exception e) {
-      log.error("HelmValuesFetchTaskNG execution failed with exception ", e);
-      return HelmValuesFetchResponse.builder()
-          .commandExecutionStatus(FAILURE)
-          .unitProgressData(UnitProgressDataMapper.toUnitProgressData(commandUnitsProgress))
-          .errorMessage("Execution failed with Exception: " + e.getMessage())
-          .build();
+      String exceptionMsg = e.getMessage() == null ? ExceptionUtils.getMessage(e) : e.getMessage();
+      String msg = "HelmValuesFetchTaskNG execution failed with exception " + exceptionMsg;
+      log.error(msg, e);
+      logCallback.saveExecutionLog(msg, INFO, FAILURE);
+      throw new TaskNGDataException(UnitProgressDataMapper.toUnitProgressData(commandUnitsProgress), e);
     }
+  }
+
+  public LogCallback getLogCallback(CommandUnitsProgress commandUnitsProgress) {
+    return new NGDelegateLogCallback(
+        getLogStreamingTaskClient(), K8sCommandUnitConstants.FetchFiles, true, commandUnitsProgress);
   }
 }

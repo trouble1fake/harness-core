@@ -52,4 +52,5 @@ public interface VerificationJobInstanceService {
   List<String> getCVConfigIdsForVerificationJobInstance(
       String verificationJobInstanceId, List<String> filterIdentifiers);
   List<String> createDemoInstances(List<VerificationJobInstance> verificationJobInstances);
+  List<ProgressLog> getProgressLogs(String verificationJobInstanceId);
 }

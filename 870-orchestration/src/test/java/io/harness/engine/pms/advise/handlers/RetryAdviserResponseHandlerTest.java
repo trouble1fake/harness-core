@@ -18,13 +18,13 @@ import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.executions.plan.PlanExecutionService;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.PlanExecution;
+import io.harness.plan.PlanNode;
 import io.harness.pms.contracts.advisers.AdviseType;
 import io.harness.pms.contracts.advisers.AdviserResponse;
 import io.harness.pms.contracts.advisers.RetryAdvise;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.ambiance.Level;
 import io.harness.pms.contracts.execution.Status;
-import io.harness.pms.contracts.plan.PlanNodeProto;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.rule.Owner;
@@ -63,12 +63,13 @@ public class RetryAdviserResponseHandlerTest extends OrchestrationTestBase {
         NodeExecution.builder()
             .uuid(NODE_EXECUTION_ID)
             .ambiance(ambiance)
-            .node(PlanNodeProto.newBuilder()
-                      .setUuid(NODE_SETUP_ID)
-                      .setName("DUMMY")
-                      .setIdentifier("dummy")
-                      .setStepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                      .build())
+            .planNode(PlanNode.builder()
+                          .uuid(NODE_SETUP_ID)
+                          .name("DUMMY")
+                          .identifier("dummy")
+                          .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+                          .serviceName("CD")
+                          .build())
             .startTs(System.currentTimeMillis())
             .status(Status.FAILED)
             .build();

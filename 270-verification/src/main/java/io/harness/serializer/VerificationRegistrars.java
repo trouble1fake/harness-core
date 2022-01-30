@@ -9,7 +9,6 @@ package io.harness.serializer;
 
 import io.harness.morphia.MorphiaRegistrar;
 import io.harness.serializer.kryo.VerificationKryoRegistrar;
-import io.harness.serializer.kryo.YamlKryoRegistrar;
 import io.harness.serializer.morphia.PrimaryVersionManagerMorphiaRegistrar;
 import io.harness.serializer.morphia.VerificationMorphiaRegistrar;
 import io.harness.serializer.morphia.VerificationMorphiaRegistrars;
@@ -22,7 +21,6 @@ public class VerificationRegistrars {
   public static final ImmutableSet<Class<? extends KryoRegistrar>> kryoRegistrars =
       ImmutableSet.<Class<? extends KryoRegistrar>>builder()
           .add(VerificationKryoRegistrar.class)
-          .add(YamlKryoRegistrar.class)
           .addAll(DelegateTaskRegistrars.kryoRegistrars)
           .build();
 

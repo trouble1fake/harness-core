@@ -17,7 +17,7 @@ import io.harness.pms.contracts.advisers.AdviserResponse;
 import io.harness.pms.contracts.advisers.AdviserType;
 import io.harness.pms.contracts.advisers.InterventionWaitAdvise;
 import io.harness.pms.contracts.commons.RepairActionCode;
-import io.harness.pms.contracts.execution.failure.FailureInfo;
+import io.harness.pms.contracts.execution.failure.FailureType;
 import io.harness.pms.execution.utils.StatusUtils;
 import io.harness.pms.sdk.core.adviser.Adviser;
 import io.harness.pms.sdk.core.adviser.AdvisingEvent;
@@ -27,6 +27,7 @@ import io.harness.serializer.KryoSerializer;
 import com.google.inject.Inject;
 import com.google.protobuf.Duration;
 import java.util.Collections;
+import java.util.List;
 
 @OwnedBy(HarnessTeam.PIPELINE)
 public class ManualInterventionAdviser implements Adviser {
@@ -59,10 +60,9 @@ public class ManualInterventionAdviser implements Adviser {
     boolean canAdvise = StatusUtils.brokeStatuses().contains(advisingEvent.getToStatus())
         && advisingEvent.getFromStatus() != INTERVENTION_WAITING;
     ManualInterventionAdviserParameters parameters = extractParameters(advisingEvent);
-    FailureInfo failureInfo = advisingEvent.getFailureInfo();
-    if (failureInfo != null && parameters != null && !isEmpty(failureInfo.getFailureTypesList())) {
-      return canAdvise
-          && !Collections.disjoint(parameters.getApplicableFailureTypes(), failureInfo.getFailureTypesList());
+    List<FailureType> failureTypesList = getAllFailureTypes(advisingEvent);
+    if (parameters != null && !isEmpty(failureTypesList)) {
+      return canAdvise && !Collections.disjoint(parameters.getApplicableFailureTypes(), failureTypesList);
     }
     return canAdvise;
   }

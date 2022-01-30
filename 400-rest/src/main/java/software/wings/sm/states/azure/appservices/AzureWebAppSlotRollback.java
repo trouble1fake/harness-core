@@ -15,16 +15,16 @@ import io.harness.delegate.task.azure.AzureTaskExecutionResponse;
 import io.harness.delegate.task.azure.appservice.AzureAppServicePreDeploymentData;
 import io.harness.delegate.task.azure.appservice.webapp.request.AzureWebAppRollbackParameters;
 
-import software.wings.beans.Activity;
 import software.wings.beans.command.AzureWebAppCommandUnit;
 import software.wings.beans.command.CommandUnit;
 import software.wings.service.impl.azure.manager.AzureTaskExecutionRequest;
 import software.wings.sm.ExecutionContext;
 import software.wings.sm.ExecutionResponse;
+import software.wings.sm.states.azure.artifact.ArtifactConnectorMapper;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.github.reinert.jjschema.SchemaIgnore;
-import com.google.common.collect.ImmutableList;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -50,25 +50,27 @@ public class AzureWebAppSlotRollback extends AzureWebAppSlotSetup {
 
   @Override
   protected AzureTaskExecutionRequest buildTaskExecutionRequest(
-      ExecutionContext context, AzureAppServiceStateData azureAppServiceStateData, Activity activity) {
+      ExecutionContext context, AzureAppServiceStateData azureAppServiceStateData, String activityId) {
     AzureWebAppRollbackParameters rollbackParameters =
-        buildAzureWebAppSlotRollbackParameters(context, azureAppServiceStateData, activity);
-
+        buildAzureWebAppSlotRollbackParameters(context, azureAppServiceStateData, activityId);
+    ArtifactConnectorMapper artifactConnectorMapper =
+        azureVMSSStateHelper.getConnectorMapper(context, azureAppServiceStateData.getArtifact());
     return AzureTaskExecutionRequest.builder()
         .azureConfigDTO(azureVMSSStateHelper.createAzureConfigDTO(azureAppServiceStateData.getAzureConfig()))
         .azureConfigEncryptionDetails(azureAppServiceStateData.getAzureEncryptedDataDetails())
         .azureTaskParameters(rollbackParameters)
+        .artifactStreamAttributes(getArtifactStreamAttributes(context, artifactConnectorMapper))
         .build();
   }
 
   private AzureWebAppRollbackParameters buildAzureWebAppSlotRollbackParameters(
-      ExecutionContext context, AzureAppServiceStateData azureAppServiceStateData, Activity activity) {
+      ExecutionContext context, AzureAppServiceStateData azureAppServiceStateData, String activityId) {
     AzureAppServiceSlotSetupContextElement contextElement = readContextElement(context);
     return AzureWebAppRollbackParameters.builder()
         .accountId(azureAppServiceStateData.getApplication().getAccountId())
         .appId(azureAppServiceStateData.getApplication().getAppId())
         .commandName(APP_SERVICE_SLOT_SETUP)
-        .activityId(activity.getUuid())
+        .activityId(activityId)
         .appName(contextElement.getWebApp())
         .subscriptionId(azureAppServiceStateData.getSubscriptionId())
         .resourceGroupName(azureAppServiceStateData.getResourceGroup())
@@ -94,7 +96,18 @@ public class AzureWebAppSlotRollback extends AzureWebAppSlotSetup {
     if (verifyIfContextElementExist(context)) {
       AzureAppServiceSlotSetupContextElement contextElement = readContextElement(context);
       AzureAppServicePreDeploymentData preDeploymentData = contextElement.getPreDeploymentData();
-      return preDeploymentData != null;
+      boolean preDeploymentDataFound = preDeploymentData != null;
+      if (!preDeploymentDataFound) {
+        setStepSkipMsg("No Azure App service setup context element found. Skipping rollback");
+        return false;
+      }
+
+      if (!azureVMSSStateHelper.getArtifactForRollback(context).isPresent()) {
+        setStepSkipMsg("Not found artifact for rollback. Skipping rollback");
+        return false;
+      }
+
+      return true;
     }
     return false;
   }
@@ -119,7 +132,7 @@ public class AzureWebAppSlotRollback extends AzureWebAppSlotSetup {
 
   @Override
   public String skipMessage() {
-    return "No Azure App service setup context element found. Skipping rollback";
+    return stepSkipMsg;
   }
 
   @Override
@@ -134,12 +147,20 @@ public class AzureWebAppSlotRollback extends AzureWebAppSlotSetup {
   }
 
   @Override
-  protected List<CommandUnit> commandUnits(boolean isGitFetch) {
-    return ImmutableList.of(new AzureWebAppCommandUnit(AzureConstants.STOP_DEPLOYMENT_SLOT),
-        new AzureWebAppCommandUnit(AzureConstants.UPDATE_DEPLOYMENT_SLOT_CONFIGURATION_SETTINGS),
-        new AzureWebAppCommandUnit(AzureConstants.UPDATE_DEPLOYMENT_SLOT_CONTAINER_SETTINGS),
-        new AzureWebAppCommandUnit(AzureConstants.START_DEPLOYMENT_SLOT),
-        new AzureWebAppCommandUnit(AzureConstants.SLOT_TRAFFIC_PERCENTAGE),
-        new AzureWebAppCommandUnit(AzureConstants.DEPLOYMENT_STATUS));
+  protected List<CommandUnit> commandUnits(boolean isNonDocker, boolean isGitFetch) {
+    List<CommandUnit> commandUnits = new ArrayList<>();
+    commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.STOP_DEPLOYMENT_SLOT));
+    commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.UPDATE_DEPLOYMENT_SLOT_CONFIGURATION_SETTINGS));
+    if (isNonDocker) {
+      commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.DEPLOY_ARTIFACT));
+      commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.START_DEPLOYMENT_SLOT));
+    } else {
+      commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.UPDATE_DEPLOYMENT_SLOT_CONTAINER_SETTINGS));
+      commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.START_DEPLOYMENT_SLOT));
+      commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.DEPLOY_DOCKER_IMAGE));
+    }
+    commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.SLOT_TRAFFIC_PERCENTAGE));
+    commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.DEPLOYMENT_STATUS));
+    return commandUnits;
   }
 }

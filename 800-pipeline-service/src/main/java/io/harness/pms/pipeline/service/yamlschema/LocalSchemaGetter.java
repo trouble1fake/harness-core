@@ -57,10 +57,11 @@ public class LocalSchemaGetter implements SchemaGetter {
 
   @Override
   public YamlSchemaDetailsWrapper getSchemaDetails() {
-    return YamlSchemaDetailsWrapper.builder()
-        .yamlSchemaWithDetailsList(yamlSchemaProvider.getCrossFunctionalStepsSchemaDetails(null, null, null,
-            pmsYamlSchemaHelper.getNodeEntityTypesByYamlGroup(StepCategory.STEP.name()), ModuleType.PMS))
-        .build();
+    List<YamlSchemaWithDetails> yamlSchemaWithDetailsList = yamlSchemaProvider.getCrossFunctionalStepsSchemaDetails(
+        null, null, null, pmsYamlSchemaHelper.getNodeEntityTypesByYamlGroup(StepCategory.STEP.name()), ModuleType.PMS);
+    yamlSchemaWithDetailsList.addAll(yamlSchemaProvider.getCrossFunctionalStepsSchemaDetails(null, null, null,
+        pmsYamlSchemaHelper.getNodeEntityTypesByYamlGroup(StepCategory.STAGE.name()), ModuleType.PMS));
+    return YamlSchemaDetailsWrapper.builder().yamlSchemaWithDetailsList(yamlSchemaWithDetailsList).build();
   }
 
   @Override

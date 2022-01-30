@@ -12,11 +12,15 @@ import static io.harness.annotations.dev.HarnessTeam.DX;
 import static io.harness.data.structure.CollectionUtils.emptyIfNull;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+import static io.harness.gitsync.core.beans.GitFullSyncEntityInfo.SyncStatus.FAILED;
 
+import io.harness.EntityType;
 import io.harness.Microservice;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.IdentifierRef;
 import io.harness.beans.gitsync.GitPRCreateRequest;
 import io.harness.delegate.beans.git.YamlGitConfigDTO;
+import io.harness.encryption.Scope;
 import io.harness.gitsync.FullSyncChangeSet;
 import io.harness.gitsync.FullSyncFileResponse;
 import io.harness.gitsync.FullSyncRequest;
@@ -25,6 +29,7 @@ import io.harness.gitsync.FullSyncServiceGrpc;
 import io.harness.gitsync.common.helper.GitSyncGrpcClientUtils;
 import io.harness.gitsync.common.service.ScmOrchestratorService;
 import io.harness.gitsync.common.service.YamlGitConfigService;
+import io.harness.gitsync.core.beans.FullSyncMsvcProcessingResponse;
 import io.harness.gitsync.core.beans.GitFullSyncEntityInfo;
 import io.harness.gitsync.core.fullsync.beans.FullSyncFilesGroupedByMsvc;
 import io.harness.gitsync.core.fullsync.entity.GitFullSyncJob;
@@ -32,15 +37,20 @@ import io.harness.gitsync.core.fullsync.service.FullSyncJobService;
 import io.harness.ng.core.entitydetail.EntityDetailRestToProtoMapper;
 import io.harness.security.SecurityContextBuilder;
 import io.harness.security.dto.ServicePrincipal;
+import io.harness.utils.IdentifierRefHelper;
 
 import com.google.inject.Inject;
 import com.mongodb.client.result.UpdateResult;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -60,7 +70,8 @@ public class GitFullSyncProcessorServiceImpl implements io.harness.gitsync.core.
   private static int MAX_RETRY_COUNT = 2;
 
   @Override
-  public boolean processFiles(Microservice microservice, List<GitFullSyncEntityInfo> entityInfoList) {
+  public FullSyncMsvcProcessingResponse processFiles(
+      Microservice microservice, List<GitFullSyncEntityInfo> entityInfoList) {
     boolean failed = false;
     FullSyncResponse fullSyncResponse = null;
     try {
@@ -69,7 +80,11 @@ public class GitFullSyncProcessorServiceImpl implements io.harness.gitsync.core.
       failed = true;
     }
     boolean processingStatusFromFiles = setTheProcessingStatusOfFiles(fullSyncResponse, entityInfoList);
-    return failed || processingStatusFromFiles;
+    return FullSyncMsvcProcessingResponse.builder()
+        .fullSyncFileResponses(
+            fullSyncResponse == null ? Collections.emptyList() : fullSyncResponse.getFileResponseList())
+        .isStatusSuccess(processingStatusFromFiles || failed)
+        .build();
   }
 
   private boolean setTheProcessingStatusOfFiles(
@@ -91,10 +106,10 @@ public class GitFullSyncProcessorServiceImpl implements io.harness.gitsync.core.
       String errorMsg = "";
       errorMsg = fullSyncFileResponse.getErrorMsg();
       if (isNotEmpty(errorMsg)) {
-        gitFullSyncEntityService.markQueuedOrFailed(fullSyncEntityInfo.getUuid(),
-            fullSyncEntityInfo.getAccountIdentifier(), fullSyncEntityInfo.getRetryCount(), MAX_RETRY_COUNT, errorMsg);
-      } else {
         anyFilesFailed = true;
+        gitFullSyncEntityService.updateStatus(
+            fullSyncEntityInfo.getUuid(), fullSyncEntityInfo.getAccountIdentifier(), FAILED);
+      } else {
         gitFullSyncEntityService.markSuccessful(
             fullSyncEntityInfo.getUuid(), fullSyncEntityInfo.getAccountIdentifier());
       }
@@ -110,9 +125,9 @@ public class GitFullSyncProcessorServiceImpl implements io.harness.gitsync.core.
     final FullSyncServiceGrpc.FullSyncServiceBlockingStub fullSyncServiceBlockingStub =
         fullSyncServiceBlockingStubMap.get(microservice);
     GitFullSyncEntityInfo gitFullSyncEntityInfo = entityInfoList.get(0);
-    final YamlGitConfigDTO yamlGitConfigDTO =
-        yamlGitConfigService.get(gitFullSyncEntityInfo.getProjectIdentifier(), gitFullSyncEntityInfo.getOrgIdentifier(),
-            gitFullSyncEntityInfo.getAccountIdentifier(), gitFullSyncEntityInfo.getYamlGitConfigId());
+    final YamlGitConfigDTO yamlGitConfigDTO = yamlGitConfigService.getByProjectIdAndRepo(
+        gitFullSyncEntityInfo.getAccountIdentifier(), gitFullSyncEntityInfo.getOrgIdentifier(),
+        gitFullSyncEntityInfo.getProjectIdentifier(), gitFullSyncEntityInfo.getRepoUrl());
     List<FullSyncChangeSet> fullSyncChangeSets = new ArrayList<>();
     for (GitFullSyncEntityInfo fullSyncEntityInfo : entityInfoList) {
       fullSyncChangeSets.add(getFullSyncChangeSet(fullSyncEntityInfo, yamlGitConfigDTO));
@@ -152,6 +167,7 @@ public class GitFullSyncProcessorServiceImpl implements io.harness.gitsync.core.
       }
       List<GitFullSyncEntityInfo> allEntitiesToBeSynced =
           gitFullSyncEntityService.list(fullSyncJob.getAccountIdentifier(), fullSyncJob.getMessageId());
+      markTheGitFullSyncEntityAsQueued(allEntitiesToBeSynced);
       boolean processingFailed = false;
       final List<FullSyncFilesGroupedByMsvc> fullSyncFilesGroupedByMsvcs =
           sortTheFilesInTheProcessingOrder(allEntitiesToBeSynced);
@@ -159,18 +175,103 @@ public class GitFullSyncProcessorServiceImpl implements io.harness.gitsync.core.
         log.info("Number of files is {} for the microservice {}",
             emptyIfNull(fullSyncFilesGroupedByMsvc.getGitFullSyncEntityInfoList()).size(),
             fullSyncFilesGroupedByMsvc.getMicroservice());
-        processingFailed = processFiles(
+        FullSyncMsvcProcessingResponse fullSyncMsvcProcessingResponse = processFiles(
             fullSyncFilesGroupedByMsvc.getMicroservice(), fullSyncFilesGroupedByMsvc.getGitFullSyncEntityInfoList());
+        processingFailed = !fullSyncMsvcProcessingResponse.isStatusSuccess();
+        if (fullSyncFilesGroupedByMsvc.getMicroservice() == Microservice.CORE) {
+          setTheRepoBranchForTheGitSyncConnector(fullSyncFilesGroupedByMsvc.getGitFullSyncEntityInfoList(),
+              fullSyncMsvcProcessingResponse.getFullSyncFileResponses());
+        }
       }
 
       updateTheStatusOfJob(processingFailed, fullSyncJob);
-      if (fullSyncJob.isCreatePullRequest()) {
+      if (!processingFailed && fullSyncJob.isCreatePullRequest()) {
         createAPullRequest(fullSyncJob);
       }
+    } catch (Exception ex) {
+      log.error("Encountered error while doing full sync", ex);
     } finally {
       SecurityContextBuilder.unsetCompleteContext();
     }
     log.info("Completed full sync for the job {}", fullSyncJob.getMessageId());
+  }
+
+  private void markTheGitFullSyncEntityAsQueued(List<GitFullSyncEntityInfo> allEntitiesToBeSynced) {
+    for (GitFullSyncEntityInfo gitFullSyncEntityInfo : allEntitiesToBeSynced) {
+      gitFullSyncEntityService.updateStatus(gitFullSyncEntityInfo.getAccountIdentifier(),
+          gitFullSyncEntityInfo.getUuid(), GitFullSyncEntityInfo.SyncStatus.QUEUED);
+    }
+  }
+
+  private void setTheRepoBranchForTheGitSyncConnector(
+      List<GitFullSyncEntityInfo> ngCoreFullSyncFiles, List<FullSyncFileResponse> fullSyncMsvcProcessingResponses) {
+    List<GitFullSyncEntityInfo> connectors = ngCoreFullSyncFiles.stream()
+                                                 .filter(x -> x.getEntityDetail().getType() == EntityType.CONNECTORS)
+                                                 .collect(Collectors.toList());
+    if (isEmpty(connectors)) {
+      return;
+    }
+    GitFullSyncEntityInfo gitFullSyncEntityInfo = ngCoreFullSyncFiles.get(0);
+    String accountIdentifier = gitFullSyncEntityInfo.getAccountIdentifier();
+    String orgIdentifier = gitFullSyncEntityInfo.getOrgIdentifier();
+    String projectIdentifier = gitFullSyncEntityInfo.getProjectIdentifier();
+    List<YamlGitConfigDTO> yamlGitConfigDTOS =
+        yamlGitConfigService.list(projectIdentifier, orgIdentifier, accountIdentifier);
+    populateRepoAndBranchForTheConnectorRef(accountIdentifier, orgIdentifier, projectIdentifier, ngCoreFullSyncFiles,
+        fullSyncMsvcProcessingResponses, yamlGitConfigDTOS);
+  }
+
+  private void populateRepoAndBranchForTheConnectorRef(String accountIdentifier, String orgIdentifier,
+      String projectIdentifier, List<GitFullSyncEntityInfo> ngCoreFullSyncFiles,
+      List<FullSyncFileResponse> fullSyncMsvcProcessingResponses, List<YamlGitConfigDTO> yamlGitConfigDTOS) {
+    if (isEmpty(yamlGitConfigDTOS)) {
+      return;
+    }
+    for (YamlGitConfigDTO yamlGitConfigDTO : yamlGitConfigDTOS) {
+      String gitConnectorRef = yamlGitConfigDTO.getGitConnectorRef();
+      IdentifierRef identifierRef = IdentifierRefHelper.getIdentifierRef(
+          gitConnectorRef, accountIdentifier, orgIdentifier, projectIdentifier, null);
+      Optional<GitFullSyncEntityInfo> gitFullSyncEntityInfoOptional =
+          getConnectorFullSyncEntity(identifierRef, ngCoreFullSyncFiles, fullSyncMsvcProcessingResponses);
+      if (gitFullSyncEntityInfoOptional.isPresent()) {
+        GitFullSyncEntityInfo gitFullSyncEntityInfo = gitFullSyncEntityInfoOptional.get();
+        saveTheRepoAndBranchInYamlGitConfig(
+            yamlGitConfigDTO, gitFullSyncEntityInfo.getYamlGitConfigId(), gitFullSyncEntityInfo.getBranchName());
+      }
+    }
+  }
+
+  private void saveTheRepoAndBranchInYamlGitConfig(
+      YamlGitConfigDTO yamlGitConfigDTO, String yamlGitConfigId, String branchName) {
+    yamlGitConfigService.updateTheConnectorRepoAndBranch(yamlGitConfigDTO.getAccountIdentifier(),
+        yamlGitConfigDTO.getOrganizationIdentifier(), yamlGitConfigDTO.getProjectIdentifier(),
+        yamlGitConfigDTO.getIdentifier(), yamlGitConfigId, branchName);
+  }
+
+  private Optional<GitFullSyncEntityInfo> getConnectorFullSyncEntity(IdentifierRef identifierRef,
+      List<GitFullSyncEntityInfo> ngCoreFullSyncFiles, List<FullSyncFileResponse> fullSyncMsvcProcessingResponses) {
+    if (isEmpty(fullSyncMsvcProcessingResponses)) {
+      return Optional.empty();
+    }
+
+    if (identifierRef.getScope() == Scope.ACCOUNT || identifierRef.getScope() == Scope.ORG) {
+      return Optional.empty();
+    }
+
+    return emptyIfNull(ngCoreFullSyncFiles)
+        .stream()
+        .filter(x -> checkIfEntityMatchesTheConnector(x, identifierRef))
+        .findFirst();
+  }
+
+  private boolean checkIfEntityMatchesTheConnector(
+      GitFullSyncEntityInfo gitFullSyncEntityInfo, IdentifierRef identifierRef) {
+    if (identifierRef == null) {
+      return false;
+    }
+
+    IdentifierRef entityRef = (IdentifierRef) gitFullSyncEntityInfo.getEntityDetail().getEntityRef();
+    return identifierRef.getIdentifier().equals(entityRef.getIdentifier());
   }
 
   private void createAPullRequest(GitFullSyncJob fullSyncJob) {
@@ -191,7 +292,8 @@ public class GitFullSyncProcessorServiceImpl implements io.harness.gitsync.core.
                                              .build();
     scmOrchestratorService.processScmRequestUsingConnectorSettings(scmClientFacilitatorService
         -> scmClientFacilitatorService.createPullRequest(createPRRequest),
-        projectIdentifier, orgIdentifier, accountIdentifier, yamlGitConfigDTO.getGitConnectorRef());
+        projectIdentifier, orgIdentifier, accountIdentifier, yamlGitConfigDTO.getGitConnectorRef(),
+        yamlGitConfigDTO.getGitConnectorsRepo(), yamlGitConfigDTO.getGitConnectorsBranch());
   }
 
   private List<FullSyncFilesGroupedByMsvc> sortTheFilesInTheProcessingOrder(
@@ -200,17 +302,59 @@ public class GitFullSyncProcessorServiceImpl implements io.harness.gitsync.core.
     Map<String, List<GitFullSyncEntityInfo>> filesGroupedByMsvc =
         emptyIfNull(allEntitiesToBeSynced)
             .stream()
-            .filter(x -> !x.getSyncStatus().equals(GitFullSyncEntityInfo.SyncStatus.PUSHED.toString()))
+            .filter(x -> !x.getSyncStatus().equals(GitFullSyncEntityInfo.SyncStatus.SUCCESS.toString()))
             .collect(Collectors.groupingBy(GitFullSyncEntityInfo::getMicroservice));
     for (Map.Entry<String, List<GitFullSyncEntityInfo>> entry : filesGroupedByMsvc.entrySet()) {
+      Microservice microservice = Microservice.fromString(entry.getKey());
+      List<GitFullSyncEntityInfo> filesForThisMicroservice = entry.getValue();
+      if (microservice == Microservice.CORE) {
+        keepTheFullSyncConnectorAtTheLast(filesForThisMicroservice);
+      }
       FullSyncFilesGroupedByMsvc fullSyncFilesGroupedByMsvc = FullSyncFilesGroupedByMsvc.builder()
-                                                                  .microservice(Microservice.fromString(entry.getKey()))
-                                                                  .gitFullSyncEntityInfoList(entry.getValue())
+                                                                  .microservice(microservice)
+                                                                  .gitFullSyncEntityInfoList(filesForThisMicroservice)
                                                                   .build();
       filesGroupedByMicroservices.add(fullSyncFilesGroupedByMsvc);
     }
     filesGroupedByMicroservices.sort(Comparator.comparingInt(x -> microservicesProcessingOrder.indexOf(x)));
     return filesGroupedByMicroservices;
+  }
+
+  private void keepTheFullSyncConnectorAtTheLast(List<GitFullSyncEntityInfo> filesForThisMicroservice) {
+    // When we are doing the full sync of the entities, we do a get call of the full sync config connector.
+    // If the git connector itself is full synced before any entity then we won't be able to find this
+    // git connector in other repo and branch. Hence we are first syncing all other files and at last we are
+    // syncing this git connector.
+    if (isEmpty(filesForThisMicroservice)) {
+      return;
+    }
+    GitFullSyncEntityInfo gitFullSyncEntityInfo = filesForThisMicroservice.get(0);
+    String yamlGitConfigId = gitFullSyncEntityInfo.getYamlGitConfigId();
+    String accountIdentifier = gitFullSyncEntityInfo.getAccountIdentifier();
+    String orgIdentifier = gitFullSyncEntityInfo.getOrgIdentifier();
+    String projectIdentifier = gitFullSyncEntityInfo.getProjectIdentifier();
+
+    YamlGitConfigDTO yamlGitConfigDTO =
+        yamlGitConfigService.get(projectIdentifier, orgIdentifier, accountIdentifier, yamlGitConfigId);
+    String gitConnectorRef = yamlGitConfigDTO.getGitConnectorRef();
+    IdentifierRef identifierRef = IdentifierRefHelper.getIdentifierRef(
+        gitConnectorRef, accountIdentifier, orgIdentifier, projectIdentifier, null);
+
+    if (identifierRef.getScope() == Scope.ACCOUNT || identifierRef.getScope() == Scope.ORG) {
+      return;
+    }
+
+    final OptionalInt posOfConnectorFullSyncEntityOpt =
+        IntStream.range(0, filesForThisMicroservice.size())
+            .filter(x -> checkIfEntityMatchesTheConnector(filesForThisMicroservice.get(x), identifierRef))
+            .findFirst();
+
+    if (posOfConnectorFullSyncEntityOpt.isPresent()) {
+      final int positionOfConnectorFullSyncEntity = posOfConnectorFullSyncEntityOpt.getAsInt();
+      GitFullSyncEntityInfo connectorFullSyncEntity = filesForThisMicroservice.get(positionOfConnectorFullSyncEntity);
+      filesForThisMicroservice.remove(positionOfConnectorFullSyncEntity);
+      filesForThisMicroservice.add(connectorFullSyncEntity);
+    }
   }
 
   private void updateTheStatusOfJob(boolean processingFailed, GitFullSyncJob fullSyncJob) {

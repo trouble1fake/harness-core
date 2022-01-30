@@ -14,12 +14,18 @@ import io.harness.azure.context.AzureWebClientContext;
 import io.harness.logging.LogCallback;
 
 import software.wings.delegatetasks.azure.AzureServiceCallBack;
+import software.wings.delegatetasks.azure.appservice.deployment.context.StatusVerifierContext;
 
 @TargetModule(HarnessModule._930_DELEGATE_TASKS)
 public class StopSlotStatusVerifier extends SlotStatusVerifier {
   public StopSlotStatusVerifier(LogCallback logCallback, String slotName, AzureWebClient azureWebClient,
       AzureWebClientContext azureWebClientContext, AzureServiceCallBack restCallBack) {
     super(logCallback, slotName, azureWebClient, azureWebClientContext, restCallBack);
+  }
+
+  public StopSlotStatusVerifier(StatusVerifierContext context) {
+    super(context.getLogCallback(), context.getSlotName(), context.getAzureWebClient(),
+        context.getAzureWebClientContext(), context.getRestCallBack());
   }
 
   @Override

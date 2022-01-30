@@ -164,14 +164,24 @@ public class YamlSchemaProvider {
     for (EntityType entityType : v2StepEntityTypes) {
       YamlSchemaWithDetails yamlSchemaWithDetails =
           getSchemaWithDetails(entityType, orgIdentifier, projectIdentifier, scope, moduleType);
-      if (yamlSchemaWithDetails.getYamlSchemaMetadata() != null
-          && yamlSchemaWithDetails.getYamlSchemaMetadata().getModulesSupported() != null
-          && (yamlSchemaWithDetails.getYamlSchemaMetadata().getModulesSupported().size() > 1
-              || yamlSchemaWithDetails.getYamlSchemaMetadata().getModulesSupported().size() == 1
-                  && yamlSchemaWithDetails.getYamlSchemaMetadata().getModulesSupported().get(0) != moduleType)) {
+      if (isCrossFunctional(yamlSchemaWithDetails, moduleType)) {
         yamlSchemaWithDetailsList.add(yamlSchemaWithDetails);
       }
     }
     return yamlSchemaWithDetailsList;
+  }
+
+  private boolean isCrossFunctional(YamlSchemaWithDetails yamlSchemaWithDetails, ModuleType moduleType) {
+    if (yamlSchemaWithDetails.getYamlSchemaMetadata() == null) {
+      return false;
+    }
+    if (yamlSchemaWithDetails.getYamlSchemaMetadata().getYamlGroup().getGroup().equals("STAGE")
+        || yamlSchemaWithDetails.getYamlSchemaMetadata().getModulesSupported().size() > 1) {
+      return true;
+    }
+    if (yamlSchemaWithDetails.getYamlSchemaMetadata().getModulesSupported().size() == 1) {
+      return yamlSchemaWithDetails.getYamlSchemaMetadata().getModulesSupported().get(0) != moduleType;
+    }
+    return false;
   }
 }

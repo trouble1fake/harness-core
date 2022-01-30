@@ -12,6 +12,7 @@ import static io.harness.rule.OwnerRule.HITESH;
 import static io.harness.rule.OwnerRule.JENNY;
 import static io.harness.rule.OwnerRule.MOHIT_GARG;
 import static io.harness.rule.OwnerRule.VUK;
+import static io.harness.rule.OwnerRule.XIN;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
@@ -486,6 +487,93 @@ public class PerpetualTaskServiceImplTest extends WingsBaseTest {
     assertThat(testBroadcastAggregateSet).size().isEqualTo(1);
     when(broadcasterFactory.lookup(anyString(), anyBoolean())).thenReturn(broadcaster);
     perpetualTaskService.broadcastToDelegate();
+  }
+
+  @Test
+  @Owner(developers = XIN)
+  @Category(UnitTests.class)
+  public void testPerpetualTaskErrorHandlingBackoff() {
+    String accountId = UUIDGenerator.generateUuid();
+    String delegateId = UUIDGenerator.generateUuid();
+    String taskId = UUIDGenerator.generateUuid();
+
+    PerpetualTaskClientContext clientContext = clientContext();
+    PerpetualTaskRecord perpetualTaskRecord = perpetualTaskRecord();
+    perpetualTaskRecord.setClientContext(clientContext);
+    perpetualTaskRecord.setAccountId(accountId);
+    perpetualTaskRecord.setDelegateId(null);
+    perpetualTaskRecord.setUuid(taskId);
+    perpetualTaskRecord.setFailedExecutionCount(4);
+    perpetualTaskRecordDao.save(perpetualTaskRecord);
+
+    perpetualTaskService.appointDelegate(accountId, taskId, delegateId, 1L);
+
+    boolean result = perpetualTaskService.triggerCallback(taskId, HEARTBEAT_MILLIS, perpetualTaskFailedResponse());
+    PerpetualTaskRecord resultPerpetualTaskRecord = perpetualTaskRecordDao.getTask(taskId);
+
+    assertThat(result).isEqualTo(true);
+    assertThat(resultPerpetualTaskRecord.getState()).isEqualTo(PerpetualTaskState.TASK_UNASSIGNED);
+    assertThat(resultPerpetualTaskRecord.getUnassignedReason())
+        .isEqualTo(PerpetualTaskUnassignedReason.MULTIPLE_FAILED_PERPETUAL_TASK);
+    assertThat(resultPerpetualTaskRecord.getFailedExecutionCount()).isEqualTo(5);
+  }
+
+  @Test
+  @Owner(developers = XIN)
+  @Category(UnitTests.class)
+  public void testPerpetualTaskErrorHandlingNonBackoff() {
+    String accountId = UUIDGenerator.generateUuid();
+    String delegateId = UUIDGenerator.generateUuid();
+    String taskId = UUIDGenerator.generateUuid();
+
+    PerpetualTaskClientContext clientContext = clientContext();
+    PerpetualTaskRecord perpetualTaskRecord = perpetualTaskRecord();
+    perpetualTaskRecord.setClientContext(clientContext);
+    perpetualTaskRecord.setAccountId(accountId);
+    perpetualTaskRecord.setDelegateId(null);
+    perpetualTaskRecord.setUuid(taskId);
+    perpetualTaskRecord.setFailedExecutionCount(3);
+    perpetualTaskRecordDao.save(perpetualTaskRecord);
+
+    perpetualTaskService.appointDelegate(accountId, taskId, delegateId, 1L);
+
+    boolean result = perpetualTaskService.triggerCallback(taskId, HEARTBEAT_MILLIS, perpetualTaskFailedResponse());
+    PerpetualTaskRecord resultPerpetualTaskRecord = perpetualTaskRecordDao.getTask(taskId);
+
+    assertThat(result).isEqualTo(true);
+    assertThat(resultPerpetualTaskRecord.getFailedExecutionCount()).isEqualTo(4);
+    assertThat(resultPerpetualTaskRecord.getState()).isEqualTo(PerpetualTaskState.TASK_ASSIGNED);
+  }
+
+  @Test
+  @Owner(developers = XIN)
+  @Category(UnitTests.class)
+  public void testPerpetualTaskSuccess() {
+    String accountId = UUIDGenerator.generateUuid();
+    String delegateId = UUIDGenerator.generateUuid();
+    String taskId = UUIDGenerator.generateUuid();
+
+    PerpetualTaskClientContext clientContext = clientContext();
+    PerpetualTaskRecord perpetualTaskRecord = perpetualTaskRecord();
+    perpetualTaskRecord.setClientContext(clientContext);
+    perpetualTaskRecord.setAccountId(accountId);
+    perpetualTaskRecord.setDelegateId(null);
+    perpetualTaskRecord.setUuid(taskId);
+    perpetualTaskRecord.setFailedExecutionCount(5);
+    perpetualTaskRecordDao.save(perpetualTaskRecord);
+
+    perpetualTaskService.appointDelegate(accountId, taskId, delegateId, 1L);
+
+    boolean result = perpetualTaskService.triggerCallback(taskId, HEARTBEAT_MILLIS, perpetualTaskResponse());
+    PerpetualTaskRecord resultPerpetualTaskRecord = perpetualTaskRecordDao.getTask(taskId);
+
+    assertThat(result).isEqualTo(true);
+    assertThat(resultPerpetualTaskRecord.getFailedExecutionCount()).isEqualTo(0);
+    assertThat(resultPerpetualTaskRecord.getState()).isEqualTo(PerpetualTaskState.TASK_ASSIGNED);
+  }
+
+  private PerpetualTaskResponse perpetualTaskFailedResponse() {
+    return PerpetualTaskResponse.builder().responseCode(500).build();
   }
 
   public PerpetualTaskClientContext clientContext() {

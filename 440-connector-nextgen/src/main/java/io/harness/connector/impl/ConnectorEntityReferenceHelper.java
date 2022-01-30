@@ -232,8 +232,7 @@ public class ConnectorEntityReferenceHelper {
       eventProducer.send(
           Message.newBuilder()
               .putAllMetadata(ImmutableMap.of("accountId", accountIdentifier, EventsFrameworkMetadataConstants.ACTION,
-                  EventsFrameworkMetadataConstants.FLUSH_CREATE_ACTION,
-                  EventsFrameworkMetadataConstants.REFERRED_ENTITY_TYPE, EntityTypeProtoEnum.SECRETS.name()))
+                  EventsFrameworkMetadataConstants.FLUSH_CREATE_ACTION))
               .setData(entityReferenceDTO.toByteString())
               .build());
     } catch (Exception ex) {

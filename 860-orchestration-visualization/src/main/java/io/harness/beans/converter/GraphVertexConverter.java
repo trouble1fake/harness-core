@@ -14,8 +14,7 @@ import io.harness.beans.GraphVertex;
 import io.harness.data.structure.CollectionUtils;
 import io.harness.dto.GraphDelegateSelectionLogParams;
 import io.harness.execution.NodeExecution;
-import io.harness.plan.IdentityPlanNode;
-import io.harness.plan.NodeType;
+import io.harness.pms.contracts.ambiance.Level;
 import io.harness.pms.data.PmsOutcome;
 import io.harness.pms.data.stepdetails.PmsStepDetails;
 import io.harness.pms.execution.utils.AmbianceUtils;
@@ -24,6 +23,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @OwnedBy(HarnessTeam.CDC)
 @Singleton
@@ -35,19 +35,15 @@ public class GraphVertexConverter {
         delegateInfoHelper.getDelegateInformationForGivenTask(nodeExecution.getExecutableResponses(),
             nodeExecution.getMode(), AmbianceUtils.getAccountId(nodeExecution.getAmbiance()));
 
-    String stepType = nodeExecution.getNode().getStepType().getType();
-
-    // This will help UI to identify the type of node and according to it will display the icon to the user.
-    if (nodeExecution.getNode().getNodeType().equals(NodeType.IDENTITY_PLAN_NODE)) {
-      stepType = ((IdentityPlanNode) nodeExecution.getNode()).getOriginalStepType().getType();
-    }
+    Level level = Objects.requireNonNull(AmbianceUtils.obtainCurrentLevel(nodeExecution.getAmbiance()));
+    String stepType = level.getStepType().getType();
 
     return GraphVertex.builder()
         .uuid(nodeExecution.getUuid())
         .ambiance(nodeExecution.getAmbiance())
-        .planNodeId(nodeExecution.getNode().getUuid())
-        .identifier(nodeExecution.getNode().getIdentifier())
-        .name(nodeExecution.getNode().getName())
+        .planNodeId(level.getSetupId())
+        .identifier(level.getIdentifier())
+        .name(nodeExecution.name())
         .startTs(nodeExecution.getStartTs())
         .endTs(nodeExecution.getEndTs())
         .initialWaitDuration(nodeExecution.getInitialWaitDuration())
@@ -62,7 +58,7 @@ public class GraphVertexConverter {
         .executableResponses(CollectionUtils.emptyIfNull(nodeExecution.getExecutableResponses()))
         .interruptHistories(nodeExecution.getInterruptHistories())
         .retryIds(nodeExecution.getRetryIds())
-        .skipType(nodeExecution.getNode().getSkipGraphType())
+        .skipType(nodeExecution.skipGraphType())
         .unitProgresses(nodeExecution.getUnitProgresses())
         .progressData(nodeExecution.getPmsProgressData())
         .graphDelegateSelectionLogParams(graphDelegateSelectionLogParamsList)
@@ -74,25 +70,18 @@ public class GraphVertexConverter {
     List<GraphDelegateSelectionLogParams> graphDelegateSelectionLogParamsList =
         delegateInfoHelper.getDelegateInformationForGivenTask(nodeExecution.getExecutableResponses(),
             nodeExecution.getMode(), AmbianceUtils.getAccountId(nodeExecution.getAmbiance()));
-
-    String stepType = nodeExecution.getNode().getStepType().getType();
-
-    // This will help UI to identify the type of node and according to it will display the icon to the user.
-    if (nodeExecution.getNode().getNodeType().equals(NodeType.IDENTITY_PLAN_NODE)) {
-      stepType = ((IdentityPlanNode) nodeExecution.getNode()).getOriginalStepType().getType();
-    }
-
+    Level level = Objects.requireNonNull(AmbianceUtils.obtainCurrentLevel(nodeExecution.getAmbiance()));
     return GraphVertex.builder()
         .uuid(nodeExecution.getUuid())
         .ambiance(nodeExecution.getAmbiance())
-        .planNodeId(nodeExecution.getNode().getUuid())
-        .identifier(nodeExecution.getNode().getIdentifier())
-        .name(nodeExecution.getNode().getName())
+        .planNodeId(level.getSetupId())
+        .identifier(level.getIdentifier())
+        .name(nodeExecution.name())
         .startTs(nodeExecution.getStartTs())
         .endTs(nodeExecution.getEndTs())
         .initialWaitDuration(nodeExecution.getInitialWaitDuration())
         .lastUpdatedAt(nodeExecution.getLastUpdatedAt())
-        .stepType(stepType)
+        .stepType(level.getStepType().getType())
         .status(nodeExecution.getStatus())
         .failureInfo(nodeExecution.getFailureInfo())
         .stepParameters(nodeExecution.getPmsStepParameters())
@@ -102,7 +91,7 @@ public class GraphVertexConverter {
         .executableResponses(CollectionUtils.emptyIfNull(nodeExecution.getExecutableResponses()))
         .interruptHistories(nodeExecution.getInterruptHistories())
         .retryIds(nodeExecution.getRetryIds())
-        .skipType(nodeExecution.getNode().getSkipGraphType())
+        .skipType(nodeExecution.skipGraphType())
         .outcomeDocuments(outcomes)
         .unitProgresses(nodeExecution.getUnitProgresses())
         .progressData(nodeExecution.getPmsProgressData())

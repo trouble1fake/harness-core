@@ -9,7 +9,6 @@ package io.harness.cvng.core.services.impl.demo;
 
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
-import io.harness.cvng.activity.entities.DeploymentActivity;
 import io.harness.cvng.activity.services.api.ActivityService;
 import io.harness.cvng.beans.DataCollectionExecutionStatus;
 import io.harness.cvng.beans.DataCollectionTaskDTO.DataCollectionTaskResult;
@@ -41,7 +40,7 @@ import io.harness.persistence.HPersistence;
 import com.google.inject.Inject;
 import java.io.IOException;
 import java.time.Duration;
-import java.util.List;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -81,12 +80,13 @@ public class CVNGDemoPerpetualTaskServiceImpl implements CVNGDemoPerpetualTaskSe
         dataCollectionTaskResultBuilder.status(DataCollectionExecutionStatus.SUCCESS);
       } catch (Exception e) {
         dataCollectionTaskResultBuilder.status(DataCollectionExecutionStatus.FAILED)
-            .stacktrace(e.getStackTrace().toString())
+            .stacktrace(Arrays.toString(e.getStackTrace()))
             .exception(e.getMessage());
         log.warn("Demo data perpetual task failed for verificationTaskId"
-            + dataCollectionTask.get().getVerificationTaskId() + "  for time frame: "
-            + dataCollectionTask.get().getStartTime() + " to " + dataCollectionTask.get().getEndTime()
-            + " with exception: " + e.getMessage() + ": stacktrace:" + e.getStackTrace());
+                + dataCollectionTask.get().getVerificationTaskId()
+                + "  for time frame: " + dataCollectionTask.get().getStartTime() + " to "
+                + dataCollectionTask.get().getEndTime() + " with exception: " + e.getMessage() + ": stacktrace: {}",
+            e);
         throw e;
       } finally {
         dataCollectionTaskService.updateTaskStatus(dataCollectionTaskResultBuilder.build());
@@ -103,8 +103,7 @@ public class CVNGDemoPerpetualTaskServiceImpl implements CVNGDemoPerpetualTaskSe
     DemoTemplate demoTemplate;
     CVConfig cvConfig = getRelatedCvConfig(dataCollectionTask.getVerificationTaskId());
     // get activity for monitored service that finished in last 15 mins.
-    demoTemplate =
-        getDemoTemplate(dataCollectionTask.getVerificationTaskId(), isHighRiskTimeRange(cvConfig, dataCollectionTask));
+    demoTemplate = getDemoTemplate(cvConfig, isHighRiskTimeRange(cvConfig, dataCollectionTask));
     if (dataCollectionTask.getDataCollectionInfo().getVerificationType().equals(VerificationType.TIME_SERIES)) {
       timeSeriesRecordService.createDemoAnalysisData(dataCollectionTask.getAccountId(),
           dataCollectionTask.getVerificationTaskId(), dataCollectionTask.getDataCollectionWorkerId(), demoTemplate,
@@ -124,17 +123,11 @@ public class CVNGDemoPerpetualTaskServiceImpl implements CVNGDemoPerpetualTaskSe
                                                             .serviceIdentifier(cvConfig.getServiceIdentifier())
                                                             .environmentIdentifier(cvConfig.getEnvIdentifier())
                                                             .build();
-    List<DeploymentActivity> deploymentActivities = activityService.getDemoDeploymentActivity(serviceEnvironmentParams,
-        dataCollectionTask.getStartTime().minus(Duration.ofMinutes(15)), dataCollectionTask.getStartTime());
     boolean isHighRiskTimeRange =
-        deploymentActivities.stream()
-            .filter(deploymentActivity -> {
-              if (deploymentActivity.getVerificationSummary() != null) {
-                return deploymentActivity.getAnalysisStatus() == ActivityVerificationStatus.VERIFICATION_FAILED;
-              }
-              return false;
-            })
-            .findAny()
+        activityService
+            .getAnyDemoDeploymentEvent(serviceEnvironmentParams,
+                dataCollectionTask.getStartTime().minus(Duration.ofMinutes(15)), dataCollectionTask.getStartTime(),
+                ActivityVerificationStatus.VERIFICATION_FAILED)
             .isPresent();
     if (isHighRiskTimeRange) {
       return true;
@@ -142,16 +135,24 @@ public class CVNGDemoPerpetualTaskServiceImpl implements CVNGDemoPerpetualTaskSe
       Optional<MonitoredService> kubernetesMonitoredService =
           getKubernetesDependentMonitoredService(serviceEnvironmentParams);
       if (kubernetesMonitoredService.isPresent()) {
+        ServiceEnvironmentParams dependencyServiceEnvParams =
+            ServiceEnvironmentParams.builder()
+                .accountIdentifier(kubernetesMonitoredService.get().getAccountId())
+                .orgIdentifier(kubernetesMonitoredService.get().getOrgIdentifier())
+                .projectIdentifier(kubernetesMonitoredService.get().getProjectIdentifier())
+                .serviceIdentifier(kubernetesMonitoredService.get().getServiceIdentifier())
+                .environmentIdentifier(kubernetesMonitoredService.get().getEnvironmentIdentifier())
+                .build();
         return activityService
-            .getAnyDemoKubernetesEvent(
-                ServiceEnvironmentParams.builder()
-                    .accountIdentifier(kubernetesMonitoredService.get().getAccountId())
-                    .orgIdentifier(kubernetesMonitoredService.get().getOrgIdentifier())
-                    .projectIdentifier(kubernetesMonitoredService.get().getProjectIdentifier())
-                    .serviceIdentifier(kubernetesMonitoredService.get().getServiceIdentifier())
-                    .environmentIdentifier(kubernetesMonitoredService.get().getEnvironmentIdentifier())
-                    .build(),
+            .getAnyKubernetesEvent(dependencyServiceEnvParams,
                 dataCollectionTask.getStartTime().minus(Duration.ofMinutes(15)), dataCollectionTask.getStartTime())
+            .map(event
+                -> activityService
+                       .getAnyDemoDeploymentEvent(serviceEnvironmentParams,
+                           event.getEventTime().minus(Duration.ofMinutes(15)),
+                           event.getEventTime().minus(Duration.ofMinutes(5)),
+                           ActivityVerificationStatus.VERIFICATION_PASSED)
+                       .orElse(null))
             .isPresent();
       } else {
         return false;
@@ -167,8 +168,9 @@ public class CVNGDemoPerpetualTaskServiceImpl implements CVNGDemoPerpetualTaskSe
         monitoredService.getDependencies()
             .stream()
             .filter(serviceDependency
-                -> serviceDependency.getDependencyMetadata().getType()
-                    == ServiceDependencyMetadata.DependencyMetadataType.KUBERNETES)
+                -> serviceDependency.getDependencyMetadata() != null
+                    && serviceDependency.getDependencyMetadata().getType()
+                        == ServiceDependencyMetadata.DependencyMetadataType.KUBERNETES)
             .findAny();
     if (serviceDependencyDTO.isPresent()) {
       MonitoredService kubernetesMonitoredService = monitoredServiceService.getMonitoredService(
@@ -177,6 +179,7 @@ public class CVNGDemoPerpetualTaskServiceImpl implements CVNGDemoPerpetualTaskSe
     }
     return Optional.empty();
   }
+
   private CVConfig getRelatedCvConfig(String verificationTaskId) {
     VerificationTask verificationTask = verificationTaskService.get(verificationTaskId);
     switch (verificationTask.getTaskInfo().getTaskType()) {
@@ -194,19 +197,15 @@ public class CVNGDemoPerpetualTaskServiceImpl implements CVNGDemoPerpetualTaskSe
     }
   }
 
-  private DemoTemplate getDemoTemplate(String verificationTaskId, boolean highRisk) {
-    VerificationTask verificationTask = verificationTaskService.get(verificationTaskId);
+  private DemoTemplate getDemoTemplate(CVConfig cvConfig, boolean highRisk) {
     String template = "default";
-    if (verificationTask.getTaskInfo().getTaskType() == VerificationTask.TaskType.LIVE_MONITORING) {
-      CVConfig cvConfig = cvConfigService.get(((LiveMonitoringInfo) verificationTask.getTaskInfo()).getCvConfigId());
-      // appd_template_demo_dev
-      Pattern identifierTemplatePattern = Pattern.compile(".*template_(.*)_dev");
-      Matcher matcher = identifierTemplatePattern.matcher(cvConfig.getFullyQualifiedIdentifier());
-      if (matcher.matches()) {
-        String templateSubstring = matcher.group(1);
-        if (isNotEmpty(templateSubstring)) {
-          template = templateSubstring;
-        }
+    // appd_template_demo_dev
+    Pattern identifierTemplatePattern = Pattern.compile(".*template_(.*)_dev");
+    Matcher matcher = identifierTemplatePattern.matcher(cvConfig.getFullyQualifiedIdentifier());
+    if (matcher.matches()) {
+      String templateSubstring = matcher.group(1);
+      if (isNotEmpty(templateSubstring)) {
+        template = templateSubstring;
       }
     }
     return DemoTemplate.builder().demoTemplateIdentifier(template).isHighRisk(highRisk).build();

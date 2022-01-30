@@ -360,8 +360,7 @@ public class ArtifactoryServiceTest extends CategoryTest {
         .isInstanceOf(ExplanationException.class)
         .getCause()
         .isInstanceOf(ArtifactoryServerException.class)
-        .hasMessageContaining(
-            "Request to server failed with status code: 500 with message - Artifactory failed to initialize: check Artifactory logs for errors.");
+        .hasMessageContaining("Request to server failed with status code: 500");
   }
 
   @Test
@@ -381,8 +380,7 @@ public class ArtifactoryServiceTest extends CategoryTest {
         .isInstanceOf(ExplanationException.class)
         .getCause()
         .isInstanceOf(ArtifactoryServerException.class)
-        .hasMessageContaining(
-            "Request to server failed with status code: 500 with message - Artifactory failed to initialize: check Artifactory logs for errors.");
+        .hasMessageContaining("Request to server failed with status code: 500");
   }
 
   @Test

@@ -75,7 +75,7 @@ public class TimeSeriesDashboardServiceImpl implements TimeSeriesDashboardServic
         serviceEnvironmentParams.getAccountIdentifier(), serviceEnvironmentParams.getProjectIdentifier(),
         serviceEnvironmentParams.getOrgIdentifier(), serviceEnvironmentParams.getEnvironmentIdentifier(),
         serviceEnvironmentParams.getServiceIdentifier(), null, timeRangeParams.getStartTime(),
-        timeRangeParams.getEndTime(), timeRangeParams.getStartTime(), timeSeriesAnalysisFilter.isAnomalous(),
+        timeRangeParams.getEndTime(), timeRangeParams.getStartTime(), timeSeriesAnalysisFilter.isAnomalousMetricsOnly(),
         pageParams.getPage(), pageParams.getSize(), timeSeriesAnalysisFilter.getFilter());
     setUpMetricDataForFullTimeRange(timeRangeParams, timeSeriesMetricDataDTOPageResponse);
     return timeSeriesMetricDataDTOPageResponse;

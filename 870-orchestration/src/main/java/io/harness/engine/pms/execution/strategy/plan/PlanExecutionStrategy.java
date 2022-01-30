@@ -16,6 +16,7 @@ import io.harness.engine.OrchestrationEngine;
 import io.harness.engine.events.OrchestrationEventEmitter;
 import io.harness.engine.executions.plan.PlanExecutionMetadataService;
 import io.harness.engine.executions.plan.PlanExecutionService;
+import io.harness.engine.executions.plan.PlanService;
 import io.harness.engine.observers.OrchestrationEndObserver;
 import io.harness.engine.observers.OrchestrationStartObserver;
 import io.harness.engine.observers.beans.OrchestrationStartInfo;
@@ -55,6 +56,7 @@ public class PlanExecutionStrategy implements NodeExecutionStrategy<Plan, PlanEx
   @Inject private OrchestrationEventEmitter eventEmitter;
   @Inject private TransactionHelper transactionHelper;
   @Inject private GovernanceService governanceService;
+  @Inject private PlanService planService;
 
   @Getter private final Subject<OrchestrationStartObserver> orchestrationStartSubject = new Subject<>();
   @Getter private final Subject<OrchestrationEndObserver> orchestrationEndSubject = new Subject<>();
@@ -77,7 +79,7 @@ public class PlanExecutionStrategy implements NodeExecutionStrategy<Plan, PlanEx
                                                                     : TriggerPayload.newBuilder().build())
             .build());
 
-    Node planNode = plan.fetchStartingPlanNode();
+    Node planNode = planService.fetchNode(plan.getUuid(), plan.getStartingNodeId());
     if (planNode == null) {
       throw new InvalidRequestException("Starting node for plan cannot be null");
     }

@@ -8,6 +8,7 @@
 package io.harness.pms.notification.orchestration.handlers;
 
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
+import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.rule.OwnerRule.NAMAN;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -19,10 +20,11 @@ import io.harness.CategoryTest;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.engine.observers.NodeStartInfo;
+import io.harness.engine.utils.PmsLevelUtils;
 import io.harness.execution.NodeExecution;
 import io.harness.notification.PipelineEventType;
+import io.harness.plan.PlanNode;
 import io.harness.pms.contracts.ambiance.Ambiance;
-import io.harness.pms.contracts.plan.PlanNodeProto;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.notification.NotificationHelper;
@@ -51,23 +53,33 @@ public class StageStartNotificationHandlerTest extends CategoryTest {
   @Owner(developers = NAMAN)
   @Category(UnitTests.class)
   public void testOnNodeStart() {
-    Ambiance ambiance = Ambiance.getDefaultInstance();
     long ts = System.currentTimeMillis();
-    PlanNodeProto planNodeProto = PlanNodeProto.newBuilder()
-                                      .setStepType(StepType.newBuilder().setStepCategory(StepCategory.STAGES).build())
-                                      .build();
-    NodeExecution nodeExecution = NodeExecution.builder().ambiance(ambiance).node(planNodeProto).build();
+    PlanNode stagesNode = PlanNode.builder()
+                              .uuid(generateUuid())
+                              .name("STAGES")
+                              .identifier("stages")
+                              .stepType(StepType.newBuilder().setStepCategory(StepCategory.STAGES).build())
+                              .build();
+    Ambiance stagesAmbiance =
+        Ambiance.newBuilder().addLevels(PmsLevelUtils.buildLevelFromNode(generateUuid(), stagesNode)).build();
+    NodeExecution nodeExecution = NodeExecution.builder().ambiance(stagesAmbiance).planNode(stagesNode).build();
     NodeStartInfo nodeStartInfo = NodeStartInfo.builder().nodeExecution(nodeExecution).updatedTs(ts).build();
     stageStartNotificationHandler.onNodeStart(nodeStartInfo);
     verify(notificationHelper, times(0)).sendNotification(any(), any(), any(), any());
 
-    planNodeProto = PlanNodeProto.newBuilder()
-                        .setStepType(StepType.newBuilder().setStepCategory(StepCategory.STAGE).build())
-                        .build();
-    nodeExecution = NodeExecution.builder().ambiance(ambiance).node(planNodeProto).build();
+    PlanNode stageNode = PlanNode.builder()
+                             .uuid(generateUuid())
+                             .name("STAGE")
+                             .identifier("stage")
+                             .stepType(StepType.newBuilder().setStepCategory(StepCategory.STAGE).build())
+                             .build();
+    Ambiance stageAmbiance =
+        Ambiance.newBuilder().addLevels(PmsLevelUtils.buildLevelFromNode(generateUuid(), stageNode)).build();
+    nodeExecution = NodeExecution.builder().ambiance(stageAmbiance).planNode(stageNode).build();
     nodeStartInfo = NodeStartInfo.builder().nodeExecution(nodeExecution).updatedTs(ts).build();
     stageStartNotificationHandler.onNodeStart(nodeStartInfo);
-    verify(notificationHelper, times(1)).sendNotification(ambiance, PipelineEventType.STAGE_START, nodeExecution, ts);
+    verify(notificationHelper, times(1))
+        .sendNotification(stageAmbiance, PipelineEventType.STAGE_START, nodeExecution, ts);
   }
 
   @Test

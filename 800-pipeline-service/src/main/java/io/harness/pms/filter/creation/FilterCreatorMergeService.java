@@ -15,6 +15,10 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.UnexpectedException;
+import io.harness.gitsync.helpers.GitContextHelper;
+import io.harness.gitsync.interceptor.GitEntityInfo;
+import io.harness.gitsync.interceptor.GitSyncBranchContext;
+import io.harness.manage.GlobalContextManager;
 import io.harness.pms.contracts.plan.Dependencies;
 import io.harness.pms.contracts.plan.ErrorResponse;
 import io.harness.pms.contracts.plan.FilterCreationBlobRequest;
@@ -81,12 +85,28 @@ public class FilterCreatorMergeService {
     FilterCreationBlobResponse response =
         obtainFiltersRecursively(services, dependencies, filters, setupMetadataBuilder.build());
     validateFilterCreationBlobResponse(response);
+    if (GitContextHelper.isFullSyncFlow()) {
+      deleteExistingSetupUsages(pipelineEntity);
+    }
     pipelineSetupUsageHelper.publishSetupUsageEvent(pipelineEntity, response.getReferredEntitiesList());
     return FilterCreatorMergeServiceResponse.builder()
         .filters(filters)
         .stageCount(response.getStageCount())
         .stageNames(new ArrayList<>(response.getStageNamesList()))
         .build();
+  }
+
+  private void deleteExistingSetupUsages(PipelineEntity pipelineEntity) {
+    GitEntityInfo oldGitEntityInfo = GitContextHelper.getGitEntityInfo();
+    try (GlobalContextManager.GlobalContextGuard ignore = GlobalContextManager.ensureGlobalContextGuard()) {
+      GitEntityInfo emptyInfo = GitEntityInfo.builder().build();
+      GlobalContextManager.upsertGlobalContextRecord(GitSyncBranchContext.builder().gitBranchInfo(emptyInfo).build());
+      pipelineSetupUsageHelper.deleteExistingSetupUsages(pipelineEntity.getAccountIdentifier(),
+          pipelineEntity.getOrgIdentifier(), pipelineEntity.getProjectIdentifier(), pipelineEntity.getIdentifier());
+    } finally {
+      GlobalContextManager.upsertGlobalContextRecord(
+          GitSyncBranchContext.builder().gitBranchInfo(oldGitEntityInfo).build());
+    }
   }
 
   public SetupMetadata.Builder getSetupMetadataBuilder(String accountId, String orgId, String projectId) {

@@ -8,7 +8,7 @@
 package io.harness.delegate.service;
 
 public interface DelegateAgentService {
-  void run(boolean watched);
+  void run(boolean watched, boolean isServer);
 
   void pause();
 

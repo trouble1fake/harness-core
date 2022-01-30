@@ -31,7 +31,6 @@ import lombok.extern.slf4j.Slf4j;
 public class PerpetualTaskServiceGrpc
     extends io.harness.perpetualtask.PerpetualTaskServiceGrpc.PerpetualTaskServiceImplBase {
   @Inject private PerpetualTaskService perpetualTaskService;
-
   @Override
   public void perpetualTaskList(
       PerpetualTaskListRequest request, StreamObserver<PerpetualTaskListResponse> responseObserver) {
@@ -69,6 +68,7 @@ public class PerpetualTaskServiceGrpc
                                                       .responseMessage(request.getResponseMessage())
                                                       .responseCode(request.getResponseCode())
                                                       .build();
+
     long heartbeatMillis = HTimestamps.toInstant(request.getHeartbeatTimestamp()).toEpochMilli();
     perpetualTaskService.triggerCallback(request.getId(), heartbeatMillis, perpetualTaskResponse);
     responseObserver.onNext(HeartbeatResponse.newBuilder().build());

@@ -34,11 +34,11 @@ import io.harness.engine.interrupts.handlers.PauseAllInterruptHandler;
 import io.harness.exception.InvalidRequestException;
 import io.harness.execution.NodeExecution;
 import io.harness.interrupts.Interrupt;
+import io.harness.plan.PlanNode;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.ExecutionMode;
 import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.interrupts.InterruptType;
-import io.harness.pms.contracts.plan.PlanNodeProto;
 import io.harness.pms.execution.utils.NodeProjectionUtils;
 import io.harness.rule.Owner;
 
@@ -155,7 +155,7 @@ public class InterruptServiceImplTest extends OrchestrationTestBase {
     NodeExecution nodeExecution = NodeExecution.builder()
                                       .uuid(generateUuid())
                                       .status(Status.QUEUED)
-                                      .node(PlanNodeProto.newBuilder().setIdentifier(generateUuid()).build())
+                                      .planNode(PlanNode.builder().identifier(generateUuid()).build())
                                       .ambiance(Ambiance.newBuilder().build())
                                       .mode(ExecutionMode.CHILD)
                                       .version(1L)
@@ -179,7 +179,7 @@ public class InterruptServiceImplTest extends OrchestrationTestBase {
     NodeExecution nodeExecution = NodeExecution.builder()
                                       .uuid(generateUuid())
                                       .status(Status.QUEUED)
-                                      .node(PlanNodeProto.newBuilder().setIdentifier(generateUuid()).build())
+                                      .planNode(PlanNode.builder().identifier(generateUuid()).build())
                                       .ambiance(Ambiance.newBuilder().build())
                                       .mode(ExecutionMode.TASK)
                                       .version(1L)
@@ -209,7 +209,7 @@ public class InterruptServiceImplTest extends OrchestrationTestBase {
     NodeExecution nodeExecution = NodeExecution.builder()
                                       .uuid(generateUuid())
                                       .status(Status.QUEUED)
-                                      .node(PlanNodeProto.newBuilder().setIdentifier(generateUuid()).build())
+                                      .planNode(PlanNode.builder().identifier(generateUuid()).build())
                                       .ambiance(Ambiance.newBuilder().build())
                                       .mode(ExecutionMode.TASK)
                                       .version(1L)
@@ -236,7 +236,7 @@ public class InterruptServiceImplTest extends OrchestrationTestBase {
     NodeExecution nodeExecution = NodeExecution.builder()
                                       .uuid(generateUuid())
                                       .status(Status.QUEUED)
-                                      .node(PlanNodeProto.newBuilder().setIdentifier(generateUuid()).build())
+                                      .planNode(PlanNode.builder().identifier(generateUuid()).build())
                                       .ambiance(Ambiance.newBuilder().build())
                                       .mode(ExecutionMode.CHILD)
                                       .version(1L)
@@ -266,7 +266,7 @@ public class InterruptServiceImplTest extends OrchestrationTestBase {
     NodeExecution nodeExecution = NodeExecution.builder()
                                       .uuid(generateUuid())
                                       .status(Status.QUEUED)
-                                      .node(PlanNodeProto.newBuilder().setIdentifier(generateUuid()).build())
+                                      .planNode(PlanNode.builder().identifier(generateUuid()).build())
                                       .ambiance(Ambiance.newBuilder().build())
                                       .mode(ExecutionMode.TASK)
                                       .version(1L)
@@ -303,7 +303,7 @@ public class InterruptServiceImplTest extends OrchestrationTestBase {
     NodeExecution nodeExecution = NodeExecution.builder()
                                       .uuid(stageNodeExecutionId)
                                       .status(Status.SUCCEEDED)
-                                      .node(PlanNodeProto.newBuilder().setIdentifier(generateUuid()).build())
+                                      .planNode(PlanNode.builder().identifier(generateUuid()).build())
                                       .ambiance(Ambiance.newBuilder().build())
                                       .mode(ExecutionMode.TASK)
                                       .version(1L)

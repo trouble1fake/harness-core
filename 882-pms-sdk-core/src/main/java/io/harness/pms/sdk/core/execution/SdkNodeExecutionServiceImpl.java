@@ -133,11 +133,12 @@ public class SdkNodeExecutionServiceImpl implements SdkNodeExecutionService {
   }
 
   @Override
-  public void handleEventError(NodeExecutionEventType eventType, String eventNotifyId, FailureInfo failureInfo) {
+  public void handleEventError(
+      NodeExecutionEventType eventType, Ambiance ambiance, String eventNotifyId, FailureInfo failureInfo) {
     SdkResponseEventProto handleEventErrorRequest =
         SdkResponseEventProto.newBuilder()
             .setSdkResponseEventType(SdkResponseEventType.HANDLE_EVENT_ERROR)
-
+            .setAmbiance(ambiance)
             .setEventErrorRequest(EventErrorRequest.newBuilder()
                                       .setEventNotifyId(eventNotifyId)
                                       .setEventType(eventType)

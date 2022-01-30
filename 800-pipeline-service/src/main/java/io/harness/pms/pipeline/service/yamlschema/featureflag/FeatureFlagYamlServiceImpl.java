@@ -14,6 +14,7 @@ import io.harness.ModuleType;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cf.pipeline.FeatureFlagStageConfig;
+import io.harness.cf.pipeline.FeatureFlagStageNode;
 import io.harness.encryption.Scope;
 import io.harness.plancreator.steps.ParallelStepElementConfig;
 import io.harness.plancreator.steps.StepElementConfig;
@@ -43,7 +44,7 @@ import java.util.Set;
 @OwnedBy(HarnessTeam.PIPELINE)
 @Singleton
 public class FeatureFlagYamlServiceImpl implements FeatureFlagYamlService {
-  private static final String FEATURE_FLAG_STAGE_CONFIG = YamlSchemaUtils.getSwaggerName(FeatureFlagStageConfig.class);
+  private static final String FEATURE_FLAG_STAGE_NODE = YamlSchemaUtils.getSwaggerName(FeatureFlagStageNode.class);
   private static final String FEATURE_FLAG_NAMESPACE = "cf";
 
   @Inject private YamlSchemaProvider yamlSchemaProvider;
@@ -85,14 +86,15 @@ public class FeatureFlagYamlServiceImpl implements FeatureFlagYamlService {
     ObjectMapper mapper = SchemaGeneratorUtils.getObjectMapperForSchemaGeneration();
     JsonNode node = mapper.createObjectNode().set(FEATURE_FLAG_NAMESPACE, definitions);
 
-    JsonNode partialApprovalSchema = ((ObjectNode) featureFlagStageSchema).set(DEFINITIONS_NODE, node);
+    JsonNode partialFeatureFlagSchema = ((ObjectNode) featureFlagStageSchema).set(DEFINITIONS_NODE, node);
 
     return PartialSchemaDTO.builder()
         .namespace(FEATURE_FLAG_NAMESPACE)
-        .nodeName(FEATURE_FLAG_STAGE_CONFIG)
-        .schema(partialApprovalSchema)
+        .nodeName(FEATURE_FLAG_STAGE_NODE)
+        .schema(partialFeatureFlagSchema)
         .nodeType(getFeatureFlagStageTypeName())
         .moduleType(ModuleType.PMS)
+        .skipStageSchema(false)
         .build();
   }
 

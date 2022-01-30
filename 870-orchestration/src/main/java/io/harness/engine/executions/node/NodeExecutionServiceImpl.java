@@ -14,6 +14,7 @@ import static io.harness.pms.PmsCommonConstants.AUTO_ABORT_PIPELINE_THROUGH_TRIG
 import static io.harness.pms.contracts.execution.Status.ABORTED;
 import static io.harness.pms.contracts.execution.Status.DISCONTINUING;
 import static io.harness.pms.contracts.execution.Status.ERRORED;
+import static io.harness.pms.contracts.execution.Status.SKIPPED;
 import static io.harness.springdata.SpringDataMongoUtils.returnNewOptions;
 
 import static org.springframework.data.domain.Sort.by;
@@ -34,13 +35,11 @@ import io.harness.exception.UnexpectedException;
 import io.harness.execution.ExecutionModeUtils;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.NodeExecution.NodeExecutionKeys;
-import io.harness.execution.NodeExecutionMapper;
 import io.harness.execution.PlanExecutionMetadata;
 import io.harness.interrupts.InterruptEffect;
 import io.harness.observer.Subject;
 import io.harness.plan.Node;
 import io.harness.pms.contracts.ambiance.Level;
-import io.harness.pms.contracts.execution.NodeExecutionProto;
 import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.execution.events.OrchestrationEvent;
 import io.harness.pms.contracts.execution.events.OrchestrationEvent.Builder;
@@ -136,13 +135,7 @@ public class NodeExecutionServiceImpl implements NodeExecutionService {
   public Optional<NodeExecution> getByNodeIdentifier(String nodeIdentifier, String planExecutionId) {
     Query query = query(where(NodeExecutionKeys.planExecutionId).is(planExecutionId))
                       .addCriteria(where(NodeExecutionKeys.planNodeIdentifier).in(nodeIdentifier));
-    Optional<NodeExecution> nodeExecution = Optional.ofNullable(mongoTemplate.findOne(query, NodeExecution.class));
-    if (!nodeExecution.isPresent()) {
-      query = query(where(NodeExecutionKeys.planExecutionId).is(planExecutionId))
-                  .addCriteria(where(NodeExecutionKeys.nodeIdentifier).in(nodeIdentifier));
-      return Optional.ofNullable(mongoTemplate.findOne(query, NodeExecution.class));
-    }
-    return nodeExecution;
+    return Optional.ofNullable(mongoTemplate.findOne(query, NodeExecution.class));
   }
 
   @Override
@@ -268,7 +261,7 @@ public class NodeExecutionServiceImpl implements NodeExecutionService {
                             .setAmbiance(nodeExecution.getAmbiance())
                             .setStatus(nodeExecution.getStatus())
                             .setEventType(OrchestrationEventType.NODE_EXECUTION_START)
-                            .setServiceName(nodeExecution.getNode().getServiceName());
+                            .setServiceName(nodeExecution.module());
 
       if (nodeExecution.getResolvedStepParameters() != null) {
         builder.setStepParameters(nodeExecution.getResolvedStepParametersBytes());
@@ -279,13 +272,10 @@ public class NodeExecutionServiceImpl implements NodeExecutionService {
           NodeExecutionStartObserver::onNodeStart, NodeStartInfo.builder().nodeExecution(nodeExecution).build());
       return nodeExecution1;
     } else {
+      nodeExecutionStartSubject.fireInform(
+          NodeExecutionStartObserver::onNodeStart, NodeStartInfo.builder().nodeExecution(nodeExecution).build());
       return mongoTemplate.save(nodeExecution);
     }
-  }
-
-  @Override
-  public NodeExecution save(NodeExecutionProto nodeExecution) {
-    return save(NodeExecutionMapper.fromNodeExecutionProto(nodeExecution));
   }
 
   /**
@@ -521,7 +511,7 @@ public class NodeExecutionServiceImpl implements NodeExecutionService {
                                .setStatus(nodeExecution.getStatus())
                                .setStepParameters(nodeExecution.getResolvedStepParametersBytes())
                                .setEventType(orchestrationEventType)
-                               .setServiceName(nodeExecution.getNode().getServiceName())
+                               .setServiceName(nodeExecution.module())
                                .setTriggerPayload(triggerPayload);
 
     updateEventIfCausedByAutoAbortThroughTrigger(nodeExecution, orchestrationEventType, eventBuilder);
@@ -589,30 +579,18 @@ public class NodeExecutionServiceImpl implements NodeExecutionService {
 
   @Override
   public List<NodeExecution> fetchStageExecutions(String planExecutionId) {
-    Criteria criteria = Criteria.where(NodeExecutionKeys.planExecutionId)
-                            .is(planExecutionId)
-                            .and(NodeExecutionKeys.status)
-                            .ne(Status.SKIPPED.name())
-                            .orOperator(Criteria.where(NodeExecutionKeys.stepCategory).is(StepCategory.STAGE),
-                                Criteria.where(NodeExecutionKeys.planNodeStepCategory).is(StepCategory.STAGE),
-                                Criteria.where(NodeExecutionKeys.IdentityNodeStepCategory).is(StepCategory.STAGE));
-
-    Query query = new Query().addCriteria(criteria);
+    Query query = query(where(NodeExecutionKeys.planExecutionId).is(planExecutionId))
+                      .addCriteria(where(NodeExecutionKeys.status).ne(Status.SKIPPED))
+                      .addCriteria(where(NodeExecutionKeys.planNodeStepCategory).is(StepCategory.STAGE));
     query.with(by(NodeExecutionKeys.createdAt));
     return mongoTemplate.find(query, NodeExecution.class);
   }
 
   @Override
   public List<NodeExecution> fetchStageExecutionsWithEndTsAndStatusProjection(String planExecutionId) {
-    Criteria criteria = Criteria.where(NodeExecutionKeys.planExecutionId)
-                            .is(planExecutionId)
-                            .and(NodeExecutionKeys.status)
-                            .ne(Status.SKIPPED.name())
-                            .orOperator(Criteria.where(NodeExecutionKeys.stepCategory).is(StepCategory.STAGE),
-                                Criteria.where(NodeExecutionKeys.planNodeStepCategory).is(StepCategory.STAGE),
-                                Criteria.where(NodeExecutionKeys.IdentityNodeStepCategory).is(StepCategory.STAGE));
-
-    Query query = new Query().addCriteria(criteria);
+    Query query = query(where(NodeExecutionKeys.planExecutionId).is(planExecutionId))
+                      .addCriteria(where(NodeExecutionKeys.status).ne(SKIPPED))
+                      .addCriteria(where(NodeExecutionKeys.planNodeStepCategory).is(StepCategory.STAGE));
     query.fields()
         .include(NodeExecutionKeys.uuid)
         .include(NodeExecutionKeys.status)
@@ -621,7 +599,7 @@ public class NodeExecutionServiceImpl implements NodeExecutionService {
         .include(NodeExecutionKeys.mode)
         .include(NodeExecutionKeys.parentId)
         .include(NodeExecutionKeys.oldRetry)
-        .include(NodeExecutionKeys.planNode);
+        .include(NodeExecutionKeys.ambiance);
 
     query.with(by(NodeExecutionKeys.createdAt));
     return mongoTemplate.find(query, NodeExecution.class);
@@ -639,11 +617,12 @@ public class NodeExecutionServiceImpl implements NodeExecutionService {
   private Map<String, String> mapNodeExecutionUuidWithPlanNodeUuid(List<NodeExecution> nodeExecutionList) {
     Map<String, String> uuidMapper = new HashMap<>();
     for (NodeExecution nodeExecution : nodeExecutionList) {
-      uuidMapper.put(nodeExecution.getNodeId(), nodeExecution.getUuid());
+      uuidMapper.put(nodeExecution.nodeId(), nodeExecution.getUuid());
     }
     return uuidMapper;
   }
 
+  // TODO optimize this to remove n+1 queries
   public List<RetryStageInfo> fetchStageDetailFromNodeExecution(List<NodeExecution> nodeExecutionList) {
     List<RetryStageInfo> stageDetails = new ArrayList<>();
 
@@ -652,12 +631,11 @@ public class NodeExecutionServiceImpl implements NodeExecutionService {
     }
 
     for (NodeExecution nodeExecution : nodeExecutionList) {
-      Node node = nodeExecution.getNode();
       String nextId = nodeExecution.getNextId();
       String parentId = nodeExecution.getParentId();
       RetryStageInfo stageDetail = RetryStageInfo.builder()
-                                       .name(node.getName())
-                                       .identifier(node.getIdentifier())
+                                       .name(nodeExecution.name())
+                                       .identifier(nodeExecution.identifier())
                                        .parentId(parentId)
                                        .createdAt(nodeExecution.getCreatedAt())
                                        .status(ExecutionStatus.getExecutionStatus(nodeExecution.getStatus()))
@@ -670,43 +648,27 @@ public class NodeExecutionServiceImpl implements NodeExecutionService {
 
   @Override
   public List<NodeExecution> getStageNodesFromPlanExecutionId(String planExecutionId) {
-    Criteria criteria = Criteria.where(NodeExecutionKeys.planExecutionId)
-                            .is(planExecutionId)
-                            .and(NodeExecutionKeys.status)
-                            .ne(Status.SKIPPED.name())
-                            .orOperator(Criteria.where(NodeExecutionKeys.stepCategory).is(StepCategory.STAGE),
-                                Criteria.where(NodeExecutionKeys.planNodeStepCategory).is(StepCategory.STAGE));
-
-    Query query = new Query().addCriteria(criteria);
+    Query query = query(where(NodeExecutionKeys.planExecutionId).is(planExecutionId))
+                      .addCriteria(where(NodeExecutionKeys.status).ne(Status.SKIPPED.name()))
+                      .addCriteria(where(NodeExecutionKeys.planNodeStepCategory).is(StepCategory.STAGE));
     query.with(by(NodeExecutionKeys.createdAt));
     return mongoTemplate.find(query, NodeExecution.class);
   }
 
   @Override
   public NodeExecution getPipelineNodeFromPlanExecutionId(String planExecutionId) {
-    Criteria criteria = Criteria.where(NodeExecutionKeys.planExecutionId)
-                            .is(planExecutionId)
-                            .and(NodeExecutionKeys.status)
-                            .ne(Status.SKIPPED.name())
-                            .orOperator(Criteria.where(NodeExecutionKeys.stepCategory).is(StepCategory.PIPELINE),
-                                Criteria.where(NodeExecutionKeys.planNodeStepCategory).is(StepCategory.PIPELINE));
-
-    Query query = new Query().addCriteria(criteria);
+    Query query = query(where(NodeExecutionKeys.planExecutionId).is(planExecutionId))
+                      .addCriteria(where(NodeExecutionKeys.status).ne(Status.SKIPPED.name()))
+                      .addCriteria(where(NodeExecutionKeys.planNodeStepCategory).is(StepCategory.PIPELINE));
     query.with(by(NodeExecutionKeys.createdAt));
-    return mongoTemplate.find(query, NodeExecution.class).get(0);
+    return mongoTemplate.findOne(query, NodeExecution.class);
   }
 
   @Override
   public List<String> fetchStageFqnFromStageIdentifiers(String planExecutionId, List<String> stageIdentifiers) {
-    // Adding IdentityNodeStepCategory, since this is required to retry the retried pipeline,
-    Criteria criteria = Criteria.where(NodeExecutionKeys.planExecutionId)
-                            .is(planExecutionId)
-                            .orOperator(Criteria.where(NodeExecutionKeys.planNodeStepCategory).is(StepCategory.STAGE),
-                                Criteria.where(NodeExecutionKeys.IdentityNodeStepCategory).is(StepCategory.STAGE))
-                            .and(NodeExecutionKeys.planNodeIdentifier)
-                            .in(stageIdentifiers);
-
-    Query query = new Query().addCriteria(criteria);
+    Query query = query(where(NodeExecutionKeys.planExecutionId).is(planExecutionId))
+                      .addCriteria(where(NodeExecutionKeys.planNodeStepCategory).is(StepCategory.STAGE))
+                      .addCriteria(where(NodeExecutionKeys.planNodeIdentifier).in(stageIdentifiers));
 
     List<NodeExecution> nodeExecutions = mongoTemplate.find(query, NodeExecution.class);
 

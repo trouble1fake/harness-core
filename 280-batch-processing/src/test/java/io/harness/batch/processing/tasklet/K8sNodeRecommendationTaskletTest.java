@@ -68,6 +68,7 @@ public class K8sNodeRecommendationTaskletTest extends BaseTaskletTest {
   private static final String CLUSTER_NAME = "clusterName";
   private static final String CLUSTER_ID = "clusterId";
   private static final Gson GSON = new Gson();
+  private static final Double DOUBLE_ERROR = 0.00001D;
 
   private K8sServiceProvider k8sServiceProvider;
   private NodePoolId nodePoolId;
@@ -266,9 +267,9 @@ public class K8sNodeRecommendationTaskletTest extends BaseTaskletTest {
     RecommendationOverviewStats stats = captor.getValue();
     assertThat(stats).isNotNull();
     // $2 per node * 6 nodes * 24 hrs * 30 days
-    assertThat(stats.getTotalMonthlyCost()).isCloseTo(2D * 6 * 24 * 30, offset(0.5D));
+    assertThat(stats.getTotalMonthlyCost()).isCloseTo(2D * 6 * 24 * 30, offset(DOUBLE_ERROR));
     // monthlyCost - $1.329993 per vm * 24 hrs * 30 days
-    assertThat(stats.getTotalMonthlySaving()).isCloseTo((2D * 6 - 1.329993D) * 24 * 30, offset(0.5D));
+    assertThat(stats.getTotalMonthlySaving()).isCloseTo((2D * 6 - 1.329993D) * 24 * 30, offset(DOUBLE_ERROR));
   }
 
   @Test
@@ -291,10 +292,9 @@ public class K8sNodeRecommendationTaskletTest extends BaseTaskletTest {
 
     assertThat(recommendation).isNotNull();
     assertThat(recommendation.getInstanceCategory()).isEqualTo(InstanceCategory.SPOT);
-    assertThat(recommendation.getAccuracy().getTotalPrice()).isCloseTo(0.28D + 0, offset(0.05D));
+    assertThat(recommendation.getAccuracy().getTotalPrice()).isCloseTo(0.28D + 0, offset(DOUBLE_ERROR));
     assertThat(recommendation.getAccuracy().getTotalPrice())
-        .isCloseTo(
-            recommendation.getAccuracy().getSpotPrice() + recommendation.getAccuracy().getMasterPrice(), offset(0.05D));
+        .isCloseTo(recommendation.getAccuracy().getSpotPrice(), offset(DOUBLE_ERROR));
 
     K8sServiceProvider serviceProvider = serviceProviderCaptor.getValue();
 
@@ -357,10 +357,9 @@ public class K8sNodeRecommendationTaskletTest extends BaseTaskletTest {
 
     assertThat(recommendation).isNotNull();
     assertThat(recommendation.getInstanceCategory()).isEqualTo(InstanceCategory.ON_DEMAND);
-    assertThat(recommendation.getAccuracy().getTotalPrice()).isCloseTo(1.329993D, offset(0.05D));
+    assertThat(recommendation.getAccuracy().getTotalPrice()).isCloseTo(1.329993D, offset(DOUBLE_ERROR));
     assertThat(recommendation.getAccuracy().getTotalPrice())
-        .isCloseTo(recommendation.getAccuracy().getWorkerPrice() + recommendation.getAccuracy().getMasterPrice(),
-            offset(0.05D));
+        .isCloseTo(recommendation.getAccuracy().getRegularPrice(), offset(DOUBLE_ERROR));
 
     K8sServiceProvider serviceProvider = serviceProviderCaptor.getValue();
 

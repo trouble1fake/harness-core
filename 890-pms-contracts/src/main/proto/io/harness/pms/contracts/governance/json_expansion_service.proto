@@ -21,6 +21,7 @@ message ExpansionRequestBatch {
 message ExpansionRequestProto {
   string fqn = 1;
   bytes value = 2;
+  string key = 3;
 }
 
 message ExpansionResponseBatch {
@@ -40,6 +41,7 @@ enum ExpansionPlacementStrategy {
   REPLACE = 0;
   PARALLEL = 1;
   MOVE_UP = 2;
+  APPEND = 3;
 }
 
 message ExpansionRequestMetadata {

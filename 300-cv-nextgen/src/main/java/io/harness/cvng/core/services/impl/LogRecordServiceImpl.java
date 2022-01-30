@@ -94,33 +94,34 @@ public class LogRecordServiceImpl implements LogRecordService {
         logRecordDTO.setTimestamp(time.toEpochMilli());
       }
       if (demoTemplate.isHighRisk()) {
-        String newLogMessage;
+        List<String> newLogMessages = new ArrayList<>();
         Map<Thread, StackTraceElement[]> stacktraces = Thread.getAllStackTraces();
         if (!stacktraces.isEmpty()) {
           int randomStacktraceIndex = new Random().nextInt(stacktraces.size());
           Map.Entry<Thread, StackTraceElement[]> stacktrace =
               Iterators.get(stacktraces.entrySet().iterator(), randomStacktraceIndex);
 
-          newLogMessage = "java.lang.RuntimeException: \n"
+          newLogMessages.add("java.lang.RuntimeException: \n"
               + String.join("\n",
                   Arrays.stream(stacktrace.getValue())
                       .map(stackTraceElement -> stackTraceElement.toString())
-                      .collect(Collectors.toList()));
-        } else {
-          newLogMessage = "java.lang.RuntimeException: \n" + UUID.randomUUID().toString()
-              + " Method throws runtime exception " + UUID.randomUUID().toString();
+                      .collect(Collectors.toList())));
         }
+        newLogMessages.add("java.lang.RuntimeException: \n" + UUID.randomUUID().toString()
+            + " Method throws runtime exception " + UUID.randomUUID().toString());
 
         for (Instant instant = startTime; instant.isBefore(endTime); instant = instant.plus(Duration.ofMinutes(1))) {
           int freq = new Random().nextInt(5) + 1;
           for (int i = 0; i < freq; i++) {
-            logRecordsDTOAtTime.add(LogRecordDTO.builder()
-                                        .accountId(accountId)
-                                        .verificationTaskId(verificationTaskId)
-                                        .host("verification-svc-canary-58589fd55f")
-                                        .timestamp(instant.toEpochMilli())
-                                        .log(newLogMessage)
-                                        .build());
+            for (String newLogMessage : newLogMessages) {
+              logRecordsDTOAtTime.add(LogRecordDTO.builder()
+                                          .accountId(accountId)
+                                          .verificationTaskId(verificationTaskId)
+                                          .host("verification-svc-canary-58589fd55f")
+                                          .timestamp(instant.toEpochMilli())
+                                          .log(newLogMessage)
+                                          .build());
+            }
           }
         }
       }

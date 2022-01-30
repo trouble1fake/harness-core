@@ -10,6 +10,7 @@ package io.harness.cvng.core.dsl;
 import static io.harness.CvNextGenTestBase.getResourceFilePath;
 import static io.harness.CvNextGenTestBase.getSourceResourceFile;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
+import static io.harness.rule.OwnerRule.ABHIJITH;
 import static io.harness.rule.OwnerRule.KAMAL;
 import static io.harness.rule.OwnerRule.RAGHU;
 
@@ -19,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import io.harness.category.element.UnitTests;
 import io.harness.cvng.HoverflyCVNextGenTestBase;
 import io.harness.cvng.beans.AppDynamicsDataCollectionInfo;
+import io.harness.cvng.beans.AppDynamicsDataCollectionInfo.AppMetricInfoDTO;
 import io.harness.cvng.beans.CVMonitoringCategory;
 import io.harness.cvng.beans.DataSourceType;
 import io.harness.cvng.core.entities.AppDynamicsCVConfig;
@@ -37,12 +39,11 @@ import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
-import io.specto.hoverfly.junit.core.SimulationSource;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +52,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.apache.commons.io.FileUtils;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -74,16 +74,11 @@ public class AppDynamicsDataCollectionDSLTest extends HoverflyCVNextGenTestBase 
   @Test
   @Owner(developers = KAMAL)
   @Category(UnitTests.class)
-  @Ignore("https://harness.atlassian.net/browse/CVNG-1599")
   public void testExecute_appDyanmicsPerformancePackForServiceGuard() throws IOException {
-    String filePath = "appdynamics/performance-service-guard.json";
-    HOVERFLY_RULE.simulate(SimulationSource.file(Paths.get(getResourceFilePath("hoverfly/" + filePath))));
-    // HOVERFLY_RULE.capture(filePath);
-
     DataCollectionDSLService dataCollectionDSLService = new DataCollectionServiceImpl();
     dataCollectionDSLService.registerDatacollectionExecutorService(executorService);
     String code = readDSL("performance-pack.datacollection");
-    Instant instant = Instant.ofEpochMilli(1599634954000L);
+    Instant instant = Instant.ofEpochMilli(1642966157038L);
     List<MetricPack> metricPacks =
         metricPackService.getMetricPacks(accountId, orgIdentifier, projectIdentifier, DataSourceType.APP_DYNAMICS);
 
@@ -117,18 +112,120 @@ public class AppDynamicsDataCollectionDSLTest extends HoverflyCVNextGenTestBase 
   }
 
   @Test
+  @Owner(developers = ABHIJITH)
+  @Category(UnitTests.class)
+  public void testExecute_appDyanmicsCustomPackForServiceGuard() throws IOException {
+    DataCollectionDSLService dataCollectionDSLService = new DataCollectionServiceImpl();
+    dataCollectionDSLService.registerDatacollectionExecutorService(executorService);
+    String code = readDSL("custom-pack.datacollection");
+    Instant instant = Instant.ofEpochMilli(1642966157038L);
+    List<MetricPack> metricPacks =
+        metricPackService.getMetricPacks(accountId, orgIdentifier, projectIdentifier, DataSourceType.APP_DYNAMICS);
+
+    AppDynamicsDataCollectionInfo appDynamicsDataCollectionInfo =
+        AppDynamicsDataCollectionInfo.builder()
+            .applicationName("cv-app")
+            .tierName("docker-tier")
+            .metricPack(metricPacks.stream()
+                            .filter(metricPack -> metricPack.getIdentifier().equals("Custom"))
+                            .findFirst()
+                            .get()
+                            .toDTO())
+            .customMetrics(Arrays.asList(AppMetricInfoDTO.builder()
+                                             .metricIdentifier("calls_number")
+                                             .baseFolder("Overall Application Performance")
+                                             .metricName("Calls Number")
+                                             .metricPath("Average Response Time (ms)")
+                                             .build(),
+                AppMetricInfoDTO.builder()
+                    .metricIdentifier("stall_number")
+                    .baseFolder("Overall Application Performance")
+                    .metricName("Stall Count")
+                    .metricPath("Stall Count")
+                    .build()))
+            .build();
+    Map<String, Object> params =
+        appDynamicsDataCollectionInfo.getDslEnvVariables(AppDynamicsConnectorDTO.builder().build());
+
+    Map<String, String> headers = new HashMap<>();
+    headers.put("Authorization", "Basic **"); // Replace this with the actual value when capturing the request.
+    RuntimeParameters runtimeParameters = RuntimeParameters.builder()
+                                              .startTime(instant.minusSeconds(60))
+                                              .endTime(instant)
+                                              .commonHeaders(headers)
+                                              .otherEnvVariables(params)
+                                              .baseUrl("https://harness-test.saas.appdynamics.com/controller/")
+                                              .build();
+    List<TimeSeriesRecord> timeSeriesRecords =
+        (List<TimeSeriesRecord>) dataCollectionDSLService.execute(code, runtimeParameters, callDetails -> {});
+    assertThat(Sets.newHashSet(timeSeriesRecords))
+        .isEqualTo(new Gson().fromJson(
+            readJson("custom-service-guard-expectation.json"), new TypeToken<Set<TimeSeriesRecord>>() {}.getType()));
+  }
+
+  @Test
+  @Owner(developers = ABHIJITH)
+  @Category(UnitTests.class)
+  public void testExecute_appDyanmicsCustomPackForDeployment() throws IOException {
+    DataCollectionDSLService dataCollectionDSLService = new DataCollectionServiceImpl();
+    dataCollectionDSLService.registerDatacollectionExecutorService(executorService);
+    String code = readDSL("custom-pack.datacollection");
+    Instant instant = Instant.ofEpochMilli(1642966157038L);
+    List<MetricPack> metricPacks =
+        metricPackService.getMetricPacks(accountId, orgIdentifier, projectIdentifier, DataSourceType.APP_DYNAMICS);
+
+    AppDynamicsDataCollectionInfo appDynamicsDataCollectionInfo =
+        AppDynamicsDataCollectionInfo.builder()
+            .applicationName("cv-app")
+            .tierName("docker-tier")
+            .metricPack(metricPacks.stream()
+                            .filter(metricPack -> metricPack.getIdentifier().equals("Custom"))
+                            .findFirst()
+                            .get()
+                            .toDTO())
+            .customMetrics(Arrays.asList(AppMetricInfoDTO.builder()
+                                             .metricIdentifier("calls_number")
+                                             .baseFolder("Overall Application Performance")
+                                             .metricName("Calls Number")
+                                             .serviceInstanceMetricPath("Individual Nodes|*|Average Response Time (ms)")
+                                             .metricPath("Average Response Time (ms)")
+                                             .build(),
+                AppMetricInfoDTO.builder()
+                    .metricIdentifier("stall_number")
+                    .baseFolder("Overall Application Performance")
+                    .metricName("Stall Count")
+                    .serviceInstanceMetricPath("Individual Nodes|*|Stall Count")
+                    .metricPath("Stall Count")
+                    .build()))
+            .build();
+    appDynamicsDataCollectionInfo.setCollectHostData(true);
+    Map<String, Object> params =
+        appDynamicsDataCollectionInfo.getDslEnvVariables(AppDynamicsConnectorDTO.builder().build());
+
+    Map<String, String> headers = new HashMap<>();
+    headers.put("Authorization", "Basic **"); // Replace this with the actual value when capturing the request.
+    RuntimeParameters runtimeParameters = RuntimeParameters.builder()
+                                              .startTime(instant.minusSeconds(60))
+                                              .endTime(instant)
+                                              .commonHeaders(headers)
+                                              .otherEnvVariables(params)
+                                              .baseUrl("https://harness-test.saas.appdynamics.com/controller/")
+                                              .build();
+    List<TimeSeriesRecord> timeSeriesRecords =
+        (List<TimeSeriesRecord>) dataCollectionDSLService.execute(code, runtimeParameters, callDetails -> {});
+    assertThat(Sets.newHashSet(timeSeriesRecords))
+        .isEqualTo(new Gson().fromJson(
+            readJson("custom-deployment-expectation.json"), new TypeToken<Set<TimeSeriesRecord>>() {}.getType()));
+  }
+
+  @Test
   @Owner(developers = KAMAL)
   @Category(UnitTests.class)
-  @Ignore("https://harness.atlassian.net/browse/CVNG-1599")
   public void testExecute_appDyanmicsPerformancePackWithHosts() throws IOException {
-    String filePath = "appdynamics/performance-verification-task-collect-hosts.json";
-    HOVERFLY_RULE.simulate(SimulationSource.file(Paths.get(getResourceFilePath("hoverfly/" + filePath))));
-    // HOVERFLY_RULE.capture(filePath);
-
     DataCollectionDSLService dataCollectionDSLService = new DataCollectionServiceImpl();
     dataCollectionDSLService.registerDatacollectionExecutorService(executorService);
     String code = readDSL("performance-pack.datacollection");
-    Instant instant = Instant.ofEpochMilli(1599634954000L);
+    Instant instant = Instant.ofEpochMilli(1642966157038L);
     List<MetricPack> metricPacks =
         metricPackService.getMetricPacks(accountId, orgIdentifier, projectIdentifier, DataSourceType.APP_DYNAMICS);
 
@@ -165,16 +262,11 @@ public class AppDynamicsDataCollectionDSLTest extends HoverflyCVNextGenTestBase 
   @Test
   @Owner(developers = RAGHU)
   @Category(UnitTests.class)
-  @Ignore("https://harness.atlassian.net/browse/CVNG-1599")
   public void testExecute_appDyanmicsQualityPackForServiceGuard() throws IOException {
-    String filePath = "appdynamics/quality-service-guard.json";
-    HOVERFLY_RULE.simulate(SimulationSource.file(Paths.get(getResourceFilePath("hoverfly/" + filePath))));
-    //    		 HOVERFLY_RULE.capture(filePath);
-
     DataCollectionDSLService dataCollectionDSLService = new DataCollectionServiceImpl();
     dataCollectionDSLService.registerDatacollectionExecutorService(executorService);
     String code = readDSL("quality-pack.datacollection");
-    Instant instant = Instant.ofEpochMilli(1607498018484L);
+    Instant instant = Instant.ofEpochMilli(1642966157038L);
     List<MetricPack> metricPacks =
         metricPackService.getMetricPacks(accountId, orgIdentifier, projectIdentifier, DataSourceType.APP_DYNAMICS);
 
@@ -212,16 +304,11 @@ public class AppDynamicsDataCollectionDSLTest extends HoverflyCVNextGenTestBase 
   @Test
   @Owner(developers = RAGHU)
   @Category(UnitTests.class)
-  @Ignore("https://harness.atlassian.net/browse/CVNG-1599")
   public void testExecute_appDyanmicsQualityPackWithHosts() throws IOException {
-    String filePath = "appdynamics/quality-verification-task-collect-hosts.json";
-    HOVERFLY_RULE.simulate(SimulationSource.file(Paths.get(getResourceFilePath("hoverfly/" + filePath))));
-    //		HOVERFLY_RULE.capture(filePath);
-
     DataCollectionDSLService dataCollectionDSLService = new DataCollectionServiceImpl();
     dataCollectionDSLService.registerDatacollectionExecutorService(executorService);
     String code = readDSL("quality-pack.datacollection");
-    Instant instant = Instant.ofEpochMilli(1607498018484L);
+    Instant instant = Instant.ofEpochMilli(1642966157038L);
     List<MetricPack> metricPacks =
         metricPackService.getMetricPacks(accountId, orgIdentifier, projectIdentifier, DataSourceType.APP_DYNAMICS);
 
@@ -260,11 +347,7 @@ public class AppDynamicsDataCollectionDSLTest extends HoverflyCVNextGenTestBase 
   @Test
   @Owner(developers = KAMAL)
   @Category(UnitTests.class)
-  @Ignore("https://harness.atlassian.net/browse/CVNG-1599")
   public void testExecute_appDynamicsConnectionValidationValidSettings() {
-    String filePath = "appdynamics/connection-validation-valid.json";
-    HOVERFLY_RULE.simulate(SimulationSource.file(Paths.get(getResourceFilePath("hoverfly/" + filePath))));
-    // HOVERFLY_RULE.capture(filePath);
     DataCollectionDSLService dataCollectionDSLService = new DataCollectionServiceImpl();
     dataCollectionDSLService.registerDatacollectionExecutorService(executorService);
     AppDynamicsConnectorValidationInfo appDynamicsConnectorValidationInfo =
@@ -274,18 +357,20 @@ public class AppDynamicsDataCollectionDSLTest extends HoverflyCVNextGenTestBase 
             .controllerUrl("https://harness-test.saas.appdynamics.com/controller")
             .accountname("harness-test")
             .username("uitest@harness.io")
-            .passwordRef(SecretRefData.builder().decryptedValue("**".toCharArray()).build())
+            .passwordRef(SecretRefData.builder().decryptedValue("*Sj3&Sjsl32ssCv".toCharArray()).build())
             .build());
     String code = appDynamicsConnectorValidationInfo.getConnectionValidationDSL();
     Instant instant = Instant.now();
     System.out.println(instant);
 
-    RuntimeParameters runtimeParameters = RuntimeParameters.builder()
-                                              .startTime(appDynamicsConnectorValidationInfo.getStartTime(instant))
-                                              .endTime(appDynamicsConnectorValidationInfo.getEndTime(instant))
-                                              .commonHeaders(appDynamicsConnectorValidationInfo.collectionHeaders())
-                                              .baseUrl(appDynamicsConnectorValidationInfo.getBaseUrl())
-                                              .build();
+    RuntimeParameters runtimeParameters =
+        RuntimeParameters.builder()
+            .startTime(appDynamicsConnectorValidationInfo.getStartTime(instant))
+            .endTime(appDynamicsConnectorValidationInfo.getEndTime(instant))
+            .commonHeaders(appDynamicsConnectorValidationInfo.collectionHeaders())
+            .baseUrl(appDynamicsConnectorValidationInfo.getBaseUrl())
+            .otherEnvVariables(appDynamicsConnectorValidationInfo.getDslEnvVariables())
+            .build();
     String isValid = (String) dataCollectionDSLService.execute(code, runtimeParameters, callDetails -> {});
     assertThat(isValid).isEqualTo("true");
   }
@@ -293,11 +378,7 @@ public class AppDynamicsDataCollectionDSLTest extends HoverflyCVNextGenTestBase 
   @Test
   @Owner(developers = KAMAL)
   @Category(UnitTests.class)
-  @Ignore("https://harness.atlassian.net/browse/CVNG-1599")
   public void testExecute_appDynamicsConnectionValidationInValidSettings() {
-    String filePath = "appdynamics/connection-validation-invalid.json";
-    HOVERFLY_RULE.simulate(SimulationSource.file(Paths.get(getResourceFilePath("hoverfly/" + filePath))));
-    // HOVERFLY_RULE.capture(filePath);
     DataCollectionDSLService dataCollectionDSLService = new DataCollectionServiceImpl();
     dataCollectionDSLService.registerDatacollectionExecutorService(executorService);
     AppDynamicsConnectorValidationInfo appDynamicsConnectorValidationInfo =
@@ -307,21 +388,22 @@ public class AppDynamicsDataCollectionDSLTest extends HoverflyCVNextGenTestBase 
             .controllerUrl("https://harness-test.saas.appdynamics.com/controllerr")
             .accountname("harness-test")
             .username("uitest@harness.io")
-            .passwordRef(SecretRefData.builder().decryptedValue("**".toCharArray()).build())
+            .passwordRef(SecretRefData.builder().decryptedValue("*Sj3&Sjsl32ssCv".toCharArray()).build())
             .build());
     String code = appDynamicsConnectorValidationInfo.getConnectionValidationDSL();
     Instant instant = Instant.now();
     System.out.println(instant);
 
-    RuntimeParameters runtimeParameters = RuntimeParameters.builder()
-                                              .startTime(appDynamicsConnectorValidationInfo.getStartTime(instant))
-                                              .endTime(appDynamicsConnectorValidationInfo.getEndTime(instant))
-                                              .commonHeaders(appDynamicsConnectorValidationInfo.collectionHeaders())
-                                              .baseUrl(appDynamicsConnectorValidationInfo.getBaseUrl())
-                                              .build();
+    RuntimeParameters runtimeParameters =
+        RuntimeParameters.builder()
+            .startTime(appDynamicsConnectorValidationInfo.getStartTime(instant))
+            .endTime(appDynamicsConnectorValidationInfo.getEndTime(instant))
+            .commonHeaders(appDynamicsConnectorValidationInfo.collectionHeaders())
+            .baseUrl(appDynamicsConnectorValidationInfo.getBaseUrl())
+            .otherEnvVariables(appDynamicsConnectorValidationInfo.getDslEnvVariables())
+            .build();
     assertThatThrownBy(() -> dataCollectionDSLService.execute(code, runtimeParameters, callDetails -> {}))
-        .hasMessage(
-            "io.harness.datacollection.exception.DataCollectionException: io.harness.datacollection.exception.DataCollectionException: Response code: 404 Error: Response{protocol=http/1.1, code=404, message=Not Found, url=https://harness-test.saas.appdynamics.com/controllerr/rest/applications?output=json}");
+        .hasMessageContaining("Response code: 404");
   }
 
   private String readDSL(String name) throws IOException {

@@ -30,74 +30,78 @@ public interface HelmClient {
    * Install helm command response.
    *
    * @param helmCommandData the command request
+   * @param isErrorFrameworkEnabled -- as HelmClient is shared by both CG and NG, this boolean is set to true in case of
+   *     NG to enable error handling
    * @return the helm command response
    * @throws InterruptedException the interrupted exception
    * @throws TimeoutException     the timeout exception
    * @throws IOException          the io exception
    * @throws ExecutionException   the execution exception
    */
-  HelmCliResponse install(HelmCommandData helmCommandData)
-      throws InterruptedException, TimeoutException, IOException, ExecutionException;
+  HelmCliResponse install(HelmCommandData helmCommandData, boolean isErrorFrameworkEnabled) throws Exception;
 
   /**
    * Upgrade helm command response.
    *
    * @param helmCommandData the command request
+   * @param isErrorFrameworkEnabled -- as HelmClient is shared by both CG and NG, this boolean is set to true in case of
+   *     NG to enable error handling
    * @return the helm command response
    * @throws InterruptedException the interrupted exception
    * @throws TimeoutException     the timeout exception
    * @throws IOException          the io exception
    * @throws ExecutionException   the execution exception
    */
-  HelmCliResponse upgrade(HelmCommandData helmCommandData)
-      throws InterruptedException, TimeoutException, IOException, ExecutionException;
+  HelmCliResponse upgrade(HelmCommandData helmCommandData, boolean isErrorFrameworkEnabled) throws Exception;
 
   /**
    * Rollback helm command response.
    *
    * @param helmCommandData the command request
+   * @param isErrorFrameworkEnabled -- as HelmClient is shared by both CG and NG, this boolean is set to true in case of
+   *     NG to enable error handling
    * @return the helm command response
    * @throws InterruptedException the interrupted exception
    * @throws TimeoutException     the timeout exception
    * @throws IOException          the io exception
    */
-  HelmCliResponse rollback(HelmCommandData helmCommandData) throws InterruptedException, TimeoutException, IOException;
+  HelmCliResponse rollback(HelmCommandData helmCommandData, boolean isErrorFrameworkEnabled) throws Exception;
 
-  HelmCliResponse releaseHistory(HelmCommandData helmCommandData)
-      throws InterruptedException, TimeoutException, IOException;
+  HelmCliResponse releaseHistory(HelmCommandData helmCommandData, boolean isErrorFrameworkEnabled) throws Exception;
 
   /**
    * List releases helm cli response.
    *
    * @param helmCommandData the command request
+   * @param isErrorFrameworkEnabled -- as HelmClient is shared by both CG and NG, this boolean is set to true in case of
+   *     NG to enable error handling
    * @return the helm cli response
    * @throws InterruptedException the interrupted exception
    * @throws TimeoutException     the timeout exception
    * @throws IOException          the io exception
    */
-  HelmCliResponse listReleases(HelmCommandData helmCommandData)
-      throws InterruptedException, TimeoutException, IOException;
+  HelmCliResponse listReleases(HelmCommandData helmCommandData, boolean isErrorFrameworkEnabled) throws Exception;
 
   /**
    * Gets client and server version.
    *
    * @param helmCommandData the helm command request
+   * @param isErrorFrameworkEnabled -- as HelmClient is shared by both CG and NG, this boolean is set to true in case of
+   *     NG to enable error handling
    * @return the client and server version
    * @throws InterruptedException the interrupted exception
    * @throws TimeoutException     the timeout exception
    * @throws IOException          the io exception
    */
-  HelmCliResponse getClientAndServerVersion(HelmCommandData helmCommandData)
-      throws InterruptedException, TimeoutException, IOException;
+  HelmCliResponse getClientAndServerVersion(HelmCommandData helmCommandData, boolean isErrorFrameworkEnabled)
+      throws Exception;
 
-  HelmCliResponse addPublicRepo(HelmCommandData helmCommandData)
-      throws InterruptedException, TimeoutException, IOException;
+  HelmCliResponse addPublicRepo(HelmCommandData helmCommandData, boolean isErrorFrameworkEnabled) throws Exception;
 
   HelmCliResponse getHelmRepoList(HelmCommandData helmCommandData)
       throws InterruptedException, TimeoutException, IOException;
 
-  HelmCliResponse deleteHelmRelease(HelmCommandData helmCommandData)
-      throws InterruptedException, TimeoutException, IOException;
+  HelmCliResponse deleteHelmRelease(HelmCommandData helmCommandData, boolean isErrorFrameworkEnabled) throws Exception;
 
   HelmCliResponse repoUpdate(HelmCommandData helmCommandData)
       throws InterruptedException, TimeoutException, IOException;
@@ -115,6 +119,8 @@ public interface HelmClient {
    * @param chartLocation
    * @param namespace
    * @param valuesOverrides
+   * @param isErrorFrameworkEnabled -- as HelmClient is shared by both CG and NG, this boolean is set to true in case of
+   *     NG to enable error handling
    * @return HelmCliResponse the helm cli response
    * @throws InterruptedException the interrupted exception
    * @throws TimeoutException     the timeout exception
@@ -122,7 +128,7 @@ public interface HelmClient {
    * @throws ExecutionException   the execution exception
    */
   HelmCliResponse renderChart(HelmCommandData helmCommandData, String chartLocation, String namespace,
-      List<String> valuesOverrides) throws InterruptedException, TimeoutException, IOException, ExecutionException;
+      List<String> valuesOverrides, boolean isErrorFrameworkEnabled) throws Exception;
 
   String getHelmPath(HelmVersion helmVersion);
 }

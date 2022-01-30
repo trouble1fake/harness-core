@@ -24,7 +24,6 @@ import static io.harness.helm.HelmConstants.ReleaseRecordConstants.NAMESPACE;
 import static io.harness.helm.HelmConstants.ReleaseRecordConstants.REVISION;
 import static io.harness.helm.HelmConstants.ReleaseRecordConstants.STATUS;
 import static io.harness.k8s.K8sConstants.MANIFEST_FILES_DIR;
-import static io.harness.logging.LogLevel.ERROR;
 import static io.harness.validation.Validator.notNullCheck;
 
 import static software.wings.beans.LogColor.Gray;
@@ -51,6 +50,7 @@ import io.harness.delegate.beans.storeconfig.HttpHelmStoreDelegateConfig;
 import io.harness.delegate.beans.storeconfig.S3HelmStoreDelegateConfig;
 import io.harness.delegate.beans.storeconfig.StoreDelegateConfig;
 import io.harness.delegate.beans.storeconfig.StoreDelegateConfigType;
+import io.harness.delegate.exception.HelmNGException;
 import io.harness.delegate.service.ExecutionConfigOverrideFromFileOnDelegate;
 import io.harness.delegate.task.git.ScmFetchFilesHelperNG;
 import io.harness.delegate.task.k8s.ContainerDeploymentDelegateBaseHelper;
@@ -63,7 +63,7 @@ import io.harness.exception.HelmClientException;
 import io.harness.exception.HelmClientRuntimeException;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
-import io.harness.exception.WingsException;
+import io.harness.exception.NestedExceptionUtils;
 import io.harness.helm.HelmCliCommandType;
 import io.harness.helm.HelmClient;
 import io.harness.helm.HelmClientImpl.HelmCliResponse;
@@ -87,6 +87,7 @@ import io.harness.logging.LogLevel;
 import io.harness.security.encryption.SecretDecryptionService;
 import io.harness.shell.SshSessionConfig;
 
+import software.wings.delegatetasks.ExceptionMessageSanitizer;
 import software.wings.helpers.ext.helm.response.ReleaseInfo;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -107,8 +108,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -154,23 +153,15 @@ public class HelmDeployServiceImplNG implements HelmDeployServiceNG {
     LogCallback logCallback = commandRequest.getLogCallback();
     HelmChartInfo helmChartInfo = null;
     int prevVersion = -1;
+    boolean isInstallUpgrade = false;
+    List<KubernetesResource> resources = Collections.emptyList();
     try {
       HelmInstallCmdResponseNG commandResponse;
       logCallback.saveExecutionLog(
           "List all existing deployed releases for release name: " + commandRequest.getReleaseName());
 
       HelmCliResponse helmCliResponse =
-          helmClient.releaseHistory(HelmCommandDataMapperNG.getHelmCmdDataNG(commandRequest));
-
-      // helm hist fails due to any reason other than 'release not found' -- then we fail deployment
-      // (for first time deployment, release history cmd fails with release not found)
-      if (helmCliResponse.getCommandExecutionStatus() == CommandExecutionStatus.FAILURE
-          && !(helmCliResponse.getOutput().contains("not found") && helmCliResponse.getOutput().contains("release"))) {
-        return HelmReleaseHistoryCmdResponseNG.builder()
-            .commandExecutionStatus(helmCliResponse.getCommandExecutionStatus())
-            .output(helmCliResponse.getOutput())
-            .build();
-      }
+          helmClient.releaseHistory(HelmCommandDataMapperNG.getHelmCmdDataNG(commandRequest), true);
 
       logCallback.saveExecutionLog(helmCliResponse.getOutput());
 
@@ -181,9 +172,9 @@ public class HelmDeployServiceImplNG implements HelmDeployServiceNG {
 
       prepareRepoAndCharts(commandRequest, commandRequest.getTimeoutInMillis());
 
-      List<KubernetesResource> resources = printHelmChartKubernetesResources(commandRequest);
+      resources = printHelmChartKubernetesResources(commandRequest);
 
-      helmChartInfo = getHelmChartDetails(commandRequest);
+      helmChartInfo = getHelmChartDetails(commandRequest.getManifestDelegateConfig(), commandRequest.getWorkingDir());
 
       logCallback = markDoneAndStartNew(commandRequest, logCallback, InstallUpgrade);
 
@@ -192,24 +183,28 @@ public class HelmDeployServiceImplNG implements HelmDeployServiceNG {
 
       log.info(helmListReleaseResponseNG.getOutput());
 
-      // if list release failed:
+      // if list release failed due to unknown exception:
       if (helmListReleaseResponseNG.getCommandExecutionStatus() == CommandExecutionStatus.FAILURE) {
-        return helmListReleaseResponseNG;
+        throw new HelmNGException(prevVersion,
+            new HelmClientRuntimeException(
+                new HelmClientException(helmListReleaseResponseNG.getOutput(), USER, HelmCliCommandType.LIST_RELEASE)),
+            false);
       }
 
       // list releases cmd passed
+      isInstallUpgrade = true;
       if (checkNewHelmInstall(helmListReleaseResponseNG)) {
         // install
         logCallback.saveExecutionLog("No previous deployment found for release. Installing chart");
         commandResponse = HelmCommandResponseMapper.getHelmInstCmdRespNG(
-            helmClient.install(HelmCommandDataMapperNG.getHelmCmdDataNG(commandRequest)));
+            helmClient.install(HelmCommandDataMapperNG.getHelmCmdDataNG(commandRequest), true));
       }
 
       else {
         // upgrade
         logCallback.saveExecutionLog("Previous release exists for chart. Upgrading chart");
         commandResponse = HelmCommandResponseMapper.getHelmInstCmdRespNG(
-            helmClient.upgrade(HelmCommandDataMapperNG.getHelmCmdDataNG(commandRequest)));
+            helmClient.upgrade(HelmCommandDataMapperNG.getHelmCmdDataNG(commandRequest), true));
       }
 
       logCallback.saveExecutionLog(commandResponse.getOutput());
@@ -219,18 +214,11 @@ public class HelmDeployServiceImplNG implements HelmDeployServiceNG {
       commandResponse.setReleaseName(commandRequest.getReleaseName());
 
       boolean useSteadyStateCheck = useSteadyStateCheck(commandRequest.isK8SteadyStateCheckEnabled(), logCallback);
-      List<KubernetesResourceId> workloads = Collections.emptyList();
 
-      if (useSteadyStateCheck) {
-        workloads = readResources(resources);
-        ReleaseHistory releaseHistory =
-            createNewRelease(commandRequest, workloads, commandRequest.getNewReleaseVersion());
-        saveReleaseHistory(commandRequest, commandResponse, releaseHistory);
-      }
+      List<KubernetesResourceId> workloads = useSteadyStateCheck
+          ? steadyStateSaveResources(commandRequest, resources, CommandExecutionStatus.SUCCESS)
+          : Collections.emptyList();
 
-      if (commandResponse.getCommandExecutionStatus() != CommandExecutionStatus.SUCCESS) {
-        return commandResponse;
-      }
       logCallback = markDoneAndStartNew(commandRequest, logCallback, WaitForSteadyState);
 
       List<ContainerInfo> containerInfos = getContainerInfos(
@@ -242,49 +230,22 @@ public class HelmDeployServiceImplNG implements HelmDeployServiceNG {
       commandResponse.setHelmVersion(commandRequest.getHelmVersion());
 
       logCallback = markDoneAndStartNew(commandRequest, logCallback, WrapUp);
+
       return commandResponse;
 
     } catch (UncheckedTimeoutException e) {
-      String msg = TIMED_OUT_IN_STEADY_STATE;
-      log.error(msg, e);
       logCallback.saveExecutionLog(TIMED_OUT_IN_STEADY_STATE, LogLevel.ERROR);
-      return HelmInstallCmdResponseNG.builder()
-          .prevReleaseVersion(prevVersion)
-          .commandExecutionStatus(CommandExecutionStatus.FAILURE)
-          .output(new StringBuilder(256)
-                      .append(TIMED_OUT_IN_STEADY_STATE)
-                      .append(": [")
-                      .append(e.getMessage())
-                      .append(" ]")
-                      .toString())
-          .helmChartInfo(helmChartInfo)
-          .helmVersion(commandRequest.getHelmVersion())
-          .build();
-    } catch (WingsException e) {
-      String exceptionMessage = ExceptionUtils.getMessage(e);
-      String msg = "Wings Exception:" + exceptionMessage;
-      log.error(msg, e);
-      logCallback.saveExecutionLog(msg, LogLevel.ERROR);
-      return HelmInstallCmdResponseNG.builder()
-          .prevReleaseVersion(prevVersion)
-          .commandExecutionStatus(CommandExecutionStatus.FAILURE)
-          .output(msg)
-          .helmChartInfo(helmChartInfo)
-          .helmVersion(commandRequest.getHelmVersion())
-          .build();
-      // throw e;
+      throw new HelmNGException(prevVersion, ExceptionMessageSanitizer.sanitizeException(e), isInstallUpgrade);
     } catch (Exception e) {
-      String exceptionMessage = ExceptionUtils.getMessage(e);
-      String msg = "Exception in deploying helm chart:" + exceptionMessage;
-      log.error(msg, e);
+      Exception sanitizedException = ExceptionMessageSanitizer.sanitizeException(e);
+      if (isInstallUpgrade && useSteadyStateCheck(commandRequest.isK8SteadyStateCheckEnabled(), logCallback)) {
+        steadyStateSaveResources(commandRequest, resources, CommandExecutionStatus.FAILURE);
+      }
+
+      String exceptionMessage = ExceptionUtils.getMessage(sanitizedException);
+      String msg = "Exception in deploying helm chart: " + exceptionMessage;
       logCallback.saveExecutionLog(msg, LogLevel.ERROR);
-      return HelmInstallCmdResponseNG.builder()
-          .prevReleaseVersion(prevVersion)
-          .commandExecutionStatus(CommandExecutionStatus.FAILURE)
-          .output(msg)
-          .helmChartInfo(helmChartInfo)
-          .helmVersion(commandRequest.getHelmVersion())
-          .build();
+      throw new HelmNGException(prevVersion, sanitizedException, isInstallUpgrade);
     } finally {
       if (checkIfReleasePurgingNeeded(commandRequest)) {
         logCallback.saveExecutionLog("Deployment failed.");
@@ -292,6 +253,21 @@ public class HelmDeployServiceImplNG implements HelmDeployServiceNG {
       }
       cleanUpWorkingDirectory(commandRequest.getWorkingDir());
     }
+  }
+
+  public List<KubernetesResourceId> steadyStateSaveResources(HelmInstallCommandRequestNG commandRequest,
+      List<KubernetesResource> resources, CommandExecutionStatus commandExecutionStatus) {
+    List<KubernetesResourceId> workloads = readResources(resources);
+    ReleaseHistory releaseHistory = null;
+    try {
+      releaseHistory = createNewRelease(commandRequest, workloads, commandRequest.getNewReleaseVersion());
+      saveReleaseHistory(commandRequest, releaseHistory, commandExecutionStatus);
+    } catch (IOException e) {
+      Exception sanitizedException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error(ExceptionUtils.getMessage(sanitizedException), sanitizedException);
+      return Collections.emptyList();
+    }
+    return workloads;
   }
 
   private void setReleaseNameForContainers(List<ContainerInfo> containerInfos, String releaseName, String namespace) {
@@ -332,10 +308,13 @@ public class HelmDeployServiceImplNG implements HelmDeployServiceNG {
       logCallback.saveExecutionLog(message);
 
       HelmCliResponse deleteResponse =
-          helmClient.deleteHelmRelease(HelmCommandDataMapperNG.getHelmCmdDataNG(commandRequest));
+          helmClient.deleteHelmRelease(HelmCommandDataMapperNG.getHelmCmdDataNG(commandRequest), true);
       logCallback.saveExecutionLog(deleteResponse.getOutput());
     } catch (Exception e) {
-      log.error("Helm delete command failed.", e);
+      Exception sanitizedException = ExceptionMessageSanitizer.sanitizeException(e);
+      String exceptionMessage = ExceptionUtils.getMessage(sanitizedException);
+      String msg = "Helm delete failed: " + exceptionMessage;
+      log.error(msg, sanitizedException);
     }
   }
 
@@ -410,7 +389,7 @@ public class HelmDeployServiceImplNG implements HelmDeployServiceNG {
             .workingDirectory(workingDir)
             .kubeconfigPath(kubeconfigPath)
             .build(),
-        namespace, executionLogCallback, false);
+        namespace, executionLogCallback, false, true);
   }
 
   private Collection<? extends ContainerInfo> fetchContainerInfo(
@@ -419,11 +398,10 @@ public class HelmDeployServiceImplNG implements HelmDeployServiceNG {
         kubernetesConfig, logCallback, ImmutableMap.of("release", commandRequest.getReleaseName()), existingPods);
   }
 
-  private void saveReleaseHistory(HelmCommandRequestNG commandRequest, HelmCommandResponseNG commandResponse,
-      ReleaseHistory releaseHistory) throws IOException {
-    Release.Status releaseStatus = CommandExecutionStatus.SUCCESS == commandResponse.getCommandExecutionStatus()
-        ? Release.Status.Succeeded
-        : Release.Status.Failed;
+  private void saveReleaseHistory(HelmCommandRequestNG commandRequest, ReleaseHistory releaseHistory,
+      CommandExecutionStatus commandExecutionStatus) throws IOException {
+    Release.Status releaseStatus =
+        CommandExecutionStatus.SUCCESS == commandExecutionStatus ? Release.Status.Succeeded : Release.Status.Failed;
     releaseHistory.setReleaseStatus(releaseStatus);
     k8sTaskHelperBase.saveReleaseHistory(
         kubernetesConfig, commandRequest.getReleaseName(), releaseHistory.getAsYaml(), true);
@@ -478,14 +456,14 @@ public class HelmDeployServiceImplNG implements HelmDeployServiceNG {
   }
 
   @Override
-  public HelmCommandResponseNG rollback(HelmRollbackCommandRequestNG commandRequest) {
+  public HelmCommandResponseNG rollback(HelmRollbackCommandRequestNG commandRequest) throws Exception {
     LogCallback logCallback = commandRequest.getLogCallback();
     kubernetesConfig =
         containerDeploymentDelegateBaseHelper.createKubernetesConfig(commandRequest.getK8sInfraDelegateConfig());
     try {
       logCallback = markDoneAndStartNew(commandRequest, logCallback, Rollback);
       HelmInstallCmdResponseNG commandResponse = HelmCommandResponseMapper.getHelmInstCmdRespNG(
-          helmClient.rollback(HelmCommandDataMapperNG.getHelmCmdDataNG(commandRequest)));
+          helmClient.rollback(HelmCommandDataMapperNG.getHelmCmdDataNG(commandRequest), true));
       commandResponse.setPrevReleaseVersion(commandRequest.getPrevReleaseVersion());
       commandResponse.setReleaseName(commandRequest.getReleaseName());
       logCallback.saveExecutionLog(commandResponse.getOutput());
@@ -498,7 +476,7 @@ public class HelmDeployServiceImplNG implements HelmDeployServiceNG {
       if (useSteadyStateCheck) {
         rollbackWorkloads = readResourcesForRollback(commandRequest, commandRequest.getPrevReleaseVersion());
         ReleaseHistory releaseHistory = createNewRelease(commandRequest, rollbackWorkloads, null);
-        saveReleaseHistory(commandRequest, commandResponse, releaseHistory);
+        saveReleaseHistory(commandRequest, releaseHistory, CommandExecutionStatus.FAILURE);
       }
       logCallback = markDoneAndStartNew(commandRequest, logCallback, WaitForSteadyState);
 
@@ -508,18 +486,25 @@ public class HelmDeployServiceImplNG implements HelmDeployServiceNG {
         setReleaseNameForContainers(containerInfos, commandRequest.getReleaseName(), commandRequest.getNamespace());
       }
       commandResponse.setContainerInfoList(containerInfos);
+      commandResponse.setHelmVersion(commandRequest.getHelmVersion());
+      HelmChartInfo helmChartInfo =
+          getHelmChartDetails(commandRequest.getManifestDelegateConfig(), commandRequest.getWorkingDir());
+      commandResponse.setHelmChartInfo(helmChartInfo);
 
       logCallback.saveExecutionLog("\nDone", LogLevel.INFO, CommandExecutionStatus.SUCCESS);
       return commandResponse;
     } catch (UncheckedTimeoutException e) {
-      log.error(TIMED_OUT_IN_STEADY_STATE, e);
+      log.error(TIMED_OUT_IN_STEADY_STATE, ExceptionMessageSanitizer.sanitizeException(e));
       logCallback.saveExecutionLog(TIMED_OUT_IN_STEADY_STATE, LogLevel.ERROR);
-      return new HelmCommandResponseNG(CommandExecutionStatus.FAILURE, ExceptionUtils.getMessage(e));
-    } catch (WingsException e) {
-      throw e;
+      throw ExceptionMessageSanitizer.sanitizeException(e);
     } catch (Exception e) {
-      log.error("Helm rollback failed:", e);
-      return new HelmCommandResponseNG(CommandExecutionStatus.FAILURE, ExceptionUtils.getMessage(e));
+      Exception sanitizedException = ExceptionMessageSanitizer.sanitizeException(e);
+      String msg = sanitizedException.getMessage() == null ? ExceptionUtils.getMessage(sanitizedException)
+                                                           : sanitizedException.getMessage();
+      log.error("Helm rollback failed: " + msg, sanitizedException);
+      logCallback.saveExecutionLog(msg, LogLevel.ERROR);
+      throw sanitizedException;
+
     } finally {
       cleanUpWorkingDirectory(commandRequest.getWorkingDir());
     }
@@ -543,23 +528,28 @@ public class HelmDeployServiceImplNG implements HelmDeployServiceNG {
     try {
       return HTimeLimiter.callInterruptible21(
           timeLimiter, Duration.ofMillis(DEFAULT_TILLER_CONNECTION_TIMEOUT_MILLIS), () -> {
-            HelmCliResponse cliResponse =
-                helmClient.getClientAndServerVersion(HelmCommandDataMapperNG.getHelmCmdDataNG(helmCommandRequest));
+            HelmCliResponse cliResponse = helmClient.getClientAndServerVersion(
+                HelmCommandDataMapperNG.getHelmCmdDataNG(helmCommandRequest), true);
             if (cliResponse.getCommandExecutionStatus() == CommandExecutionStatus.FAILURE) {
               throw new InvalidRequestException(cliResponse.getOutput());
             }
 
-            boolean helm3 = isHelm3(cliResponse.getOutput());
-            CommandExecutionStatus commandExecutionStatus =
-                helm3 ? CommandExecutionStatus.FAILURE : CommandExecutionStatus.SUCCESS;
-            return new HelmCommandResponseNG(commandExecutionStatus, cliResponse.getOutput());
+            if (isHelm3(cliResponse.getOutput())) {
+              throw NestedExceptionUtils.hintWithExplanationException("Change the version to V3 from V2",
+                  "Trying to perform a helm V2 deployment with helm V3",
+                  new InvalidRequestException("Location of helm binary used is: "
+                      + helmClient.getHelmPath(helmCommandRequest.getHelmVersion())));
+            }
+
+            return new HelmCommandResponseNG(CommandExecutionStatus.SUCCESS, cliResponse.getOutput());
           });
     } catch (UncheckedTimeoutException e) {
       String msg = "Timed out while finding helm client and server version";
-      log.error(msg, e);
+      log.error(msg, ExceptionMessageSanitizer.sanitizeException(e));
       throw new InvalidRequestException(msg);
     } catch (Exception e) {
-      throw new InvalidRequestException("Some error occurred while finding Helm client and server version", e);
+      throw new InvalidRequestException("Some error occurred while finding Helm client and server version",
+          ExceptionMessageSanitizer.sanitizeException(e));
     }
   }
 
@@ -567,7 +557,7 @@ public class HelmDeployServiceImplNG implements HelmDeployServiceNG {
   public HelmListReleaseResponseNG listReleases(HelmInstallCommandRequestNG helmCommandRequest) {
     try {
       HelmCliResponse helmCliResponse =
-          helmClient.listReleases(HelmCommandDataMapperNG.getHelmCmdDataNG(helmCommandRequest));
+          helmClient.listReleases(HelmCommandDataMapperNG.getHelmCmdDataNG(helmCommandRequest), true);
       List<ReleaseInfo> releaseInfoList =
           parseHelmReleaseCommandOutput(helmCliResponse.getOutput(), HelmCommandRequestNG.HelmCommandType.LIST_RELEASE);
       return HelmListReleaseResponseNG.builder()
@@ -575,11 +565,15 @@ public class HelmDeployServiceImplNG implements HelmDeployServiceNG {
           .output(helmCliResponse.getOutput())
           .releaseInfoList(releaseInfoList)
           .build();
-    } catch (Exception e) {
+    } catch (HelmClientRuntimeException e) {
       log.error("Helm list releases failed", e);
+      throw e;
+    } catch (Exception e) {
+      Exception sanitizedException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Helm list releases failed", sanitizedException);
       return HelmListReleaseResponseNG.builder()
           .commandExecutionStatus(CommandExecutionStatus.FAILURE)
-          .output(ExceptionUtils.getMessage(e))
+          .output(ExceptionUtils.getMessage(sanitizedException))
           .build();
     }
   }
@@ -588,7 +582,7 @@ public class HelmDeployServiceImplNG implements HelmDeployServiceNG {
   public HelmReleaseHistoryCmdResponseNG releaseHistory(HelmReleaseHistoryCommandRequestNG helmCommandRequest) {
     try {
       HelmCliResponse helmCliResponse =
-          helmClient.releaseHistory(HelmCommandDataMapperNG.getHelmCmdDataNG(helmCommandRequest));
+          helmClient.releaseHistory(HelmCommandDataMapperNG.getHelmCmdDataNG(helmCommandRequest), true);
       List<ReleaseInfo> releaseInfoList =
           parseHelmReleaseCommandOutput(helmCliResponse.getOutput(), helmCommandRequest.getHelmCommandType());
       return HelmReleaseHistoryCmdResponseNG.builder()
@@ -596,10 +590,11 @@ public class HelmDeployServiceImplNG implements HelmDeployServiceNG {
           .releaseInfoList(releaseInfoList)
           .build();
     } catch (Exception e) {
-      log.error("Helm list releases failed:", e);
+      Exception sanitizedException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Helm list releases failed:", sanitizedException);
       return HelmReleaseHistoryCmdResponseNG.builder()
           .commandExecutionStatus(CommandExecutionStatus.FAILURE)
-          .output(ExceptionUtils.getMessage(e))
+          .output(ExceptionUtils.getMessage(sanitizedException))
           .build();
     }
   }
@@ -619,8 +614,10 @@ public class HelmDeployServiceImplNG implements HelmDeployServiceNG {
     if (commandRequest.getHelmVersion() == null) {
       log.error("Did not expect null value of helmVersion, defaulting to V2");
     }
-    return commandRequest.getHelmVersion() == HelmVersion.V3 ? ensureHelm3Installed(commandRequest)
-                                                             : ensureHelmCliAndTillerInstalled(commandRequest);
+    return commandRequest.getHelmVersion() == HelmVersion.V2
+        ? ensureHelmCliAndTillerInstalled(commandRequest)
+        : new HelmCommandResponseNG(
+            CommandExecutionStatus.SUCCESS, "Skipping this as we already have capability check for V3");
   }
 
   @VisibleForTesting
@@ -666,11 +663,16 @@ public class HelmDeployServiceImplNG implements HelmDeployServiceNG {
         secretDecryptionService.decrypt(
             GitApiAccessDecryptionHelper.getAPIAccessDecryptableEntity(gitStoreDelegateConfig.getGitConfigDTO()),
             gitStoreDelegateConfig.getApiAuthEncryptedDataDetails());
+        ExceptionMessageSanitizer.storeAllSecretsForSanitizing(
+            GitApiAccessDecryptionHelper.getAPIAccessDecryptableEntity(gitStoreDelegateConfig.getGitConfigDTO()),
+            gitStoreDelegateConfig.getApiAuthEncryptedDataDetails());
         scmFetchFilesHelper.downloadFilesUsingScm(
             manifestFilesDirectory, gitStoreDelegateConfig, commandRequest.getLogCallback());
       } else {
         GitConfigDTO gitConfigDTO = ScmConnectorMapper.toGitConfigDTO(gitStoreDelegateConfig.getGitConfigDTO());
         gitDecryptionHelper.decryptGitConfig(gitConfigDTO, gitStoreDelegateConfig.getEncryptedDataDetails());
+        ExceptionMessageSanitizer.storeAllSecretsForSanitizing(
+            gitConfigDTO, gitStoreDelegateConfig.getEncryptedDataDetails());
         SshSessionConfig sshSessionConfig = gitDecryptionHelper.getSSHSessionConfig(
             gitStoreDelegateConfig.getSshKeySpecDTO(), gitStoreDelegateConfig.getEncryptedDataDetails());
         ngGitService.downloadFiles(gitStoreDelegateConfig, manifestFilesDirectory, commandRequest.getAccountId(),
@@ -683,9 +685,7 @@ public class HelmDeployServiceImplNG implements HelmDeployServiceNG {
 
     } catch (Exception e) {
       String errorMsg = "Failed to download manifest files from git. ";
-      commandRequest.getLogCallback().saveExecutionLog(
-          errorMsg + ExceptionUtils.getMessage(e), ERROR, CommandExecutionStatus.FAILURE);
-      throw new GitOperationException(errorMsg, e);
+      throw new GitOperationException(errorMsg, ExceptionMessageSanitizer.sanitizeException(e));
     }
   }
 
@@ -728,15 +728,12 @@ public class HelmDeployServiceImplNG implements HelmDeployServiceNG {
       logCallback.saveExecutionLog(color("Successfully fetched following files:", White, Bold));
       logCallback.saveExecutionLog(getManifestFileNamesInLogFormat(destinationDirectory));
     } catch (HelmClientException e) {
-      String errorMsg = format("Failed to download manifest files from %s repo. ",
-          manifestDelegateConfig.getStoreDelegateConfig().getType());
-      logCallback.saveExecutionLog(errorMsg + ExceptionUtils.getMessage(e), ERROR, CommandExecutionStatus.FAILURE);
-      throw new HelmClientRuntimeException(e);
+      throw new HelmClientRuntimeException((HelmClientException) ExceptionMessageSanitizer.sanitizeException(e));
     } catch (Exception e) {
       String errorMsg = format("Failed to download manifest files from %s repo. ",
           manifestDelegateConfig.getStoreDelegateConfig().getType());
-      logCallback.saveExecutionLog(errorMsg + ExceptionUtils.getMessage(e), ERROR, CommandExecutionStatus.FAILURE);
-      throw new HelmClientException(errorMsg, e, HelmCliCommandType.FETCH);
+      throw new HelmClientRuntimeException(
+          new HelmClientException(errorMsg, ExceptionMessageSanitizer.sanitizeException(e), HelmCliCommandType.FETCH));
     }
   }
 
@@ -806,7 +803,8 @@ public class HelmDeployServiceImplNG implements HelmDeployServiceNG {
   }
 
   @VisibleForTesting
-  public List<KubernetesResource> printHelmChartKubernetesResources(HelmInstallCommandRequestNG commandRequest) {
+  public List<KubernetesResource> printHelmChartKubernetesResources(HelmInstallCommandRequestNG commandRequest)
+      throws Exception {
     ManifestDelegateConfig manifestDelegateConfig = commandRequest.getManifestDelegateConfig();
 
     Optional<StoreDelegateConfigType> storeTypeOpt =
@@ -839,19 +837,17 @@ public class HelmDeployServiceImplNG implements HelmDeployServiceNG {
       executionLogCallback.saveExecutionLog(ManifestHelper.toYamlForLogs(helmKubernetesResources));
 
     } catch (InterruptedException e) {
-      log.error("Failed to get k8s resources from Helm chart", e);
+      log.error("Failed to get k8s resources from Helm chart", ExceptionMessageSanitizer.sanitizeException(e));
       Thread.currentThread().interrupt();
-    } catch (Exception e) {
-      String msg = format("Failed to print Helm chart manifest, location: %s", workingDir);
-      log.error(msg, e);
-      executionLogCallback.saveExecutionLog(msg);
+      throw new HelmClientRuntimeException(
+          new HelmClientException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), USER,
+              HelmCliCommandType.RENDER_CHART));
     }
     return helmKubernetesResources;
   }
 
-  private List<KubernetesResource> getKubernetesResourcesFromHelmChart(
-      HelmInstallCommandRequestNG commandRequest, String namespace, String workingDir, List<String> valueOverrides)
-      throws InterruptedException, ExecutionException, TimeoutException, IOException {
+  private List<KubernetesResource> getKubernetesResourcesFromHelmChart(HelmInstallCommandRequestNG commandRequest,
+      String namespace, String workingDir, List<String> valueOverrides) throws Exception {
     log.debug("Getting K8S resources from Helm chart, namespace: {}, chartLocation: {}", namespace, workingDir);
 
     HelmCommandResponseNG commandResponse = renderHelmChart(commandRequest, namespace, workingDir, valueOverrides);
@@ -862,9 +858,8 @@ public class HelmDeployServiceImplNG implements HelmDeployServiceNG {
   }
 
   @Override
-  public HelmCommandResponseNG renderHelmChart(
-      HelmCommandRequestNG commandRequest, String namespace, String chartLocation, List<String> valueOverrides)
-      throws InterruptedException, TimeoutException, IOException, ExecutionException {
+  public HelmCommandResponseNG renderHelmChart(HelmCommandRequestNG commandRequest, String namespace,
+      String chartLocation, List<String> valueOverrides) throws Exception {
     LogCallback executionLogCallback = commandRequest.getLogCallback();
 
     log.debug("Rendering Helm chart, namespace: {}, chartLocation: {}", namespace, chartLocation);
@@ -872,12 +867,7 @@ public class HelmDeployServiceImplNG implements HelmDeployServiceNG {
     executionLogCallback.saveExecutionLog("Rendering Helm chart", LogLevel.INFO, CommandExecutionStatus.RUNNING);
 
     HelmCliResponse cliResponse = helmClient.renderChart(
-        HelmCommandDataMapperNG.getHelmCmdDataNG(commandRequest), chartLocation, namespace, valueOverrides);
-    if (cliResponse.getCommandExecutionStatus() == CommandExecutionStatus.FAILURE) {
-      String msg = format("Failed to render chart location: %s. Reason %s ", chartLocation, cliResponse.getOutput());
-      executionLogCallback.saveExecutionLog(msg);
-      throw new InvalidRequestException(msg);
-    }
+        HelmCommandDataMapperNG.getHelmCmdDataNG(commandRequest), chartLocation, namespace, valueOverrides, true);
 
     return new HelmCommandResponseNG(cliResponse.getCommandExecutionStatus(), cliResponse.getOutput());
   }
@@ -923,14 +913,13 @@ public class HelmDeployServiceImplNG implements HelmDeployServiceNG {
         .build();
   }
 
-  private HelmChartInfo getHelmChartDetails(HelmInstallCommandRequestNG helmInstallCommandRequestNG)
+  private HelmChartInfo getHelmChartDetails(ManifestDelegateConfig manifestDelegateConfig, String workingDir)
       throws IOException {
-    ManifestDelegateConfig manifestDelegateConfig = helmInstallCommandRequestNG.getManifestDelegateConfig();
     HelmChartManifestDelegateConfig helmChartManifestDelegateConfig =
         (HelmChartManifestDelegateConfig) manifestDelegateConfig;
 
-    HelmChartInfo helmChartInfo = helmTaskHelperBase.getHelmChartInfoFromChartsYamlFile(
-        Paths.get(helmInstallCommandRequestNG.getWorkingDir(), CHARTS_YAML_KEY).toString());
+    HelmChartInfo helmChartInfo =
+        helmTaskHelperBase.getHelmChartInfoFromChartsYamlFile(Paths.get(workingDir, CHARTS_YAML_KEY).toString());
 
     try {
       switch (manifestDelegateConfig.getStoreDelegateConfig().getType()) {
@@ -949,7 +938,7 @@ public class HelmDeployServiceImplNG implements HelmDeployServiceNG {
       }
 
     } catch (Exception e) {
-      log.error("Incorrect/Unsupported store type.", e);
+      log.error("Incorrect/Unsupported store type.", ExceptionMessageSanitizer.sanitizeException(e));
     }
 
     return helmChartInfo;
