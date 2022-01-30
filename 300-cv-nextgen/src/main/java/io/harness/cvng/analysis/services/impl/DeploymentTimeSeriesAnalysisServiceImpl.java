@@ -213,6 +213,11 @@ public class DeploymentTimeSeriesAnalysisServiceImpl implements DeploymentTimeSe
     return new ArrayList<>(nodeNameSet);
   }
 
+  @Override
+  public List<TransactionMetricInfo> getTransactionMetricInfos(String accountId, String verificationJobInstanceId) {
+    return getMetrics(accountId, verificationJobInstanceId, DeploymentTimeSeriesAnalysisFilter.builder().build());
+  }
+
   private List<TransactionMetricInfo> getMetrics(String accountId, String verificationJobInstanceId,
       DeploymentTimeSeriesAnalysisFilter deploymentTimeSeriesAnalysisFilter) {
     List<DeploymentTimeSeriesAnalysis> latestDeploymentTimeSeriesAnalysis =
@@ -270,8 +275,7 @@ public class DeploymentTimeSeriesAnalysisServiceImpl implements DeploymentTimeSe
     }
 
     List<TransactionMetricInfo> transactionMetricInfoList = new ArrayList<>(transactionMetricInfoSet);
-    transactionMetricInfoList.sort(
-        (d1, d2) -> Double.compare(d2.getTransactionMetric().getScore(), d1.getTransactionMetric().getScore()));
+    Collections.sort(transactionMetricInfoList);
     return transactionMetricInfoList;
   }
 
