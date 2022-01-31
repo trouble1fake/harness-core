@@ -19,7 +19,6 @@ import io.harness.pms.contracts.advisers.AdviserObtainment;
 import io.harness.pms.contracts.execution.failure.FailureType;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.pms.yaml.YamlField;
-import io.harness.steps.StepSpecTypeConstants;
 import io.harness.utils.TimeoutUtils;
 import io.harness.yaml.core.failurestrategy.FailureStrategyActionConfig;
 import io.harness.yaml.core.failurestrategy.manualintervention.ManualInterventionFailureActionConfig;
@@ -34,7 +33,7 @@ import java.util.stream.Collectors;
 public class PMSStepPlanCreator extends GenericStepPMSPlanCreator {
   @Override
   public Set<String> getSupportedStepTypes() {
-    return Sets.newHashSet(StepSpecTypeConstants.FLAG_CONFIGURATION);
+    return Sets.newHashSet();
   }
 
   @Override

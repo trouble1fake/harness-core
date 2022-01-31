@@ -25,6 +25,7 @@ import io.harness.plancreator.stages.parallel.ParallelPlanCreator;
 import io.harness.plancreator.steps.StepGroupPMSPlanCreator;
 import io.harness.plancreator.steps.barrier.BarrierStepPlanCreator;
 import io.harness.plancreator.steps.http.HttpStepPlanCreator;
+import io.harness.plancreator.steps.internal.FlagConfigurationStepPlanCreator;
 import io.harness.plancreator.steps.internal.PMSStepPlanCreator;
 import io.harness.plancreator.steps.internal.PmsStepFilterJsonCreator;
 import io.harness.plancreator.steps.internal.PmsStepFilterJsonCreatorV2;
@@ -85,6 +86,7 @@ public class PipelineServiceInternalInfoProvider implements PipelineServiceInfoP
     planCreators.add(new JiraApprovalStepPlanCreator());
     planCreators.add(new HarnessApprovalStepPlanCreator());
     planCreators.add(new BarrierStepPlanCreator());
+    planCreators.add(new FlagConfigurationStepPlanCreator());
     injectorUtils.injectMembers(planCreators);
     return planCreators;
   }
