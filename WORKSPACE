@@ -4448,7 +4448,7 @@ plain_artifacts = [
     "com.spotify:docker-client:8.16.0",
     "com.squareup.okhttp3:logging-interceptor:3.14.9",
     "com.squareup.okhttp3:okhttp-urlconnection:3.14.9",
-    "com.squareup.okhttp3:okhttp:3.14.9",
+    "com.squareup.okhttp3:okhttp:4.9.0",
     "com.squareup.okio:okio:1.17.2",
     "com.squareup.retrofit2:adapter-rxjava:2.8.1",
     "com.squareup.retrofit2:converter-gson:2.8.1",
