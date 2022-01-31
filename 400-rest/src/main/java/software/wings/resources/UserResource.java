@@ -49,6 +49,7 @@ import io.harness.ng.core.switchaccount.SwitchAccountResponse;
 import io.harness.ng.core.user.TwoFactorAdminOverrideSettings;
 import io.harness.rest.RestResponse;
 import io.harness.rest.RestResponse.Builder;
+import io.harness.security.annotations.InternalApi;
 import io.harness.security.annotations.PublicApi;
 
 import software.wings.app.MainConfiguration;
@@ -95,6 +96,8 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Hidden;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -317,6 +320,17 @@ public class UserResource {
   public RestResponse<User> updateUserGroupsOfUser(
       @QueryParam("accountId") @NotEmpty String accountId, @PathParam("userId") String userId, User user) {
     return getPublicUser(userService.updateUserGroupsOfUser(userId, user.getUserGroups(), accountId, true));
+  }
+
+  @GET
+  @Hidden
+  @InternalApi
+  @AuthRule(permissionType = LOGGED_IN)
+  @Path("validate-support-user/{userId}")
+  @ApiOperation(value = "This is to check if user is part of harness support group", hidden = true)
+  public RestResponse<Boolean> isHarnessSupportUser(@PathParam("userId") String userId) {
+    boolean response = harnessUserGroupService.isHarnessSupportUser(userId);
+    return new RestResponse<>(response);
   }
 
   /**

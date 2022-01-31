@@ -12,6 +12,7 @@ import static io.harness.rule.OwnerRule.DEEPAK;
 import static io.harness.rule.OwnerRule.MEENAKSHI;
 import static io.harness.rule.OwnerRule.MEHUL;
 import static io.harness.rule.OwnerRule.MOHIT;
+import static io.harness.rule.OwnerRule.NISHANT;
 import static io.harness.rule.OwnerRule.RAMA;
 import static io.harness.rule.OwnerRule.UNKNOWN;
 
@@ -273,5 +274,14 @@ public class UserResourceTest extends WingsBaseTest {
       verify(bugsnagErrorReporter, times(1)).report(ErrorData.builder().exception(e).email("").tabs(tab).build());
       assertThat(e).isNotNull();
     }
+  }
+
+  @Test
+  @Owner(developers = NISHANT)
+  @Category(UnitTests.class)
+  public void testIsHarnessSupportUser() {
+    String userId = UUIDGenerator.generateUuid();
+    userResource.isHarnessSupportUser(userId);
+    verify(HARNESS_USER_GROUP_SERVICE, times(1)).isHarnessSupportUser(userId);
   }
 }
