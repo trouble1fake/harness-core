@@ -450,9 +450,7 @@ public class StateMachine implements PersistentEntity, UuidAware, CreatedAtAware
    * Clear cache.
    */
   void clearCache() {
-    synchronized (cachedStatesMap) {
-      cachedStatesMap = null;
-    }
+    cachedStatesMap = null;
     cachedTransitionFlowMap = null;
   }
 
@@ -507,9 +505,7 @@ public class StateMachine implements PersistentEntity, UuidAware, CreatedAtAware
       }
       states.add(state);
     }
-    synchronized (cachedStatesMap) {
-      cachedStatesMap = null;
-    }
+    cachedStatesMap = null;
     return state;
   }
 
