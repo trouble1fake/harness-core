@@ -48,7 +48,6 @@ import retrofit2.converter.jackson.JacksonConverterFactory;
 @Singleton
 @Slf4j
 public class NexusThreeClientImpl {
-  private static final int MAX_PAGES = 10;
   private static final List<String> IGNORE_EXTENSIONS = Lists.newArrayList("pom", "sha1", "sha256", "sha512", "md5");
 
   public NexusThreeRestClient getNexusThreeClient(NexusRequest nexusConfig) {
@@ -134,10 +133,7 @@ public class NexusThreeClientImpl {
       response = nexusThreeRestClient.search(repoName, imageName, repoFormat, null).execute();
     }
 
-    List<BuildDetailsInternal> versions =
-        processComponentResponse(nexusConfig, repoName, port, imageName, repoFormat, null, response);
-
-    return versions;
+    return processComponentResponse(nexusConfig, repoName, port, imageName, repoFormat, null, response);
   }
 
   private List<ArtifactFileMetadataInternal> getArtifactMetadata(List<Asset> assets, String repoId) {
@@ -203,10 +199,7 @@ public class NexusThreeClientImpl {
       response = nexusThreeRestClient.getArtifact(repository, imageName, repositoryFormat, tag, null, null).execute();
     }
 
-    List<BuildDetailsInternal> components =
-        processComponentResponse(nexusConfig, repository, port, imageName, repositoryFormat, tag, response);
-
-    return components;
+    return processComponentResponse(nexusConfig, repository, port, imageName, repositoryFormat, tag, response);
   }
 
   private List<BuildDetailsInternal> processComponentResponse(NexusRequest nexusConfig, String repository, Integer port,
@@ -220,8 +213,7 @@ public class NexusThreeClientImpl {
                 getArtifactMetadata(component.getAssets(), repository);
             String versionDownloadUrl = null;
             String imagePath = null;
-            String actualTag = (isEmpty(tag) ?
-                    component.getVersion() : tag);
+            String actualTag = isEmpty(tag) ? component.getVersion() : tag;
             if (isNotEmpty(artifactFileMetadataInternals)) {
               versionDownloadUrl = getArtifactDownloadUrl(artifactFileMetadataInternals, null, null);
               imagePath = getArtifactImagePath(artifactFileMetadataInternals, null, null);
@@ -259,8 +251,9 @@ public class NexusThreeClientImpl {
 
     log.error(response.errorBody().toString());
     throw NestedExceptionUtils.hintWithExplanationException(
-            "Request to get artifact details has failed with code (" + response.code() + ")",
-             response.errorBody().toString().length() < 500 ? "Error response: " + response.errorBody().toString() : "Check logs for more details.",
-            new InvalidArtifactServerException("Failed to fetch the components", WingsException.USER));
+        "Request to get artifact details has failed with code (" + response.code() + ")",
+        response.errorBody().toString().length() < 500 ? "Error response: " + response.errorBody().toString()
+                                                       : "Check logs for more details.",
+        new InvalidArtifactServerException("Failed to fetch the components", WingsException.USER));
   }
 }

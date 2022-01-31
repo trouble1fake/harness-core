@@ -3130,8 +3130,7 @@
             "connectorRef",
             "imagePath",
             "repository",
-            "repositoryFormat",
-            "repositoryPort"
+            "repositoryFormat"
           ],
           "properties": {
             "connectorRef": {
@@ -3163,6 +3162,20 @@
               "type": "string"
             }
           }
+        },
+        {
+          "oneOf": [
+            {
+              "required": [
+                "repositoryPort"
+              ]
+            },
+            {
+              "required": [
+                "dockerRepositoryServer"
+              ]
+            }
+          ]
         },
         {
           "oneOf": [

@@ -83,8 +83,8 @@ public class ArtifactConfigToDelegateReqMapper {
     }
     return ArtifactDelegateRequestUtils.getNexusArtifactDelegateRequest(artifactConfig.getRepository().getValue(),
         artifactConfig.getRepositoryPort().getValue(), artifactConfig.getImagePath().getValue(),
-        artifactConfig.getRepositoryFormat().getValue(), artifactConfig.getDockerRepositoryServer().getValue(), tag, tagRegex, null, connectorRef, nexusConnectorDTO,
-        encryptedDataDetails, ArtifactSourceType.ARTIFACTORY_REGISTRY);
+        artifactConfig.getRepositoryFormat().getValue(), artifactConfig.getDockerRepositoryServer().getValue(), tag,
+        tagRegex, null, connectorRef, nexusConnectorDTO, encryptedDataDetails, ArtifactSourceType.ARTIFACTORY_REGISTRY);
   }
 
   public ArtifactoryArtifactDelegateRequest getArtifactoryArtifactDelegateRequest(
