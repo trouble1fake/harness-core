@@ -6,8 +6,9 @@
 echo "INFO: Downloading alpn.jar to Harness-Core Directory."
 echo "INFO: Running: curl https://storage.googleapis.com/harness-prod-public/public/shared/tools/alpn/release/8.1.13.v20181017/alpn-boot-8.1.13.v20181017.jar --output alpn-boot-8.1.13.v20181017.jar"
 curl https://storage.googleapis.com/harness-prod-public/public/shared/tools/alpn/release/8.1.13.v20181017/alpn-boot-8.1.13.v20181017.jar --output alpn-boot-8.1.13.v20181017.jar
-echo "Download Status: $?"
-if [[ "$?" -ne 0 ]]; then
+STATUS="$?"
+echo "Download Status: $STATUS"
+if [[ "$STATUS" -ne 0 ]]; then
   echo "ERROR: Downloading alpn.jar failed."; exit 1
 fi
 

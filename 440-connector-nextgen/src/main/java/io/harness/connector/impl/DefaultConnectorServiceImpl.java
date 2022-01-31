@@ -503,7 +503,7 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
   }
 
   @Override
-  public ConnectorDTO fullSyncEntity(EntityDetailProtoDTO entityDetailProtoDTO) {
+  public ConnectorDTO fullSyncEntity(EntityDetailProtoDTO entityDetailProtoDTO, boolean isFullSyncingToDefaultBranch) {
     IdentifierRefProtoDTO identifierRef = entityDetailProtoDTO.getIdentifierRef();
     String accountIdentifier = identifierRef.getAccountIdentifier().getValue();
     String orgIdentifier = identifierRef.getOrgIdentifier().getValue();
@@ -520,12 +520,19 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
     if (!existingConnectorOptional.isPresent()) {
       throw new InvalidRequestException(format("No connector exists with the  Identifier %s", identifier));
     }
-    Connector updatedConnector = connectorRepository.save(existingConnectorOptional.get(), ADD);
+    Connector connector = existingConnectorOptional.get();
+    connector.setHeartbeatPerpetualTaskId(null);
+    Connector updatedConnector = connectorRepository.save(connector, ADD);
     ConnectorInfoDTO connectorInfoDTO = getResponse(accountIdentifier, updatedConnector.getOrgIdentifier(),
         updatedConnector.getProjectIdentifier(), updatedConnector)
                                             .getConnector();
     deleteTheExistingReferences(accountIdentifier, orgIdentifier, projectIdentifier, identifier);
     connectorEntityReferenceHelper.createSetupUsageForSecret(connectorInfoDTO, accountIdentifier, true);
+    String fqn = FullyQualifiedIdentifierHelper.getFullyQualifiedIdentifier(
+        accountIdentifier, orgIdentifier, projectIdentifier, identifier);
+    if (!isFullSyncingToDefaultBranch) {
+      connectorHeartbeatService.deletePerpetualTask(accountIdentifier, connector.getHeartbeatPerpetualTaskId(), fqn);
+    }
     return ConnectorDTO.builder().connectorInfo(connectorInfoDTO).build();
   }
 
@@ -951,7 +958,7 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
             if (isNotBlank(heartbeatTaskId)) {
               boolean perpetualTaskIsDeleted =
                   connectorHeartbeatService.deletePerpetualTask(accountIdentifier, heartbeatTaskId, connectorFQN);
-              if (perpetualTaskIsDeleted == false) {
+              if (!perpetualTaskIsDeleted) {
                 log.info("{} The perpetual task could not be deleted {}", CONNECTOR_HEARTBEAT_LOG_PREFIX, connectorFQN);
                 return false;
               }

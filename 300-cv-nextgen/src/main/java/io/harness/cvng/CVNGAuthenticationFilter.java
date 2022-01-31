@@ -56,21 +56,23 @@ public class CVNGAuthenticationFilter
     }
 
     if (isDelegateRequest(containerRequestContext)) {
-      try {
-        if (managerClient
-                .authenticateDelegateRequest(
-                    containerRequestContext.getUriInfo().getQueryParameters().getFirst("accountId"),
-                    containerRequestContext.getHeaderString(HttpHeaders.AUTHORIZATION))
-                .execute()
-                .body()
-                .getResource()) {
-          return;
-        }
-      } catch (IOException e) {
-        log.error("Can not validate delegate request", e);
-      }
+      String accountId = containerRequestContext.getUriInfo().getQueryParameters().getFirst("accountId");
+      String token = containerRequestContext.getHeaderString(HttpHeaders.AUTHORIZATION);
+      validateDelegateToken(accountId, token);
     }
 
+    throw new WingsException(INVALID_CREDENTIAL, USER);
+  }
+
+  @Override
+  public void validateDelegateToken(String accountId, String tokenString) {
+    try {
+      if (managerClient.authenticateDelegateRequest(accountId, tokenString).execute().body().getResource()) {
+        return;
+      }
+    } catch (IOException e) {
+      log.error("Can not validate delegate request", e);
+    }
     throw new WingsException(INVALID_CREDENTIAL, USER);
   }
 

@@ -33,7 +33,10 @@ import static io.harness.eventsframework.EventsFrameworkMetadataConstants.DELETE
 import static io.harness.exception.WingsException.USER;
 import static io.harness.k8s.KubernetesConvention.getAccountIdentifier;
 import static io.harness.logging.AutoLogContext.OverrideBehavior.OVERRIDE_NESTS;
+import static io.harness.metrics.impl.DelegateMetricsServiceImpl.DELEGATE_DESTROYED;
+import static io.harness.metrics.impl.DelegateMetricsServiceImpl.DELEGATE_DISCONNECTED;
 import static io.harness.metrics.impl.DelegateMetricsServiceImpl.DELEGATE_REGISTRATION_FAILED;
+import static io.harness.metrics.impl.DelegateMetricsServiceImpl.DELEGATE_RESTARTED;
 import static io.harness.mongo.MongoUtils.setUnset;
 import static io.harness.obfuscate.Obfuscator.obfuscate;
 import static io.harness.persistence.HQuery.excludeAuthority;
@@ -932,6 +935,7 @@ public class DelegateServiceImpl implements DelegateService {
     auditServiceHelper.reportForAuditingUsingAccountId(accountId, currentDelegate, updatedDelegate, actionEventType);
 
     if (DelegateInstanceStatus.DELETED == newDelegateStatus) {
+      delegateMetricsService.recordDelegateMetrics(currentDelegate, DELEGATE_DESTROYED);
       broadcasterFactory.lookup(STREAM_DELEGATE + accountId, true).broadcast(SELF_DESTRUCT + delegateId);
       log.warn("Sent self destruct command to rejected delegate {}.", delegateId);
     }
@@ -2240,6 +2244,7 @@ public class DelegateServiceImpl implements DelegateService {
   @Override
   public DelegateRegisterResponse register(Delegate delegate) {
     if (licenseService.isAccountDeleted(delegate.getAccountId())) {
+      delegateMetricsService.recordDelegateMetrics(delegate, DELEGATE_DESTROYED);
       broadcasterFactory.lookup(STREAM_DELEGATE + delegate.getAccountId(), true).broadcast(SELF_DESTRUCT);
       log.warn("Sending self destruct command from register delegate because the account is deleted.");
       delegateMetricsService.recordDelegateMetrics(delegate, DELEGATE_REGISTRATION_FAILED);
@@ -2297,6 +2302,9 @@ public class DelegateServiceImpl implements DelegateService {
   @Override
   public DelegateRegisterResponse register(final DelegateParams delegateParams) {
     if (licenseService.isAccountDeleted(delegateParams.getAccountId())) {
+      delegateMetricsService.recordDelegateMetrics(
+          Delegate.builder().accountId(delegateParams.getAccountId()).version(delegateParams.getVersion()).build(),
+          DELEGATE_DESTROYED);
       broadcasterFactory.lookup(STREAM_DELEGATE + delegateParams.getAccountId(), true).broadcast(SELF_DESTRUCT);
       log.warn("Sending self destruct command from register delegate parameters because the account is deleted.");
       return DelegateRegisterResponse.builder().action(DelegateRegisterResponse.Action.SELF_DESTRUCT).build();
@@ -2854,6 +2862,8 @@ public class DelegateServiceImpl implements DelegateService {
     log.info("Delegate connection {} disconnected for delegate {}", delegateConnectionId, delegateId);
     delegateConnectionDao.delegateDisconnected(accountId, delegateConnectionId);
     subject.fireInform(DelegateObserver::onDisconnected, accountId, delegateId);
+    Delegate delegate = delegateCache.get(accountId, delegateId, false);
+    delegateMetricsService.recordDelegateMetrics(delegate, DELEGATE_DISCONNECTED);
     remoteObserverInformer.sendEvent(
         ReflectionUtils.getMethod(DelegateObserver.class, "onDisconnected", String.class, String.class),
         DelegateServiceImpl.class, accountId, delegateId);
@@ -3037,6 +3047,7 @@ public class DelegateServiceImpl implements DelegateService {
     DelegateConnection previousDelegateConnection = delegateConnectionDao.upsertCurrentConnection(
         accountId, delegateId, heartbeat.getDelegateConnectionId(), version, heartbeat.getLocation());
 
+    Delegate delegate = delegateCache.get(accountId, delegateId, false);
     if (previousDelegateConnection == null) {
       DelegateConnection existingConnection = delegateConnectionDao.findAndDeletePreviousConnections(
           accountId, delegateId, heartbeat.getDelegateConnectionId(), heartbeat.getVersion());
@@ -3044,7 +3055,6 @@ public class DelegateServiceImpl implements DelegateService {
         UUID currentUUID = convertFromBase64(heartbeat.getDelegateConnectionId());
         UUID existingUUID = convertFromBase64(existingConnection.getUuid());
         if (existingUUID.timestamp() > currentUUID.timestamp()) {
-          Delegate delegate = delegateCache.get(accountId, delegateId, false);
           boolean notSameLocationForShellScriptDelegate = DelegateType.SHELL_SCRIPT.equals(delegate.getDelegateType())
               && (isNotEmpty(heartbeat.getLocation()) && isNotEmpty(existingConnection.getLocation())
                   && !heartbeat.getLocation().equals(existingConnection.getLocation()));
@@ -3057,6 +3067,7 @@ public class DelegateServiceImpl implements DelegateService {
             log.error("Two delegates with the same identity");
           }
         } else {
+          delegateMetricsService.recordDelegateMetrics(delegate, DELEGATE_RESTARTED);
           log.error("Delegate restarted");
         }
       }
@@ -3519,6 +3530,8 @@ public class DelegateServiceImpl implements DelegateService {
 
   private void destroyTheCurrentDelegate(
       String accountId, String delegateId, String delegateConnectionId, ConnectionMode connectionMode) {
+    Delegate delegate = delegateCache.get(accountId, delegateId, false);
+    delegateMetricsService.recordDelegateMetrics(delegate, DELEGATE_DESTROYED);
     switch (connectionMode) {
       case POLLING:
         log.warn("Sent self destruct command to delegate {}, with connectionId {}.", delegateId, delegateConnectionId);

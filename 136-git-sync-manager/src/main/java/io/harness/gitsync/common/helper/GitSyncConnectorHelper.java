@@ -27,6 +27,10 @@ import io.harness.delegate.beans.git.YamlGitConfigDTO;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.UnexpectedException;
 import io.harness.gitsync.common.service.YamlGitConfigService;
+import io.harness.gitsync.helpers.GitContextHelper;
+import io.harness.gitsync.interceptor.GitEntityInfo;
+import io.harness.gitsync.interceptor.GitSyncBranchContext;
+import io.harness.manage.GlobalContextManager;
 import io.harness.tasks.DecryptGitApiAccessHelper;
 import io.harness.utils.IdentifierRefHelper;
 
@@ -154,25 +158,26 @@ public class GitSyncConnectorHelper {
     }
   }
 
-  public ScmConnector getScmConnector(
-      String accountIdentifier, String orgIdentifier, String projectIdentifier, String connectorRef) {
+  public ScmConnector getScmConnector(String accountIdentifier, String orgIdentifier, String projectIdentifier,
+      String connectorRef, String connectorRepo, String connectorBranch) {
     IdentifierRef identifierRef =
         IdentifierRefHelper.getIdentifierRef(connectorRef, accountIdentifier, orgIdentifier, projectIdentifier);
-    final ConnectorResponseDTO connectorResponseDTO =
-        connectorService
-            .get(identifierRef.getAccountIdentifier(), identifierRef.getOrgIdentifier(),
-                identifierRef.getProjectIdentifier(), identifierRef.getIdentifier())
-            .orElseThrow(()
-                             -> new InvalidRequestException(connectorErrorMessagesHelper.createConnectorNotFoundMessage(
-                                 identifierRef.getAccountIdentifier(), identifierRef.getOrgIdentifier(),
-                                 identifierRef.getProjectIdentifier(), identifierRef.getIdentifier())));
-    return (ScmConnector) connectorResponseDTO.getConnector().getConnectorConfig();
+    final Optional<ConnectorResponseDTO> connectorResponseDTO = getConnectorFromDefaultBranchElseFromGitBranch(
+        identifierRef.getAccountIdentifier(), identifierRef.getOrgIdentifier(), identifierRef.getProjectIdentifier(),
+        identifierRef.getIdentifier(), connectorRepo, connectorBranch);
+    if (!connectorResponseDTO.isPresent()) {
+      throw new InvalidRequestException(String.format("Ref Connector [{}] doesn't exist.", connectorRef));
+    }
+    return (ScmConnector) connectorResponseDTO.get().getConnector().getConnectorConfig();
   }
 
   public ScmConnector getDecryptedConnector(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, String connectorRef, String repoUrl) {
+    YamlGitConfigDTO yamlGitConfigDTO =
+        yamlGitConfigService.getByProjectIdAndRepo(accountIdentifier, orgIdentifier, projectIdentifier, repoUrl);
     try {
-      ScmConnector connector = getScmConnector(accountIdentifier, orgIdentifier, projectIdentifier, connectorRef);
+      ScmConnector connector = getScmConnector(accountIdentifier, orgIdentifier, projectIdentifier, connectorRef,
+          yamlGitConfigDTO.getGitConnectorsRepo(), yamlGitConfigDTO.getGitConnectorsBranch());
       final ScmConnector scmConnector =
           decryptGitApiAccessHelper.decryptScmApiAccess(connector, accountIdentifier, projectIdentifier, orgIdentifier);
       scmConnector.setUrl(repoUrl);
@@ -181,6 +186,40 @@ public class GitSyncConnectorHelper {
       throw new UnexpectedException(
           String.format("The connector with the  id %s, accountId %s, orgId %s, projectId %s is not a scm connector",
               connectorRef, accountIdentifier, orgIdentifier, projectIdentifier));
+    }
+  }
+
+  public Optional<ConnectorResponseDTO> getConnectorFromDefaultBranchElseFromGitBranch(String accountId,
+      String orgIdentifier, String projectIdentifier, String identifier, String connectorRepo, String connectorBranch) {
+    Optional<ConnectorResponseDTO> connectorResponseDTO = Optional.empty();
+    GitEntityInfo oldGitEntityInfo = GitContextHelper.getGitEntityInfo();
+    try (GlobalContextManager.GlobalContextGuard guard = GlobalContextManager.ensureGlobalContextGuard()) {
+      final GitEntityInfo emptyInfo = GitEntityInfo.builder().build();
+      GlobalContextManager.upsertGlobalContextRecord(GitSyncBranchContext.builder().gitBranchInfo(emptyInfo).build());
+      connectorResponseDTO = connectorService.get(accountId, orgIdentifier, projectIdentifier, identifier);
+    } finally {
+      GlobalContextManager.upsertGlobalContextRecord(
+          GitSyncBranchContext.builder().gitBranchInfo(oldGitEntityInfo).build());
+    }
+    if (connectorResponseDTO.isPresent()) {
+      return connectorResponseDTO;
+    }
+    return getConnectorFromRepoBranch(
+        accountId, orgIdentifier, projectIdentifier, identifier, connectorRepo, connectorBranch);
+  }
+
+  private Optional<ConnectorResponseDTO> getConnectorFromRepoBranch(String accountId, String orgIdentifier,
+      String projectIdentifier, String identifier, String connectorRepo, String connectorBranch) {
+    GitEntityInfo oldGitEntityInfo = GitContextHelper.getGitEntityInfo();
+    try (GlobalContextManager.GlobalContextGuard guard = GlobalContextManager.ensureGlobalContextGuard()) {
+      final GitEntityInfo repoBranchInfo =
+          GitEntityInfo.builder().yamlGitConfigId(connectorRepo).branch(connectorBranch).build();
+      GlobalContextManager.upsertGlobalContextRecord(
+          GitSyncBranchContext.builder().gitBranchInfo(repoBranchInfo).build());
+      return connectorService.get(accountId, orgIdentifier, projectIdentifier, identifier);
+    } finally {
+      GlobalContextManager.upsertGlobalContextRecord(
+          GitSyncBranchContext.builder().gitBranchInfo(oldGitEntityInfo).build());
     }
   }
 }
