@@ -165,14 +165,9 @@ metadata:
   namespace: harness-autostopping
 data:
   envoy.yaml: >
-    admin:
-      profile_path: /tmp/envoy.prof
-      access_log_path: /tmp/envoy_admin.log
-      address:
-        socket_address: { address: 0.0.0.0, port_value: 9901 }
     node:
-      cluster: test-cluster
-      id: test-id
+      cluster: primary-cluster
+      id: primary-id
 
     dynamic_resources:
       lds_config:
