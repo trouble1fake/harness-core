@@ -11,11 +11,13 @@ import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 
 import io.harness.annotation.StoreIn;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.annotations.dev.ToBeDeleted;
 import io.harness.mongo.index.CompoundMongoIndex;
 import io.harness.mongo.index.FdTtlIndex;
 import io.harness.mongo.index.MongoIndex;
 import io.harness.ng.DbAliases;
 import io.harness.pms.data.stepdetails.PmsStepDetails;
+import io.harness.pms.data.stepparameters.PmsStepParameters;
 
 import com.google.common.collect.ImmutableList;
 import java.time.OffsetDateTime;
@@ -37,6 +39,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document("stepDetailInstance")
 @TypeAlias("stepDetailInstance")
 @StoreIn(DbAliases.PMS)
+@ToBeDeleted
+// Delete after six months from 27-Jan
 public class StepDetailInstance {
   public static final long TTL_MONTHS = 6;
 
@@ -46,6 +50,7 @@ public class StepDetailInstance {
   String nodeExecutionId;
   PmsStepDetails stepDetails;
 
+  PmsStepParameters resolvedInputs;
   @Builder.Default @FdTtlIndex Date validUntil = Date.from(OffsetDateTime.now().plusMonths(TTL_MONTHS).toInstant());
 
   public static List<MongoIndex> mongoIndexes() {
@@ -56,6 +61,17 @@ public class StepDetailInstance {
                  .field(StepDetailInstanceKeys.name)
                  .unique(true)
                  .build())
+        .build();
+  }
+
+  public static StepDetailInstance cloneForRetry(
+      StepDetailInstance stepDetailInstance, String newPlanExecutionId, String newNodeExecutionId) {
+    return StepDetailInstance.builder()
+        .name(stepDetailInstance.getName())
+        .stepDetails(stepDetailInstance.getStepDetails())
+        .nodeExecutionId(newNodeExecutionId)
+        .resolvedInputs(stepDetailInstance.getResolvedInputs())
+        .planExecutionId(newPlanExecutionId)
         .build();
   }
 }

@@ -20,7 +20,6 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.ExecutionStatus;
-import io.harness.beans.FeatureName;
 import io.harness.context.ContextElementType;
 import io.harness.data.validator.Trimmed;
 import io.harness.delegate.task.k8s.K8sTaskType;
@@ -96,8 +95,7 @@ public class K8sTrafficSplitState extends AbstractK8sState {
               .timeoutIntervalInMin(10)
               .virtualServiceName(virtualServiceName)
               .istioDestinationWeights(istioDestinationWeights)
-              .useVarSupportForKustomize(
-                  featureFlagService.isEnabled(FeatureName.VARIABLE_SUPPORT_FOR_KUSTOMIZE, context.getAccountId()))
+              .useVarSupportForKustomize(isUseVarSupportForKustomize(context.getAccountId()))
               .useNewKubectlVersion(featureFlagService.isEnabled(NEW_KUBECTL_VERSION, infraMapping.getAccountId()))
               .build();
       return queueK8sDelegateTask(context, k8sTaskParameters, null);

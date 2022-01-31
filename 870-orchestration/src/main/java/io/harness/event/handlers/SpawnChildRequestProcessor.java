@@ -28,8 +28,11 @@ import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.ExecutableResponse;
 import io.harness.pms.contracts.execution.events.SdkResponseEventProto;
 import io.harness.pms.contracts.execution.events.SpawnChildRequest;
+import io.harness.pms.data.stepparameters.PmsStepParameters;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.execution.utils.SdkResponseEventUtils;
+import io.harness.pms.expression.PmsEngineExpressionService;
+import io.harness.pms.utils.OrchestrationMapBackwardCompatibilityUtils;
 import io.harness.waiter.WaitNotifyEngine;
 
 import com.google.inject.Inject;
@@ -48,6 +51,7 @@ public class SpawnChildRequestProcessor implements SdkResponseProcessor {
   @Inject @Named("EngineExecutorService") private ExecutorService executorService;
   @Inject private WaitNotifyEngine waitNotifyEngine;
   @Inject @Named(OrchestrationPublisherName.PUBLISHER_NAME) private String publisherName;
+  @Inject private PmsEngineExpressionService pmsEngineExpressionService;
 
   @Override
   public void handleEvent(SdkResponseEventProto event) {
@@ -81,23 +85,31 @@ public class SpawnChildRequestProcessor implements SdkResponseProcessor {
     String childInstanceId = generateUuid();
     Ambiance clonedAmbiance = AmbianceUtils.cloneForChild(
         nodeExecution.getAmbiance(), PmsLevelUtils.buildLevelFromNode(childInstanceId, node));
-    return nodeExecutionService.save(NodeExecution.builder()
-                                         .uuid(childInstanceId)
-                                         .planNode(node)
-                                         .ambiance(clonedAmbiance)
-                                         .levelCount(clonedAmbiance.getLevelsCount())
-                                         .status(QUEUED)
-                                         .notifyId(childInstanceId)
-                                         .parentId(nodeExecution.getUuid())
-                                         .startTs(AmbianceUtils.getCurrentLevelStartTs(clonedAmbiance))
-                                         .originalNodeExecutionId(OrchestrationUtils.getOriginalNodeExecutionId(node))
-                                         .module(node.getServiceName())
-                                         .name(node.getName())
-                                         .skipGraphType(node.getSkipGraphType())
-                                         .identifier(node.getIdentifier())
-                                         .stepType(node.getStepType())
-                                         .nodeId(node.getUuid())
-                                         .build());
+    boolean skipUnresolvedExpressionsCheck = node.isSkipUnresolvedExpressionsCheck();
+    log.info("Starting to Resolve step parameters and Inputs");
+    Object resolvedStepParameters =
+        pmsEngineExpressionService.resolve(clonedAmbiance, node.getStepParameters(), skipUnresolvedExpressionsCheck);
+
+    return nodeExecutionService.save(
+        NodeExecution.builder()
+            .uuid(childInstanceId)
+            .planNode(node)
+            .ambiance(clonedAmbiance)
+            .levelCount(clonedAmbiance.getLevelsCount())
+            .status(QUEUED)
+            .notifyId(childInstanceId)
+            .parentId(nodeExecution.getUuid())
+            .startTs(AmbianceUtils.getCurrentLevelStartTs(clonedAmbiance))
+            .originalNodeExecutionId(OrchestrationUtils.getOriginalNodeExecutionId(node))
+            .module(node.getServiceName())
+            .name(node.getName())
+            .resolvedParams(PmsStepParameters.parse(
+                OrchestrationMapBackwardCompatibilityUtils.extractToOrchestrationMap(resolvedStepParameters)))
+            .skipGraphType(node.getSkipGraphType())
+            .identifier(node.getIdentifier())
+            .stepType(node.getStepType())
+            .nodeId(node.getUuid())
+            .build());
   }
 
   private String extractChildNodeId(SpawnChildRequest spawnChildRequest) {

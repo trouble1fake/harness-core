@@ -43,6 +43,8 @@ public class YamlGitConfigMapper {
         .defaultRootFolder(yamlGitConfigDTO.getDefaultRootFolder())
         .accountId(accountId)
         .gitConnectorType(yamlGitConfigDTO.getGitConnectorType())
+        .gitConnectorsRepo(yamlGitConfigDTO.getGitConnectorsRepo())
+        .gitConnectorsBranch(yamlGitConfigDTO.getGitConnectorsBranch())
         .build();
   }
 
@@ -60,6 +62,8 @@ public class YamlGitConfigMapper {
         .rootFolders(yamlGitConfig.getRootFolders())
         .defaultRootFolder(yamlGitConfig.getDefaultRootFolder())
         .gitConnectorType(yamlGitConfig.getGitConnectorType())
+        .gitConnectorsRepo(yamlGitConfig.getGitConnectorsRepo())
+        .gitConnectorsBranch(yamlGitConfig.getGitConnectorsBranch())
         .build();
   }
 

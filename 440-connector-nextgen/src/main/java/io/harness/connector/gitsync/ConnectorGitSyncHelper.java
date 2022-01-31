@@ -8,6 +8,8 @@
 package io.harness.connector.gitsync;
 
 import static io.harness.connector.entities.Connector.ConnectorKeys;
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
+import static io.harness.grpc.utils.StringValueUtils.getStringFromStringValue;
 import static io.harness.ng.core.utils.NGUtils.validate;
 import static io.harness.remote.NGObjectMapperHelper.configureNGObjectMapper;
 
@@ -25,14 +27,17 @@ import io.harness.connector.services.ConnectorService;
 import io.harness.eventsframework.schemas.entity.EntityDetailProtoDTO;
 import io.harness.eventsframework.schemas.entity.IdentifierRefProtoDTO;
 import io.harness.git.model.ChangeType;
+import io.harness.gitsync.BranchDetails;
 import io.harness.gitsync.FileChange;
 import io.harness.gitsync.FullSyncChangeSet;
+import io.harness.gitsync.HarnessToGitPushInfoServiceGrpc;
+import io.harness.gitsync.RepoDetails;
 import io.harness.gitsync.ScopeDetails;
 import io.harness.gitsync.entityInfo.AbstractGitSdkEntityHandler;
 import io.harness.gitsync.entityInfo.GitSdkEntityHandlerInterface;
 import io.harness.gitsync.exceptions.NGYamlParsingException;
+import io.harness.gitsync.interceptor.GitSyncBranchContext;
 import io.harness.gitsync.sdk.EntityGitDetails;
-import io.harness.grpc.utils.StringValueUtils;
 import io.harness.manage.GlobalContextManager;
 import io.harness.ng.core.EntityDetail;
 import io.harness.ng.core.utils.NGYamlUtils;
@@ -42,11 +47,13 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
+import com.google.protobuf.StringValue;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 
 @Slf4j
 @Singleton
@@ -57,14 +64,17 @@ public class ConnectorGitSyncHelper extends AbstractGitSdkEntityHandler<Connecto
   ConnectorService connectorService;
   ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
   ConnectorFullSyncHelper connectorFullSyncHelper;
+  HarnessToGitPushInfoServiceGrpc.HarnessToGitPushInfoServiceBlockingStub harnessToGitPushInfoServiceBlockingStub;
 
   @Inject
   public ConnectorGitSyncHelper(@Named("connectorDecoratorService") ConnectorService connectorService,
-      ConnectorMapper connectorMapper, ConnectorFullSyncHelper connectorFullSyncHelper) {
+      ConnectorMapper connectorMapper, ConnectorFullSyncHelper connectorFullSyncHelper,
+      HarnessToGitPushInfoServiceGrpc.HarnessToGitPushInfoServiceBlockingStub harnessToGitPushInfoServiceBlockingStub) {
     this.connectorService = connectorService;
     this.connectorMapper = connectorMapper;
     configureNGObjectMapper(objectMapper);
     this.connectorFullSyncHelper = connectorFullSyncHelper;
+    this.harnessToGitPushInfoServiceBlockingStub = harnessToGitPushInfoServiceBlockingStub;
   }
 
   @Override
@@ -157,7 +167,7 @@ public class ConnectorGitSyncHelper extends AbstractGitSdkEntityHandler<Connecto
   }
 
   @Override
-  public ConnectorDTO updateEntityFilePath(String accountIdentifier, String yaml, String newFilePath) {
+  protected ConnectorDTO updateEntityFilePath(String accountIdentifier, String yaml, String newFilePath) {
     ConnectorDTO connectorDTO = getYamlDTO(yaml);
     validate(connectorDTO);
     ConnectorResponseDTO connectorResponseDTO =
@@ -170,10 +180,10 @@ public class ConnectorGitSyncHelper extends AbstractGitSdkEntityHandler<Connecto
   public String getYamlFromEntityRef(EntityDetailProtoDTO entityReference) {
     final IdentifierRefProtoDTO identifierRef = entityReference.getIdentifierRef();
     final Optional<ConnectorResponseDTO> connectorResponseDTO =
-        connectorService.get(StringValueUtils.getStringFromStringValue(identifierRef.getAccountIdentifier()),
-            StringValueUtils.getStringFromStringValue(identifierRef.getOrgIdentifier()),
-            StringValueUtils.getStringFromStringValue(identifierRef.getProjectIdentifier()),
-            StringValueUtils.getStringFromStringValue(identifierRef.getIdentifier()));
+        connectorService.get(getStringFromStringValue(identifierRef.getAccountIdentifier()),
+            getStringFromStringValue(identifierRef.getOrgIdentifier()),
+            getStringFromStringValue(identifierRef.getProjectIdentifier()),
+            getStringFromStringValue(identifierRef.getIdentifier()));
     return NGYamlUtils.getYamlString(
         ConnectorDTO.builder().connectorInfo(connectorResponseDTO.get().getConnector()).build(), objectMapper);
   }
@@ -190,9 +200,31 @@ public class ConnectorGitSyncHelper extends AbstractGitSdkEntityHandler<Connecto
   @Override
   public ConnectorDTO fullSyncEntity(FullSyncChangeSet fullSyncChangeSet) {
     final EntityDetailProtoDTO entityDetail = fullSyncChangeSet.getEntityDetail();
+    String accountIdentifier = fullSyncChangeSet.getAccountIdentifier();
+    String orgIdentifier = getStringFromStringValue(entityDetail.getIdentifierRef().getOrgIdentifier());
+    String projectIdentifier = getStringFromStringValue(entityDetail.getIdentifierRef().getProjectIdentifier());
     try (GlobalContextManager.GlobalContextGuard guard = GlobalContextManager.ensureGlobalContextGuard()) {
-      GlobalContextManager.upsertGlobalContextRecord(createGitEntityInfo(fullSyncChangeSet));
-      return connectorService.fullSyncEntity(entityDetail);
+      final GitSyncBranchContext gitEntityInfo = createGitEntityInfo(fullSyncChangeSet);
+      GlobalContextManager.upsertGlobalContextRecord(gitEntityInfo);
+      BranchDetails branchDetails = getDefaultBranch(
+          accountIdentifier, orgIdentifier, projectIdentifier, fullSyncChangeSet.getYamlGitConfigIdentifier());
+      return connectorService.fullSyncEntity(
+          entityDetail, branchDetails.getDefaultBranch().equals(fullSyncChangeSet.getBranchName()));
     }
+  }
+
+  private BranchDetails getDefaultBranch(
+      String accountId, String orgIdentifier, String projectIdentifier, String getYamlGitConfigId) {
+    final RepoDetails.Builder repoDetailsBuilder = RepoDetails.newBuilder()
+                                                       .setAccountId(accountId)
+                                                       .setYamlGitConfigId(getYamlGitConfigId)
+                                                       .putAllContextMap(MDC.getCopyOfContextMap());
+    if (!isEmpty(projectIdentifier)) {
+      repoDetailsBuilder.setProjectIdentifier(StringValue.of(projectIdentifier));
+    }
+    if (!isEmpty(orgIdentifier)) {
+      repoDetailsBuilder.setOrgIdentifier(StringValue.of(orgIdentifier));
+    }
+    return harnessToGitPushInfoServiceBlockingStub.getDefaultBranch(repoDetailsBuilder.build());
   }
 }

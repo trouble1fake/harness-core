@@ -38,6 +38,8 @@ import static io.harness.persistence.HQuery.excludeAuthority;
 import static software.wings.service.impl.DelegateSelectionLogsServiceImpl.NO_ELIGIBLE_DELEGATES;
 import static software.wings.service.impl.DelegateSelectionLogsServiceImpl.TASK_VALIDATION_FAILED;
 
+import static software.wings.app.ManagerCacheRegistrar.SECRET_TOKEN_CACHE;
+
 import static java.lang.String.format;
 import static java.lang.String.join;
 import static java.lang.System.currentTimeMillis;
@@ -54,6 +56,7 @@ import io.harness.beans.Cd1SetupFields;
 import io.harness.beans.DelegateTask;
 import io.harness.beans.DelegateTask.DelegateTaskKeys;
 import io.harness.beans.FeatureName;
+import io.harness.cache.HarnessCacheManager;
 import io.harness.capability.CapabilityRequirement;
 import io.harness.capability.CapabilitySubjectPermission;
 import io.harness.capability.CapabilityTaskSelectionDetails;
@@ -115,6 +118,7 @@ import io.harness.observer.Subject;
 import io.harness.persistence.HPersistence;
 import io.harness.secretmanagerclient.services.api.SecretManagerClientService;
 import io.harness.security.encryption.EncryptedDataDetail;
+import io.harness.security.encryption.EncryptedRecordData;
 import io.harness.security.encryption.EncryptionConfig;
 import io.harness.selection.log.DelegateSelectionLogTaskMetadata;
 import io.harness.serializer.KryoSerializer;
@@ -465,6 +469,7 @@ public class DelegateTaskServiceClassicImpl implements DelegateTaskServiceClassi
 
         if (!task.getData().isAsync() && connectedEligibleDelegates.isEmpty()) {
           addToTaskActivityLog(task, "No Connected eligible delegates to execute sync task");
+          delegateSelectionLogsService.save(batch);
           if (assignDelegateService.noInstalledDelegates(task.getAccountId())) {
             throw new NoInstalledDelegatesException();
           } else {

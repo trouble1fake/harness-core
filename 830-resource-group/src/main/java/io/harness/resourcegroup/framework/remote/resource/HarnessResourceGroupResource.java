@@ -46,6 +46,7 @@ import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.resourcegroup.framework.service.ResourceGroupService;
 import io.harness.resourcegroup.model.DynamicResourceSelector;
 import io.harness.resourcegroup.model.ResourceSelectorByScope;
+import io.harness.resourcegroup.model.StaticResourceSelector;
 import io.harness.resourcegroup.remote.dto.ManagedFilter;
 import io.harness.resourcegroup.remote.dto.ResourceGroupDTO;
 import io.harness.resourcegroup.remote.dto.ResourceGroupFilterDTO;
@@ -67,6 +68,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.BeanParam;
@@ -233,6 +235,7 @@ public class HarnessResourceGroupResource {
     resourceGroupRequest.getResourceGroup().setAllowedScopeLevels(
         Sets.newHashSet(ScopeLevel.of(accountIdentifier, orgIdentifier, projectIdentifier).toString().toLowerCase()));
     verifySupportedResourceSelectorsAreUsed(resourceGroupRequest);
+    validateResourceSelectors(resourceGroupRequest);
     ResourceGroupResponse resourceGroupResponse =
         resourceGroupService.create(resourceGroupRequest.getResourceGroup(), false);
     return ResponseDTO.newResponse(resourceGroupResponse);
@@ -262,6 +265,7 @@ public class HarnessResourceGroupResource {
     resourceGroupRequest.getResourceGroup().setAllowedScopeLevels(
         Sets.newHashSet(ScopeLevel.of(accountIdentifier, orgIdentifier, projectIdentifier).toString().toLowerCase()));
     verifySupportedResourceSelectorsAreUsed(resourceGroupRequest);
+    validateResourceSelectors(resourceGroupRequest);
     Optional<ResourceGroupResponse> resourceGroupResponseOpt =
         resourceGroupService.update(resourceGroupRequest.getResourceGroup(), true, false);
     return ResponseDTO.newResponse(resourceGroupResponseOpt.orElse(null));
@@ -302,13 +306,51 @@ public class HarnessResourceGroupResource {
     if (isNotEmpty(resourceGroupDTO.getResourceSelectors())) {
       resourceGroupDTO.getResourceSelectors().forEach(resourceSelector -> {
         if (resourceSelector instanceof ResourceSelectorByScope) {
-          throw new InvalidRequestException("Resource Selector by scope not supported yet.");
-        }
-        if ((resourceSelector instanceof DynamicResourceSelector)
-            && Boolean.TRUE.equals(((DynamicResourceSelector) resourceSelector).getIncludeChildScopes())) {
-          throw new InvalidRequestException("Including child scopes not supported yet.");
+          if (!resourceGroupDTO.getScope().equals(((ResourceSelectorByScope) resourceSelector).getScope())) {
+            throw new InvalidRequestException(
+                "Resource Selector by scope with different scope cannot be provided for custom resource groups.");
+          }
         }
       });
+    }
+  }
+
+  private void validateResourceSelectors(ResourceGroupRequest resourceGroupRequest) {
+    if (resourceGroupRequest == null || resourceGroupRequest.getResourceGroup() == null) {
+      return;
+    }
+    ResourceGroupDTO resourceGroupDTO = resourceGroupRequest.getResourceGroup();
+    if (isNotEmpty(resourceGroupDTO.getResourceSelectors())) {
+      AtomicBoolean selectorByScopePresent = new AtomicBoolean(false);
+      AtomicBoolean dynamicSelectorIncludingChildScopesPresent = new AtomicBoolean(false);
+      AtomicBoolean dynamicSelectorNotIncludingChildScopesPresent = new AtomicBoolean(false);
+      AtomicBoolean staticSelectorPresent = new AtomicBoolean(false);
+
+      resourceGroupDTO.getResourceSelectors().forEach(resourceSelector -> {
+        if (resourceSelector instanceof ResourceSelectorByScope) {
+          selectorByScopePresent.set(true);
+        } else if (resourceSelector instanceof StaticResourceSelector) {
+          staticSelectorPresent.set(true);
+        } else if (resourceSelector instanceof DynamicResourceSelector) {
+          if (Boolean.TRUE.equals(((DynamicResourceSelector) resourceSelector).getIncludeChildScopes())) {
+            dynamicSelectorIncludingChildScopesPresent.set(true);
+          } else {
+            dynamicSelectorNotIncludingChildScopesPresent.set(false);
+          }
+        }
+      });
+
+      if (selectorByScopePresent.get()
+          && (dynamicSelectorIncludingChildScopesPresent.get() || dynamicSelectorNotIncludingChildScopesPresent.get()
+              || staticSelectorPresent.get())) {
+        throw new InvalidRequestException(
+            "Resource Selector by scope cannot be selected along with other resource selectors.");
+      }
+
+      if (dynamicSelectorIncludingChildScopesPresent.get() && dynamicSelectorNotIncludingChildScopesPresent.get()) {
+        throw new InvalidRequestException(
+            "Either the current scope or the current scope including the child scopes should be selected, and not both.");
+      }
     }
   }
 }

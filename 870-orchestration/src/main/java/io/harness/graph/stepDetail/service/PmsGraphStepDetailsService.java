@@ -10,11 +10,18 @@ package io.harness.graph.stepDetail.service;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.pms.data.stepdetails.PmsStepDetails;
+import io.harness.pms.data.stepparameters.PmsStepParameters;
 
 import java.util.Map;
 
 @OwnedBy(HarnessTeam.PIPELINE)
 public interface PmsGraphStepDetailsService {
   void addStepDetail(String nodeExecutionId, String planExecutionId, PmsStepDetails stepDetails, String name);
+  void addStepInputs(String nodeExecutionId, String planExecutionId, PmsStepParameters stepParameters);
+
+  PmsStepParameters getStepInputs(String planExecutionId, String nodeExecutionId);
+
   Map<String, PmsStepDetails> getStepDetails(String planExecutionId, String nodeExecutionId);
+
+  void copyStepDetailsForRetry(String planExecutionId, String originalNodeExecutionId, String newNodeExecutionId);
 }

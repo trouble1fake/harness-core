@@ -46,5 +46,6 @@ public interface NGTemplateRepositoryCustom {
   boolean existsByAccountIdAndOrgIdAndProjectIdAndIdentifierAndVersionLabel(
       String accountId, String orgIdentifier, String projectIdentifier, String templateIdentifier, String versionLabel);
 
-  TemplateEntity update(Criteria criteria, Update update);
+  TemplateEntity update(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, Criteria criteria, Update update);
 }
