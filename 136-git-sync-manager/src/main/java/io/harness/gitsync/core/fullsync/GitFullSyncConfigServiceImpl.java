@@ -31,6 +31,9 @@ public class GitFullSyncConfigServiceImpl implements GitFullSyncConfigService {
   @Override
   public GitFullSyncConfigDTO createConfig(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, GitFullSyncConfigRequestDTO dto) {
+    // Why are we making a GET call to check the config?
+    // We can simply make a save call and it will automatically fail for duplicateKeyException if config
+    // already exists
     if (get(accountIdentifier, orgIdentifier, projectIdentifier).isPresent()) {
       throw new InvalidRequestException(
           "Configuration already exists, please update it instead of creating a new one", WingsException.USER);
@@ -54,6 +57,8 @@ public class GitFullSyncConfigServiceImpl implements GitFullSyncConfigService {
   @Override
   public GitFullSyncConfigDTO updateConfig(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, GitFullSyncConfigRequestDTO dto) {
+    // Again here, any specific requirement of GET call?
+    // Can't we simply do an update call?
     Optional<GitFullSyncConfig> gitFullSyncConfigOptional =
         getInternal(accountIdentifier, orgIdentifier, projectIdentifier);
     if (gitFullSyncConfigOptional.isPresent()) {

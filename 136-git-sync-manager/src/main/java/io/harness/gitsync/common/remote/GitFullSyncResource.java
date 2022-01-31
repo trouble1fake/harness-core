@@ -155,6 +155,7 @@ public class GitFullSyncResource {
   @Operation(operationId = "updateGitFullSyncConfig", summary = "Updates a configuration for performing git full sync",
       responses =
       {
+        // It should say : "Returns the `updated` git full sync configuration back along with scope information"
         @io.swagger.v3.oas.annotations.responses.
         ApiResponse(description = "Returns the configuration back along with the scope information")
       })
