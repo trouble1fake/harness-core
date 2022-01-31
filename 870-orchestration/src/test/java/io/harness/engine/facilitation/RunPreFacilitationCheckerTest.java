@@ -26,12 +26,12 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.execution.NodeExecution;
 import io.harness.expression.EngineExpressionEvaluator;
 import io.harness.expression.VariableResolverTracker;
+import io.harness.plan.PlanNode;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.ExecutionMode;
 import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.execution.run.ExpressionBlock;
 import io.harness.pms.contracts.execution.run.NodeRunInfo;
-import io.harness.pms.contracts.plan.PlanNodeProto;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.contracts.steps.io.StepResponseProto;
@@ -69,11 +69,11 @@ public class RunPreFacilitationCheckerTest extends OrchestrationTestBase {
             .ambiance(Ambiance.newBuilder().setPlanExecutionId(generateUuid()).build())
             .status(Status.QUEUED)
             .mode(ExecutionMode.TASK)
-            .node(PlanNodeProto.newBuilder()
-                      .setUuid(generateUuid())
-                      .setStepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                      .setWhenCondition(whenCondition)
-                      .build())
+            .planNode(PlanNode.builder()
+                          .uuid(generateUuid())
+                          .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+                          .whenCondition(whenCondition)
+                          .build())
             .startTs(System.currentTimeMillis())
             .build();
     mongoTemplate.save(nodeExecution);
@@ -101,11 +101,11 @@ public class RunPreFacilitationCheckerTest extends OrchestrationTestBase {
             .ambiance(ambiance)
             .status(Status.QUEUED)
             .mode(ExecutionMode.TASK)
-            .node(PlanNodeProto.newBuilder()
-                      .setUuid(generateUuid())
-                      .setStepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                      .setWhenCondition(whenCondition)
-                      .build())
+            .planNode(PlanNode.builder()
+                          .uuid(generateUuid())
+                          .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+                          .whenCondition(whenCondition)
+                          .build())
             .startTs(System.currentTimeMillis())
             .build();
     mongoTemplate.save(nodeExecution);
@@ -138,11 +138,11 @@ public class RunPreFacilitationCheckerTest extends OrchestrationTestBase {
             .ambiance(Ambiance.newBuilder().setPlanExecutionId(generateUuid()).build())
             .status(Status.QUEUED)
             .mode(ExecutionMode.TASK)
-            .node(PlanNodeProto.newBuilder()
-                      .setUuid(generateUuid())
-                      .setStepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                      .setWhenCondition(whenCondition)
-                      .build())
+            .planNode(PlanNode.builder()
+                          .uuid(generateUuid())
+                          .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+                          .whenCondition(whenCondition)
+                          .build())
             .startTs(System.currentTimeMillis())
             .build();
     mongoTemplate.save(nodeExecution);

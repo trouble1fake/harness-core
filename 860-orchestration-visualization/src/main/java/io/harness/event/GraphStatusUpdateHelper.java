@@ -19,8 +19,7 @@ import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.pms.data.PmsOutcomeService;
 import io.harness.execution.NodeExecution;
 import io.harness.generator.OrchestrationAdjacencyListGenerator;
-import io.harness.plan.IdentityPlanNode;
-import io.harness.plan.NodeType;
+import io.harness.pms.contracts.ambiance.Level;
 import io.harness.pms.contracts.execution.events.OrchestrationEventType;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.execution.utils.StatusUtils;
@@ -29,6 +28,7 @@ import io.harness.pms.sdk.core.resolver.outcome.mapper.PmsOutcomeMapper;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.util.Map;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 
 @OwnedBy(HarnessTeam.PIPELINE)
@@ -103,21 +103,18 @@ public class GraphStatusUpdateHelper {
 
   // Todo: Update only properties that will be changed. No need to construct full
   public GraphVertex convertFromNodeExecution(GraphVertex prevValue, NodeExecution nodeExecution) {
-    String stepType = nodeExecution.getNode().getStepType().getType();
-    if (nodeExecution.getNode().getNodeType().equals(NodeType.IDENTITY_PLAN_NODE)) {
-      stepType = ((IdentityPlanNode) nodeExecution.getNode()).getOriginalStepType().getType();
-    }
+    Level level = Objects.requireNonNull(AmbianceUtils.obtainCurrentLevel(nodeExecution.getAmbiance()));
     return prevValue.toBuilder()
         .uuid(nodeExecution.getUuid())
         .ambiance(nodeExecution.getAmbiance())
-        .planNodeId(nodeExecution.getNode().getUuid())
-        .identifier(nodeExecution.getNode().getIdentifier())
+        .planNodeId(level.getSetupId())
+        .identifier(level.getIdentifier())
         .name(nodeExecution.getNode().getName())
         .startTs(nodeExecution.getStartTs())
         .endTs(nodeExecution.getEndTs())
         .initialWaitDuration(nodeExecution.getInitialWaitDuration())
         .lastUpdatedAt(nodeExecution.getLastUpdatedAt())
-        .stepType(stepType)
+        .stepType(level.getStepType().getType())
         .status(nodeExecution.getStatus())
         .failureInfo(nodeExecution.getFailureInfo())
         .skipInfo(nodeExecution.getSkipInfo())

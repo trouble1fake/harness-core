@@ -12,6 +12,8 @@ import static io.harness.data.structure.EmptyPredicate.isEmpty;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.execution.NodeExecution;
+import io.harness.plan.IdentityPlanNode;
+import io.harness.plan.Node;
 import io.harness.plan.NodeType;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.ambiance.Level;
@@ -42,7 +44,7 @@ public class OrchestrationUtils {
   }
 
   public static boolean isStageNode(NodeExecution nodeExecution) {
-    return nodeExecution.getNode().getStepCategory() == StepCategory.STAGE;
+    return AmbianceUtils.getCurrentStepType(nodeExecution.getAmbiance()).getStepCategory() == StepCategory.STAGE;
   }
 
   public static boolean isPipelineNode(NodeExecution nodeExecution) {
@@ -59,5 +61,12 @@ public class OrchestrationUtils {
       return NodeType.PLAN_NODE;
     }
     return NodeType.valueOf(level.getNodeType());
+  }
+
+  public static String getOriginalNodeExecutionId(Node node) {
+    if (node.getNodeType() == NodeType.IDENTITY_PLAN_NODE) {
+      return ((IdentityPlanNode) node).getOriginalNodeExecutionId();
+    }
+    return null;
   }
 }

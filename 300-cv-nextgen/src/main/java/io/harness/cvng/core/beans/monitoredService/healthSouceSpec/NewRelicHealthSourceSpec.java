@@ -48,15 +48,15 @@ public class NewRelicHealthSourceSpec extends HealthSourceSpec {
 
   @Override
   public CVConfigUpdateResult getCVConfigUpdateResult(String accountId, String orgIdentifier, String projectIdentifier,
-      String environmentRef, String serviceRef, String identifier, String name, List<CVConfig> existingCVConfigs,
-      MetricPackService metricPackService) {
+      String environmentRef, String serviceRef, String monitoredServiceIdentifier, String identifier, String name,
+      List<CVConfig> existingCVConfigs, MetricPackService metricPackService) {
     Map<Key, NewRelicCVConfig> mapExistingConfigs = new HashMap<>();
     existingCVConfigs.forEach(cvConfig
         -> mapExistingConfigs.put(getKeyFromCVConfig((NewRelicCVConfig) cvConfig), (NewRelicCVConfig) cvConfig));
 
     Map<Key, NewRelicCVConfig> mapConfigsFromThisObj = new HashMap<>();
-    List<NewRelicCVConfig> cvConfigList = toCVConfigs(
-        accountId, orgIdentifier, projectIdentifier, environmentRef, serviceRef, identifier, name, metricPackService);
+    List<NewRelicCVConfig> cvConfigList = toCVConfigs(accountId, orgIdentifier, projectIdentifier, environmentRef,
+        serviceRef, monitoredServiceIdentifier, identifier, name, metricPackService);
     cvConfigList.forEach(config -> mapConfigsFromThisObj.put(getKeyFromCVConfig(config), config));
 
     Set<Key> deleted = Sets.difference(mapExistingConfigs.keySet(), mapConfigsFromThisObj.keySet());
@@ -95,7 +95,8 @@ public class NewRelicHealthSourceSpec extends HealthSourceSpec {
   }
 
   private List<NewRelicCVConfig> toCVConfigs(String accountId, String orgIdentifier, String projectIdentifier,
-      String environmentRef, String serviceRef, String identifier, String name, MetricPackService metricPackService) {
+      String environmentRef, String serviceRef, String monitoredServiceIdentifier, String identifier, String name,
+      MetricPackService metricPackService) {
     List<NewRelicCVConfig> cvConfigs = new ArrayList<>();
     CollectionUtils.emptyIfNull(metricPacks).forEach(metricPack -> {
       MetricPack metricPackFromDb =
@@ -114,6 +115,7 @@ public class NewRelicHealthSourceSpec extends HealthSourceSpec {
                                               .metricPack(metricPackFromDb)
                                               .category(metricPackFromDb.getCategory())
                                               .productName(feature)
+                                              .monitoredServiceIdentifier(monitoredServiceIdentifier)
                                               .build();
       cvConfigs.add(newRelicCVConfig);
     });
@@ -138,6 +140,7 @@ public class NewRelicHealthSourceSpec extends HealthSourceSpec {
                                               .serviceIdentifier(serviceRef)
                                               .groupName(definitionList.get(0).getGroupName())
                                               .category(definitionList.get(0).getRiskProfile().getCategory())
+                                              .monitoredServiceIdentifier(monitoredServiceIdentifier)
                                               .build();
       newRelicCVConfig.populateFromMetricDefinitions(
           newRelicMetricDefinitions, newRelicMetricDefinitions.get(0).getRiskProfile().getCategory());

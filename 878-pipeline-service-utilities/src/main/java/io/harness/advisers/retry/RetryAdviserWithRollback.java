@@ -27,7 +27,7 @@ import io.harness.pms.contracts.advisers.MarkSuccessAdvise;
 import io.harness.pms.contracts.advisers.NextStepAdvise;
 import io.harness.pms.contracts.advisers.RetryAdvise;
 import io.harness.pms.contracts.ambiance.Ambiance;
-import io.harness.pms.contracts.execution.failure.FailureInfo;
+import io.harness.pms.contracts.execution.failure.FailureType;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.sdk.core.adviser.Adviser;
 import io.harness.pms.sdk.core.adviser.AdvisingEvent;
@@ -74,11 +74,10 @@ public class RetryAdviserWithRollback implements Adviser {
   public boolean canAdvise(AdvisingEvent advisingEvent) {
     boolean canAdvise = retryableStatuses().contains(advisingEvent.getToStatus())
         && advisingEvent.getFromStatus() != INTERVENTION_WAITING;
-    FailureInfo failureInfo = advisingEvent.getFailureInfo();
     RetryAdviserRollbackParameters parameters = extractParameters(advisingEvent);
-    if (failureInfo != null && !isEmpty(failureInfo.getFailureTypesList())) {
-      return canAdvise
-          && !Collections.disjoint(parameters.getApplicableFailureTypes(), failureInfo.getFailureTypesList());
+    List<FailureType> failureTypesList = getAllFailureTypes(advisingEvent);
+    if (parameters != null && !isEmpty(failureTypesList)) {
+      return canAdvise && !Collections.disjoint(parameters.getApplicableFailureTypes(), failureTypesList);
     }
     return canAdvise;
   }

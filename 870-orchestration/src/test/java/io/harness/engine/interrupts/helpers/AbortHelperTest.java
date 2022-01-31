@@ -33,12 +33,12 @@ import io.harness.execution.NodeExecution;
 import io.harness.execution.NodeExecution.NodeExecutionBuilder;
 import io.harness.interrupts.Interrupt;
 import io.harness.interrupts.Interrupt.State;
+import io.harness.plan.PlanNode;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.ambiance.Level;
 import io.harness.pms.contracts.execution.ExecutionMode;
 import io.harness.pms.contracts.interrupts.InterruptConfig;
 import io.harness.pms.contracts.interrupts.InterruptType;
-import io.harness.pms.contracts.plan.PlanNodeProto;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.rule.Owner;
@@ -88,10 +88,10 @@ public class AbortHelperTest extends OrchestrationTestBase {
             .ambiance(Ambiance.newBuilder().setPlanExecutionId(generateUuid()).build())
             .status(DISCONTINUING)
             .mode(ExecutionMode.ASYNC)
-            .node(PlanNodeProto.newBuilder()
-                      .setUuid(generateUuid())
-                      .setStepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                      .build())
+            .planNode(PlanNode.builder()
+                          .uuid(generateUuid())
+                          .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+                          .build())
             .startTs(System.currentTimeMillis())
             .build();
 
@@ -137,10 +137,10 @@ public class AbortHelperTest extends OrchestrationTestBase {
             .uuid(nodeExecutionId)
             .ambiance(ambiance)
             .mode(ExecutionMode.SYNC)
-            .node(PlanNodeProto.newBuilder()
-                      .setUuid(generateUuid())
-                      .setStepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                      .build())
+            .planNode(PlanNode.builder()
+                          .uuid(generateUuid())
+                          .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+                          .build())
             .startTs(System.currentTimeMillis());
 
     when(nodeExecutionService.updateStatusWithOps(eq(nodeExecutionId), eq(ABORTED), any(), any()))
@@ -182,10 +182,10 @@ public class AbortHelperTest extends OrchestrationTestBase {
             .uuid(nodeExecutionId)
             .ambiance(ambiance)
             .mode(ExecutionMode.CHILD)
-            .node(PlanNodeProto.newBuilder()
-                      .setUuid(generateUuid())
-                      .setStepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                      .build())
+            .planNode(PlanNode.builder()
+                          .uuid(generateUuid())
+                          .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+                          .build())
             .startTs(System.currentTimeMillis());
 
     when(nodeExecutionService.updateStatusWithOps(eq(nodeExecutionId), eq(ABORTED), any(), any()))
@@ -221,10 +221,10 @@ public class AbortHelperTest extends OrchestrationTestBase {
             .ambiance(Ambiance.newBuilder().setPlanExecutionId(generateUuid()).build())
             .status(DISCONTINUING)
             .mode(ExecutionMode.ASYNC)
-            .node(PlanNodeProto.newBuilder()
-                      .setUuid(generateUuid())
-                      .setStepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                      .build())
+            .planNode(PlanNode.builder()
+                          .uuid(generateUuid())
+                          .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+                          .build())
             .startTs(System.currentTimeMillis())
             .build();
     assertThatThrownBy(() -> abortHelper.discontinueMarkedInstance(nodeExecution, interrupt))

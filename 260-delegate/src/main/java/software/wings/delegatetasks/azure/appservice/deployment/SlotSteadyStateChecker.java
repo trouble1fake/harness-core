@@ -61,11 +61,13 @@ public class SlotSteadyStateChecker {
     } catch (UncheckedTimeoutException e) {
       String message = format("Timed out waiting for executing operation [%s], %n %s", commandUnitName, e.getMessage());
       logCallback.saveExecutionLog(message, LogLevel.ERROR, FAILURE);
+      slotStatusVerifier.stopPolling();
       throw new InvalidRequestException(message, e);
     } catch (Exception e) {
       String message =
           format("Error while waiting for executing operation [%s], %n %s", commandUnitName, e.getMessage());
       logCallback.saveExecutionLog(message, LogLevel.ERROR, FAILURE);
+      slotStatusVerifier.stopPolling();
       throw new InvalidRequestException(message, e);
     }
   }

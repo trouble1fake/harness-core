@@ -7,6 +7,7 @@
 
 package io.harness.cvng.core.beans.monitoredService.healthSourceSpec;
 
+import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.rule.OwnerRule.ANJAN;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -51,6 +52,7 @@ public class CustomHealthSourceSpecTest extends CvNextGenTestBase {
   String environmentRef = "1234_envRef";
   String serviceRef = "1234_serviceRef";
   String name = "customhealthsource";
+  String monitoredServiceIdentifier = generateUuid();
   MetricResponseMapping responseMapping;
   @Inject MetricPackService metricPackService;
 
@@ -114,9 +116,9 @@ public class CustomHealthSourceSpecTest extends CvNextGenTestBase {
     List<CVConfig> existingCVConfigs = new ArrayList<>();
     existingCVConfigs.add(existingCVConfig);
 
-    HealthSource.CVConfigUpdateResult result =
-        customHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier, environmentRef,
-            serviceRef, "1234234_iden", "healthsource", existingCVConfigs, metricPackService);
+    HealthSource.CVConfigUpdateResult result = customHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier,
+        projectIdentifier, environmentRef, serviceRef, monitoredServiceIdentifier, "1234234_iden", "healthsource",
+        existingCVConfigs, metricPackService);
 
     MetricPack.MetricDefinition metricDefinition1 =
         MetricPack.MetricDefinition.builder().name("metric1").thresholds(new ArrayList<>()).included(true).build();
@@ -171,9 +173,9 @@ public class CustomHealthSourceSpecTest extends CvNextGenTestBase {
     List<CVConfig> existingCVConfigs = new ArrayList<>();
     existingCVConfigs.add(existingCVConfig);
 
-    HealthSource.CVConfigUpdateResult result =
-        customHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier, environmentRef,
-            serviceRef, "1234234_iden", "healthsource", existingCVConfigs, metricPackService);
+    HealthSource.CVConfigUpdateResult result = customHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier,
+        projectIdentifier, environmentRef, serviceRef, monitoredServiceIdentifier, "1234234_iden", "healthsource",
+        existingCVConfigs, metricPackService);
 
     List<CustomHealthCVConfig> deletedConfigs = new ArrayList<>();
     deletedConfigs.add(CustomHealthCVConfig.builder()
@@ -234,9 +236,9 @@ public class CustomHealthSourceSpecTest extends CvNextGenTestBase {
     List<CVConfig> existingCVConfigs = new ArrayList<>();
     existingCVConfigs.add(existingCVConfig);
 
-    HealthSource.CVConfigUpdateResult result =
-        customHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier, environmentRef,
-            serviceRef, "1234234_iden", "healthsource", existingCVConfigs, metricPackService);
+    HealthSource.CVConfigUpdateResult result = customHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier,
+        projectIdentifier, environmentRef, serviceRef, monitoredServiceIdentifier, "1234234_iden", "healthsource",
+        existingCVConfigs, metricPackService);
 
     List<CustomHealthCVConfig> updatedConfigs = new ArrayList<>();
     updatedConfigs.add(CustomHealthCVConfig.builder()
@@ -356,12 +358,12 @@ public class CustomHealthSourceSpecTest extends CvNextGenTestBase {
             .monitoringSourceName("customhealthSource")
             .build();
 
-    List<CustomHealthCVConfig> configs =
-        customHealthSourceSpec
-            .getCVConfigs(accountId, orgIdentifier, projectIdentifier, environmentRef, serviceRef, identifier, name)
-            .values()
-            .stream()
-            .collect(Collectors.toList());
+    List<CustomHealthCVConfig> configs = customHealthSourceSpec
+                                             .getCVConfigs(accountId, orgIdentifier, projectIdentifier, environmentRef,
+                                                 serviceRef, monitoredServiceIdentifier, identifier, name)
+                                             .values()
+                                             .stream()
+                                             .collect(Collectors.toList());
 
     if (configs.get(0).getMetricDefinitions().size() == 2) {
       assertThat(configs.get(0).getMetricDefinitions()).isEqualTo(multipleMetricDefinitions.getMetricDefinitions());

@@ -7,7 +7,6 @@
 
 package io.harness.pms.expressions;
 
-import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.rule.OwnerRule.ARCHIT;
 import static io.harness.rule.OwnerRule.BRIJESH;
@@ -33,19 +32,20 @@ import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.executions.plan.PlanExecutionService;
 import io.harness.engine.expressions.OrchestrationConstants;
 import io.harness.engine.pms.data.PmsOutcomeService;
+import io.harness.engine.utils.PmsLevelUtils;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.PlanExecution;
 import io.harness.expression.EngineExpressionEvaluator;
 import io.harness.expression.EngineJexlContext;
 import io.harness.expression.field.dummy.DummyOrchestrationField;
+import io.harness.plan.PlanNode;
 import io.harness.pms.contracts.ambiance.Ambiance;
-import io.harness.pms.contracts.ambiance.Level;
 import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.expression.ExpressionResponse;
-import io.harness.pms.contracts.plan.PlanNodeProto;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
-import io.harness.pms.execution.utils.AmbianceUtils;
+import io.harness.pms.data.stepparameters.PmsStepParameters;
+import io.harness.pms.execution.utils.NodeProjectionUtils;
 import io.harness.pms.expressions.functors.RemoteExpressionFunctor;
 import io.harness.pms.sdk.PmsSdkInstance;
 import io.harness.pms.sdk.PmsSdkInstanceService;
@@ -54,10 +54,9 @@ import io.harness.pms.serializer.recaster.RecastOrchestrationUtils;
 import io.harness.rule.Owner;
 
 import com.google.common.collect.ImmutableMap;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
+import java.util.Map;
 import lombok.Builder;
 import lombok.Data;
 import org.joor.Reflect;
@@ -75,12 +74,21 @@ public class PMSExpressionEvaluatorTest extends PipelineServiceTestBase {
   @Mock PmsSdkInstanceService pmsSdkInstanceService;
   @Mock RemoteExpressionFunctor remoteExpressionFunctor;
 
-  private Ambiance ambiance;
+  private final String planExecutionId = generateUuid();
   NodeExecution nodeExecution1;
+  PlanNode planNode1;
+
   NodeExecution nodeExecution2;
+  PlanNode planNode2;
+
   NodeExecution nodeExecution3;
+  PlanNode planNode3;
+
   NodeExecution nodeExecution4;
+  PlanNode planNode4;
+
   NodeExecution nodeExecution5;
+  PlanNode planNode5;
 
   @Before
   public void setup() {
@@ -90,76 +98,111 @@ public class PMSExpressionEvaluatorTest extends PipelineServiceTestBase {
     String nodeExecution4Id = generateUuid();
     String nodeExecution5Id = generateUuid();
 
-    nodeExecution1 = NodeExecution.builder()
-                         .uuid(nodeExecution1Id)
-                         .node(preparePlanNode(false, "pipeline", "pipelineValue", "PIPELINE"))
-                         .resolvedStepParameters(prepareStepParameters("pipelineResolvedValue"))
-                         .build();
-    nodeExecution2 = NodeExecution.builder()
-                         .uuid(nodeExecution2Id)
-                         .node(preparePlanNode(false, "stages", "stagesValue", null))
-                         .resolvedStepParameters(prepareStepParameters("stagesResolvedValue"))
-                         .parentId(nodeExecution1Id)
-                         .build();
-    nodeExecution3 = NodeExecution.builder()
-                         .uuid(nodeExecution3Id)
-                         .node(preparePlanNode(false, "stage", "stageValue", "STAGE"))
-                         .resolvedStepParameters(prepareStepParameters("stageResolvedValue"))
-                         .parentId(nodeExecution2Id)
-                         .build();
-    nodeExecution4 = NodeExecution.builder()
-                         .uuid(nodeExecution4Id)
-                         .node(preparePlanNode(false, "d", "di1", null))
-                         .resolvedStepParameters(prepareStepParameters("dResolvedValue"))
-                         .parentId(nodeExecution3Id)
-                         .nextId(nodeExecution5Id)
-                         .build();
+    Ambiance.Builder ambianceBuilder = Ambiance.newBuilder().setPlanExecutionId(planExecutionId);
+    planNode1 = preparePlanNode(false, "pipeline", "pipelineValue", "PIPELINE");
 
-    nodeExecution5 = NodeExecution.builder()
-                         .uuid(nodeExecution4Id)
-                         .node(preparePlanNode(false, "e", "ei1", null))
-                         .resolvedStepParameters(prepareStepParameters("eResolvedValue"))
-                         .previousId(nodeExecution4Id)
-                         .parentId(nodeExecution3Id)
-                         .build();
+    nodeExecution1 =
+        NodeExecution.builder()
+            .uuid(nodeExecution1Id)
+            .ambiance(ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution1Id, planNode1)).build())
+            .planNode(planNode1)
+            .resolvedStepParameters(prepareStepParameters("pipelineResolvedValue"))
+            .build();
 
-    Level pipelineLevel = Level.newBuilder().setRuntimeId(nodeExecution1Id).build();
-    Level stagesLevel = Level.newBuilder().setRuntimeId(nodeExecution2Id).build();
-    Level stageLevel = Level.newBuilder().setRuntimeId(nodeExecution3Id).build();
-    List<Level> levels = new ArrayList<>();
-    levels.add(pipelineLevel);
-    levels.add(stagesLevel);
-    levels.add(stageLevel);
-    ambiance = Ambiance.newBuilder()
-                   .setPlanExecutionId(generateUuid())
-                   .putAllSetupAbstractions(ImmutableMap.of("accountId", generateUuid(), "appId", generateUuid()))
-                   .setExpressionFunctorToken(1234)
-                   .build();
+    planNode2 = preparePlanNode(false, "stages", "stagesValue", null);
+    nodeExecution2 =
+        NodeExecution.builder()
+            .uuid(nodeExecution2Id)
+            .ambiance(ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution1Id, planNode1))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution2Id, planNode2))
+                          .build())
+            .planNode(planNode2)
+            .resolvedStepParameters(prepareStepParameters("stagesResolvedValue"))
+            .parentId(nodeExecution1Id)
+            .build();
 
-    when(nodeExecutionService.get(nodeExecution1.getUuid())).thenReturn(nodeExecution1);
-    when(nodeExecutionService.get(nodeExecution2.getUuid())).thenReturn(nodeExecution2);
-    when(nodeExecutionService.get(nodeExecution3.getUuid())).thenReturn(nodeExecution3);
-    when(nodeExecutionService.get(nodeExecution4.getUuid())).thenReturn(nodeExecution4);
-    when(nodeExecutionService.get(nodeExecution5.getUuid())).thenReturn(nodeExecution5);
+    planNode3 = preparePlanNode(false, "stage", "stageValue", "STAGE");
+    nodeExecution3 =
+        NodeExecution.builder()
+            .uuid(nodeExecution3Id)
+            .ambiance(ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution1Id, planNode1))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution2Id, planNode2))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution3Id, planNode3))
+                          .build())
+            .planNode(planNode3)
+            .resolvedStepParameters(prepareStepParameters("stageResolvedValue"))
+            .parentId(nodeExecution2Id)
+            .build();
 
-    String planExecutionId = ambiance.getPlanExecutionId();
-    when(nodeExecutionService.fetchChildrenNodeExecutions(planExecutionId, null))
+    planNode4 = preparePlanNode(false, "d", "di1", null);
+    nodeExecution4 =
+        NodeExecution.builder()
+            .uuid(nodeExecution4Id)
+            .ambiance(ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution1Id, planNode1))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution2Id, planNode2))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution3Id, planNode3))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution4Id, planNode4))
+                          .build())
+            .planNode(planNode4)
+            .resolvedStepParameters(prepareStepParameters("dResolvedValue"))
+            .parentId(nodeExecution3Id)
+            .nextId(nodeExecution5Id)
+            .build();
+
+    planNode5 = preparePlanNode(false, "e", "ei1", null);
+    nodeExecution5 =
+        NodeExecution.builder()
+            .uuid(nodeExecution5Id)
+            .ambiance(ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution1Id, planNode1))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution2Id, planNode2))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution3Id, planNode3))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution5Id, planNode5))
+                          .build())
+            .planNode(planNode5)
+            .resolvedStepParameters(prepareStepParameters("eResolvedValue"))
+            .previousId(nodeExecution4Id)
+            .parentId(nodeExecution3Id)
+            .build();
+
+    when(nodeExecutionService.getWithFieldsIncluded(
+             nodeExecution1.getUuid(), NodeProjectionUtils.fieldsForExpressionEngine))
+        .thenReturn(nodeExecution1);
+    when(nodeExecutionService.getWithFieldsIncluded(
+             nodeExecution2.getUuid(), NodeProjectionUtils.fieldsForExpressionEngine))
+        .thenReturn(nodeExecution2);
+    when(nodeExecutionService.getWithFieldsIncluded(
+             nodeExecution3.getUuid(), NodeProjectionUtils.fieldsForExpressionEngine))
+        .thenReturn(nodeExecution3);
+    when(nodeExecutionService.getWithFieldsIncluded(
+             nodeExecution4.getUuid(), NodeProjectionUtils.fieldsForExpressionEngine))
+        .thenReturn(nodeExecution4);
+    when(nodeExecutionService.getWithFieldsIncluded(
+             nodeExecution5.getUuid(), NodeProjectionUtils.fieldsForExpressionEngine))
+        .thenReturn(nodeExecution5);
+
+    when(nodeExecutionService.fetchChildrenNodeExecutions(
+             planExecutionId, null, NodeProjectionUtils.fieldsForExpressionEngine))
         .thenReturn(Collections.singletonList(nodeExecution1));
-    when(nodeExecutionService.fetchChildrenNodeExecutions(planExecutionId, nodeExecution1.getUuid()))
+    when(nodeExecutionService.fetchChildrenNodeExecutions(
+             planExecutionId, nodeExecution1.getUuid(), NodeProjectionUtils.fieldsForExpressionEngine))
         .thenReturn(Collections.singletonList(nodeExecution2));
-    when(nodeExecutionService.fetchChildrenNodeExecutions(planExecutionId, nodeExecution2.getUuid()))
+    when(nodeExecutionService.fetchChildrenNodeExecutions(
+             planExecutionId, nodeExecution2.getUuid(), NodeProjectionUtils.fieldsForExpressionEngine))
         .thenReturn(Collections.singletonList(nodeExecution3));
-    when(nodeExecutionService.fetchChildrenNodeExecutions(planExecutionId, nodeExecution3.getUuid()))
+    when(nodeExecutionService.fetchChildrenNodeExecutions(
+             planExecutionId, nodeExecution3.getUuid(), NodeProjectionUtils.fieldsForExpressionEngine))
         .thenReturn(asList(nodeExecution4, nodeExecution5));
 
     when(planExecutionService.get(planExecutionId)).thenReturn(PlanExecution.builder().build());
 
     // pipeline children
-    when(nodeExecutionService.findAllChildren(ambiance.getPlanExecutionId(), nodeExecution1.getUuid(), false))
+    when(nodeExecutionService.findAllChildren(
+             planExecutionId, nodeExecution1.getUuid(), false, NodeProjectionUtils.fieldsForExpressionEngine))
         .thenReturn(Arrays.asList(nodeExecution2, nodeExecution3, nodeExecution4, nodeExecution5));
 
     // stage children
-    when(nodeExecutionService.findAllChildren(ambiance.getPlanExecutionId(), nodeExecution3.getUuid(), false))
+    when(nodeExecutionService.findAllChildren(
+             planExecutionId, nodeExecution3.getUuid(), false, NodeProjectionUtils.fieldsForExpressionEngine))
         .thenReturn(Arrays.asList(nodeExecution4, nodeExecution5));
   }
 
@@ -167,8 +210,13 @@ public class PMSExpressionEvaluatorTest extends PipelineServiceTestBase {
   @Owner(developers = ARCHIT)
   @Category(UnitTests.class)
   public void testNodeExecutionCurrentStatusWhenIgnoredFailure() {
-    Ambiance newAmbiance =
-        AmbianceUtils.cloneForChild(ambiance, Level.newBuilder().setRuntimeId(nodeExecution5.getUuid()).build());
+    Ambiance newAmbiance = Ambiance.newBuilder()
+                               .setPlanExecutionId(planExecutionId)
+                               .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution1.getUuid(), planNode1))
+                               .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution2.getUuid(), planNode2))
+                               .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution3.getUuid(), planNode3))
+                               .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution5.getUuid(), planNode5))
+                               .build();
 
     Reflect.on(nodeExecution5).set("status", Status.IGNORE_FAILED);
     Reflect.on(nodeExecution4).set("status", Status.SUCCEEDED);
@@ -196,8 +244,13 @@ public class PMSExpressionEvaluatorTest extends PipelineServiceTestBase {
   @Owner(developers = BRIJESH)
   @Category(UnitTests.class)
   public void testRemoteFunctor() {
-    Ambiance newAmbiance =
-        AmbianceUtils.cloneForChild(ambiance, Level.newBuilder().setRuntimeId(nodeExecution5.getUuid()).build());
+    Ambiance newAmbiance = Ambiance.newBuilder()
+                               .setPlanExecutionId(planExecutionId)
+                               .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution1.getUuid(), planNode1))
+                               .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution2.getUuid(), planNode2))
+                               .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution3.getUuid(), planNode3))
+                               .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution5.getUuid(), planNode5))
+                               .build();
     EngineExpressionEvaluator engineExpressionEvaluator = prepareEngineExpressionEvaluator(newAmbiance);
     ExpressionResponse expressionResponse = ExpressionResponse.newBuilder().build();
     ArgumentCaptor<String> argumentCaptor = ArgumentCaptor.forClass(String.class);
@@ -224,25 +277,21 @@ public class PMSExpressionEvaluatorTest extends PipelineServiceTestBase {
     assertEquals(argsArray[1], "arg2");
   }
 
-  private PlanNodeProto preparePlanNode(
+  private PlanNode preparePlanNode(
       boolean skipExpressionChain, String identifier, String paramValue, String groupName) {
-    PlanNodeProto.Builder builder =
-        PlanNodeProto.newBuilder()
-            .setUuid(generateUuid())
-            .setName(identifier)
-            .setStepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-            .setIdentifier(identifier)
-            .setSkipExpressionChain(skipExpressionChain)
-            .setStepParameters(RecastOrchestrationUtils.toJson(prepareStepParameters(paramValue)));
-
-    if (!isEmpty(groupName)) {
-      builder.setGroup(groupName);
-    }
-    return builder.build();
+    return PlanNode.builder()
+        .uuid(generateUuid())
+        .name(identifier)
+        .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+        .identifier(identifier)
+        .skipExpressionChain(skipExpressionChain)
+        .stepParameters(PmsStepParameters.parse(RecastOrchestrationUtils.toJson(prepareStepParameters(paramValue))))
+        .group(groupName)
+        .build();
   }
 
-  private StepParameters prepareStepParameters(String paramValue) {
-    return TestStepParameters.builder().param(paramValue).build();
+  private Map<String, Object> prepareStepParameters(String paramValue) {
+    return RecastOrchestrationUtils.toMap(TestStepParameters.builder().param(paramValue).build());
   }
 
   private EngineExpressionEvaluator prepareEngineExpressionEvaluator(Ambiance ambiance) {

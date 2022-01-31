@@ -14,6 +14,7 @@ import static io.harness.persistence.HQuery.excludeAuthority;
 import io.harness.connector.ConnectorInfoDTO;
 import io.harness.cvng.activity.beans.DeploymentActivityResultDTO.TimeSeriesAnalysisSummary;
 import io.harness.cvng.analysis.beans.DeploymentTimeSeriesAnalysisDTO;
+import io.harness.cvng.analysis.beans.NodeRiskCountDTO;
 import io.harness.cvng.analysis.beans.Risk;
 import io.harness.cvng.analysis.beans.TransactionMetricInfo;
 import io.harness.cvng.analysis.beans.TransactionMetricInfoSummaryPageDTO;
@@ -46,17 +47,19 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import org.apache.commons.lang3.StringUtils;
 import org.mongodb.morphia.query.Sort;
 
 public class DeploymentTimeSeriesAnalysisServiceImpl implements DeploymentTimeSeriesAnalysisService {
@@ -99,6 +102,13 @@ public class DeploymentTimeSeriesAnalysisServiceImpl implements DeploymentTimeSe
                       || transactionMetricInfo.getTransactionMetric().getTransactionName().toLowerCase().contains(
                           deploymentTimeSeriesAnalysisFilter.getFilter().toLowerCase()))
               .collect(Collectors.toList());
+    }
+    if (deploymentTimeSeriesAnalysisFilter.filterByTransactionNames()) {
+      transactionMetricInfoList = transactionMetricInfoList.stream()
+                                      .filter(transactionMetricInfo
+                                          -> deploymentTimeSeriesAnalysisFilter.getTransactionNames().contains(
+                                              transactionMetricInfo.getTransactionMetric().getTransactionName()))
+                                      .collect(Collectors.toList());
     }
 
     return TransactionMetricInfoSummaryPageDTO.builder()
@@ -173,6 +183,37 @@ public class DeploymentTimeSeriesAnalysisServiceImpl implements DeploymentTimeSe
     }
   }
 
+  @Override
+  public List<String> getTransactionNames(String accountId, String verificationJobInstanceId) {
+    Set<String> transactionNameSet = new HashSet<>();
+    DeploymentTimeSeriesAnalysisFilter deploymentTimeSeriesAnalysisFilter =
+        DeploymentTimeSeriesAnalysisFilter.builder().build();
+    List<DeploymentTimeSeriesAnalysis> latestDeploymentTimeSeriesAnalysis =
+        getLatestDeploymentTimeSeriesAnalysis(accountId, verificationJobInstanceId, deploymentTimeSeriesAnalysisFilter);
+    for (DeploymentTimeSeriesAnalysis timeSeriesAnalysis : latestDeploymentTimeSeriesAnalysis) {
+      timeSeriesAnalysis.getTransactionMetricSummaries().forEach(
+          transactionMetricHostData -> transactionNameSet.add(transactionMetricHostData.getTransactionName()));
+    }
+
+    return new ArrayList<>(transactionNameSet);
+  }
+
+  @Override
+  public List<String> getNodeNames(String accountId, String verificationJobInstanceId) {
+    Set<String> nodeNameSet = new HashSet<>();
+    DeploymentTimeSeriesAnalysisFilter deploymentTimeSeriesAnalysisFilter =
+        DeploymentTimeSeriesAnalysisFilter.builder().build();
+    List<DeploymentTimeSeriesAnalysis> latestDeploymentTimeSeriesAnalysis =
+        getLatestDeploymentTimeSeriesAnalysis(accountId, verificationJobInstanceId, deploymentTimeSeriesAnalysisFilter);
+    for (DeploymentTimeSeriesAnalysis timeSeriesAnalysis : latestDeploymentTimeSeriesAnalysis) {
+      timeSeriesAnalysis.getTransactionMetricSummaries().forEach(transactionMetricHostData
+          -> transactionMetricHostData.getHostData().forEach(
+              hostData -> nodeNameSet.add(hostData.getHostName().get())));
+    }
+
+    return new ArrayList<>(nodeNameSet);
+  }
+
   private List<TransactionMetricInfo> getMetrics(String accountId, String verificationJobInstanceId,
       DeploymentTimeSeriesAnalysisFilter deploymentTimeSeriesAnalysisFilter) {
     List<DeploymentTimeSeriesAnalysis> latestDeploymentTimeSeriesAnalysis =
@@ -198,23 +239,29 @@ public class DeploymentTimeSeriesAnalysisServiceImpl implements DeploymentTimeSe
           .stream()
           .filter(transactionMetricHostData
               -> filterAnomalousMetrics(transactionMetricHostData,
-                  deploymentTimeSeriesAnalysisFilter.filterByHostName(),
+                  deploymentTimeSeriesAnalysisFilter.filterByHostNames(),
                   deploymentTimeSeriesAnalysisFilter.isAnomalous()))
           .forEach(transactionMetricHostData -> {
+            Map<Risk, Integer> nodeCountByRiskStatusMap = new HashMap<>();
+            SortedSet<DeploymentTimeSeriesAnalysisDTO.HostData> nodeDataSet = new TreeSet();
+            transactionMetricHostData.getHostData()
+                .stream()
+                .filter(hostData
+                    -> filterHostData(hostData, deploymentTimeSeriesAnalysisFilter.getHostNames(),
+                        deploymentTimeSeriesAnalysisFilter.isAnomalous()))
+                .forEach(hostData -> {
+                  nodeDataSet.add(hostData);
+                  Risk risk = hostData.getRisk();
+                  nodeCountByRiskStatusMap.put(risk, nodeCountByRiskStatusMap.getOrDefault(risk, 0) + 1);
+                });
             TransactionMetricInfo transactionMetricInfo =
                 TransactionMetricInfo.builder()
                     .transactionMetric(createTransactionMetric(transactionMetricHostData))
                     .connectorName(connectorName)
                     .dataSourceType(dataSourceType)
+                    .nodes(nodeDataSet)
+                    .nodeRiskCountDTO(getNodeRiskCountDTO(nodeCountByRiskStatusMap))
                     .build();
-            SortedSet<DeploymentTimeSeriesAnalysisDTO.HostData> nodeDataSet = new TreeSet();
-            transactionMetricHostData.getHostData()
-                .stream()
-                .filter(hostData
-                    -> filterHostData(hostData, deploymentTimeSeriesAnalysisFilter.getHostName(),
-                        deploymentTimeSeriesAnalysisFilter.isAnomalous()))
-                .forEach(hostData -> nodeDataSet.add(hostData));
-            transactionMetricInfo.setNodes(nodeDataSet);
             if (isNotEmpty(nodeDataSet)) {
               transactionMetricInfoSet.add(transactionMetricInfo);
             }
@@ -227,12 +274,30 @@ public class DeploymentTimeSeriesAnalysisServiceImpl implements DeploymentTimeSe
     return transactionMetricInfoList;
   }
 
+  private NodeRiskCountDTO getNodeRiskCountDTO(Map<Risk, Integer> nodeCountByRiskStatusMap) {
+    int totalNodeCount = 0;
+    for (int val : nodeCountByRiskStatusMap.values()) {
+      totalNodeCount += val;
+    }
+    return NodeRiskCountDTO.builder()
+        .totalNodeCount(totalNodeCount)
+        .anomalousNodeCount(totalNodeCount - nodeCountByRiskStatusMap.getOrDefault(Risk.HEALTHY, 0))
+        .riskCounts(Arrays.stream(Risk.values())
+                        .map(risk
+                            -> NodeRiskCountDTO.RiskCount.builder()
+                                   .risk(risk)
+                                   .count(nodeCountByRiskStatusMap.getOrDefault(risk, 0))
+                                   .build())
+                        .collect(Collectors.toList()))
+        .build();
+  }
+
   private boolean filterHostData(
-      DeploymentTimeSeriesAnalysisDTO.HostData hostData, String hostName, boolean anomalousMetricsOnly) {
-    if (StringUtils.isBlank(hostName)) {
+      DeploymentTimeSeriesAnalysisDTO.HostData hostData, List<String> hostNames, boolean anomalousMetricsOnly) {
+    if (isEmpty(hostNames)) {
       return true;
     } else if (hostData.getHostName().isPresent()) {
-      return hostName.equals(hostData.getHostName().get()) && (!anomalousMetricsOnly || hostData.isAnomalous());
+      return hostNames.contains(hostData.getHostName().get()) && (!anomalousMetricsOnly || hostData.isAnomalous());
     } else {
       return false;
     }

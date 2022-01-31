@@ -13,10 +13,10 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.engine.executions.retry.RetryStageInfo;
 import io.harness.execution.NodeExecution;
 import io.harness.plan.Node;
-import io.harness.pms.contracts.execution.NodeExecutionProto;
 import io.harness.pms.contracts.execution.Status;
 
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -40,7 +40,13 @@ public interface NodeExecutionService {
 
   List<NodeExecution> fetchNodeExecutionsWithoutOldRetriesAndStatusIn(String planExecutionId, EnumSet<Status> statuses);
 
+  List<NodeExecution> fetchNodeExecutionsWithoutOldRetriesAndStatusIn(
+      String planExecutionId, EnumSet<Status> statuses, boolean shouldUseProjections, Set<String> fieldsToBeIncluded);
+
   List<NodeExecution> fetchChildrenNodeExecutions(String planExecutionId, String parentId);
+
+  List<NodeExecution> fetchChildrenNodeExecutions(
+      String planExecutionId, String parentId, Set<String> fieldsToBeIncluded);
 
   List<NodeExecution> fetchNodeExecutionsByStatus(String planExecutionId, Status status);
 
@@ -61,8 +67,6 @@ public interface NodeExecutionService {
 
   NodeExecution save(NodeExecution nodeExecution);
 
-  NodeExecution save(NodeExecutionProto nodeExecution);
-
   NodeExecution updateStatusWithUpdate(@NotNull String nodeExecutionId, @NotNull Status status, Update ops,
       EnumSet<Status> overrideStatusSet, Set<String> includedFields, boolean shouldUseProjections);
 
@@ -81,8 +85,19 @@ public interface NodeExecutionService {
   List<NodeExecution> findByParentIdAndStatusIn(String parentId, EnumSet<Status> flowingStatuses);
 
   default List<NodeExecution> findAllChildren(String planExecutionId, String parentId, boolean includeParent) {
-    return findAllChildrenWithStatusIn(planExecutionId, parentId, EnumSet.noneOf(Status.class), includeParent);
+    return findAllChildrenWithStatusIn(
+        planExecutionId, parentId, EnumSet.noneOf(Status.class), includeParent, false, new HashSet<>());
   }
+
+  default List<NodeExecution> findAllChildren(
+      String planExecutionId, String parentId, boolean includeParent, Set<String> fieldsToBeIncluded) {
+    return findAllChildrenWithStatusIn(
+        planExecutionId, parentId, EnumSet.noneOf(Status.class), includeParent, true, fieldsToBeIncluded);
+  }
+
+  List<NodeExecution> findAllChildrenWithStatusIn(String planExecutionId, String parentId,
+      EnumSet<Status> flowingStatuses, boolean includeParent, boolean shouldUseProjections,
+      Set<String> fieldsToBeIncluded);
 
   List<NodeExecution> findAllChildrenWithStatusIn(
       String planExecutionId, String parentId, EnumSet<Status> flowingStatuses, boolean includeParent);
@@ -107,4 +122,6 @@ public interface NodeExecutionService {
   List<String> fetchStageFqnFromStageIdentifiers(String planExecutionId, List<String> stageIdentifiers);
 
   Map<String, Node> mapNodeExecutionIdWithPlanNodeForGivenStageFQN(String planExecutionId, List<String> stageFQNs);
+
+  List<NodeExecution> fetchStageExecutionsWithEndTsAndStatusProjection(String planExecutionId);
 }

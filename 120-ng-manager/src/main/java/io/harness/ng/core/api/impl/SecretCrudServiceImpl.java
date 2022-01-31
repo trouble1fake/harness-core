@@ -46,9 +46,11 @@ import io.harness.ng.core.dto.secrets.SecretTextSpecDTO;
 import io.harness.ng.core.entities.NGEncryptedData;
 import io.harness.ng.core.models.Secret;
 import io.harness.ng.core.models.Secret.SecretKeys;
+import io.harness.ng.core.models.SecretTextSpec;
 import io.harness.ng.core.remote.SecretValidationMetaData;
 import io.harness.ng.core.remote.SecretValidationResultDTO;
 import io.harness.secretmanagerclient.SecretType;
+import io.harness.secretmanagerclient.ValueType;
 import io.harness.stream.BoundedInputStream;
 import io.harness.utils.PageUtils;
 
@@ -109,6 +111,14 @@ public class SecretCrudServiceImpl implements SecretCrudService {
   }
 
   private SecretResponseWrapper getResponseWrapper(@NotNull Secret secret) {
+    if (secret.getType() == SecretText) {
+      SecretTextSpec secretSpec = (SecretTextSpec) secret.getSecretSpec();
+      if (ValueType.Reference.equals(secretSpec.getValueType())) {
+        NGEncryptedData encryptedData = encryptedDataService.get(secret.getAccountIdentifier(),
+            secret.getOrgIdentifier(), secret.getProjectIdentifier(), secret.getIdentifier());
+        secretSpec.setValue(encryptedData.getPath());
+      }
+    }
     return SecretResponseWrapper.builder()
         .secret(secret.toDTO())
         .updatedAt(secret.getLastModifiedAt())

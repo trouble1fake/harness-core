@@ -17,7 +17,7 @@ import io.harness.pms.contracts.advisers.AdviserResponse;
 import io.harness.pms.contracts.advisers.AdviserType;
 import io.harness.pms.contracts.advisers.MarkSuccessAdvise;
 import io.harness.pms.contracts.advisers.MarkSuccessAdvise.Builder;
-import io.harness.pms.contracts.execution.failure.FailureInfo;
+import io.harness.pms.contracts.execution.failure.FailureType;
 import io.harness.pms.execution.utils.StatusUtils;
 import io.harness.pms.sdk.core.adviser.Adviser;
 import io.harness.pms.sdk.core.adviser.AdvisingEvent;
@@ -27,6 +27,7 @@ import io.harness.serializer.KryoSerializer;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import java.util.Collections;
+import java.util.List;
 import javax.validation.constraints.NotNull;
 
 @OwnedBy(HarnessTeam.PIPELINE)
@@ -50,10 +51,9 @@ public class OnMarkSuccessAdviser implements Adviser {
   public boolean canAdvise(AdvisingEvent advisingEvent) {
     OnMarkSuccessAdviserParameters adviserParameters = extractParameters(advisingEvent);
     boolean canAdvise = StatusUtils.brokeStatuses().contains(advisingEvent.getToStatus());
-    FailureInfo failureInfo = advisingEvent.getFailureInfo();
-    if (failureInfo != null && !isEmpty(failureInfo.getFailureTypesValueList())) {
-      return canAdvise
-          && !Collections.disjoint(adviserParameters.getApplicableFailureTypes(), failureInfo.getFailureTypesList());
+    List<FailureType> failureTypesList = getAllFailureTypes(advisingEvent);
+    if (adviserParameters != null && !isEmpty(failureTypesList)) {
+      return canAdvise && !Collections.disjoint(adviserParameters.getApplicableFailureTypes(), failureTypesList);
     }
     return canAdvise;
   }

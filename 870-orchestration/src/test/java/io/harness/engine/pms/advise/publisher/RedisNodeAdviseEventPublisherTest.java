@@ -25,6 +25,7 @@ import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.pms.commons.events.PmsEventSender;
 import io.harness.execution.NodeExecution;
 import io.harness.interrupts.InterruptEffect;
+import io.harness.plan.PlanNode;
 import io.harness.pms.contracts.advisers.AdviserObtainment;
 import io.harness.pms.contracts.advisers.AdviserType;
 import io.harness.pms.contracts.ambiance.Ambiance;
@@ -35,7 +36,6 @@ import io.harness.pms.contracts.interrupts.InterruptConfig;
 import io.harness.pms.contracts.interrupts.InterruptType;
 import io.harness.pms.contracts.interrupts.IssuedBy;
 import io.harness.pms.contracts.interrupts.TimeoutIssuer;
-import io.harness.pms.contracts.plan.PlanNodeProto;
 import io.harness.rule.Owner;
 
 import com.google.common.collect.ImmutableList;
@@ -78,12 +78,12 @@ public class RedisNodeAdviseEventPublisherTest extends OrchestrationTestBase {
                     .build()))
             .status(Status.RUNNING)
             .retryIds(new ArrayList<>())
-            .node(PlanNodeProto.newBuilder()
-                      .addAdviserObtainments(AdviserObtainment.newBuilder()
+            .planNode(PlanNode.builder()
+                          .adviserObtainment(AdviserObtainment.newBuilder()
                                                  .setType(AdviserType.newBuilder().setType("type").buildPartial())
                                                  .build())
-                      .setServiceName("serviceName")
-                      .build())
+                          .serviceName("serviceName")
+                          .build())
             .build();
 
     String eventId = generateUuid();

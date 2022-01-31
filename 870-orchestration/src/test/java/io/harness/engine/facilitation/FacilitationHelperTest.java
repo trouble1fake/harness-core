@@ -25,7 +25,6 @@ import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.facilitators.FacilitatorObtainment;
 import io.harness.pms.contracts.facilitators.FacilitatorResponseProto;
 import io.harness.pms.contracts.facilitators.FacilitatorType;
-import io.harness.pms.contracts.plan.PlanNodeProto;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.OrchestrationFacilitatorType;
@@ -50,12 +49,12 @@ public class FacilitationHelperTest extends OrchestrationTestBase {
             .uuid(generateUuid())
             .ambiance(ambiance)
             .status(Status.QUEUED)
-            .node(PlanNodeProto.newBuilder()
-                      .setUuid(generateUuid())
-                      .setStepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                      .addFacilitatorObtainments(
-                          FacilitatorObtainment.newBuilder().setType(SyncFacilitator.FACILITATOR_TYPE).build())
-                      .build())
+            .planNode(PlanNode.builder()
+                          .uuid(generateUuid())
+                          .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+                          .facilitatorObtainment(
+                              FacilitatorObtainment.newBuilder().setType(SyncFacilitator.FACILITATOR_TYPE).build())
+                          .build())
             .startTs(System.currentTimeMillis())
             .build();
     FacilitatorResponseProto facilitatorResponse = facilitationHelper.calculateFacilitatorResponse(nodeExecution);

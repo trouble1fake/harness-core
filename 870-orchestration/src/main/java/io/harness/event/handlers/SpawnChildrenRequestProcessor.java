@@ -17,6 +17,7 @@ import io.harness.engine.OrchestrationEngine;
 import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.executions.plan.PlanService;
 import io.harness.engine.pms.resume.EngineResumeCallback;
+import io.harness.engine.utils.OrchestrationUtils;
 import io.harness.engine.utils.PmsLevelUtils;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.NodeExecution.NodeExecutionKeys;
@@ -65,16 +66,18 @@ public class SpawnChildrenRequestProcessor implements SdkResponseProcessor {
         callbackIds.add(uuid);
         Node node = planService.fetchNode(ambiance.getPlanId(), child.getChildNodeId());
         Ambiance clonedAmbiance = AmbianceUtils.cloneForChild(ambiance, PmsLevelUtils.buildLevelFromNode(uuid, node));
-        NodeExecution childNodeExecution = NodeExecution.builder()
-                                               .uuid(uuid)
-                                               .planNode(node)
-                                               .ambiance(clonedAmbiance)
-                                               .levelCount(clonedAmbiance.getLevelsCount())
-                                               .status(Status.QUEUED)
-                                               .notifyId(uuid)
-                                               .parentId(nodeExecution.getUuid())
-                                               .startTs(AmbianceUtils.getCurrentLevelStartTs(clonedAmbiance))
-                                               .build();
+        NodeExecution childNodeExecution =
+            NodeExecution.builder()
+                .uuid(uuid)
+                .planNode(node)
+                .ambiance(clonedAmbiance)
+                .levelCount(clonedAmbiance.getLevelsCount())
+                .status(Status.QUEUED)
+                .notifyId(uuid)
+                .parentId(nodeExecution.getUuid())
+                .startTs(AmbianceUtils.getCurrentLevelStartTs(clonedAmbiance))
+                .originalNodeExecutionId(OrchestrationUtils.getOriginalNodeExecutionId(node))
+                .build();
         nodeExecutionService.save(childNodeExecution);
         log.info("For Children Executable starting Child NodeExecution with id: {}", uuid);
         executorService.submit(
@@ -82,10 +85,7 @@ public class SpawnChildrenRequestProcessor implements SdkResponseProcessor {
       }
 
       // Attach a Callback to the parent for the child
-      EngineResumeCallback callback = EngineResumeCallback.builder()
-                                          .nodeExecutionId(SdkResponseEventUtils.getNodeExecutionId(event))
-                                          .ambiance(ambiance)
-                                          .build();
+      EngineResumeCallback callback = EngineResumeCallback.builder().ambiance(ambiance).build();
       waitNotifyEngine.waitForAllOn(publisherName, callback, callbackIds.toArray(new String[0]));
 
       // Update the parent with executable response

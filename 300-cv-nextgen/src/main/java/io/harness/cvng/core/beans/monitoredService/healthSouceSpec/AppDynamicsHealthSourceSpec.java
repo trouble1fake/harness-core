@@ -52,10 +52,10 @@ public class AppDynamicsHealthSourceSpec extends MetricHealthSourceSpec {
 
   @Override
   public HealthSource.CVConfigUpdateResult getCVConfigUpdateResult(String accountId, String orgIdentifier,
-      String projectIdentifier, String environmentRef, String serviceRef, String identifier, String name,
-      List<CVConfig> existingCVConfigs, MetricPackService metricPackService) {
-    List<AppDynamicsCVConfig> cvConfigsFromThisObj = toCVConfigs(
-        accountId, orgIdentifier, projectIdentifier, environmentRef, serviceRef, identifier, name, metricPackService);
+      String projectIdentifier, String environmentRef, String serviceRef, String monitoredServiceIdentifier,
+      String identifier, String name, List<CVConfig> existingCVConfigs, MetricPackService metricPackService) {
+    List<AppDynamicsCVConfig> cvConfigsFromThisObj = toCVConfigs(accountId, orgIdentifier, projectIdentifier,
+        environmentRef, serviceRef, monitoredServiceIdentifier, identifier, name, metricPackService);
     Map<Key, AppDynamicsCVConfig> existingConfigMap = new HashMap<>();
     List<AppDynamicsCVConfig> existingAppDCVConfig = (List<AppDynamicsCVConfig>) (List<?>) existingCVConfigs;
     for (AppDynamicsCVConfig appDynamicsCVConfig : existingAppDCVConfig) {
@@ -88,7 +88,8 @@ public class AppDynamicsHealthSourceSpec extends MetricHealthSourceSpec {
   }
 
   private List<AppDynamicsCVConfig> toCVConfigs(String accountId, String orgIdentifier, String projectIdentifier,
-      String environmentRef, String serviceRef, String identifier, String name, MetricPackService metricPackService) {
+      String environmentRef, String serviceRef, String monitoredServiceIdentifier, String identifier, String name,
+      MetricPackService metricPackService) {
     List<AppDynamicsCVConfig> cvConfigs = new ArrayList<>();
     CollectionUtils.emptyIfNull(metricPacks).forEach(metricPack -> {
       MetricPack metricPackFromDb =
@@ -100,6 +101,7 @@ public class AppDynamicsHealthSourceSpec extends MetricHealthSourceSpec {
                                                     .identifier(identifier)
                                                     .connectorIdentifier(getConnectorRef())
                                                     .monitoringSourceName(name)
+                                                    .monitoredServiceIdentifier(monitoredServiceIdentifier)
                                                     .productName(feature)
                                                     .applicationName(applicationName)
                                                     .tierName(tierName)
@@ -129,6 +131,7 @@ public class AppDynamicsHealthSourceSpec extends MetricHealthSourceSpec {
                                    .tierName(tierName)
                                    .envIdentifier(environmentRef)
                                    .serviceIdentifier(serviceRef)
+                                   .monitoredServiceIdentifier(monitoredServiceIdentifier)
                                    .groupName(mdList.get(0).getGroupName())
                                    .category(mdList.get(0).getRiskProfile().getCategory())
                                    .build();
