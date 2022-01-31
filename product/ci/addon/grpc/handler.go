@@ -77,8 +77,8 @@ func (h *handler) ExecuteStep(ctx context.Context, in *pb.ExecuteStepRequest) (*
 		err = close(rl.Writer, err)
 		return response, err
 	case *enginepb.UnitStep_Security:
-		stepOutput, numRetries, err := newSecurityTask(in.GetStep(), in.GetPrevStepOutputs(), rl.BaseLogger,
-			rl.Writer, false, h.log).Run(ctx)
+		stepOutput, numRetries, err := newSecurityTask(in.GetStep(), in.GetPrevStepOutputs(),
+			in.GetTmpFilePath(), rl.BaseLogger, rl.Writer, false, h.log).Run(ctx)
 		response := &pb.ExecuteStepResponse{
 			Output:     stepOutput,
 			NumRetries: numRetries,

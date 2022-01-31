@@ -8,9 +8,10 @@ package tasks
 import (
 	"context"
 	"fmt"
+	"github.com/wings-software/portal/commons/go/lib/filesystem"
 	"io"
 	"os"
-	"strings"
+	"path/filepath"
 	"time"
 
 	"github.com/wings-software/portal/commons/go/lib/exec"
@@ -27,7 +28,7 @@ const (
 	defaultSecurityTimeout    int64         = 14400 // 4 hour
 	defaultSecurityNumRetries int32         = 1
 	securityCmdExitWaitTime   time.Duration = time.Duration(0)
-	securityOutputPrefix	  string		= "SECURITY_"
+	outputEnvSecuritySuffix   string        = ".out"
 )
 
 // SecurityTask represents interface to execute a security step
@@ -43,6 +44,7 @@ type securityTask struct {
 	image             string
 	entrypoint        []string
 	environment       map[string]string
+	tmpFilePath       string
 	envVarOutputs     []string
 	prevStepOutputs   map[string]*pb.StepOutput
 	logMetrics        bool
@@ -51,13 +53,15 @@ type securityTask struct {
 	procWriter        io.Writer
 	cmdContextFactory exec.CmdContextFactory
 	artifactFilePath  string
+	fs                filesystem.FileSystem
 	reports           []*pb.Report
 }
 
 // NewSecurityTask creates a security step executor
-func NewSecurityTask(step *pb.UnitStep, prevStepOutputs map[string]*pb.StepOutput,
+func NewSecurityTask(step *pb.UnitStep, prevStepOutputs map[string]*pb.StepOutput, tmpFilePath string,
 	log *zap.SugaredLogger, w io.Writer, logMetrics bool, addonLogger *zap.SugaredLogger) SecurityTask {
 	r := step.GetSecurity()
+	fs := filesystem.NewOSFileSystem(log)
 	timeoutSecs := r.GetContext().GetExecutionTimeoutSecs()
 	if timeoutSecs == 0 {
 		timeoutSecs = defaultSecurityTimeout
@@ -74,6 +78,7 @@ func NewSecurityTask(step *pb.UnitStep, prevStepOutputs map[string]*pb.StepOutpu
 		entrypoint:        r.GetEntrypoint(),
 		environment:       r.GetEnvironment(),
 		envVarOutputs:     r.GetEnvVarOutputs(),
+		tmpFilePath:       tmpFilePath,
 		reports:           r.GetReports(),
 		timeoutSecs:       timeoutSecs,
 		numRetries:        numRetries,
@@ -82,6 +87,7 @@ func NewSecurityTask(step *pb.UnitStep, prevStepOutputs map[string]*pb.StepOutpu
 		logMetrics:        logMetrics,
 		log:               log,
 		procWriter:        w,
+		fs:                fs,
 		addonLogger:       addonLogger,
 		artifactFilePath:  r.GetArtifactFilePath(),
 	}
@@ -165,13 +171,17 @@ func (t *securityTask) execute(ctx context.Context, retryCount int32) (map[strin
 		return nil, err
 	}
 
+	outputFile := filepath.Join(t.tmpFilePath, fmt.Sprintf("%s%s", t.id, outputEnvSecuritySuffix))
 	stepOutput := make(map[string]string)
-
-	envVarMap := getEnvVars()
-	for k, v := range envVarMap {
-		if strings.HasPrefix(k, securityOutputPrefix) {
-			stepOutput[strings.TrimPrefix(k, securityOutputPrefix)] = v
+	if len(t.envVarOutputs) != 0 {
+		var err error
+		outputVars, err := fetchOutputVariables(outputFile, t.fs, t.log)
+		if err != nil {
+			logSecurityErr(t.log, "error encountered while fetching output of security step", t.id, nil, retryCount, start, err)
+			return nil, err
 		}
+
+		stepOutput = outputVars
 	}
 
 	t.addonLogger.Infow(

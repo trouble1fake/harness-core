@@ -44,6 +44,7 @@ go_test(
         "publish_artifacts_test.go",
         "restore_cache_test.go",
         "run_test.go",
+        "security_test.go",
         "save_cache_test.go",
         "security_test.go",
     ],

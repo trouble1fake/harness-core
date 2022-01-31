@@ -103,6 +103,44 @@ func TestExecuteRunStep(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestExecuteSecurityStep(t *testing.T) {
+	ctrl, ctx := gomock.WithContext(context.Background(), t)
+	defer ctrl.Finish()
+
+	stopCh := make(chan bool)
+	log, _ := logs.GetObservedLogger(zap.InfoLevel)
+	mockStep := mtasks.NewMockRunTask(ctrl)
+
+	in := &addonpb.ExecuteStepRequest{
+		Step: &pb.UnitStep{
+			Id: "step1",
+			Step: &pb.UnitStep_Security{
+				Security: &pb.SecurityStep{
+					Image: "plugin/drone-git",
+				},
+			},
+		},
+	}
+
+	oldLogger := newGrpcRemoteLogger
+	defer func() { newGrpcRemoteLogger = oldLogger }()
+	newGrpcRemoteLogger = func(key string) (rl *logs.RemoteLogger, err error) {
+		return &logs.RemoteLogger{BaseLogger: log.Sugar(), Writer: logs.NopWriter()}, nil
+	}
+
+	oldSecurityTask := newSecurityTask
+	defer func() { newSecurityTask = oldSecurityTask }()
+	newSecurityTask = func(step *pb.UnitStep, so map[string]*pb.StepOutput, tmpFilePath string, log *zap.SugaredLogger,
+		w io.Writer, logMetrics bool, addonLogger *zap.SugaredLogger) tasks.SecurityTask {
+		return mockStep
+	}
+
+	mockStep.EXPECT().Run(ctx).Return(nil, int32(1), nil)
+	h := NewAddonHandler(stopCh, false, log.Sugar())
+	_, err := h.ExecuteStep(ctx, in)
+	assert.Nil(t, err)
+}
+
 func TestExecutePluginStep(t *testing.T) {
 	ctrl, ctx := gomock.WithContext(context.Background(), t)
 	defer ctrl.Finish()
