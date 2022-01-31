@@ -101,6 +101,7 @@ import io.harness.delegate.event.listener.ProjectEntityCRUDEventListener;
 import io.harness.delegate.outbox.DelegateOutboxEventHandler;
 import io.harness.delegate.service.impl.DelegateRingServiceImpl;
 import io.harness.delegate.service.impl.DelegateUpgraderServiceImpl;
+import io.harness.delegate.service.intfc.DelegateNgTokenService;
 import io.harness.delegate.service.intfc.DelegateRingService;
 import io.harness.delegate.service.intfc.DelegateUpgraderService;
 import io.harness.encryptors.CustomEncryptor;
@@ -213,6 +214,7 @@ import io.harness.service.EventConfigServiceImpl;
 import io.harness.service.EventHelper;
 import io.harness.service.EventService;
 import io.harness.service.EventServiceImpl;
+import io.harness.service.impl.DelegateNgTokenServiceImpl;
 import io.harness.service.impl.DelegateTokenServiceImpl;
 import io.harness.service.intfc.DelegateTokenService;
 import io.harness.telemetry.AbstractTelemetryModule;
@@ -1116,6 +1118,7 @@ public class WingsModule extends AbstractModule implements ServersModule {
     bind(CeAccountExpirationChecker.class).to(CeAccountExpirationCheckerImpl.class);
     bind(AccessRequestService.class).to(AccessRequestServiceImpl.class);
     bind(DelegateTaskServiceClassic.class).to(DelegateTaskServiceClassicImpl.class);
+    bind(DelegateNgTokenService.class).to(DelegateNgTokenServiceImpl.class);
 
     bind(GcbService.class).to(GcbServiceImpl.class);
     bind(ACRResourceProvider.class);

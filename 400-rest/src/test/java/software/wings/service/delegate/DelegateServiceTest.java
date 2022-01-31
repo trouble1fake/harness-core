@@ -3836,8 +3836,8 @@ public class DelegateServiceTest extends WingsBaseTest {
                                             .k8sConfigDetails(k8sConfigDetails)
                                             .build();
     assertThatThrownBy(()
-                           -> delegateService.generateKubernetesYamlNg(ACCOUNT_ID, setupDetails,
-                               "https://localhost:9090", "https://localhost:7070", MediaType.MULTIPART_FORM_DATA_TYPE))
+                           -> delegateService.generateKubernetesYaml(ACCOUNT_ID, setupDetails, "https://localhost:9090",
+                               "https://localhost:7070", MediaType.MULTIPART_FORM_DATA_TYPE))
         .isInstanceOf(InvalidRequestException.class)
         .hasMessage(UNIQUE_DELEGATE_NAME_ERROR_MESSAGE);
   }
