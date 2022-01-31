@@ -43,6 +43,7 @@ go_test(
         "plugin_test.go",
         "run_test.go",
         "runtests_test.go",
+        "security_test.go",
     ],
     data = glob(["testdata/**"]),
     embed = [":tasks"],

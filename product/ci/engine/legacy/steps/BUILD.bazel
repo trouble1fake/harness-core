@@ -44,6 +44,7 @@ go_test(
         "restore_cache_test.go",
         "run_test.go",
         "save_cache_test.go",
+        "security_test.go",
     ],
     embed = [":steps"],
     deps = [
