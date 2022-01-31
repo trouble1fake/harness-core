@@ -98,8 +98,8 @@ public class PmsGraphStepDetailsServiceImpl implements PmsGraphStepDetailsServic
       NodeExecutionsInfo newNodeExecutionsInfo =
           NodeExecutionsInfo.builder()
               .nodeExecutionDetailsInfoList(originalExecutionInfo.getNodeExecutionDetailsInfoList())
-              .nodeExecutionId(originalExecutionInfo.getNodeExecutionId())
-              .planExecutionId(originalExecutionInfo.getPlanExecutionId())
+              .nodeExecutionId(newNodeExecutionId)
+              .planExecutionId(planExecutionId)
               .resolvedInputs(originalExecutionInfo.getResolvedInputs())
               .build();
       nodeExecutionsInfoRepository.save(newNodeExecutionsInfo);
