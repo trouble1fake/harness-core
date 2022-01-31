@@ -4353,7 +4353,7 @@ plain_artifacts = [
     "com.google.cloud:google-cloud-storage:1.52.0",
     "com.google.code.findbugs:annotations:3.0.0",
     "com.google.code.findbugs:jsr305:3.0.2",
-    "com.google.code.gson:gson:2.8.5",
+    "com.google.code.gson:gson:2.8.0",
     "com.google.errorprone:error_prone_annotations:2.3.3",
     "com.google.guava:guava:30.1.1-jre",
     "com.google.http-client:google-http-client-apache-v2:1.38.0",
