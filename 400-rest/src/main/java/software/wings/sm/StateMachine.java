@@ -450,7 +450,9 @@ public class StateMachine implements PersistentEntity, UuidAware, CreatedAtAware
    * Clear cache.
    */
   void clearCache() {
-    cachedStatesMap = null;
+    synchronized (cachedStatesMap) {
+      cachedStatesMap = null;
+    }
     cachedTransitionFlowMap = null;
   }
 
@@ -487,7 +489,9 @@ public class StateMachine implements PersistentEntity, UuidAware, CreatedAtAware
    * @param states the states
    */
   public void setStates(List<State> states) {
-    this.states = states;
+    synchronized (this.states) {
+      this.states = states;
+    }
   }
 
   /**
@@ -497,11 +501,15 @@ public class StateMachine implements PersistentEntity, UuidAware, CreatedAtAware
    * @return state after saving.
    */
   public State addState(State state) {
-    if (states == null) {
-      states = new ArrayList<>();
+    synchronized (states) {
+      if (states == null) {
+        states = new ArrayList<>();
+      }
+      states.add(state);
     }
-    states.add(state);
-    cachedStatesMap = null;
+    synchronized (cachedStatesMap) {
+      cachedStatesMap = null;
+    }
     return state;
   }
 
@@ -581,8 +589,9 @@ public class StateMachine implements PersistentEntity, UuidAware, CreatedAtAware
     if (dupName != null) {
       throw new DuplicateStateNameException(dupName);
     }
-
-    cachedStatesMap = statesMap;
+    synchronized (cachedStatesMap) {
+      cachedStatesMap = statesMap;
+    }
     return statesMap;
   }
 
