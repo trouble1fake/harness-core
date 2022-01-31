@@ -589,9 +589,7 @@ public class StateMachine implements PersistentEntity, UuidAware, CreatedAtAware
     if (dupName != null) {
       throw new DuplicateStateNameException(dupName);
     }
-    synchronized (cachedStatesMap) {
-      cachedStatesMap = statesMap;
-    }
+    cachedStatesMap = statesMap;
     return statesMap;
   }
 
