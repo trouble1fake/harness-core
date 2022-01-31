@@ -101,14 +101,19 @@ public class GitFullSyncResource {
   private final FullSyncTriggerService fullSyncTriggerService;
   private final GitFullSyncConfigService gitFullSyncConfigService;
   private final GitFullSyncEntityService gitFullSyncEntityService;
+  // Add blank line here
   @POST
   @ApiOperation(value = "Triggers Full Sync", nickname = "triggerFullSync")
   @Operation(operationId = "triggerFullSync", summary = "Triggers Full Sync",
       responses =
       { @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Successfully triggered Full Sync") })
   public ResponseDTO<TriggerFullSyncResponseDTO>
+  // method name shouldn't be create, its not creating anything but rather triggering an ops
+  // @NotNull should be used with accountIdentifier instead of @NotEmpty
   create(@Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
              NGCommonEntityConstants.ACCOUNT_KEY) @NotEmpty String accountIdentifier,
+      // Why are there 2 different @OrgIdentifier used?
+      // Isn't there something similar for Account?
       @Parameter(description = ORG_PARAM_MESSAGE) @OrgIdentifier @QueryParam(
           NGCommonEntityConstants.ORG_KEY) @io.harness.accesscontrol.OrgIdentifier String orgIdentifier,
       @Parameter(description = PROJECT_PARAM_MESSAGE) @ProjectIdentifier @QueryParam(
@@ -129,10 +134,13 @@ public class GitFullSyncResource {
   @NGAccessControlCheck(resourceType = ResourceTypes.PROJECT, permission = EDIT_PROJECT_PERMISSION)
   public ResponseDTO<GitFullSyncConfigDTO>
   createFullSyncConfig(
+      // Use @NotNull
       @Parameter(description = ACCOUNT_PARAM_MESSAGE) @NotBlank @QueryParam(
           NGCommonEntityConstants.ACCOUNT_KEY) @io.harness.accesscontrol.AccountIdentifier String accountIdentifier,
+      // Why multiple usages of @OrgIdentifier
       @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(
           NGCommonEntityConstants.ORG_KEY) @io.harness.accesscontrol.OrgIdentifier @OrgIdentifier String orgIdentifier,
+      // Why multiple usages of @ProjectIdentifier?
       @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(NGCommonEntityConstants.PROJECT_KEY) @io.
       harness.accesscontrol.ProjectIdentifier @ProjectIdentifier String projectIdentifier,
       @RequestBody(description = "Configuration body") @NotNull @Valid GitFullSyncConfigRequestDTO requestDTO) {
@@ -143,6 +151,7 @@ public class GitFullSyncResource {
   @PUT
   @Path("/config")
   @ApiOperation(value = "Update a full sync configuration", nickname = "updateGitFullSyncConfig")
+  // Summary should be : "Updates configuration used for performing git full sync" ?
   @Operation(operationId = "updateGitFullSyncConfig", summary = "Updates a configuration for performing git full sync",
       responses =
       {
@@ -152,6 +161,7 @@ public class GitFullSyncResource {
   @NGAccessControlCheck(resourceType = ResourceTypes.PROJECT, permission = EDIT_PROJECT_PERMISSION)
   public ResponseDTO<GitFullSyncConfigDTO>
   updateFullSyncConfig(
+      // Please refer same comments on query params as mentioned before
       @Parameter(description = ACCOUNT_PARAM_MESSAGE) @NotNull @QueryParam(
           NGCommonEntityConstants.ACCOUNT_KEY) @io.harness.accesscontrol.AccountIdentifier String accountIdentifier,
       @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(
@@ -166,6 +176,7 @@ public class GitFullSyncResource {
   @GET
   @Path("/config")
   @ApiOperation(value = "Get full sync configuration", nickname = "getGitFullSyncConfig")
+  // Summary should be : "Get configuration used for performing git full sync" ?
   @Operation(operationId = "getGitFullSyncConfig", summary = "Get configuration for performing git full sync",
       responses =
       {
@@ -175,6 +186,7 @@ public class GitFullSyncResource {
   @NGAccessControlCheck(resourceType = ResourceTypes.PROJECT, permission = VIEW_PROJECT_PERMISSION)
   public ResponseDTO<GitFullSyncConfigDTO>
   getFullSyncConfig(
+      // check same comments as above
       @Parameter(description = ACCOUNT_PARAM_MESSAGE) @NotNull @QueryParam(
           NGCommonEntityConstants.ACCOUNT_KEY) @io.harness.accesscontrol.AccountIdentifier String accountIdentifier,
       @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(
@@ -182,8 +194,12 @@ public class GitFullSyncResource {
       @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(NGCommonEntityConstants.PROJECT_KEY) @io.
       harness.accesscontrol.ProjectIdentifier @ProjectIdentifier String projectIdentifier) {
     GitFullSyncConfigDTO gitFullSyncConfigDTO =
-        gitFullSyncConfigService.get(accountIdentifier, orgIdentifier, projectIdentifier)
+        gitFullSyncConfigService
+            .get(accountIdentifier, orgIdentifier, projectIdentifier)
+            // Why are we throwing exception here?
+            // If git sync config is not found, simply return HTTP 200 saying no git sync config found.
             .orElseThrow(
+                // Message can be better : "Git Full Sync Config not found at the scope provided" ?
                 () -> new InvalidRequestException("Config not found at the scope provided", WingsException.USER));
     return ResponseDTO.newResponse(gitFullSyncConfigDTO);
   }
@@ -191,6 +207,7 @@ public class GitFullSyncResource {
   @DELETE
   @Path("/config")
   @ApiOperation(value = "Delete full sync configuration", nickname = "deleteGitFullSyncConfig")
+  // Summary should be : "Delete configuration used for performing git full sync" ?
   @Operation(operationId = "deleteGitFullSyncConfig", summary = "Delete configuration for performing git full sync",
       responses =
       {
@@ -200,16 +217,23 @@ public class GitFullSyncResource {
   @NGAccessControlCheck(resourceType = ResourceTypes.PROJECT, permission = EDIT_PROJECT_PERMISSION)
   public ResponseDTO<Boolean>
   deleteFullSyncConfig(
+      // Check same comments
       @Parameter(description = ACCOUNT_PARAM_MESSAGE) @NotNull @QueryParam(
           NGCommonEntityConstants.ACCOUNT_KEY) @io.harness.accesscontrol.AccountIdentifier String accountIdentifier,
       @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(
           NGCommonEntityConstants.ORG_KEY) @io.harness.accesscontrol.OrgIdentifier @OrgIdentifier String orgIdentifier,
       @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(NGCommonEntityConstants.PROJECT_KEY) @io.
       harness.accesscontrol.ProjectIdentifier @ProjectIdentifier String projectIdentifier) {
+    // Returning Boolean doesn't justify delete ops
+    // If its false, then whats the cause? Is it genuinely false for some logic or is it some internal issue?
+    // Ideally, we should send HTTP 404 if there's no config to delete
+    // Also, we should return the config that's deleted. Simply returning true/false is sort of not a good response.
     return ResponseDTO.newResponse(
         gitFullSyncConfigService.delete(accountIdentifier, orgIdentifier, projectIdentifier));
   }
 
+  // Lets discuss on why its a blocker to make it a GET request and how can we try to resolve it
+  // Using POST for GET requests isn't correct
   @POST
   @Path("/files")
   @ApiOperation(value = "List files in full sync along with their status", nickname = "listFullSyncFiles")
@@ -219,15 +243,20 @@ public class GitFullSyncResource {
   @NGAccessControlCheck(resourceType = ResourceTypes.PROJECT, permission = VIEW_PROJECT_PERMISSION)
   public ResponseDTO<PageResponse<GitFullSyncEntityInfoDTO>>
   listFiles(
+      // Please maintain order of parameters in any request
+      // Page request can't be the first parameter.
       @RequestBody(description = "Details of Page including: size, index, sort") @BeanParam PageRequest pageRequest,
+      // Check same comments as previously mentioned
       @Parameter(description = ACCOUNT_PARAM_MESSAGE) @NotNull @QueryParam(
           NGCommonEntityConstants.ACCOUNT_KEY) @io.harness.accesscontrol.AccountIdentifier String accountIdentifier,
       @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(
           NGCommonEntityConstants.ORG_KEY) @io.harness.accesscontrol.OrgIdentifier @OrgIdentifier String orgIdentifier,
       @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(NGCommonEntityConstants.PROJECT_KEY) @io.
       harness.accesscontrol.ProjectIdentifier @ProjectIdentifier String projectIdentifier,
+      // What is a search term? Do our customers understand it?
       @Parameter(description = GitSyncApiConstants.SEARCH_TERM_PARAM_MESSAGE) @QueryParam(
           NGResourceFilterConstants.SEARCH_TERM_KEY) String searchTerm,
+      // Why is it a required field?
       @RequestBody(description = "Filters like entityType and syncStatus",
           required = true) @Body GitFullSyncEntityInfoFilterDTO gitFullSyncEntityInfoFilterDTO) {
     return ResponseDTO.newResponse(gitFullSyncEntityService.list(

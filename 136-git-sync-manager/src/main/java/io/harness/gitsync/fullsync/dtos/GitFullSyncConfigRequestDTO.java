@@ -18,12 +18,16 @@ import lombok.experimental.FieldDefaults;
 
 @Data
 @Builder
+// description should be : "This defines details required to trigger full sync" ?
 @Schema(name = "GitFullSyncConfigRequest", description = "This contains details to trigger Full Sync")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class GitFullSyncConfigRequestDTO {
+  // Shouldn't it be "Branch `to` which entities will be pushed"?
   @Schema(description = "Branch on which Entities will be pushed") @NotNull String branch;
   @Schema(description = GitSyncApiConstants.REPOID_PARAM_MESSAGE) @NotNull String repoIdentifier;
   @Schema(description = "Root Folder Path where entities will be pushed") @NotNull String rootFolder;
+  // We should mention whats default value here
+  // Description should be : "Defines if branch selected is a new branch or not" ?
   @Schema(description = "Checks the new Branch") boolean isNewBranch;
   @Schema(description = GitSyncApiConstants.DEFAULT_BRANCH_PARAM_MESSAGE) String baseBranch;
   @Schema(description = "This checks whether to create a pull request. Its default value is False")
