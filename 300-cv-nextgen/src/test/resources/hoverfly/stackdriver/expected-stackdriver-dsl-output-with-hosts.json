@@ -1,0 +1,82 @@
+[
+  {
+    "hostname": "chi-pr-medium-0",
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.016402767308977672,
+    "timestamp": 1642966157038
+  },
+  {
+    "hostname": "chi-pr-medium-1",
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.014496871695496337,
+    "timestamp": 1642966157038
+  },
+  {
+    "hostname": "chi-pr-medium-2",
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.014999628030720184,
+    "timestamp": 1642966157038
+  },
+  {
+    "hostname": "chi-pr-medium-3",
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.014019381723104136,
+    "timestamp": 1642966157038
+  },
+  {
+    "hostname": "cv-qa-chi-0",
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.03411670101092265,
+    "timestamp": 1642966157038
+  },
+  {
+    "hostname": "k8s-chi-play-0",
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.0911520759981613,
+    "timestamp": 1642966157038
+  },
+  {
+    "hostname": "k8s-chi-play-1",
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.10196209694313438,
+    "timestamp": 1642966157038
+  },
+  {
+    "hostname": "k8s-chi-play-2",
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.03942734775334126,
+    "timestamp": 1642966157038
+  },
+  {
+    "hostname": "k8s-chi-play-3",
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.1019649074581442,
+    "timestamp": 1642966157038
+  },
+  {
+    "hostname": "metrics-server-v0.4.4-857776bc9c-btktl",
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.1855212349879382,
+    "timestamp": 1642966157038
+  }
+]

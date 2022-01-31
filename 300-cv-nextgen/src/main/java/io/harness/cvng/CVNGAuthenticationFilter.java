@@ -59,6 +59,7 @@ public class CVNGAuthenticationFilter
       String accountId = containerRequestContext.getUriInfo().getQueryParameters().getFirst("accountId");
       String token = containerRequestContext.getHeaderString(HttpHeaders.AUTHORIZATION);
       validateDelegateToken(accountId, token);
+      return;
     }
 
     throw new WingsException(INVALID_CREDENTIAL, USER);

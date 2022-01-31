@@ -25,6 +25,7 @@ import io.harness.cvng.core.entities.LogRecord;
 import io.harness.cvng.core.entities.TimeSeriesRecord;
 import io.harness.cvng.core.entities.VerificationTask;
 import io.harness.cvng.core.entities.demo.CVNGDemoDataIndex;
+import io.harness.cvng.core.services.api.CVConfigService;
 import io.harness.cvng.core.services.api.DeletedCVConfigService;
 import io.harness.cvng.core.services.api.MonitoringSourcePerpetualTaskService;
 import io.harness.cvng.core.services.api.VerificationTaskService;
@@ -60,6 +61,7 @@ public class DeletedCVConfigServiceImpl implements DeletedCVConfigService {
   @Inject private VerificationTaskService verificationTaskService;
   @Inject private MonitoringSourcePerpetualTaskService monitoringSourcePerpetualTaskService;
   @Inject private Clock clock;
+  @Inject private CVConfigService cvConfigService;
 
   @Override
   public DeletedCVConfig save(DeletedCVConfig deletedCVConfig, Duration toDeleteAfterDuration) {
@@ -84,9 +86,16 @@ public class DeletedCVConfigServiceImpl implements DeletedCVConfigService {
                 VerificationTask.VERIFICATION_TASK_ID_KEY, verificationTaskId))));
     verificationTaskService.removeLiveMonitoringMappings(
         deletedCVConfig.getCvConfig().getAccountId(), deletedCVConfig.getCvConfig().getUuid());
-    monitoringSourcePerpetualTaskService.deleteTask(deletedCVConfig.getCvConfig().getAccountId(),
-        deletedCVConfig.getCvConfig().getOrgIdentifier(), deletedCVConfig.getCvConfig().getProjectIdentifier(),
-        deletedCVConfig.getCvConfig().getIdentifier());
+    // TODO: we can still have a race condition between saving/updating monitored service and deleting perpetual task.
+    if (cvConfigService
+            .list(deletedCVConfig.getCvConfig().getAccountId(), deletedCVConfig.getCvConfig().getOrgIdentifier(),
+                deletedCVConfig.getCvConfig().getProjectIdentifier(),
+                deletedCVConfig.getCvConfig().getFullyQualifiedIdentifier())
+            .isEmpty()) {
+      monitoringSourcePerpetualTaskService.deleteTask(deletedCVConfig.getCvConfig().getAccountId(),
+          deletedCVConfig.getCvConfig().getOrgIdentifier(), deletedCVConfig.getCvConfig().getProjectIdentifier(),
+          deletedCVConfig.getCvConfig().getFullyQualifiedIdentifier());
+    }
     log.info("Deleting DeletedCVConfig {}", deletedCVConfig.getUuid());
     delete(deletedCVConfig.getUuid());
     log.info("Deletion of DeletedCVConfig {} was successful", deletedCVConfig.getUuid());
