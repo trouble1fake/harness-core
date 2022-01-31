@@ -33,8 +33,12 @@ import org.springframework.data.annotation.TypeAlias;
 public class ArtifactoryArtifactOutcome implements ArtifactOutcome {
   /** Artifactory hub registry connector. */
   String connectorRef;
+  /** Artifactory registry repository name. */
+  String repositoryName;
   /** Images in repos need to be referenced via a path. */
   String imagePath;
+  /** Artifactory registry repository format. */
+  String repositoryFormat;
   /** Tag refers to exact tag number. */
   String tag;
   /** Tag regex is used to get latest build from builds matching regex. */

@@ -7,12 +7,16 @@
 
 package io.harness.polling;
 
+import static io.harness.delegate.task.artifacts.ArtifactSourceType.ARTIFACTORY_REGISTRY;
 import static io.harness.delegate.task.artifacts.ArtifactSourceType.DOCKER_REGISTRY;
+import static io.harness.delegate.task.artifacts.ArtifactSourceType.NEXUS_REGISTRY;
+import static io.harness.polling.contracts.Type.ARTIFACTORY;
 import static io.harness.polling.contracts.Type.DOCKER_HUB;
 import static io.harness.polling.contracts.Type.ECR;
 import static io.harness.polling.contracts.Type.GCR;
 import static io.harness.polling.contracts.Type.GCS_HELM;
 import static io.harness.polling.contracts.Type.HTTP_HELM;
+import static io.harness.polling.contracts.Type.NEXUS;
 import static io.harness.polling.contracts.Type.S3_HELM;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -38,9 +42,11 @@ import io.harness.delegate.beans.polling.ManifestPollingDelegateResponse;
 import io.harness.delegate.beans.polling.PollingDelegateResponse;
 import io.harness.delegate.beans.polling.PollingResponseInfc;
 import io.harness.delegate.task.artifacts.ArtifactSourceType;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.docker.DockerArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.ecr.EcrArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.gcr.GcrArtifactDelegateResponse;
+import io.harness.delegate.task.artifacts.nexus.NexusArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.response.ArtifactDelegateResponse;
 import io.harness.k8s.model.HelmVersion;
 import io.harness.logging.CommandExecutionStatus;
@@ -49,9 +55,11 @@ import io.harness.polling.bean.PollingDocument;
 import io.harness.polling.bean.PollingInfo;
 import io.harness.polling.bean.PollingType;
 import io.harness.polling.bean.artifact.ArtifactPolledResponse;
+import io.harness.polling.bean.artifact.ArtifactoryRegistryArtifactInfo;
 import io.harness.polling.bean.artifact.DockerHubArtifactInfo;
 import io.harness.polling.bean.artifact.EcrArtifactInfo;
 import io.harness.polling.bean.artifact.GcrArtifactInfo;
+import io.harness.polling.bean.artifact.NexusRegistryArtifactInfo;
 import io.harness.polling.bean.manifest.HelmChartManifestInfo;
 import io.harness.polling.bean.manifest.ManifestPolledResponse;
 import io.harness.polling.contracts.PollingResponse;
@@ -187,6 +195,20 @@ public class PollingResponseHandlerTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testSuccessEcrPollingResponseWithDelegateRebalance() {
     testSuccessResponse(ECR, PollingType.ARTIFACT);
+  }
+
+  @Test
+  @Owner(developers = OwnerRule.MLUKIC)
+  @Category(UnitTests.class)
+  public void testSuccessNexusRegistryPollingResponseWithDelegateRebalance() {
+    testSuccessResponse(NEXUS, PollingType.ARTIFACT);
+  }
+
+  @Test
+  @Owner(developers = OwnerRule.MLUKIC)
+  @Category(UnitTests.class)
+  public void testSuccessArtifactoryRegistryPollingResponseWithDelegateRebalance() {
+    testSuccessResponse(ARTIFACTORY, PollingType.ARTIFACT);
   }
 
   private void testSuccessResponse(Type type, PollingType pollingType) {
@@ -333,6 +355,13 @@ public class PollingResponseHandlerTest extends CategoryTest {
       case GCR:
         artifactDelegateResponses = getGcrArtifactDelegateResponseList(startIndexUnpublished, endIndexUnpublished);
         break;
+      case NEXUS:
+        artifactDelegateResponses = getNexusArtifactDelegateResponseList(startIndexUnpublished, endIndexUnpublished);
+        break;
+      case ARTIFACTORY:
+        artifactDelegateResponses =
+            getArtifactoryArtifactDelegateResponseList(startIndexUnpublished, endIndexUnpublished);
+        break;
       default:
         artifactDelegateResponses = getEcrArtifactDelegateResponseList(startIndexUnpublished, endIndexUnpublished);
     }
@@ -368,6 +397,24 @@ public class PollingResponseHandlerTest extends CategoryTest {
         .collect(Collectors.toList());
   }
 
+  private List<ArtifactDelegateResponse> getNexusArtifactDelegateResponseList(int startIndex, int endIndex) {
+    return IntStream.rangeClosed(startIndex, endIndex)
+        .boxed()
+        .map(i -> NexusArtifactDelegateResponse.builder().sourceType(NEXUS_REGISTRY).tag(String.valueOf(i)).build())
+        .collect(Collectors.toList());
+  }
+
+  private List<ArtifactDelegateResponse> getArtifactoryArtifactDelegateResponseList(int startIndex, int endIndex) {
+    return IntStream.rangeClosed(startIndex, endIndex)
+        .boxed()
+        .map(i
+            -> ArtifactoryArtifactDelegateResponse.builder()
+                   .sourceType(ARTIFACTORY_REGISTRY)
+                   .tag(String.valueOf(i))
+                   .build())
+        .collect(Collectors.toList());
+  }
+
   private PollingDelegateResponse getPollingDelegateResponse(PollingResponseInfc pollingResponseInfc) {
     return PollingDelegateResponse.builder()
         .pollingDocId(POLLING_DOC_ID)
@@ -398,6 +445,10 @@ public class PollingResponseHandlerTest extends CategoryTest {
         return getDockerHubPollingDocument(polledResponse);
       case GCR:
         return getGcrPollingDocument(polledResponse);
+      case NEXUS:
+        return getNexusRegistryPollingDocument(polledResponse);
+      case ARTIFACTORY:
+        return getArtifactoryRegistryPollingDocument(polledResponse);
       default:
         return getEcrPollingDocument(polledResponse);
     }
@@ -446,6 +497,18 @@ public class PollingResponseHandlerTest extends CategoryTest {
   private PollingDocument getEcrPollingDocument(PolledResponse polledResponse) {
     EcrArtifactInfo ecrArtifactInfo = EcrArtifactInfo.builder().imagePath("imagePath").build();
     return getPollingDocument(polledResponse, ecrArtifactInfo, PollingType.ARTIFACT);
+  }
+
+  private PollingDocument getNexusRegistryPollingDocument(PolledResponse polledResponse) {
+    NexusRegistryArtifactInfo nexusRegistryArtifactInfo =
+        NexusRegistryArtifactInfo.builder().imagePath("imagePath").build();
+    return getPollingDocument(polledResponse, nexusRegistryArtifactInfo, PollingType.ARTIFACT);
+  }
+
+  private PollingDocument getArtifactoryRegistryPollingDocument(PolledResponse polledResponse) {
+    ArtifactoryRegistryArtifactInfo artifactoryRegistryArtifactInfo =
+        ArtifactoryRegistryArtifactInfo.builder().imagePath("imagePath").build();
+    return getPollingDocument(polledResponse, artifactoryRegistryArtifactInfo, PollingType.ARTIFACT);
   }
 
   private PollingDocument getPollingDocument(

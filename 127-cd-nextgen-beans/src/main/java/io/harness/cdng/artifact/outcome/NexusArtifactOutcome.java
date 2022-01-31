@@ -33,9 +33,11 @@ import org.springframework.data.annotation.TypeAlias;
 public class NexusArtifactOutcome implements ArtifactOutcome {
   /** Nexus hub registry connector. */
   String connectorRef;
+  /** Nexus registry repository name. */
   String repositoryName;
   /** Images in repos need to be referenced via a path. */
   String imagePath;
+  /** Nexus registry repository format. */
   String repositoryFormat;
   /** Tag refers to exact tag number. */
   String tag;

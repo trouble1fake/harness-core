@@ -127,9 +127,9 @@ public class ArtifactResponseToOutcomeMapper {
   private NexusArtifactOutcome getNexusArtifactOutcome(NexusRegistryArtifactConfig artifactConfig,
       NexusArtifactDelegateResponse artifactDelegateResponse, boolean useDelegateResponse) {
     return NexusArtifactOutcome.builder()
+        .repositoryName(artifactConfig.getRepository().getValue())
         .image(getImageValue(artifactDelegateResponse))
         .connectorRef(artifactConfig.getConnectorRef().getValue())
-        .repositoryName(artifactConfig.getRepository().getValue())
         .imagePath(artifactConfig.getImagePath().getValue())
         .repositoryFormat(artifactConfig.getRepositoryFormat().getValue())
         .tag(useDelegateResponse ? artifactDelegateResponse.getTag()
@@ -145,9 +145,11 @@ public class ArtifactResponseToOutcomeMapper {
   private ArtifactoryArtifactOutcome getArtifactoryArtifactOutcome(ArtifactoryRegistryArtifactConfig artifactConfig,
       ArtifactoryArtifactDelegateResponse artifactDelegateResponse, boolean useDelegateResponse) {
     return ArtifactoryArtifactOutcome.builder()
+        .repositoryName(artifactConfig.getRepository().getValue())
         .image(getImageValue(artifactDelegateResponse))
         .connectorRef(artifactConfig.getConnectorRef().getValue())
         .imagePath(artifactConfig.getImagePath().getValue())
+        .repositoryFormat(artifactConfig.getRepositoryFormat().getValue())
         .tag(useDelegateResponse ? artifactDelegateResponse.getTag()
                                  : (artifactConfig.getTag() != null ? artifactConfig.getTag().getValue() : null))
         .tagRegex(artifactConfig.getTagRegex() != null ? artifactConfig.getTagRegex().getValue() : null)

@@ -7,6 +7,7 @@
 
 package io.harness.cdng.creator.plan.artifact;
 
+import static io.harness.rule.OwnerRule.MLUKIC;
 import static io.harness.rule.OwnerRule.PRASHANTSHARMA;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -50,7 +51,7 @@ public class SideCarPlanCreatorTest extends CDNGTestBase {
   }
 
   @Test
-  @Owner(developers = PRASHANTSHARMA)
+  @Owner(developers = {PRASHANTSHARMA, MLUKIC})
   @Category(UnitTests.class)
   public void testGetSupportedTypes() {
     Map<String, Set<String>> supportedTypes = sidecarPlanCreator.getSupportedTypes();

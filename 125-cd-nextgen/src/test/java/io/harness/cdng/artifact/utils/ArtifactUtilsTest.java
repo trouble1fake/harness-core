@@ -8,6 +8,7 @@
 package io.harness.cdng.artifact.utils;
 
 import static io.harness.rule.OwnerRule.ARCHIT;
+import static io.harness.rule.OwnerRule.MLUKIC;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -18,12 +19,16 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.cdng.artifact.bean.ArtifactConfig;
 import io.harness.cdng.artifact.bean.yaml.ArtifactListConfig;
+import io.harness.cdng.artifact.bean.yaml.ArtifactoryRegistryArtifactConfig;
 import io.harness.cdng.artifact.bean.yaml.DockerHubArtifactConfig;
+import io.harness.cdng.artifact.bean.yaml.NexusRegistryArtifactConfig;
 import io.harness.cdng.artifact.bean.yaml.PrimaryArtifact;
 import io.harness.cdng.artifact.bean.yaml.SidecarArtifact;
 import io.harness.cdng.artifact.bean.yaml.SidecarArtifactWrapper;
 import io.harness.cdng.artifact.outcome.ArtifactOutcome;
+import io.harness.cdng.artifact.outcome.ArtifactoryArtifactOutcome;
 import io.harness.cdng.artifact.outcome.DockerArtifactOutcome;
+import io.harness.cdng.artifact.outcome.NexusArtifactOutcome;
 import io.harness.exception.InvalidRequestException;
 import io.harness.rule.Owner;
 
@@ -82,7 +87,7 @@ public class ArtifactUtilsTest extends CategoryTest {
   @Test
   @Owner(developers = ARCHIT)
   @Category(UnitTests.class)
-  public void testIsPrimaryArtifact() {
+  public void testDockerHub_IsPrimaryArtifact() {
     DockerHubArtifactConfig config = DockerHubArtifactConfig.builder().primaryArtifact(true).build();
     boolean primaryArtifact = config.isPrimaryArtifact();
     assertThat(primaryArtifact).isTrue();
@@ -99,9 +104,48 @@ public class ArtifactUtilsTest extends CategoryTest {
   }
 
   @Test
+  @Owner(developers = MLUKIC)
+  @Category(UnitTests.class)
+  public void testNexusRegistry_IsPrimaryArtifact() {
+    NexusRegistryArtifactConfig config = NexusRegistryArtifactConfig.builder().primaryArtifact(true).build();
+    boolean primaryArtifact = config.isPrimaryArtifact();
+    assertThat(primaryArtifact).isTrue();
+    config = NexusRegistryArtifactConfig.builder().primaryArtifact(false).build();
+    primaryArtifact = config.isPrimaryArtifact();
+    assertThat(primaryArtifact).isFalse();
+
+    ArtifactOutcome artifactOutcome = NexusArtifactOutcome.builder().primaryArtifact(true).build();
+    primaryArtifact = artifactOutcome.isPrimaryArtifact();
+    assertThat(primaryArtifact).isTrue();
+    artifactOutcome = NexusArtifactOutcome.builder().primaryArtifact(false).build();
+    primaryArtifact = artifactOutcome.isPrimaryArtifact();
+    assertThat(primaryArtifact).isFalse();
+  }
+
+  @Test
+  @Owner(developers = MLUKIC)
+  @Category(UnitTests.class)
+  public void testArtifactoryRegistry_IsPrimaryArtifact() {
+    ArtifactoryRegistryArtifactConfig config =
+        ArtifactoryRegistryArtifactConfig.builder().primaryArtifact(true).build();
+    boolean primaryArtifact = config.isPrimaryArtifact();
+    assertThat(primaryArtifact).isTrue();
+    config = ArtifactoryRegistryArtifactConfig.builder().primaryArtifact(false).build();
+    primaryArtifact = config.isPrimaryArtifact();
+    assertThat(primaryArtifact).isFalse();
+
+    ArtifactOutcome artifactOutcome = ArtifactoryArtifactOutcome.builder().primaryArtifact(true).build();
+    primaryArtifact = artifactOutcome.isPrimaryArtifact();
+    assertThat(primaryArtifact).isTrue();
+    artifactOutcome = ArtifactoryArtifactOutcome.builder().primaryArtifact(false).build();
+    primaryArtifact = artifactOutcome.isPrimaryArtifact();
+    assertThat(primaryArtifact).isFalse();
+  }
+
+  @Test
   @Owner(developers = ARCHIT)
   @Category(UnitTests.class)
-  public void testGetArtifactKey() {
+  public void testDockerHub_GetArtifactKey() {
     DockerHubArtifactConfig artifactConfig =
         DockerHubArtifactConfig.builder().primaryArtifact(true).identifier("ARTIFACT1").build();
     String artifactKey = ArtifactUtils.getArtifactKey(artifactConfig);
@@ -112,13 +156,77 @@ public class ArtifactUtilsTest extends CategoryTest {
   }
 
   @Test
+  @Owner(developers = MLUKIC)
+  @Category(UnitTests.class)
+  public void testNexusRegistry_GetArtifactKey() {
+    NexusRegistryArtifactConfig artifactConfig =
+        NexusRegistryArtifactConfig.builder().primaryArtifact(true).identifier("ARTIFACT1").build();
+    String artifactKey = ArtifactUtils.getArtifactKey(artifactConfig);
+    assertThat(artifactKey).isEqualTo("ARTIFACT1");
+    artifactConfig = NexusRegistryArtifactConfig.builder().primaryArtifact(false).identifier("ARTIFACT1").build();
+    artifactKey = ArtifactUtils.getArtifactKey(artifactConfig);
+    assertThat(artifactKey).isEqualTo("sidecars.ARTIFACT1");
+  }
+
+  @Test
+  @Owner(developers = MLUKIC)
+  @Category(UnitTests.class)
+  public void testArtifactoryRegistry_GetArtifactKey() {
+    ArtifactoryRegistryArtifactConfig artifactConfig =
+        ArtifactoryRegistryArtifactConfig.builder().primaryArtifact(true).identifier("ARTIFACT1").build();
+    String artifactKey = ArtifactUtils.getArtifactKey(artifactConfig);
+    assertThat(artifactKey).isEqualTo("ARTIFACT1");
+    artifactConfig = ArtifactoryRegistryArtifactConfig.builder().primaryArtifact(false).identifier("ARTIFACT1").build();
+    artifactKey = ArtifactUtils.getArtifactKey(artifactConfig);
+    assertThat(artifactKey).isEqualTo("sidecars.ARTIFACT1");
+  }
+
+  @Test
   @Owner(developers = ARCHIT)
   @Category(UnitTests.class)
-  public void testConvertArtifactListConfig() {
+  public void testDockerHub_ConvertArtifactListConfig() {
     DockerHubArtifactConfig primaryArtifact =
         DockerHubArtifactConfig.builder().primaryArtifact(true).identifier("ARTIFACT1").build();
     DockerHubArtifactConfig sidecarArtifact =
         DockerHubArtifactConfig.builder().primaryArtifact(false).identifier("ARTIFACT2").build();
+    ArtifactListConfig artifactListConfig =
+        ArtifactListConfig.builder()
+            .primary(PrimaryArtifact.builder().spec(primaryArtifact).build())
+            .sidecar(SidecarArtifactWrapper.builder()
+                         .sidecar(SidecarArtifact.builder().spec(sidecarArtifact).build())
+                         .build())
+            .build();
+    List<ArtifactConfig> artifactsList = ArtifactUtils.convertArtifactListIntoArtifacts(artifactListConfig, null);
+    assertThat(artifactsList).containsOnly(primaryArtifact, sidecarArtifact);
+  }
+
+  @Test
+  @Owner(developers = MLUKIC)
+  @Category(UnitTests.class)
+  public void testNexusRegistry_ConvertArtifactListConfig() {
+    NexusRegistryArtifactConfig primaryArtifact =
+        NexusRegistryArtifactConfig.builder().primaryArtifact(true).identifier("ARTIFACT1").build();
+    NexusRegistryArtifactConfig sidecarArtifact =
+        NexusRegistryArtifactConfig.builder().primaryArtifact(false).identifier("ARTIFACT2").build();
+    ArtifactListConfig artifactListConfig =
+        ArtifactListConfig.builder()
+            .primary(PrimaryArtifact.builder().spec(primaryArtifact).build())
+            .sidecar(SidecarArtifactWrapper.builder()
+                         .sidecar(SidecarArtifact.builder().spec(sidecarArtifact).build())
+                         .build())
+            .build();
+    List<ArtifactConfig> artifactsList = ArtifactUtils.convertArtifactListIntoArtifacts(artifactListConfig, null);
+    assertThat(artifactsList).containsOnly(primaryArtifact, sidecarArtifact);
+  }
+
+  @Test
+  @Owner(developers = MLUKIC)
+  @Category(UnitTests.class)
+  public void testArtifactoryRegistry_ConvertArtifactListConfig() {
+    ArtifactoryRegistryArtifactConfig primaryArtifact =
+        ArtifactoryRegistryArtifactConfig.builder().primaryArtifact(true).identifier("ARTIFACT1").build();
+    ArtifactoryRegistryArtifactConfig sidecarArtifact =
+        ArtifactoryRegistryArtifactConfig.builder().primaryArtifact(false).identifier("ARTIFACT2").build();
     ArtifactListConfig artifactListConfig =
         ArtifactListConfig.builder()
             .primary(PrimaryArtifact.builder().spec(primaryArtifact).build())

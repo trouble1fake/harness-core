@@ -9,6 +9,7 @@ package io.harness.pms.expressions.utils;
 
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 import static io.harness.rule.OwnerRule.BRIJESH;
+import static io.harness.rule.OwnerRule.MLUKIC;
 
 import static junit.framework.TestCase.assertEquals;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -21,13 +22,19 @@ import io.harness.CategoryTest;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.cdng.artifact.outcome.ArtifactOutcome;
+import io.harness.cdng.artifact.outcome.ArtifactoryArtifactOutcome;
 import io.harness.cdng.artifact.outcome.DockerArtifactOutcome;
 import io.harness.cdng.artifact.outcome.EcrArtifactOutcome;
 import io.harness.cdng.artifact.outcome.GcrArtifactOutcome;
+import io.harness.cdng.artifact.outcome.NexusArtifactOutcome;
 import io.harness.connector.ConnectorDTO;
 import io.harness.connector.ConnectorInfoDTO;
 import io.harness.connector.ConnectorResponseDTO;
 import io.harness.connector.services.ConnectorService;
+import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryAuthType;
+import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryAuthenticationDTO;
+import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryConnectorDTO;
+import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryUsernamePasswordAuthDTO;
 import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
 import io.harness.delegate.beans.connector.docker.DockerAuthType;
 import io.harness.delegate.beans.connector.docker.DockerAuthenticationDTO;
@@ -37,6 +44,10 @@ import io.harness.delegate.beans.connector.gcpconnector.GcpConnectorCredentialDT
 import io.harness.delegate.beans.connector.gcpconnector.GcpConnectorDTO;
 import io.harness.delegate.beans.connector.gcpconnector.GcpCredentialType;
 import io.harness.delegate.beans.connector.gcpconnector.GcpManualDetailsDTO;
+import io.harness.delegate.beans.connector.nexusconnector.NexusAuthType;
+import io.harness.delegate.beans.connector.nexusconnector.NexusAuthenticationDTO;
+import io.harness.delegate.beans.connector.nexusconnector.NexusConnectorDTO;
+import io.harness.delegate.beans.connector.nexusconnector.NexusUsernamePasswordAuthDTO;
 import io.harness.delegate.task.artifacts.ArtifactSourceConstants;
 import io.harness.delegate.task.artifacts.ArtifactTaskType;
 import io.harness.delegate.task.artifacts.ecr.EcrArtifactDelegateResponse;
@@ -48,6 +59,8 @@ import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.rule.Owner;
 import io.harness.security.encryption.EncryptedDataDetail;
+
+import software.wings.utils.RepositoryFormat;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -192,6 +205,83 @@ public class ImagePullSecretUtilsTest extends CategoryTest {
     when(connectorService.get(any(), any(), any(), any())).thenReturn(connectorResponseDTO);
     assertEquals(imagePullSecretUtils.getImagePullSecret(artifactOutcome, ambiance),
         "${imageSecret.create(\"index.docker.io\", ${ngSecretManager.obtain(\"null\", 0)}, ${ngSecretManager.obtain(\"null\", 0)})}");
+  }
+
+  @Test
+  @Owner(developers = MLUKIC)
+  @Category(UnitTests.class)
+  public void testNexusDockerImagePullSecret() throws IOException {
+    ArtifactOutcome artifactOutcome = NexusArtifactOutcome.builder()
+                                          .imagePath("test-image")
+                                          .type(ArtifactSourceConstants.NEXUS_REGISTRY_NAME)
+                                          .connectorRef("account")
+                                          .build();
+    Ambiance ambiance = Ambiance.newBuilder()
+                            .putSetupAbstractions("accountId", "accountId")
+                            .putSetupAbstractions("projectIdentifier", "projectId")
+                            .putSetupAbstractions("orgIdentifier", "orgIdentifier")
+                            .build();
+
+    NexusAuthenticationDTO authenticationDTO =
+        NexusAuthenticationDTO.builder()
+            .authType(NexusAuthType.USER_PASSWORD)
+            .credentials(NexusUsernamePasswordAuthDTO.builder()
+                             .usernameRef(SecretRefData.builder().identifier("username").build())
+                             .passwordRef(SecretRefData.builder().identifier("password").build())
+                             .build())
+            .build();
+
+    Optional<ConnectorResponseDTO> connectorResponseDTO = Optional.of(
+        ConnectorResponseDTO.builder()
+            .connector(
+                ConnectorInfoDTO.builder()
+                    .connectorConfig(
+                        NexusConnectorDTO.builder().nexusServerUrl("nexus.harness.io").auth(authenticationDTO).build())
+                    .build())
+            .build());
+
+    when(connectorService.get(any(), any(), any(), any())).thenReturn(connectorResponseDTO);
+    assertEquals(imagePullSecretUtils.getImagePullSecret(artifactOutcome, ambiance),
+        "${imageSecret.create(\"nexus.harness.io\", ${ngSecretManager.obtain(\"null\", 0)}, ${ngSecretManager.obtain(\"null\", 0)})}");
+  }
+
+  @Test
+  @Owner(developers = MLUKIC)
+  @Category(UnitTests.class)
+  public void testArtifactoryDockerImagePullSecret() throws IOException {
+    ArtifactOutcome artifactOutcome = ArtifactoryArtifactOutcome.builder()
+                                          .imagePath("test-image")
+                                          .type(ArtifactSourceConstants.ARTIFACTORY_REGISTRY_NAME)
+                                          .connectorRef("account")
+                                          .build();
+    Ambiance ambiance = Ambiance.newBuilder()
+                            .putSetupAbstractions("accountId", "accountId")
+                            .putSetupAbstractions("projectIdentifier", "projectId")
+                            .putSetupAbstractions("orgIdentifier", "orgIdentifier")
+                            .build();
+
+    ArtifactoryAuthenticationDTO authenticationDTO =
+        ArtifactoryAuthenticationDTO.builder()
+            .authType(ArtifactoryAuthType.USER_PASSWORD)
+            .credentials(ArtifactoryUsernamePasswordAuthDTO.builder()
+                             .usernameRef(SecretRefData.builder().identifier("username").build())
+                             .passwordRef(SecretRefData.builder().identifier("password").build())
+                             .build())
+            .build();
+
+    Optional<ConnectorResponseDTO> connectorResponseDTO =
+        Optional.of(ConnectorResponseDTO.builder()
+                        .connector(ConnectorInfoDTO.builder()
+                                       .connectorConfig(ArtifactoryConnectorDTO.builder()
+                                                            .artifactoryServerUrl("harness.jfrog.io")
+                                                            .auth(authenticationDTO)
+                                                            .build())
+                                       .build())
+                        .build());
+
+    when(connectorService.get(any(), any(), any(), any())).thenReturn(connectorResponseDTO);
+    assertEquals(imagePullSecretUtils.getImagePullSecret(artifactOutcome, ambiance),
+        "${imageSecret.create(\"harness.jfrog.io\", ${ngSecretManager.obtain(\"null\", 0)}, ${ngSecretManager.obtain(\"null\", 0)})}");
   }
 
   @Test
