@@ -26,6 +26,7 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.exception.UnexpectedException;
 import io.harness.gitsync.UserPrincipal;
 import io.harness.gitsync.common.dtos.GitFileContent;
+import io.harness.gitsync.common.helper.GitSyncConnectorHelper;
 import io.harness.gitsync.common.helper.UserProfileHelper;
 import io.harness.gitsync.common.service.ScmClientFacilitatorService;
 import io.harness.gitsync.common.service.YamlGitConfigService;
@@ -51,15 +52,17 @@ public abstract class AbstractScmClientFacilitatorServiceImpl implements ScmClie
   private ConnectorErrorMessagesHelper connectorErrorMessagesHelper;
   private YamlGitConfigService yamlGitConfigService;
   private UserProfileHelper userProfileHelper;
+  private GitSyncConnectorHelper gitSyncConnectorHelper;
 
   @Inject
   protected AbstractScmClientFacilitatorServiceImpl(ConnectorService connectorService,
       ConnectorErrorMessagesHelper connectorErrorMessagesHelper, YamlGitConfigService yamlGitConfigService,
-      UserProfileHelper userProfileHelper) {
+      UserProfileHelper userProfileHelper, GitSyncConnectorHelper gitSyncConnectorHelper) {
     this.connectorService = connectorService;
     this.connectorErrorMessagesHelper = connectorErrorMessagesHelper;
     this.yamlGitConfigService = yamlGitConfigService;
     this.userProfileHelper = userProfileHelper;
+    this.gitSyncConnectorHelper = gitSyncConnectorHelper;
   }
 
   @Override
@@ -121,8 +124,10 @@ public abstract class AbstractScmClientFacilitatorServiceImpl implements ScmClie
     final String connectorRef = gitSyncConfigDTO.getGitConnectorRef();
     IdentifierRef identifierRef = IdentifierRefHelper.getIdentifierRef(
         connectorRef, accountId, gitSyncConfigDTO.getOrganizationIdentifier(), gitSyncConfigDTO.getProjectIdentifier());
-    Optional<ConnectorResponseDTO> connectorDTO = connectorService.get(accountId, identifierRef.getOrgIdentifier(),
-        identifierRef.getProjectIdentifier(), identifierRef.getIdentifier());
+    Optional<ConnectorResponseDTO> connectorDTO =
+        gitSyncConnectorHelper.getConnectorFromDefaultBranchElseFromGitBranch(accountId,
+            identifierRef.getOrgIdentifier(), identifierRef.getProjectIdentifier(), identifierRef.getIdentifier(),
+            gitSyncConfigDTO.getGitConnectorsRepo(), gitSyncConfigDTO.getGitConnectorsBranch());
     return connectorDTO.orElseThrow(
         ()
             -> new UnexpectedException(

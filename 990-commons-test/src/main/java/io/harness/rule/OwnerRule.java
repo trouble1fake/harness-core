@@ -231,6 +231,7 @@ public class OwnerRule implements TestRule {
   public static final String PAVIC = "slobodan.pavic";
   public static final String SHIVAM = "shivam.negi";
   public static final String VITALIE = "vitalie.safronovici";
+  public static final String SHUBHAM_MAHESHWARI = "shubham.maheshwari";
 
   @Deprecated public static final String UNKNOWN = "unknown";
 
