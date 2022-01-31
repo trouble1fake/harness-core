@@ -32,6 +32,7 @@ public class DelegateStackdriverLogAppender extends RemoteStackdriverLogAppender
   private static TimeLimiter timeLimiter;
   private static DelegateAgentManagerClient delegateAgentManagerClient;
   private static String delegateId;
+  private static boolean stopStackDriverLogging;
 
   @Getter @Setter private String accountId;
   @Getter @Setter private String managerHost;
@@ -44,6 +45,11 @@ public class DelegateStackdriverLogAppender extends RemoteStackdriverLogAppender
   @Override
   protected String getDelegateId() {
     return delegateId;
+  }
+
+  @Override
+  protected boolean isStopStackDriverLogging() {
+    return stopStackDriverLogging;
   }
 
   @Override
@@ -77,5 +83,10 @@ public class DelegateStackdriverLogAppender extends RemoteStackdriverLogAppender
 
   public static void setDelegateId(String delegateId) {
     DelegateStackdriverLogAppender.delegateId = delegateId;
+  }
+
+  public static void setStopStackDriverLogging() {
+    log.info("Delegate will stop publishing its logs to stack driver");
+    stopStackDriverLogging = true;
   }
 }

@@ -457,8 +457,6 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       log.info("Delegate will start running on JRE {}", System.getProperty(JAVA_VERSION));
       log.info("The deploy mode for delegate is [{}]", System.getenv().get("DEPLOY_MODE"));
       startTime = clock.millis();
-      DelegateStackdriverLogAppender.setTimeLimiter(timeLimiter);
-      DelegateStackdriverLogAppender.setManagerClient(delegateAgentManagerClient);
 
       logProxyConfiguration();
       if (delegateConfiguration.isVersionCheckDisabled()) {
@@ -578,7 +576,15 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
 
       delegateId = registerDelegate(builder);
       log.info("[New] Delegate registered in {} ms", clock.millis() - start);
-      DelegateStackdriverLogAppender.setDelegateId(delegateId);
+
+      if (delegateConfiguration.isStackDriverLoggingEnabeled()) {
+        DelegateStackdriverLogAppender.setTimeLimiter(timeLimiter);
+        DelegateStackdriverLogAppender.setManagerClient(delegateAgentManagerClient);
+        DelegateStackdriverLogAppender.setDelegateId(delegateId);
+      } else {
+        // Disable stack driver logging.
+        DelegateStackdriverLogAppender.setStopStackDriverLogging();
+      }
 
       if (isPollingForTasksEnabled()) {
         log.info("Polling is enabled for Delegate");

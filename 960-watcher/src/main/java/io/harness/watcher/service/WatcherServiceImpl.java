@@ -82,6 +82,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.UUIDGenerator;
 import io.harness.delegate.beans.DelegateConfiguration;
 import io.harness.delegate.beans.DelegateScripts;
+import io.harness.delegate.logging.DelegateStackdriverLogAppender;
 import io.harness.delegate.message.Message;
 import io.harness.delegate.message.MessageService;
 import io.harness.event.client.impl.tailer.ChronicleEventTailer;
@@ -226,8 +227,14 @@ public class WatcherServiceImpl implements WatcherService {
 
   @Override
   public void run(boolean upgrade) {
-    WatcherStackdriverLogAppender.setTimeLimiter(timeLimiter);
-    WatcherStackdriverLogAppender.setManagerClient(managerClient);
+    if (watcherConfiguration.isStackDriverLoggingEnabeled()) {
+      WatcherStackdriverLogAppender.setTimeLimiter(timeLimiter);
+      WatcherStackdriverLogAppender.setManagerClient(managerClient);
+    } else {
+      // Disable stack driver logging.
+      WatcherStackdriverLogAppender.setStopStackDriverLogging();
+    }
+
     log.info("Watcher will start running on JRE {}", watcherJreVersion);
 
     try {

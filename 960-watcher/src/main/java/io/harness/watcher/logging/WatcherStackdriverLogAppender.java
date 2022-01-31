@@ -30,6 +30,7 @@ public class WatcherStackdriverLogAppender extends RemoteStackdriverLogAppender 
 
   private static TimeLimiter timeLimiter;
   private static ManagerClientV2 managerClient;
+  private static boolean stopStackDriverLogging;
 
   private String accountId = "";
   private String managerHost = "";
@@ -53,6 +54,11 @@ public class WatcherStackdriverLogAppender extends RemoteStackdriverLogAppender 
       managerHost = substringBefore(getConfiguration().getManagerUrl(), "/api/");
     }
     return managerHost;
+  }
+
+  @Override
+  protected boolean isStopStackDriverLogging() {
+    return stopStackDriverLogging;
   }
 
   @Override
@@ -87,5 +93,10 @@ public class WatcherStackdriverLogAppender extends RemoteStackdriverLogAppender 
 
   public static void setManagerClient(ManagerClientV2 managerClient) {
     WatcherStackdriverLogAppender.managerClient = managerClient;
+  }
+
+  public static void setStopStackDriverLogging() {
+    log.info("Watcher will stop publishing its logs to stack driver");
+    stopStackDriverLogging = true;
   }
 }

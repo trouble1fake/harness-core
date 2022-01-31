@@ -49,6 +49,7 @@ import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -82,6 +83,7 @@ public abstract class RemoteStackdriverLogAppender<E> extends AppenderBase<E> {
   private final AtomicLong nextAttempt = new AtomicLong(0);
   private final AtomicBoolean stackDriverReachable = new AtomicBoolean();
   private final AtomicLong nextConnectivityTestAttempt = new AtomicLong(0);
+  private ScheduledExecutorService logSubmitterPool;
 
   @Override
   public void start() {
@@ -98,16 +100,17 @@ public abstract class RemoteStackdriverLogAppender<E> extends AppenderBase<E> {
       super.start();
       localhostName = getLocalHostName();
       logQueue = Queues.newLinkedBlockingQueue(500000);
-      Executors
-          .newSingleThreadScheduledExecutor(
-              new ThreadFactoryBuilder().setNameFormat("remote-stackdriver-log-submitter").build())
-          .scheduleWithFixedDelay(this::send, 1L, 3L, TimeUnit.SECONDS);
+      logSubmitterPool = Executors.newSingleThreadScheduledExecutor(
+          new ThreadFactoryBuilder().setNameFormat("remote-stackdriver-log-submitter").build());
+      logSubmitterPool.scheduleWithFixedDelay(this::send, 1L, 3L, TimeUnit.SECONDS);
     }
   }
+
   @Override
   public void stop() {
     super.stop();
     flush();
+    logSubmitterPool.shutdown();
   }
 
   @Override
@@ -154,6 +157,10 @@ public abstract class RemoteStackdriverLogAppender<E> extends AppenderBase<E> {
   }
 
   private void send() {
+    if (isStopStackDriverLogging()) {
+      stop();
+      return;
+    }
     submitLogs(MIN_BATCH_SIZE);
   }
 
@@ -350,6 +357,7 @@ public abstract class RemoteStackdriverLogAppender<E> extends AppenderBase<E> {
   protected abstract String getAccountId();
   protected abstract String getManagerHost();
   protected abstract String getDelegateId();
+  protected abstract boolean isStopStackDriverLogging();
   protected abstract AccessTokenBean getLoggingToken();
 
   @VisibleForTesting

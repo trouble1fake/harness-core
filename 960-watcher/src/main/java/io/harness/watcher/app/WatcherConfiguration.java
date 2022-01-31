@@ -27,4 +27,5 @@ public class WatcherConfiguration {
   private boolean fileHandlesMonitoringEnabled;
   private long fileHandlesMonitoringIntervalInMinutes;
   private long fileHandlesLogsRetentionInMinutes;
+  private boolean stackDriverLoggingEnabeled;
 }
