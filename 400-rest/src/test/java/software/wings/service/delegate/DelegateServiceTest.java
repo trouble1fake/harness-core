@@ -341,7 +341,7 @@ public class DelegateServiceTest extends WingsBaseTest {
     when(mainConfiguration.getPortal()).thenReturn(portalConfig);
     when(delegateGrpcConfig.getPort()).thenReturn(8080);
 
-    when(accountService.getDelegateConfiguration(anyString()))
+    when(delegateRingService.getDelegateConfiguration(anyString()))
         .thenReturn(DelegateConfiguration.builder().delegateVersions(singletonList("0.0.0")).build());
     when(accountService.get(ACCOUNT_ID)).thenReturn(account);
     when(infraDownloadService.getDownloadUrlForDelegate(anyString(), any()))
