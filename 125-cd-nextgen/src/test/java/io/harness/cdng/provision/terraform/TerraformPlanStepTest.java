@@ -8,6 +8,7 @@
 package io.harness.cdng.provision.terraform;
 
 import static io.harness.rule.OwnerRule.NAMAN_TALAYCHA;
+import static io.harness.rule.OwnerRule.NGONZALEZ;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
@@ -23,14 +24,19 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.EnvironmentType;
 import io.harness.category.element.UnitTests;
 import io.harness.cdng.featureFlag.CDFeatureFlagHelper;
-import io.harness.cdng.manifest.yaml.GithubStore;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfigType;
-import io.harness.cdng.manifest.yaml.storeConfig.StoreConfigWrapper;
+import io.harness.connector.ConnectorInfoDTO;
 import io.harness.delegate.beans.TaskData;
+import io.harness.delegate.beans.connector.ConnectorType;
+import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryAuthType;
+import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryAuthenticationDTO;
+import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryConnectorDTO;
+import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryUsernamePasswordAuthDTO;
 import io.harness.delegate.beans.connector.scm.GitAuthType;
 import io.harness.delegate.beans.connector.scm.GitConnectionType;
 import io.harness.delegate.beans.connector.scm.genericgitconnector.GitConfigDTO;
 import io.harness.delegate.beans.logstreaming.UnitProgressData;
+import io.harness.delegate.beans.storeconfig.ArtifactoryStoreDelegateConfig;
 import io.harness.delegate.beans.storeconfig.FetchType;
 import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
 import io.harness.delegate.task.git.GitFetchFilesConfig;
@@ -38,6 +44,7 @@ import io.harness.delegate.task.terraform.TFTaskType;
 import io.harness.delegate.task.terraform.TerraformTaskNGParameters;
 import io.harness.delegate.task.terraform.TerraformTaskNGResponse;
 import io.harness.delegate.task.terraform.TerraformVarFileInfo;
+import io.harness.encryption.SecretRefData;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
 import io.harness.logging.CommandExecutionStatus;
@@ -59,7 +66,6 @@ import io.harness.steps.StepUtils;
 import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import org.junit.Rule;
 import org.junit.Test;
@@ -95,56 +101,29 @@ public class TerraformPlanStepTest extends CategoryTest {
         .putSetupAbstractions("orgIdentifier", "test-org")
         .build();
   }
+
   @Captor ArgumentCaptor<List<EntityDetail>> captor;
   @Test
   @Owner(developers = NAMAN_TALAYCHA)
   @Category(UnitTests.class)
-  public void testValidateResources() {
+  public void testValidateResourcesWithGithubStore() {
     Ambiance ambiance = getAmbiance();
-    TerraformConfigFilesWrapper configFilesWrapper = new TerraformConfigFilesWrapper();
-    configFilesWrapper.setStore(StoreConfigWrapper.builder()
-                                    .spec(GithubStore.builder()
-                                              .branch(ParameterField.createValueField("master"))
-                                              .gitFetchType(FetchType.BRANCH)
-                                              .folderPath(ParameterField.createValueField("Config/"))
-                                              .connectorRef(ParameterField.createValueField("terraform"))
-                                              .build())
-                                    .type(StoreConfigType.GITHUB)
-                                    .build());
-    RemoteTerraformVarFileSpec remoteTerraformVarFileSpec = new RemoteTerraformVarFileSpec();
-    remoteTerraformVarFileSpec.setStore(
-        StoreConfigWrapper.builder()
-            .spec(GithubStore.builder()
-                      .branch(ParameterField.createValueField("master"))
-                      .gitFetchType(FetchType.BRANCH)
-                      .paths(ParameterField.createValueField(Collections.singletonList("VarFiles/")))
-                      .connectorRef(ParameterField.createValueField("terraform"))
-                      .build())
-            .type(StoreConfigType.GITHUB)
-            .build());
-    InlineTerraformVarFileSpec inlineTerraformVarFileSpec = new InlineTerraformVarFileSpec();
-    inlineTerraformVarFileSpec.setContent(ParameterField.createValueField("var-content"));
-    InlineTerraformBackendConfigSpec inlineTerraformBackendConfigSpec = new InlineTerraformBackendConfigSpec();
-    inlineTerraformBackendConfigSpec.setContent(ParameterField.createValueField("back-content"));
-    TerraformBackendConfig terraformBackendConfig = new TerraformBackendConfig();
-    terraformBackendConfig.setTerraformBackendConfigSpec(inlineTerraformBackendConfigSpec);
-    LinkedHashMap<String, TerraformVarFile> varFilesMap = new LinkedHashMap<>();
-    varFilesMap.put("var-file-01",
-        TerraformVarFile.builder().identifier("var-file-01").type("Inline").spec(inlineTerraformVarFileSpec).build());
-    varFilesMap.put("var-file-02",
-        TerraformVarFile.builder().identifier("var-file-02").type("Remote").spec(remoteTerraformVarFileSpec).build());
-    TerraformPlanStepParameters planStepParameters =
-        TerraformPlanStepParameters.infoBuilder()
-            .provisionerIdentifier(ParameterField.createValueField("id"))
-            .configuration(TerraformPlanExecutionDataParameters.builder()
-                               .configFiles(configFilesWrapper)
-                               .command(TerraformPlanCommand.APPLY)
-                               .secretManagerRef(ParameterField.createValueField("secret"))
-                               .varFiles(varFilesMap)
-                               .environmentVariables(ImmutableMap.of("KEY", ParameterField.createValueField("VAL")))
-                               .backendConfig(terraformBackendConfig)
-                               .build())
+    TerraformStepDataGenerator.GitStoreConfig gitStoreConfigFiles =
+        TerraformStepDataGenerator.GitStoreConfig.builder()
+            .branch("master")
+            .fetchType(FetchType.BRANCH)
+            .folderPath(ParameterField.createValueField("Config/"))
+            .connectoref(ParameterField.createValueField("terraform"))
             .build();
+    TerraformStepDataGenerator.GitStoreConfig gitStoreVarFiles =
+        TerraformStepDataGenerator.GitStoreConfig.builder()
+            .branch("master")
+            .fetchType(FetchType.BRANCH)
+            .folderPath(ParameterField.createValueField("VarFiles/"))
+            .connectoref(ParameterField.createValueField("terraform"))
+            .build();
+    TerraformPlanStepParameters planStepParameters =
+        TerraformStepDataGenerator.generateStepPlan(StoreConfigType.GITHUB, gitStoreConfigFiles, gitStoreVarFiles);
     StepElementParameters stepElementParameters = StepElementParameters.builder().spec(planStepParameters).build();
     terraformPlanStep.validateResources(ambiance, stepElementParameters);
     verify(pipelineRbacHelper, times(1)).checkRuntimePermissions(eq(ambiance), captor.capture(), eq(true));
@@ -160,56 +139,61 @@ public class TerraformPlanStepTest extends CategoryTest {
   }
 
   @Test
+  @Owner(developers = NGONZALEZ)
+  @Category(UnitTests.class)
+  public void testValidateResourcesWithArtifactoryStore() {
+    Ambiance ambiance = getAmbiance();
+    TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreConfigFiles =
+        TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
+            .artifactoryName("artifactoryConfigFiles")
+            .connectorRef("connectorRef")
+            .repositoryPath("repositoryPath")
+            .version("1.0.0")
+            .build();
+    TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreVarFiles =
+        TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
+            .artifactoryName("artifactoryVarFiles")
+            .connectorRef("connectorRef2")
+            .repositoryPath("repositoryPathtoVars")
+            .version("1.0.2")
+            .build();
+    TerraformPlanStepParameters planStepParameters = TerraformStepDataGenerator.generateStepPlan(
+        StoreConfigType.ARTIFACTORY, artifactoryStoreConfigFiles, artifactoryStoreVarFiles);
+    StepElementParameters stepElementParameters = StepElementParameters.builder().spec(planStepParameters).build();
+    terraformPlanStep.validateResources(ambiance, stepElementParameters);
+    verify(pipelineRbacHelper, times(1)).checkRuntimePermissions(eq(ambiance), captor.capture(), eq(true));
+
+    List<EntityDetail> entityDetails = captor.getValue();
+    assertThat(entityDetails.size()).isEqualTo(3);
+    assertThat(entityDetails.get(0).getEntityRef().getIdentifier()).isEqualTo("connectorRef");
+    assertThat(entityDetails.get(0).getEntityRef().getAccountIdentifier()).isEqualTo("test-account");
+    assertThat(entityDetails.get(1).getEntityRef().getIdentifier()).isEqualTo("connectorRef2");
+    assertThat(entityDetails.get(1).getEntityRef().getAccountIdentifier()).isEqualTo("test-account");
+    assertThat(entityDetails.get(2).getEntityRef().getIdentifier()).isEqualTo("secret");
+    assertThat(entityDetails.get(2).getEntityRef().getAccountIdentifier()).isEqualTo("test-account");
+  }
+
+  @Test
   @Owner(developers = NAMAN_TALAYCHA)
   @Category(UnitTests.class)
-  public void testObtainTaskAfterRbac() {
+  public void testObtainTaskAfterRbacWithGithubStore() {
     Ambiance ambiance = getAmbiance();
-    TerraformConfigFilesWrapper configFilesWrapper = new TerraformConfigFilesWrapper();
-    configFilesWrapper.setStore(StoreConfigWrapper.builder()
-                                    .spec(GithubStore.builder()
-                                              .branch(ParameterField.createValueField("master"))
-                                              .gitFetchType(FetchType.BRANCH)
-                                              .folderPath(ParameterField.createValueField("Config/"))
-                                              .connectorRef(ParameterField.createValueField("terraform"))
-                                              .build())
-                                    .type(StoreConfigType.GITHUB)
-                                    .build());
-    RemoteTerraformVarFileSpec remoteTerraformVarFileSpec = new RemoteTerraformVarFileSpec();
-    remoteTerraformVarFileSpec.setStore(
-        StoreConfigWrapper.builder()
-            .spec(GithubStore.builder()
-                      .branch(ParameterField.createValueField("master"))
-                      .gitFetchType(FetchType.BRANCH)
-                      .paths(ParameterField.createValueField(Collections.singletonList("VarFiles/")))
-                      .connectorRef(ParameterField.createValueField("terraform"))
-                      .build())
-            .type(StoreConfigType.GITHUB)
-            .build());
-    InlineTerraformVarFileSpec inlineTerraformVarFileSpec = new InlineTerraformVarFileSpec();
-    inlineTerraformVarFileSpec.setContent(ParameterField.createValueField("var-content"));
-    InlineTerraformBackendConfigSpec inlineTerraformBackendConfigSpec = new InlineTerraformBackendConfigSpec();
-    inlineTerraformBackendConfigSpec.setContent(ParameterField.createValueField("back-content"));
-    TerraformBackendConfig terraformBackendConfig = new TerraformBackendConfig();
-    terraformBackendConfig.setTerraformBackendConfigSpec(inlineTerraformBackendConfigSpec);
-    LinkedHashMap<String, TerraformVarFile> varFilesMap = new LinkedHashMap<>();
-    varFilesMap.put("var-file-01",
-        TerraformVarFile.builder().identifier("var-file-01").type("Inline").spec(inlineTerraformVarFileSpec).build());
-    varFilesMap.put("var-file-02",
-        TerraformVarFile.builder().identifier("var-file-02").type("Remote").spec(remoteTerraformVarFileSpec).build());
-    TerraformPlanStepParameters planStepParameters =
-        TerraformPlanStepParameters.infoBuilder()
-            .provisionerIdentifier(ParameterField.createValueField("id"))
-            .configuration(TerraformPlanExecutionDataParameters.builder()
-                               .configFiles(configFilesWrapper)
-                               .command(TerraformPlanCommand.APPLY)
-                               .secretManagerRef(ParameterField.createValueField("secret"))
-                               .varFiles(varFilesMap)
-                               .workspace(ParameterField.createValueField("w1"))
-                               .environmentVariables(ImmutableMap.of("KEY", ParameterField.createValueField("VAL")))
-                               .backendConfig(terraformBackendConfig)
-
-                               .build())
+    TerraformStepDataGenerator.GitStoreConfig gitStoreConfigFiles =
+        TerraformStepDataGenerator.GitStoreConfig.builder()
+            .branch("master")
+            .fetchType(FetchType.BRANCH)
+            .folderPath(ParameterField.createValueField("Config/"))
+            .connectoref(ParameterField.createValueField("terraform"))
             .build();
+    TerraformStepDataGenerator.GitStoreConfig gitStoreVarFiles =
+        TerraformStepDataGenerator.GitStoreConfig.builder()
+            .branch("master")
+            .fetchType(FetchType.BRANCH)
+            .folderPath(ParameterField.createValueField("VarFiles/"))
+            .connectoref(ParameterField.createValueField("terraform"))
+            .build();
+    TerraformPlanStepParameters planStepParameters =
+        TerraformStepDataGenerator.generateStepPlan(StoreConfigType.GITHUB, gitStoreConfigFiles, gitStoreVarFiles);
 
     GitConfigDTO gitConfigDTO = GitConfigDTO.builder()
                                     .gitAuthType(GitAuthType.HTTP)
@@ -233,6 +217,91 @@ public class TerraformPlanStepTest extends CategoryTest {
     doReturn("fileId").when(terraformStepHelper).getLatestFileId(any());
     doReturn("planName").when(terraformStepHelper).getTerraformPlanName(any(), any());
     doReturn(gitFetchFilesConfig).when(terraformStepHelper).getGitFetchFilesConfig(any(), any(), any());
+    doReturn(varFileInfo).when(terraformStepHelper).toTerraformVarFileInfo(any(), any());
+    doReturn(EnvironmentType.NON_PROD).when(stepHelper).getEnvironmentType(any());
+    doReturn("back-content").when(terraformStepHelper).getBackendConfig(any());
+    doReturn(ImmutableMap.of("KEY", ParameterField.createValueField("VAL")))
+        .when(terraformStepHelper)
+        .getEnvironmentVariablesMap(any());
+    mockStatic(StepUtils.class);
+    PowerMockito.when(StepUtils.prepareCDTaskRequest(any(), any(), any(), any(), any(), any(), any()))
+        .thenReturn(TaskRequest.newBuilder().build());
+    ArgumentCaptor<TaskData> taskDataArgumentCaptor = ArgumentCaptor.forClass(TaskData.class);
+    TaskRequest taskRequest = terraformPlanStep.obtainTaskAfterRbac(ambiance, stepElementParameters, stepInputPackage);
+    assertThat(taskRequest).isNotNull();
+    PowerMockito.verifyStatic(StepUtils.class, times(1));
+    StepUtils.prepareCDTaskRequest(any(), taskDataArgumentCaptor.capture(), any(), any(), any(), any(), any());
+    assertThat(taskDataArgumentCaptor.getValue()).isNotNull();
+    assertThat(taskDataArgumentCaptor.getValue().getParameters()).isNotNull();
+    TerraformTaskNGParameters taskParameters =
+        (TerraformTaskNGParameters) taskDataArgumentCaptor.getValue().getParameters()[0];
+    assertThat(taskParameters.getTaskType()).isEqualTo(TFTaskType.PLAN);
+    assertThat(taskParameters.getPlanName()).isEqualTo("planName");
+  }
+
+  @Test
+  @Owner(developers = NAMAN_TALAYCHA)
+  @Category(UnitTests.class)
+  public void testObtainTaskAfterRbacWithArtifactoryStore() {
+    Ambiance ambiance = getAmbiance();
+    TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreConfigFiles =
+        TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
+            .artifactoryName("artifactoryConfigFiles")
+            .connectorRef("connectorRef")
+            .repositoryPath("repositoryPath")
+            .version("1.0.0")
+            .build();
+    TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreVarFiles =
+        TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
+            .artifactoryName("artifactoryVarFiles")
+            .connectorRef("connectorRef2")
+            .repositoryPath("repositoryPathtoVars")
+            .version("1.0.2")
+            .build();
+    TerraformPlanStepParameters planStepParameters = TerraformStepDataGenerator.generateStepPlan(
+        StoreConfigType.ARTIFACTORY, artifactoryStoreConfigFiles, artifactoryStoreVarFiles);
+
+    // Create auth with user and password
+    char[] password = {'r', 's', 't', 'u', 'v'};
+    ArtifactoryAuthenticationDTO artifactoryAuthenticationDTO =
+        ArtifactoryAuthenticationDTO.builder()
+            .authType(ArtifactoryAuthType.USER_PASSWORD)
+            .credentials(ArtifactoryUsernamePasswordAuthDTO.builder()
+                             .username("username")
+                             .passwordRef(SecretRefData.builder().decryptedValue(password).build())
+                             .build())
+            .build();
+
+    // Create DTO connector
+    ArtifactoryConnectorDTO artifactoryConnectorDTO = ArtifactoryConnectorDTO.builder()
+                                                          .artifactoryServerUrl("http://artifactory.com")
+                                                          .auth(artifactoryAuthenticationDTO)
+                                                          .delegateSelectors(Collections.singleton("delegateSelector"))
+                                                          .build();
+    ConnectorInfoDTO connectorInfoDTO = ConnectorInfoDTO.builder()
+                                            .connectorType(ConnectorType.ARTIFACTORY)
+                                            .identifier("connectorRef")
+                                            .name("connectorName")
+                                            .connectorConfig(artifactoryConnectorDTO)
+                                            .build();
+
+    ArtifactoryStoreDelegateConfig artifactoryStoreDelegateConfig = ArtifactoryStoreDelegateConfig.builder()
+                                                                        .artifactName("artifactName")
+                                                                        .repositoryPath("repositoryPath")
+                                                                        .version("1.0.0")
+                                                                        .connectorDTO(connectorInfoDTO)
+                                                                        .succeedIfFileNotFound(false)
+                                                                        .build();
+
+    List<TerraformVarFileInfo> varFileInfo = new ArrayList<>();
+    StepElementParameters stepElementParameters = StepElementParameters.builder().spec(planStepParameters).build();
+    StepInputPackage stepInputPackage = StepInputPackage.builder().build();
+    doReturn("test-account/test-org/test-project/id").when(terraformStepHelper).generateFullIdentifier(any(), any());
+    doReturn("fileId").when(terraformStepHelper).getLatestFileId(any());
+    doReturn("planName").when(terraformStepHelper).getTerraformPlanName(any(), any());
+    doReturn(artifactoryStoreDelegateConfig)
+        .when(terraformStepHelper)
+        .getFileFactoryFetchFilesConfig(any(), any(), any());
     doReturn(varFileInfo).when(terraformStepHelper).toTerraformVarFileInfo(any(), any());
     doReturn(EnvironmentType.NON_PROD).when(stepHelper).getEnvironmentType(any());
     doReturn("back-content").when(terraformStepHelper).getBackendConfig(any());

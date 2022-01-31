@@ -52,6 +52,7 @@ import io.harness.connector.ConnectorInfoDTO;
 import io.harness.connector.helper.GitApiAccessDecryptionHelper;
 import io.harness.connector.services.ConnectorService;
 import io.harness.connector.validator.scmValidators.GitConfigAuthenticationInfoHelper;
+import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryConnectorDTO;
 import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
 import io.harness.delegate.beans.connector.gcpconnector.GcpConnectorDTO;
 import io.harness.delegate.beans.connector.helm.HttpHelmConnectorDTO;
@@ -443,6 +444,12 @@ public class CDStepHelper {
         if (!((connectorInfoDTO.getConnectorConfig()) instanceof AwsConnectorDTO)) {
           throw new InvalidRequestException(
               format("Invalid connector selected in %s. Select Amazon Web Services connector", message));
+        }
+        break;
+      case ManifestStoreType.ARTIFACTORY:
+        if (!((connectorInfoDTO.getConnectorConfig()) instanceof ArtifactoryConnectorDTO)) {
+          throw new InvalidRequestException(
+              format("Invalid connector selected in %s. Select Artifactory connector", message));
         }
         break;
 

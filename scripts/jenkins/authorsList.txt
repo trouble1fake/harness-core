@@ -103,6 +103,7 @@ Mounik V V S S mounik.velavalivenkata@harness.io
 Naman Talaycha naman.talaycha@harness.io
 Naman Verma naman.verma@harness.io
 Nandan Chandrashekar nandan.chandrashekar@harness.io
+Nasser Gonzalez Gonzalez nasser.gonzalez@harness.io
 Nataraja Maruthi nataraja@harness.io
 Nathan Nguyen nnguyen01@users.noreply.github.com
 Nathan Nguyen lenathan.nguyen@harness.io

@@ -24,7 +24,8 @@ public enum StoreConfigType {
   @JsonProperty(ManifestStoreType.GITLAB) GITLAB(ManifestStoreType.GITLAB),
   @JsonProperty(ManifestStoreType.HTTP) HTTP(ManifestStoreType.HTTP),
   @JsonProperty(ManifestStoreType.S3) S3(ManifestStoreType.S3),
-  @JsonProperty(ManifestStoreType.GCS) GCS(ManifestStoreType.GCS);
+  @JsonProperty(ManifestStoreType.GCS) GCS(ManifestStoreType.GCS),
+  @JsonProperty(ManifestStoreType.ARTIFACTORY) ARTIFACTORY(ManifestStoreType.ARTIFACTORY);
   private final String displayName;
 
   StoreConfigType(String displayName) {

@@ -351,6 +351,40 @@
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
+    "ArtifactoryStoreConfig": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/StoreConfig"
+        },
+        {
+          "type": "object",
+          "required": [
+            "artifactName",
+            "connectorRef",
+            "repositoryPath",
+            "version"
+          ],
+          "properties": {
+            "artifactName": {
+              "type": "string"
+            },
+            "connectorRef": {
+              "type": "string"
+            },
+            "metadata": {
+              "type": "string"
+            },
+            "repositoryPath": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            }
+          }
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
     "BarrierStepInfo": {
       "allOf": [
         {
@@ -5095,12 +5129,29 @@
             "GitLab",
             "Http",
             "S3",
-            "Gcs"
+            "Gcs",
+            "Artifactory"
           ]
         }
       },
       "$schema": "http://json-schema.org/draft-07/schema#",
       "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Artifactory"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/ArtifactoryStoreConfig"
+              }
+            }
+          }
+        },
         {
           "if": {
             "properties": {

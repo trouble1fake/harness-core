@@ -10,6 +10,7 @@ package io.harness.cdng.provision.terraform;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.manifest.yaml.GitStoreConfigDTO;
+import io.harness.cdng.manifest.yaml.storeConfig.StoreConfig;
 
 import lombok.Builder;
 import lombok.Data;
@@ -19,4 +20,5 @@ import lombok.Data;
 @OwnedBy(HarnessTeam.CDP)
 public class TerraformRemoteVarFileConfig implements TerraformVarFileConfig {
   GitStoreConfigDTO gitStoreConfigDTO;
+  StoreConfig fileStoreConfig;
 }

@@ -13,6 +13,7 @@ import static io.harness.expression.Expression.ALLOW_SECRETS;
 import static io.harness.expression.Expression.DISALLOW_SECRETS;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryCapabilityHelper;
 import io.harness.delegate.beans.connector.scm.genericgitconnector.GitConfigDTO;
 import io.harness.delegate.beans.executioncapability.ExecutionCapability;
 import io.harness.delegate.beans.executioncapability.ExecutionCapabilityDemander;
@@ -21,6 +22,7 @@ import io.harness.delegate.beans.executioncapability.SelectorCapability;
 import io.harness.delegate.capability.EncryptedDataDetailsCapabilityHelper;
 import io.harness.delegate.capability.ProcessExecutionCapabilityHelper;
 import io.harness.delegate.task.TaskParameters;
+import io.harness.delegate.task.filestore.FileStoreFetchFilesConfig;
 import io.harness.delegate.task.git.GitFetchFilesConfig;
 import io.harness.expression.Expression;
 import io.harness.expression.ExpressionEvaluator;
@@ -28,6 +30,7 @@ import io.harness.expression.ExpressionReflectionUtils.NestedAnnotationResolver;
 import io.harness.security.encryption.EncryptedRecordData;
 import io.harness.security.encryption.EncryptionConfig;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import lombok.Builder;
@@ -47,7 +50,8 @@ public class TerraformTaskNGParameters
   @NonNull TFTaskType taskType;
   @NonNull String entityId;
   String workspace;
-  @NonNull GitFetchFilesConfig configFile;
+  GitFetchFilesConfig configFile;
+  FileStoreFetchFilesConfig fileStoreConfigFiles;
   @Expression(ALLOW_SECRETS) List<TerraformVarFileInfo> varFileInfos;
   @Expression(ALLOW_SECRETS) String backendConfig;
   @Expression(DISALLOW_SECRETS) List<String> targets;
@@ -68,10 +72,11 @@ public class TerraformTaskNGParameters
 
   @Override
   public List<ExecutionCapability> fetchRequiredExecutionCapabilities(ExpressionEvaluator maskingEvaluator) {
-    List<ExecutionCapability> capabilities = ProcessExecutionCapabilityHelper.generateExecutionCapabilitiesForTerraform(
-        configFile.getGitStoreDelegateConfig().getEncryptedDataDetails(), maskingEvaluator);
-    log.info("Adding Required Execution Capabilities");
+    List<ExecutionCapability> capabilities = new ArrayList<>();
     if (configFile != null) {
+      capabilities = ProcessExecutionCapabilityHelper.generateExecutionCapabilitiesForTerraform(
+          configFile.getGitStoreDelegateConfig().getEncryptedDataDetails(), maskingEvaluator);
+      log.info("Adding Required Execution Capabilities for GitStores");
       capabilities.add(GitConnectionNGCapability.builder()
                            .gitConfig((GitConfigDTO) configFile.getGitStoreDelegateConfig().getGitConfigDTO())
                            .encryptedDataDetails(configFile.getGitStoreDelegateConfig().getEncryptedDataDetails())
@@ -83,20 +88,46 @@ public class TerraformTaskNGParameters
         capabilities.add(SelectorCapability.builder().selectors(gitConfigDTO.getDelegateSelectors()).build());
       }
     }
-    if (varFileInfos != null && isNotEmpty(varFileInfos)) {
+    if (fileStoreConfigFiles != null) {
+      switch (fileStoreConfigFiles.getManifestStoreType()) {
+        case "Artifactory":
+          capabilities.addAll(ArtifactoryCapabilityHelper.fetchRequiredExecutionCapabilities(
+              fileStoreConfigFiles.getConnectorDTO().getConnectorConfig(), maskingEvaluator));
+          log.info("Adding Required Execution Capabilities for ArtifactoryStores");
+          break;
+        default:
+          break;
+      }
+    }
+    if (isNotEmpty(varFileInfos)) {
       for (TerraformVarFileInfo varFileInfo : varFileInfos) {
         if (varFileInfo instanceof RemoteTerraformVarFileInfo) {
           GitFetchFilesConfig gitFetchFilesConfig = ((RemoteTerraformVarFileInfo) varFileInfo).getGitFetchFilesConfig();
-          capabilities.add(
-              GitConnectionNGCapability.builder()
-                  .gitConfig((GitConfigDTO) gitFetchFilesConfig.getGitStoreDelegateConfig().getGitConfigDTO())
-                  .encryptedDataDetails(gitFetchFilesConfig.getGitStoreDelegateConfig().getEncryptedDataDetails())
-                  .sshKeySpecDTO(gitFetchFilesConfig.getGitStoreDelegateConfig().getSshKeySpecDTO())
-                  .build());
+          if (gitFetchFilesConfig != null) {
+            capabilities.add(
+                GitConnectionNGCapability.builder()
+                    .gitConfig((GitConfigDTO) gitFetchFilesConfig.getGitStoreDelegateConfig().getGitConfigDTO())
+                    .encryptedDataDetails(gitFetchFilesConfig.getGitStoreDelegateConfig().getEncryptedDataDetails())
+                    .sshKeySpecDTO(gitFetchFilesConfig.getGitStoreDelegateConfig().getSshKeySpecDTO())
+                    .build());
 
-          GitConfigDTO gitConfigDTO = (GitConfigDTO) gitFetchFilesConfig.getGitStoreDelegateConfig().getGitConfigDTO();
-          if (isNotEmpty(gitConfigDTO.getDelegateSelectors())) {
-            capabilities.add(SelectorCapability.builder().selectors(gitConfigDTO.getDelegateSelectors()).build());
+            GitConfigDTO gitConfigDTO =
+                (GitConfigDTO) gitFetchFilesConfig.getGitStoreDelegateConfig().getGitConfigDTO();
+            if (isNotEmpty(gitConfigDTO.getDelegateSelectors())) {
+              capabilities.add(SelectorCapability.builder().selectors(gitConfigDTO.getDelegateSelectors()).build());
+            }
+          }
+          FileStoreFetchFilesConfig fileFactoryFetchFilesConfig =
+              ((RemoteTerraformVarFileInfo) varFileInfo).getFilestoreFetchFilesConfig();
+          if (fileFactoryFetchFilesConfig != null) {
+            switch (fileFactoryFetchFilesConfig.getManifestStoreType()) {
+              case "Artifactory":
+                capabilities.addAll(ArtifactoryCapabilityHelper.fetchRequiredExecutionCapabilities(
+                    fileFactoryFetchFilesConfig.getConnectorDTO().getConnectorConfig(), maskingEvaluator));
+                log.info("Adding Required Execution Capabilities for ArtifactoryStores");
+                break;
+              default:
+            }
           }
         }
       }
