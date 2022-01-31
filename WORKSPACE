@@ -4451,7 +4451,7 @@ plain_artifacts = [
     "com.squareup.okhttp3:okhttp:4.9.0",
     "com.squareup.okio:okio:2.8.0",
     "com.squareup.retrofit2:adapter-rxjava:2.8.1",
-    "com.squareup.retrofit2:converter-gson:2.8.1",
+    "com.squareup.retrofit2:converter-gson:2.3.0",
     "com.squareup.retrofit2:converter-jackson:2.8.1",
     "com.squareup.retrofit2:converter-simplexml:2.8.1",
     "com.squareup.retrofit2:retrofit:2.8.1",
