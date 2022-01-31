@@ -170,6 +170,7 @@ public class PipelineResource implements YamlSchemaResource {
 
   @POST
   @Path("/v2")
+  @Deprecated
   @ApiOperation(value = "Create a Pipeline", nickname = "createPipelineV2")
   @Operation(operationId = "postPipelineV2", summary = "Create a Pipeline API (V2 Version)",
       responses =
@@ -326,6 +327,7 @@ public class PipelineResource implements YamlSchemaResource {
 
   @PUT
   @Path("/v2/{pipelineIdentifier}")
+  @Deprecated
   @ApiOperation(value = "Update a Pipeline", nickname = "putPipelineV2")
   @Operation(operationId = "updatePipelineV2", summary = "Updates a Pipeline by identifier (V2 Version)",
       responses =
