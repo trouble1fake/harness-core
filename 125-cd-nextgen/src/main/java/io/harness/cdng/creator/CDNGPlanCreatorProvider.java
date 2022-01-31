@@ -10,7 +10,7 @@ package io.harness.cdng.creator;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FeatureName;
-import io.harness.cdng.creator.filters.DeploymentStageFilterJsonCreator;
+import io.harness.cdng.creator.filters.DeploymentStageFilterJsonCreatorV2;
 import io.harness.cdng.creator.plan.StepsPlanCreator;
 import io.harness.cdng.creator.plan.artifact.ArtifactsPlanCreator;
 import io.harness.cdng.creator.plan.artifact.PrimaryArtifactPlanCreator;
@@ -21,7 +21,7 @@ import io.harness.cdng.creator.plan.manifest.IndividualManifestPlanCreator;
 import io.harness.cdng.creator.plan.manifest.ManifestsPlanCreator;
 import io.harness.cdng.creator.plan.rollback.ExecutionStepsRollbackPMSPlanCreator;
 import io.harness.cdng.creator.plan.service.ServicePlanCreator;
-import io.harness.cdng.creator.plan.stage.DeploymentStagePMSPlanCreator;
+import io.harness.cdng.creator.plan.stage.DeploymentStagePMSPlanCreatorV2;
 import io.harness.cdng.creator.plan.steps.CDPMSStepFilterJsonCreator;
 import io.harness.cdng.creator.plan.steps.CDPMSStepFilterJsonCreatorV2;
 import io.harness.cdng.creator.plan.steps.CDPMSStepPlanCreator;
@@ -62,7 +62,7 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
   @Override
   public List<PartialPlanCreator<?>> getPlanCreators() {
     List<PartialPlanCreator<?>> planCreators = new LinkedList<>();
-    planCreators.add(new DeploymentStagePMSPlanCreator());
+    planCreators.add(new DeploymentStagePMSPlanCreatorV2());
     planCreators.add(new CDPMSStepPlanCreator());
     planCreators.add(new K8sCanaryStepPlanCreator());
     planCreators.add(new K8sRollingRollbackPMSStepPlanCreator());
@@ -87,7 +87,7 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
   @Override
   public List<FilterJsonCreator> getFilterJsonCreators() {
     List<FilterJsonCreator> filterJsonCreators = new ArrayList<>();
-    filterJsonCreators.add(new DeploymentStageFilterJsonCreator());
+    filterJsonCreators.add(new DeploymentStageFilterJsonCreatorV2());
     filterJsonCreators.add(new CDPMSStepFilterJsonCreator());
     filterJsonCreators.add(new CDPMSStepFilterJsonCreatorV2());
     injectorUtils.injectMembers(filterJsonCreators);
