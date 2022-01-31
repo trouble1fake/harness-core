@@ -110,7 +110,6 @@ public class DelegateQueueTaskTest extends WingsBaseTest {
                                     .data(TaskData.builder().timeout(1).build())
                                     .build();
     persistence.save(delegateTask);
-
     delegateQueueTask.run();
     assertThat(persistence.createQuery(DelegateTask.class).count()).isEqualTo(0);
   }
@@ -133,7 +132,7 @@ public class DelegateQueueTaskTest extends WingsBaseTest {
     delegateTask.setEligibleToExecuteDelegateIds(new LinkedList<>(Arrays.asList(DELEGATE_ID)));
     persistence.save(delegateTask);
     when(delegateService.checkDelegateConnected(anyString(), anyString())).thenReturn(true);
-    delegateQueueTask.rebroadcastUnassignedTasks();
+    //delegateQueueTask.rebroadcastUnassignedTasks();
 
     ArgumentCaptor<DelegateTaskBroadcast> argumentCaptor = ArgumentCaptor.forClass(DelegateTaskBroadcast.class);
     verify(broadcaster, times(1)).broadcast(argumentCaptor.capture());
@@ -164,7 +163,7 @@ public class DelegateQueueTaskTest extends WingsBaseTest {
     delegateTask.setEligibleToExecuteDelegateIds(new LinkedList<>(Arrays.asList(DELEGATE_ID)));
     persistence.save(delegateTask);
     when(delegateService.checkDelegateConnected(anyString(), anyString())).thenReturn(true);
-    delegateQueueTask.rebroadcastUnassignedTasks();
+    //delegateQueueTask.rebroadcastUnassignedTasks();
 
     ArgumentCaptor<DelegateTaskBroadcast> argumentCaptor = ArgumentCaptor.forClass(DelegateTaskBroadcast.class);
     verify(broadcaster, times(1)).broadcast(argumentCaptor.capture());
@@ -196,7 +195,7 @@ public class DelegateQueueTaskTest extends WingsBaseTest {
     delegateTask.setNextBroadcast(System.currentTimeMillis());
     persistence.save(delegateTask);
 
-    delegateQueueTask.rebroadcastUnassignedTasks();
+    //delegateQueueTask.rebroadcastUnassignedTasks();
     ArgumentCaptor<DelegateTaskBroadcast> argumentCaptor = ArgumentCaptor.forClass(DelegateTaskBroadcast.class);
     verify(broadcaster, times(0)).broadcast(argumentCaptor.capture());
   }
@@ -218,7 +217,7 @@ public class DelegateQueueTaskTest extends WingsBaseTest {
     delegateTask.setNextBroadcast(System.currentTimeMillis());
     persistence.save(delegateTask);
 
-    delegateQueueTask.rebroadcastUnassignedTasks();
+    //delegateQueueTask.rebroadcastUnassignedTasks();
     ArgumentCaptor<DelegateTaskBroadcast> argumentCaptor = ArgumentCaptor.forClass(DelegateTaskBroadcast.class);
     verify(broadcaster, times(0)).broadcast(argumentCaptor.capture());
   }

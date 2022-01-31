@@ -17,6 +17,7 @@ import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.beans.TaskData.TaskDataKeys;
 import io.harness.delegate.beans.executioncapability.ExecutionCapability;
 import io.harness.delegate.task.HDelegateTask;
+import io.harness.iterator.PersistentIterable;
 import io.harness.mongo.index.CompoundMongoIndex;
 import io.harness.mongo.index.FdTtlIndex;
 import io.harness.mongo.index.MongoIndex;
@@ -57,7 +58,7 @@ import org.mongodb.morphia.annotations.Transient;
 @FieldNameConstants(innerTypeName = "DelegateTaskKeys")
 @TargetModule(HarnessModule._920_DELEGATE_SERVICE_BEANS)
 public class DelegateTask
-    implements PersistentEntity, UuidAware, CreatedAtAware, UpdatedAtAware, AccountAccess, HDelegateTask {
+        implements PersistentEntity, UuidAware, CreatedAtAware, UpdatedAtAware, AccountAccess, HDelegateTask, PersistentIterable {
   public static List<MongoIndex> mongoIndexes() {
     return ImmutableList.<MongoIndex>builder()
         .add(CompoundMongoIndex.builder()
@@ -187,6 +188,16 @@ public class DelegateTask
       return data.getTaskType();
     }
     return description;
+  }
+
+  @Override
+  public Long obtainNextIteration(String fieldName) {
+    return null;
+  }
+
+  @Override
+  public String logKeyForId() {
+    return UuidAware.super.logKeyForId();
   }
 
   public enum Status {

@@ -86,6 +86,7 @@ import io.harness.grpc.server.GrpcServerConfig;
 import io.harness.health.HealthMonitor;
 import io.harness.health.HealthService;
 import io.harness.insights.DelegateInsightsSummaryJob;
+import io.harness.iterator.DelegateTaskBroadcastingIterator;
 import io.harness.iterator.DelegateTaskExpiryCheckIterator;
 import io.harness.lock.AcquiredLock;
 import io.harness.lock.DistributedLockImplementation;
@@ -1399,6 +1400,8 @@ public class WingsApplication extends Application<MainConfiguration> {
         .registerIterators(iteratorsConfig.getPerpetualTaskAssignmentIteratorConfig().getThreadPoolSize(),
             iteratorsConfig.getPerpetualTaskRebalanceIteratorConfig().getThreadPoolSize());
     injector.getInstance(DelegateTaskExpiryCheckIterator.class)
+        .registerIterators(iteratorsConfig.getDelegateTaskExpiryCheckIteratorConfig().getThreadPoolSize());
+    injector.getInstance(DelegateTaskBroadcastingIterator.class)
         .registerIterators(iteratorsConfig.getDelegateTaskExpiryCheckIteratorConfig().getThreadPoolSize());
     injector.getInstance(DelegateTelemetryPublisher.class).registerIterators();
   }
