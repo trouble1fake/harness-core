@@ -41,7 +41,8 @@ public class PmsGraphStepDetailsServiceImpl implements PmsGraphStepDetailsServic
 
   @Override
   public void addStepDetail(String nodeExecutionId, String planExecutionId, PmsStepDetails stepDetails, String name) {
-    Update update = new Update().addToSet(name, stepDetails);
+    Update update = new Update().addToSet(NodeExecutionsInfoKeys.nodeExecutionDetailsInfoList,
+        NodeExecutionDetailsInfo.builder().name(name).stepDetails(stepDetails).build());
     Criteria criteria = Criteria.where(NodeExecutionsInfoKeys.nodeExecutionId).is(nodeExecutionId);
     mongoTemplate.findAndModify(new Query(criteria), update, NodeExecutionsInfo.class);
     stepDetailsUpdateObserverSubject.fireInform(StepDetailsUpdateObserver::onStepDetailsUpdate,

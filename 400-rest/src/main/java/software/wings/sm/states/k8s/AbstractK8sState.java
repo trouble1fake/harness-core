@@ -9,10 +9,10 @@ package software.wings.sm.states.k8s;
 
 import static io.harness.annotations.dev.HarnessModule._870_CG_ORCHESTRATION;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.beans.FeatureName.KUSTOMIZE_PATCHES_CG;
 import static io.harness.beans.FeatureName.OPTIMIZED_GIT_FETCH_FILES;
 import static io.harness.beans.FeatureName.OVERRIDE_VALUES_YAML_FROM_HELM_CHART;
 import static io.harness.beans.FeatureName.USE_LATEST_CHARTMUSEUM_VERSION;
-import static io.harness.beans.FeatureName.VARIABLE_SUPPORT_FOR_KUSTOMIZE;
 import static io.harness.data.structure.CollectionUtils.emptyIfNull;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
@@ -1274,6 +1274,6 @@ public abstract class AbstractK8sState extends State implements K8sStateExecutor
   }
 
   public boolean isUseVarSupportForKustomize(String accountId) {
-    return featureFlagService.isEnabled(VARIABLE_SUPPORT_FOR_KUSTOMIZE, accountId);
+    return featureFlagService.isEnabled(KUSTOMIZE_PATCHES_CG, accountId);
   }
 }

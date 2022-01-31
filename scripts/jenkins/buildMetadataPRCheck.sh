@@ -50,7 +50,7 @@ then
 
 fi
 
-if [ "${ghprbTargetBranch}" = "master" ]
+if [ "${ghprbTargetBranch}" = "develop" ]
 then
   git show ${VERSION_FILE} | grep "build.number" || exit 0 && exit 1
   git show ${VERSION_FILE} | grep "build.patch" || exit 0 && exit 1

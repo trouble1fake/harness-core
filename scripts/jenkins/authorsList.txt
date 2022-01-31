@@ -103,6 +103,7 @@ Mounik V V S S mounik.velavalivenkata@harness.io
 Naman Talaycha naman.talaycha@harness.io
 Naman Verma naman.verma@harness.io
 Nandan Chandrashekar nandan.chandrashekar@harness.io
+Nasser Gonzalez Gonzalez nasser.gonzalez@harness.io
 Nataraja Maruthi nataraja@harness.io
 Nathan Nguyen nnguyen01@users.noreply.github.com
 Nathan Nguyen lenathan.nguyen@harness.io
@@ -137,6 +138,7 @@ Reetika mallavarapu.reetika@harness.io
 Rihaz Zahir rihaz.zahir@harness.io
 Rishi Singh rishi@harness.io
 Riyas P riyas.yash@harness.io
+Roger Simms roger.simms@harness.io
 Rohit Karelia rohit.karelia@harness.io
 Rohit Kumar rohit.kumar@harness.io
 Rushabh Shah rushabh.shah@harness.io
@@ -222,4 +224,4 @@ Trunapushpa trunapushpa.surkar@harness.io
 David Warren david.warren@harness.io
 Shivam Negi shivam.negi@harness.io
 Vitalie Safronovici vitalie.safronovici@harness.io
-
+Shubham Maheshwari shubham.maheshwari@harness.io

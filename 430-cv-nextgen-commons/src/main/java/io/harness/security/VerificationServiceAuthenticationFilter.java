@@ -9,8 +9,6 @@ package io.harness.security;
 
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
-import static io.harness.eraro.ErrorCode.ACCESS_DENIED;
-import static io.harness.eraro.ErrorCode.DEFAULT_ERROR_CODE;
 import static io.harness.eraro.ErrorCode.EXPIRED_TOKEN;
 import static io.harness.eraro.ErrorCode.INVALID_CREDENTIAL;
 import static io.harness.eraro.ErrorCode.INVALID_TOKEN;
@@ -44,17 +42,10 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JWEDecrypter;
-import com.nimbusds.jose.KeyLengthException;
-import com.nimbusds.jose.crypto.DirectDecrypter;
-import com.nimbusds.jwt.EncryptedJWT;
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
-import java.text.ParseException;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Priority;
-import javax.crypto.spec.SecretKeySpec;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ResourceInfo;
@@ -62,14 +53,12 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MultivaluedMap;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.DecoderException;
-import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.StringUtils;
 
 @Singleton
 @Priority(AUTHENTICATION)
 @Slf4j
-public class VerificationServiceAuthenticationFilter implements ContainerRequestFilter {
+public abstract class VerificationServiceAuthenticationFilter implements ContainerRequestFilter {
   private String PREFIX_BEARER = "Bearer";
   @Context private ResourceInfo resourceInfo;
   @Inject private CVNextGenCache cvNextGenCache;
@@ -219,44 +208,7 @@ public class VerificationServiceAuthenticationFilter implements ContainerRequest
     }
   }
 
-  protected void validateDelegateToken(String accountId, String tokenString) {
-    log.info("Delegate token validation, account id [{}] token requested", accountId);
-    String accountKey = cvNextGenCache.getAccountKey(accountId);
-    if (accountKey == null) {
-      log.error("Account Id {} does not exist in manager. So, rejecting delegate register request.", accountId);
-      throw new WingsException(ACCESS_DENIED);
-    }
-
-    EncryptedJWT encryptedJWT = null;
-    try {
-      encryptedJWT = EncryptedJWT.parse(tokenString);
-    } catch (ParseException e) {
-      log.error("Invalid token for delegate " + tokenString, e);
-      throw new WingsException(INVALID_TOKEN);
-    }
-
-    byte[] encodedKey;
-    try {
-      encodedKey = Hex.decodeHex(accountKey.toCharArray());
-    } catch (DecoderException e) {
-      log.error("Invalid hex account key {}", accountKey, e);
-      throw new WingsException(DEFAULT_ERROR_CODE); // ShouldNotHappen
-    }
-
-    JWEDecrypter decrypter;
-    try {
-      decrypter = new DirectDecrypter(new SecretKeySpec(encodedKey, 0, encodedKey.length, "AES"));
-    } catch (KeyLengthException e) {
-      log.error("Invalid account key {}", accountKey, e);
-      throw new WingsException(DEFAULT_ERROR_CODE);
-    }
-
-    try {
-      encryptedJWT.decrypt(decrypter);
-    } catch (JOSEException e) {
-      throw new WingsException(INVALID_TOKEN);
-    }
-  }
+  public abstract void validateDelegateToken(String accountId, String tokenString);
 
   protected boolean validateHarnessClientApiRequest(ClientType clientType, String apiKey) {
     if (clientType == null || apiKey == null) {

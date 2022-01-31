@@ -49,6 +49,7 @@ public class StepDetailInstance {
   String planExecutionId;
   String nodeExecutionId;
   PmsStepDetails stepDetails;
+
   PmsStepParameters resolvedInputs;
   @Builder.Default @FdTtlIndex Date validUntil = Date.from(OffsetDateTime.now().plusMonths(TTL_MONTHS).toInstant());
 

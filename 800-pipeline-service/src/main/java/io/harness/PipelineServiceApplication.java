@@ -470,6 +470,8 @@ public class PipelineServiceApplication extends Application<PipelineServiceConfi
     // NodeExecutionStartObserver
     nodeExecutionService.getNodeExecutionStartSubject().register(
         injector.getInstance(Key.get(StageStartNotificationHandler.class)));
+    nodeExecutionService.getNodeExecutionStartSubject().register(
+        injector.getInstance(Key.get(OrchestrationLogPublisher.class)));
 
     PlanStatusEventEmitterHandler planStatusEventEmitterHandler =
         injector.getInstance(Key.get(PlanStatusEventEmitterHandler.class));

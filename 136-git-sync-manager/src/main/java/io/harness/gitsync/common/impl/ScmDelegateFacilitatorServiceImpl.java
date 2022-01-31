@@ -57,6 +57,7 @@ import io.harness.gitsync.common.dtos.GitDiffResultFileListDTO;
 import io.harness.gitsync.common.dtos.GitFileChangeDTO;
 import io.harness.gitsync.common.dtos.GitFileContent;
 import io.harness.gitsync.common.helper.FileBatchResponseMapper;
+import io.harness.gitsync.common.helper.GitSyncConnectorHelper;
 import io.harness.gitsync.common.helper.PRFileListMapper;
 import io.harness.gitsync.common.helper.UserProfileHelper;
 import io.harness.gitsync.common.service.YamlGitConfigService;
@@ -106,8 +107,9 @@ public class ScmDelegateFacilitatorServiceImpl extends AbstractScmClientFacilita
   public ScmDelegateFacilitatorServiceImpl(@Named("connectorDecoratorService") ConnectorService connectorService,
       ConnectorErrorMessagesHelper connectorErrorMessagesHelper, YamlGitConfigService yamlGitConfigService,
       SecretManagerClientService secretManagerClientService, DelegateGrpcClientWrapper delegateGrpcClientWrapper,
-      UserProfileHelper userProfileHelper) {
-    super(connectorService, connectorErrorMessagesHelper, yamlGitConfigService, userProfileHelper);
+      UserProfileHelper userProfileHelper, GitSyncConnectorHelper gitSyncConnectorHelper) {
+    super(connectorService, connectorErrorMessagesHelper, yamlGitConfigService, userProfileHelper,
+        gitSyncConnectorHelper);
     this.secretManagerClientService = secretManagerClientService;
     this.delegateGrpcClientWrapper = delegateGrpcClientWrapper;
   }
