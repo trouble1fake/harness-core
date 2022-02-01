@@ -109,6 +109,14 @@ java_library(
         "@maven//:org_assertj_assertj_core",
         "@maven//:org_mockito_mockito_core",
         "@maven//:org_powermock_powermock_api_mockito",
+#        "@maven//:au_com_dius_pact_provider_junit5",
+#        "@maven//:au_com_dius_pact_provider_junit5spring",
+        "@maven//:au_com_dius_pact_provider_junit",
+        "@maven//:org_jetbrains_kotlin_kotlin_stdlib_common",
+        "@maven//:org_jetbrains_kotlin_kotlin_stdlib_jdk7",
+        "@maven//:org_jetbrains_kotlin_kotlin_stdlib_jdk8",
+        "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
+
     ],
 )
 

@@ -102,6 +102,10 @@ java_library(
         "@maven//:org_apache_commons_commons_lang3",
         "@maven//:org_assertj_assertj_core",
         "@maven//:org_mockito_mockito_core",
+        "@maven//:au_com_dius_pact_provider_junit",
+#        "@maven//:org_jetbrains_kotlin_kotlin_stdlib_common",
+#        "@maven//:org_jetbrains_kotlin_kotlin_stdlib_jdk8",
+#        "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
     ],
 )
 

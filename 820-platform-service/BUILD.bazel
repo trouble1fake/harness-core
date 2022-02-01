@@ -762,6 +762,12 @@ java_library(
         "@maven//:org_zeroturnaround_zt_exec",
         "@maven//:ru_vyarus_guice_validator",
         "@maven//:software_amazon_ion_ion_java",
+#        "@maven//:au_com_dius_pact_jvm_provider_junit_2_11",
+        "@maven//:au_com_dius_pact_provider_junit",
+#        "@maven//:org_jetbrains_kotlin_kotlin_stdlib_common",
+#        "@maven//:org_jetbrains_kotlin_kotlin_stdlib_jdk7",
+#        "@maven//:org_jetbrains_kotlin_kotlin_stdlib_jdk8",
+#        "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
     ],
 )
 
