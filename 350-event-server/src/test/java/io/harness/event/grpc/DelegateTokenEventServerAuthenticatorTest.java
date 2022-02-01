@@ -27,6 +27,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import io.harness.CategoryTest;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
+import io.harness.delegate.beans.DelegateNgToken;
 import io.harness.delegate.beans.DelegateToken;
 import io.harness.delegate.beans.DelegateTokenStatus;
 import io.harness.eraro.ErrorCode;
@@ -140,6 +141,7 @@ public class DelegateTokenEventServerAuthenticatorTest extends CategoryTest {
     MorphiaIterator<DelegateToken, DelegateToken> morphiaIterator = mock(MorphiaIterator.class);
 
     doReturn(mockQuery).when(persistence).createQuery(DelegateToken.class);
+    doReturn(mockQuery).when(persistence).createQuery(DelegateNgToken.class);
     doReturn(fieldEnd).when(mockQuery).field(anyString());
     doReturn(mockQuery).when(fieldEnd).equal(any());
 
@@ -169,13 +171,19 @@ public class DelegateTokenEventServerAuthenticatorTest extends CategoryTest {
                                              .build();
 
     Query mockQuery = mock(Query.class);
+    Query mockNgQuery = mock(Query.class);
     FieldEnd<Service> fieldEnd = mock(FieldEnd.class);
+    FieldEnd<Service> fieldEndNg = mock(FieldEnd.class);
 
     MorphiaIterator<DelegateToken, DelegateToken> morphiaIterator = mock(MorphiaIterator.class);
+    MorphiaIterator<DelegateNgToken, DelegateNgToken> morphiaIteratorNg = mock(MorphiaIterator.class);
 
     doReturn(mockQuery).when(persistence).createQuery(DelegateToken.class);
+    doReturn(mockNgQuery).when(persistence).createQuery(DelegateNgToken.class);
     doReturn(fieldEnd).when(mockQuery).field(anyString());
     doReturn(mockQuery).when(fieldEnd).equal(any());
+    doReturn(fieldEndNg).when(mockNgQuery).field(anyString());
+    doReturn(mockNgQuery).when(fieldEndNg).equal(any());
 
     when(morphiaIterator.hasNext())
         .thenReturn(false)
@@ -183,6 +191,7 @@ public class DelegateTokenEventServerAuthenticatorTest extends CategoryTest {
         .thenReturn(false); // Return no ACTIVE tokens and then return one revoked
     when(morphiaIterator.next()).thenReturn(delegateTokenRevoked);
     when(mockQuery.fetch()).thenReturn(morphiaIterator);
+    when(mockNgQuery.fetch()).thenReturn(morphiaIteratorNg);
 
     TokenGenerator tokenGenerator = new TokenGenerator(ACCOUNT_ID, accountKey);
 
@@ -211,6 +220,7 @@ public class DelegateTokenEventServerAuthenticatorTest extends CategoryTest {
     MorphiaIterator<DelegateToken, DelegateToken> morphiaIterator = mock(MorphiaIterator.class);
 
     doReturn(mockQuery).when(persistence).createQuery(DelegateToken.class);
+    doReturn(mockQuery).when(persistence).createQuery(DelegateNgToken.class);
     doReturn(fieldEnd).when(mockQuery).field(anyString());
     doReturn(mockQuery).when(fieldEnd).equal(any());
 
@@ -291,6 +301,7 @@ public class DelegateTokenEventServerAuthenticatorTest extends CategoryTest {
     MorphiaIterator<DelegateToken, DelegateToken> morphiaIterator = mock(MorphiaIterator.class);
 
     doReturn(mockQuery).when(persistence).createQuery(DelegateToken.class);
+    doReturn(mockQuery).when(persistence).createQuery(DelegateNgToken.class);
     doReturn(fieldEnd).when(mockQuery).field(anyString());
     doReturn(mockQuery).when(fieldEnd).equal(any());
 

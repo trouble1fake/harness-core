@@ -71,7 +71,8 @@ public class ScmManagerFacilitatorServiceImpl extends AbstractScmClientFacilitat
       ConnectorErrorMessagesHelper connectorErrorMessagesHelper, YamlGitConfigService yamlGitConfigService,
       DecryptGitApiAccessHelper decryptGitApiAccessHelper, GitSyncConnectorHelper gitSyncConnectorHelper,
       UserProfileHelper userProfileHelper) {
-    super(connectorService, connectorErrorMessagesHelper, yamlGitConfigService, userProfileHelper);
+    super(connectorService, connectorErrorMessagesHelper, yamlGitConfigService, userProfileHelper,
+        gitSyncConnectorHelper);
     this.scmClient = scmClient;
     this.gitSyncConnectorHelper = gitSyncConnectorHelper;
     this.decryptGitApiAccessHelper = decryptGitApiAccessHelper;

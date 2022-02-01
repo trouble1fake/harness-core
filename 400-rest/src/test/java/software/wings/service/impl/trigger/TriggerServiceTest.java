@@ -3376,6 +3376,13 @@ public class TriggerServiceTest extends WingsBaseTest {
     assertThat(argsArgumentCaptor.getValue().getHelmCharts()).hasSize(2);
     assertThat(argsArgumentCaptor.getValue().getHelmCharts().stream().map(HelmChart::getVersion))
         .containsExactlyInAnyOrder("1", "5");
+
+    when(helmChartService.getManifestByVersionNumber(eq(ACCOUNT_ID), anyString(), anyString())).thenReturn(null);
+    when(featureFlagService.isEnabled(FeatureName.BYPASS_HELM_FETCH, ACCOUNT_ID)).thenReturn(true);
+    triggerService.triggerExecutionByWebHook(APP_ID, trigger.getWebHookToken(), Collections.emptyMap(),
+        serviceManifestMapping, null, Collections.singletonMap("service", SERVICE_NAME));
+    verify(helmChartService).createHelmChartWithVersionForAppManifest(any(), eq("1"));
+    verify(helmChartService).createHelmChartWithVersionForAppManifest(any(), eq("5"));
   }
 
   @Test

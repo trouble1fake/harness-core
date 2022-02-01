@@ -228,11 +228,6 @@ if [[ "" != "$DEPLOY_MODE" ]]; then
   yq write -i $CONFIG_FILE deployMode "$DEPLOY_MODE"
 fi
 
-if [[ "" != "$KUBECTL_VERSION" ]]; then
-  yq write -i $CONFIG_FILE kubectlVersion "$KUBECTL_VERSION"
-fi
-
-
 if [[ "" != "$jwtPasswordSecret" ]]; then
   yq write -i $CONFIG_FILE portal.jwtPasswordSecret "$jwtPasswordSecret"
 fi

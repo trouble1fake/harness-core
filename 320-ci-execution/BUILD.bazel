@@ -6,7 +6,6 @@ shared_dependencies = [
     "//330-ci-beans:module",
     "//440-connector-nextgen:module",
     "//878-pipeline-service-utilities:module",
-    "//878-pms-coupling:module",
     "//879-pms-sdk:module",
     "//890-sm-core:module",
     "//930-ng-core-clients:module",

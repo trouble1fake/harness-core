@@ -25,6 +25,8 @@ import io.harness.exception.ExceptionUtils;
 import io.harness.k8s.model.HelmVersion;
 import io.harness.security.encryption.SecretDecryptionService;
 
+import software.wings.delegatetasks.ExceptionMessageSanitizer;
+
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.io.IOException;
@@ -87,6 +89,7 @@ public class HttpHelmValidationHandler implements ConnectorValidationHandler {
 
     for (DecryptableEntity entity : decryptableEntityList) {
       decryptionService.decrypt(entity, helmValidationParams.getEncryptionDataDetails());
+      ExceptionMessageSanitizer.storeAllSecretsForSanitizing(entity, helmValidationParams.getEncryptionDataDetails());
     }
   }
 }

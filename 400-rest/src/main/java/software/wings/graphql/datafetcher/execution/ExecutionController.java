@@ -8,6 +8,7 @@
 package software.wings.graphql.datafetcher.execution;
 
 import static io.harness.annotations.dev.HarnessTeam.CDC;
+import static io.harness.beans.FeatureName.BYPASS_HELM_FETCH;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.exception.WingsException.USER;
@@ -26,6 +27,7 @@ import io.harness.beans.CreatedByType;
 import io.harness.beans.ExecutionStatus;
 import io.harness.data.parser.CsvParser;
 import io.harness.exception.InvalidRequestException;
+import io.harness.ff.FeatureFlagService;
 import io.harness.govern.Switch;
 
 import software.wings.beans.ArtifactVariable;
@@ -34,6 +36,7 @@ import software.wings.beans.Environment;
 import software.wings.beans.ExecutionArgs;
 import software.wings.beans.Service;
 import software.wings.beans.Variable;
+import software.wings.beans.appmanifest.ApplicationManifest;
 import software.wings.beans.appmanifest.HelmChart;
 import software.wings.beans.artifact.Artifact;
 import software.wings.beans.artifact.ArtifactStream;
@@ -56,6 +59,7 @@ import software.wings.graphql.schema.type.QLExecutionStatus;
 import software.wings.infra.InfrastructureDefinition;
 import software.wings.resources.graphql.TriggeredByType;
 import software.wings.service.ArtifactStreamHelper;
+import software.wings.service.intfc.ApplicationManifestService;
 import software.wings.service.intfc.ArtifactCollectionService;
 import software.wings.service.intfc.ArtifactService;
 import software.wings.service.intfc.ArtifactStreamService;
@@ -94,6 +98,8 @@ public class ExecutionController {
   @Inject ArtifactStreamHelper artifactStreamHelper;
   @Inject InfrastructureDefinitionService infrastructureDefinitionService;
   @Inject EnvironmentService environmentService;
+  @Inject ApplicationManifestService applicationManifestService;
+  @Inject FeatureFlagService featureFlagService;
 
   public static QLExecutionStatus convertStatus(ExecutionStatus status) {
     switch (status) {
@@ -460,11 +466,19 @@ public class ExecutionController {
       throw new InvalidRequestException("Version Number cannot be empty for serviceInput: " + service.getName(), USER);
     }
 
+    ApplicationManifest applicationManifest =
+        applicationManifestService.getAppManifestByName(service.getAppId(), null, service.getUuid(), appManifestName);
+    notNullCheck("App manifest with name " + appManifestName + " doesn't belong to the given app and service",
+        applicationManifest);
+
     HelmChart helmChart =
         helmChartService.getByChartVersion(service.getAppId(), service.getUuid(), appManifestName, versionNumber);
     if (helmChart == null) {
+      if (featureFlagService.isEnabled(BYPASS_HELM_FETCH, applicationManifest.getAccountId())) {
+        return helmChartService.createHelmChartWithVersionForAppManifest(applicationManifest, versionNumber);
+      }
       helmChart = helmChartService.fetchByChartVersion(
-          service.getAccountId(), service.getAppId(), service.getUuid(), appManifestName, versionNumber);
+          service.getAccountId(), service.getAppId(), service.getUuid(), applicationManifest.getUuid(), versionNumber);
     }
     notNullCheck("Cannot find helm chart for specified version number: " + versionNumber, helmChart, USER);
     return helmChart;

@@ -79,7 +79,11 @@ public class ConnectorCustomRepositoryImpl implements ConnectorCustomRepository 
   }
 
   @Override
-  public Connector update(Criteria criteria, Update update) {
+  public Connector update(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, Criteria criteria, Update update) {
+    criteria = gitAwarePersistence.makeCriteriaGitAware(
+        accountIdentifier, orgIdentifier, projectIdentifier, Connector.class, criteria);
+
     return mongoTemplate.findAndModify(
         query(criteria), update, FindAndModifyOptions.options().returnNew(true), Connector.class);
   }

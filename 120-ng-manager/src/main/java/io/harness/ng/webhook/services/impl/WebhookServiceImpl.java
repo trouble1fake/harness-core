@@ -79,7 +79,8 @@ public class WebhookServiceImpl implements WebhookService, WebhookEventService {
         scmOrchestratorService.processScmRequestUsingConnectorSettings(scmClientFacilitatorService
             -> scmClientFacilitatorService.upsertWebhook(upsertWebhookRequestDTO, target, GitWebhookTaskType.UPSERT),
             upsertWebhookRequestDTO.getProjectIdentifier(), upsertWebhookRequestDTO.getOrgIdentifier(),
-            upsertWebhookRequestDTO.getAccountIdentifier(), upsertWebhookRequestDTO.getConnectorIdentifierRef());
+            upsertWebhookRequestDTO.getAccountIdentifier(), upsertWebhookRequestDTO.getConnectorIdentifierRef(), null,
+            null);
     return UpsertWebhookResponseDTO.builder()
         .webhookResponse(createWebhookResponse.getWebhook())
         .error(createWebhookResponse.getError())

@@ -70,6 +70,7 @@ public class RecommendationsOverviewQueryV2 {
   @Inject private RecommendationService recommendationService;
 
   private static final Gson GSON = new Gson();
+  private static final String RESOURCE_TYPE_WORKLOAD = "WORKLOAD";
 
   @GraphQLQuery(name = "recommendationsV2", description = "The list of all types of recommendations for overview page")
   public RecommendationsDTO recommendations(
@@ -268,6 +269,12 @@ public class RecommendationsOverviewQueryV2 {
         // based on current-gen workload recommendation dataFetcher
         .and(CE_RECOMMENDATIONS.LASTPROCESSEDAT.greaterOrEqual(
             offsetDateTimeNow().truncatedTo(ChronoUnit.DAYS).minusDays(2)))
-        .and(CE_RECOMMENDATIONS.NAMESPACE.notIn("harness-delegate", "harness-delegate-ng"));
+        .and(nonDelegate());
+  }
+
+  private static Condition nonDelegate() {
+    return CE_RECOMMENDATIONS.RESOURCETYPE.notEqual(RESOURCE_TYPE_WORKLOAD)
+        .or(CE_RECOMMENDATIONS.RESOURCETYPE.eq(RESOURCE_TYPE_WORKLOAD)
+                .and(CE_RECOMMENDATIONS.NAMESPACE.notIn("harness-delegate", "harness-delegate-ng")));
   }
 }

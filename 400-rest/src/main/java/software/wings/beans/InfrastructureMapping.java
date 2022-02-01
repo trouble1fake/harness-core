@@ -66,6 +66,11 @@ public abstract class InfrastructureMapping
     extends Base implements EncryptableSetting, PersistentRegularIterable, NameAccess, AccountAccess {
   public static List<MongoIndex> mongoIndexes() {
     return ImmutableList.<MongoIndex>builder()
+        .add(CompoundMongoIndex.builder()
+                 .name("infra_mapping_appId_infrastructureDefinitionId_idx")
+                 .field(InfrastructureMappingKeys.appId)
+                 .field(InfrastructureMappingKeys.infrastructureDefinitionId)
+                 .build())
         .add(SortCompoundMongoIndex.builder()
                  .name("infra_mapping_appId_envId_serviceId")
                  .field(InfrastructureMappingKeys.appId)

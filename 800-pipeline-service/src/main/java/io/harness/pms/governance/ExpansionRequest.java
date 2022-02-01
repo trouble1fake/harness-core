@@ -22,5 +22,6 @@ import lombok.Value;
 public class ExpansionRequest {
   ModuleType module;
   String fqn;
+  String key;
   JsonNode fieldValue;
 }

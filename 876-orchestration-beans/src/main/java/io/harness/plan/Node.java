@@ -52,4 +52,6 @@ public interface Node extends UuidAccess {
   default StepCategory getStepCategory() {
     return getStepType().getStepCategory();
   }
+
+  boolean isSkipUnresolvedExpressionsCheck();
 }

@@ -17,6 +17,7 @@ import io.harness.ng.beans.PageRequest;
 import io.harness.ng.beans.PageResponse;
 
 import java.util.List;
+import java.util.Optional;
 
 @OwnedBy(DX)
 public interface GitFullSyncEntityService {
@@ -32,5 +33,13 @@ public interface GitFullSyncEntityService {
   long count(String accountIdentifier, String orgIdentifier, String projectIdentifier,
       GitFullSyncEntityInfoFilterDTO gitFullSyncEntityInfoFilterDTO);
 
-  List<GitFullSyncEntityInfo> list(String accountIdentifier, String fullSyncJobId);
+  List<GitFullSyncEntityInfo> listEntitiesToBeSynced(String accountIdentifier, String fullSyncJobId);
+
+  Optional<GitFullSyncEntityInfo> get(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, String filePath);
+
+  void updateStatus(String accountIdentifier, String orgIdentifier, String projectIdentifier, String filePath,
+      List<GitFullSyncEntityInfo.SyncStatus> oldStatus, GitFullSyncEntityInfo.SyncStatus newStatus);
+
+  void updateStatus(String accountIdentifier, String uuid, GitFullSyncEntityInfo.SyncStatus status);
 }

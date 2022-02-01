@@ -19,6 +19,7 @@ import io.harness.delegate.beans.connector.awsconnector.AwsS3BucketResponse;
 import io.harness.delegate.beans.connector.awsconnector.AwsTaskParams;
 import io.harness.security.encryption.SecretDecryptionService;
 
+import software.wings.delegatetasks.ExceptionMessageSanitizer;
 import software.wings.service.impl.AwsApiHelperService;
 
 import com.google.inject.Inject;
@@ -61,6 +62,8 @@ public class AwsS3DelegateTaskHelper {
     AwsConnectorDTO awsConnectorDTO = awsTaskParams.getAwsConnector();
     if (awsConnectorDTO.getCredential() != null && awsConnectorDTO.getCredential().getConfig() != null) {
       secretDecryptionService.decrypt(
+          (AwsManualConfigSpecDTO) awsConnectorDTO.getCredential().getConfig(), awsTaskParams.getEncryptionDetails());
+      ExceptionMessageSanitizer.storeAllSecretsForSanitizing(
           (AwsManualConfigSpecDTO) awsConnectorDTO.getCredential().getConfig(), awsTaskParams.getEncryptionDetails());
     }
   }

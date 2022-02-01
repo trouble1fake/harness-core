@@ -89,6 +89,8 @@ import io.harness.gitsync.interceptor.GitSyncBranchContext;
 import io.harness.gitsync.persistance.GitSyncSdkService;
 import io.harness.gitsync.scm.EntityObjectIdUtils;
 import io.harness.gitsync.sdk.EntityGitDetailsMapper;
+import io.harness.gitsync.utils.GitEntityFilePath;
+import io.harness.gitsync.utils.GitSyncSdkUtils;
 import io.harness.manage.GlobalContextManager;
 import io.harness.ng.beans.PageRequest;
 import io.harness.ng.core.BaseNGAccess;
@@ -514,7 +516,7 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
   }
 
   @Override
-  public ConnectorDTO fullSyncEntity(EntityDetailProtoDTO entityDetailProtoDTO) {
+  public ConnectorDTO fullSyncEntity(EntityDetailProtoDTO entityDetailProtoDTO, boolean isFullSyncingToDefaultBranch) {
     IdentifierRefProtoDTO identifierRef = entityDetailProtoDTO.getIdentifierRef();
     String accountIdentifier = identifierRef.getAccountIdentifier().getValue();
     String orgIdentifier = identifierRef.getOrgIdentifier().getValue();
@@ -531,12 +533,19 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
     if (!existingConnectorOptional.isPresent()) {
       throw new InvalidRequestException(format("No connector exists with the  Identifier %s", identifier));
     }
-    Connector updatedConnector = connectorRepository.save(existingConnectorOptional.get(), ADD);
+    Connector connector = existingConnectorOptional.get();
+    connector.setHeartbeatPerpetualTaskId(null);
+    Connector updatedConnector = connectorRepository.save(connector, ADD);
     ConnectorInfoDTO connectorInfoDTO = getResponse(accountIdentifier, updatedConnector.getOrgIdentifier(),
         updatedConnector.getProjectIdentifier(), updatedConnector)
                                             .getConnector();
     deleteTheExistingReferences(accountIdentifier, orgIdentifier, projectIdentifier, identifier);
     connectorEntityReferenceHelper.createSetupUsageForSecret(connectorInfoDTO, accountIdentifier, true);
+    String fqn = FullyQualifiedIdentifierHelper.getFullyQualifiedIdentifier(
+        accountIdentifier, orgIdentifier, projectIdentifier, identifier);
+    if (!isFullSyncingToDefaultBranch) {
+      connectorHeartbeatService.deletePerpetualTask(accountIdentifier, connector.getHeartbeatPerpetualTaskId(), fqn);
+    }
     return ConnectorDTO.builder().connectorInfo(connectorInfoDTO).build();
   }
 
@@ -552,9 +561,14 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
                             .and(ConnectorKeys.identifier)
                             .is(connectorDTO.getConnectorInfo().getIdentifier());
 
-    Update update = new Update().set(ConnectorKeys.filePath, newFilePath);
+    GitEntityFilePath gitEntityFilePath = GitSyncSdkUtils.getRootFolderAndFilePath(newFilePath);
+    Update update = new Update()
+                        .set(ConnectorKeys.filePath, gitEntityFilePath.getFilePath())
+                        .set(ConnectorKeys.rootFolder, gitEntityFilePath.getRootFolder());
     return getResponse(accountIdentifier, connectorDTO.getConnectorInfo().getOrgIdentifier(),
-        connectorDTO.getConnectorInfo().getProjectIdentifier(), connectorRepository.update(criteria, update));
+        connectorDTO.getConnectorInfo().getProjectIdentifier(),
+        connectorRepository.update(accountIdentifier, connectorDTO.getConnectorInfo().getOrgIdentifier(),
+            connectorDTO.getConnectorInfo().getProjectIdentifier(), criteria, update));
   }
 
   private void deleteTheExistingReferences(
@@ -809,10 +823,11 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
       }
       return validationFailureBuilder.build();
     } catch (WingsException wingsException) {
-      // handle flows which are registered to error handlng framework
+      log.error("An error occurred while validating the Connector ", wingsException);
+      // handle flows which are registered to error handling framework
       throw wingsException;
     } catch (Exception ex) {
-      log.info("Encountered Error while validating the connector {}",
+      log.error("An error occurred while validating the Connector {}",
           String.format(CONNECTOR_STRING, connectorInfo.getIdentifier(), accountIdentifier,
               connectorInfo.getOrgIdentifier(), connectorInfo.getProjectIdentifier()),
           ex);
@@ -956,7 +971,7 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
             if (isNotBlank(heartbeatTaskId)) {
               boolean perpetualTaskIsDeleted =
                   connectorHeartbeatService.deletePerpetualTask(accountIdentifier, heartbeatTaskId, connectorFQN);
-              if (perpetualTaskIsDeleted == false) {
+              if (!perpetualTaskIsDeleted) {
                 log.info("{} The perpetual task could not be deleted {}", CONNECTOR_HEARTBEAT_LOG_PREFIX, connectorFQN);
                 return false;
               }

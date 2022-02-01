@@ -26,3 +26,15 @@ metrics:
     metricDefinition: Delegate task acquiring limit exceeded count
     type: Count
     unit: "1"
+  - metricName: delegate_task_rebroadcast
+    metricDefinition: Delegate task rebroadcast count
+    type: Count
+    unit: "1"
+  - metricName: delegate_task_validation
+    metricDefinition: Delegate task validation count
+    type: Count
+    unit: "1"
+  - metricName: delegate_task_no_first_whitelisted
+    metricDefinition: Delegate task not whitelisted
+    type: Count
+    unit: "1"

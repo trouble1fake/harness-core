@@ -17,6 +17,7 @@ import io.harness.data.structure.EmptyPredicate;
 import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.executions.node.NodeExecutionTimeoutCallback;
 import io.harness.engine.executions.node.NodeExecutionUpdateFailedException;
+import io.harness.engine.executions.plan.PlanService;
 import io.harness.engine.pms.commons.events.PmsEventSender;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.NodeExecution.NodeExecutionKeys;
@@ -29,7 +30,6 @@ import io.harness.pms.contracts.execution.start.NodeStartEvent;
 import io.harness.pms.contracts.facilitators.FacilitatorResponseProto;
 import io.harness.pms.events.base.PmsEventCategory;
 import io.harness.pms.execution.utils.AmbianceUtils;
-import io.harness.pms.execution.utils.NodeProjectionUtils;
 import io.harness.pms.expression.PmsEngineExpressionService;
 import io.harness.pms.sdk.core.execution.NodeExecutionUtils;
 import io.harness.pms.serializer.recaster.RecastOrchestrationUtils;
@@ -57,12 +57,13 @@ public class NodeStartHelper {
   @Inject private NodeExecutionService nodeExecutionService;
   @Inject private KryoSerializer kryoSerializer;
   @Inject private TimeoutEngine timeoutEngine;
+  @Inject private PlanService planService;
   @Inject private PmsEngineExpressionService pmsEngineExpressionService;
 
   public void startNode(Ambiance ambiance, FacilitatorResponseProto facilitatorResponse) {
     String nodeExecutionId = AmbianceUtils.obtainCurrentRuntimeId(ambiance);
     Status targetStatus = calculateStatusFromMode(facilitatorResponse.getExecutionMode());
-    NodeExecution nodeExecution = prepareNodeExecutionForInvocation(nodeExecutionId, targetStatus, facilitatorResponse);
+    NodeExecution nodeExecution = prepareNodeExecutionForInvocation(ambiance, targetStatus, facilitatorResponse);
     if (nodeExecution == null) {
       // This is just for debugging if this is happening then the node status has changed from QUEUED
       // This should never happen
@@ -75,8 +76,7 @@ public class NodeStartHelper {
   }
 
   private void sendEvent(NodeExecution nodeExecution, ByteString passThroughData) {
-    PlanNode planNode = nodeExecution.getNode();
-    String serviceName = planNode.getServiceName();
+    PlanNode planNode = planService.fetchNode(nodeExecution.getAmbiance().getPlanId(), nodeExecution.nodeId());
     NodeStartEvent nodeStartEvent = NodeStartEvent.newBuilder()
                                         .setAmbiance(nodeExecution.getAmbiance())
                                         .addAllRefObjects(planNode.getRefObjects())
@@ -84,22 +84,17 @@ public class NodeStartHelper {
                                         .setStepParameters(nodeExecution.getResolvedStepParametersBytes())
                                         .setMode(nodeExecution.getMode())
                                         .build();
-    eventSender.sendEvent(
-        nodeExecution.getAmbiance(), nodeStartEvent.toByteString(), PmsEventCategory.NODE_START, serviceName, true);
+    eventSender.sendEvent(nodeExecution.getAmbiance(), nodeStartEvent.toByteString(), PmsEventCategory.NODE_START,
+        nodeExecution.module(), true);
   }
 
   private NodeExecution prepareNodeExecutionForInvocation(
-      String nodeExecutionId, Status targetStatus, FacilitatorResponseProto facilitatorResponse) {
-    NodeExecution nodeExecution =
-        nodeExecutionService.getWithFieldsIncluded(nodeExecutionId, NodeProjectionUtils.withAmbianceAndNode);
+      Ambiance ambiance, Status targetStatus, FacilitatorResponseProto facilitatorResponse) {
+    String nodeExecutionId = AmbianceUtils.obtainCurrentRuntimeId(ambiance);
+    PlanNode planNode = planService.fetchNode(ambiance.getPlanId(), AmbianceUtils.obtainCurrentSetupId(ambiance));
 
-    if (nodeExecution == null) {
-      log.warn("NodeExecution Status update failed while preparing for invocation Target Status : {}", targetStatus);
-      return null;
-    }
-    PlanNode planNode = nodeExecution.getNode();
-    List<String> timeoutInstanceIds = registerTimeouts(nodeExecution.getAmbiance(), planNode.getTimeoutObtainments());
-    return nodeExecutionService.updateStatusWithOps(nodeExecution.getUuid(), targetStatus, ops -> {
+    List<String> timeoutInstanceIds = registerTimeouts(ambiance, planNode.getTimeoutObtainments());
+    return nodeExecutionService.updateStatusWithOps(nodeExecutionId, targetStatus, ops -> {
       setUnset(ops, NodeExecutionKeys.timeoutInstanceIds, timeoutInstanceIds);
       ops.set(NodeExecutionKeys.mode, facilitatorResponse.getExecutionMode());
     }, EnumSet.noneOf(Status.class));

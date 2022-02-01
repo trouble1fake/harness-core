@@ -35,7 +35,6 @@ io.harness.beans.sweepingoutputs.VmStageInfraDetails
 io.harness.beans.sweepingoutputs.K8StageInfraDetails
 io.harness.steps.http.HttpOutcome
 io.harness.advisers.rollback.OnFailRollbackParameters
-io.harness.ngpipeline.artifact.bean.GcrArtifactOutcome
 io.harness.beans.steps.outcome.CIStepArtifactOutcome
 io.harness.beans.steps.stepinfo.RestoreCacheS3StepInfo
 io.harness.plancreator.steps.resourceconstraint.ResourceConstraintStepInfo
@@ -46,11 +45,9 @@ io.harness.steps.shellscript.ShellScriptInlineSource
 io.harness.beans.sweepingoutputs.K8PodDetails
 io.harness.beans.sweepingoutputs.StageDetails
 io.harness.beans.steps.stepinfo.RunTestsStepInfo
-io.harness.ngpipeline.artifact.bean.SidecarsOutcome
 io.harness.steps.jira.update.JiraUpdateSpecParameters
 io.harness.steps.approval.step.jira.JiraApprovalSpecParameters
 io.harness.beans.sweepingoutputs.StepTaskDetails
-io.harness.ngpipeline.artifact.bean.DockerArtifactOutcome
 io.harness.steps.approval.step.jira.beans.CriteriaSpecWrapper
 io.harness.beans.stages.IntegrationStageStepParametersPMS
 io.harness.steps.shellscript.K8sInfraDelegateConfigOutput
@@ -63,7 +60,6 @@ io.harness.plancreator.flowcontrol.FlowControlConfig
 io.harness.steps.approval.step.jira.beans.KeyValuesCriteriaSpec
 io.harness.beans.outcomes.LiteEnginePodDetailsOutcome
 io.harness.beans.outcomes.VmDetailsOutcome
-io.harness.ngpipeline.artifact.bean.ArtifactsOutcome
 io.harness.states.codebase.CodeBaseTaskStepParameters
 io.harness.steps.resourcerestraint.beans.HoldingScope
 io.harness.steps.jira.create.JiraCreateStepInfo
@@ -97,7 +93,6 @@ io.harness.steps.shellscript.ShellScriptStepNode
 io.harness.steps.template.TemplateStepNode
 io.harness.ci.stdvars.BuildStandardVariables
 io.harness.steps.jira.JiraIssueOutcome
-io.harness.ngpipeline.artifact.bean.EcrArtifactOutcome
 io.harness.steps.jira.create.JiraCreateSpecParameters
 io.harness.pms.yaml.validation.InputSetValidator
 io.harness.steps.cf.FlagConfigurationStepParameters
@@ -115,10 +110,12 @@ io.harness.yaml.core.failurestrategy.OnFailureConfig
 io.harness.yaml.core.failurestrategy.FailureStrategyConfig
 io.harness.yaml.core.failurestrategy.marksuccess.MarkAsSuccessFailureActionConfig
 io.harness.yaml.core.failurestrategy.rollback.StageRollbackFailureActionConfig
-io.harness.ngpipeline.pipeline.executions.beans.DockerArtifactSummary
 io.harness.advisers.rollback.RollbackTriggeredOutput
 io.harness.cdng.pipeline.stepinfo.ShellScriptStepInfo
 io.harness.steps.approval.step.servicenow.ServiceNowApprovalStepInfo
 io.harness.steps.approval.step.servicenow.ServiceNowApprovalSpecParameters
 io.harness.steps.servicenow.approval.ServiceNowApprovalStepNode
 io.harness.steps.approval.step.servicenow.ServiceNowApprovalOutcome
+io.harness.beans.stages.IntegrationStageNode
+io.harness.steps.approval.stage.ApprovalStageNode
+io.harness.cf.pipeline.FeatureFlagStageNode

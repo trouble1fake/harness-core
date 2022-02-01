@@ -34,6 +34,7 @@ import io.harness.pms.contracts.facilitators.FacilitatorEvent;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.data.stepparameters.PmsStepParameters;
 import io.harness.pms.events.base.PmsEventCategory;
+import io.harness.pms.execution.utils.NodeProjectionUtils;
 import io.harness.pms.serializer.recaster.RecastOrchestrationUtils;
 import io.harness.rule.Owner;
 import io.harness.utils.steps.TestStepParameters;
@@ -79,13 +80,14 @@ public class RedisFacilitateEventPublisherTest extends OrchestrationTestBase {
                             .serviceName("DUMMY")
                             .build();
     String nodeExecutionId = generateUuid();
+    Ambiance ambiance = Ambiance.newBuilder()
+                            .setPlanExecutionId(generateUuid())
+                            .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecutionId, planNode))
+                            .build();
     NodeExecution nodeExecution =
         NodeExecution.builder()
             .uuid(nodeExecutionId)
-            .ambiance(Ambiance.newBuilder()
-                          .setPlanExecutionId(generateUuid())
-                          .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecutionId, planNode))
-                          .build())
+            .ambiance(ambiance)
             .status(Status.RUNNING)
             .mode(ExecutionMode.ASYNC)
             .planNode(planNode)
@@ -99,14 +101,15 @@ public class RedisFacilitateEventPublisherTest extends OrchestrationTestBase {
             .interruptHistories(new ArrayList<>())
             .startTs(System.currentTimeMillis())
             .build();
-    when(nodeExecutionService.get(nodeExecution.getUuid())).thenReturn(nodeExecution);
-    redisFacilitateEventPublisher.publishEvent(nodeExecution.getUuid());
+    when(nodeExecutionService.getWithFieldsIncluded(nodeExecution.getUuid(), NodeProjectionUtils.forFacilitation))
+        .thenReturn(nodeExecution);
+    redisFacilitateEventPublisher.publishEvent(ambiance, planNode);
 
     ArgumentCaptor<ByteString> argumentCaptor = ArgumentCaptor.forClass(ByteString.class);
     ArgumentCaptor<Ambiance> ambianceArgumentCaptor = ArgumentCaptor.forClass(Ambiance.class);
     verify(eventSender)
         .sendEvent(ambianceArgumentCaptor.capture(), argumentCaptor.capture(), eq(PmsEventCategory.FACILITATOR_EVENT),
-            eq(nodeExecution.getNode().getServiceName()), eq(true));
+            eq(nodeExecution.module()), eq(true));
     ByteString value = argumentCaptor.getValue();
     FacilitatorEvent facilitatorEvent = FacilitatorEvent.parseFrom(value);
     assertThat(facilitatorEvent.getStepParameters()).isEqualTo(nodeExecution.getResolvedStepParametersBytes());

@@ -105,7 +105,7 @@ public class RedisProgressEventPublisherTest extends OrchestrationTestBase {
             .setProgressBytes(ByteString.copyFrom("PROGRESS_DATA".getBytes(StandardCharsets.UTF_8)))
             .build();
     when(eventSender.sendEvent(nodeExecution.getAmbiance(), progressEvent.toByteString(),
-             PmsEventCategory.PROGRESS_EVENT, nodeExecution.getNode().getServiceName(), false))
+             PmsEventCategory.PROGRESS_EVENT, nodeExecution.module(), false))
         .thenReturn("");
 
     redisProgressEventPublisher.publishEvent(nodeExecution.getUuid(),
@@ -113,6 +113,6 @@ public class RedisProgressEventPublisherTest extends OrchestrationTestBase {
 
     verify(eventSender)
         .sendEvent(nodeExecution.getAmbiance(), progressEvent.toByteString(), PmsEventCategory.PROGRESS_EVENT,
-            nodeExecution.getNode().getServiceName(), false);
+            nodeExecution.module(), false);
   }
 }

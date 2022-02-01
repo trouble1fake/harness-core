@@ -20,5 +20,5 @@ import lombok.experimental.SuperBuilder;
 @Data
 @NoArgsConstructor
 public class TimeSeriesAnalysisFilter extends AnalysisFilter {
-  @DefaultValue("false") @QueryParam("anomalousMetricsOnly") boolean anomalous;
+  @DefaultValue("false") @QueryParam("anomalousMetricsOnly") boolean anomalousMetricsOnly;
 }

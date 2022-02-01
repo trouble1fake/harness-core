@@ -20,7 +20,6 @@ import io.harness.pms.contracts.governance.ExpansionResponseBatch;
 import io.harness.pms.contracts.governance.ExpansionResponseProto;
 import io.harness.pms.contracts.governance.JsonExpansionServiceGrpc.JsonExpansionServiceImplBase;
 import io.harness.pms.sdk.core.registries.JsonExpansionHandlerRegistry;
-import io.harness.pms.yaml.YamlNode;
 import io.harness.pms.yaml.YamlUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -46,7 +45,7 @@ public class JsonExpansionService extends JsonExpansionServiceImplBase {
     for (ExpansionRequestProto request : expansionRequests) {
       String fqn = request.getFqn();
       try {
-        String key = YamlNode.getLastKeyInPath(fqn);
+        String key = request.getKey();
         JsonExpansionHandler jsonExpansionHandler = expansionHandlerRegistry.obtain(key);
         JsonNode value = getValueJsonNode(request);
         ExpansionResponse expansionResponse = jsonExpansionHandler.expand(value, requestsBatch.getRequestMetadata());

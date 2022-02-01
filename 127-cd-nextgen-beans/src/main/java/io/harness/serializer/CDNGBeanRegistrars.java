@@ -25,7 +25,6 @@ public class CDNGBeanRegistrars {
       ImmutableSet.<Class<? extends KryoRegistrar>>builder()
           .addAll(ManagerRegistrars.kryoRegistrars)
           .addAll(OrchestrationStepsModuleRegistrars.kryoRegistrars)
-          .addAll(NGPipelineRegistrars.kryoRegistrars)
           .add(NGBeanKryoRegistrar.class)
           .build();
 
@@ -33,7 +32,6 @@ public class CDNGBeanRegistrars {
       ImmutableSet.<Class<? extends MorphiaRegistrar>>builder()
           .addAll(ManagerRegistrars.morphiaRegistrars)
           .addAll(OrchestrationStepsModuleRegistrars.morphiaRegistrars)
-          .addAll(NGPipelineRegistrars.morphiaRegistrars)
           .add(NGBeanMorphiaRegistrar.class)
           .build();
 

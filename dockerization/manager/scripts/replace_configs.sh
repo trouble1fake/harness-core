@@ -281,10 +281,6 @@ if [[ "" != "$DEPLOY_MODE" ]]; then
   yq write -i $CONFIG_FILE deployMode "$DEPLOY_MODE"
 fi
 
-if [[ "" != "$KUBECTL_VERSION" ]]; then
-  yq write -i $CONFIG_FILE kubectlVersion "$KUBECTL_VERSION"
-fi
-
 yq write -i $NEWRELIC_FILE common.license_key "$NEWRELIC_LICENSE_KEY"
 
 if [[ "$DISABLE_NEW_RELIC" == "true" ]]; then

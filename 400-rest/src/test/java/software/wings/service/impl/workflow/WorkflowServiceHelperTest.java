@@ -14,6 +14,7 @@ import static io.harness.rule.OwnerRule.ABHINAV_MITTAL;
 import static io.harness.rule.OwnerRule.ADWAIT;
 import static io.harness.rule.OwnerRule.ANIL;
 import static io.harness.rule.OwnerRule.BOJANA;
+import static io.harness.rule.OwnerRule.DEEPAK_PUTHRAYA;
 import static io.harness.rule.OwnerRule.GARVIT;
 import static io.harness.rule.OwnerRule.HARSH;
 import static io.harness.rule.OwnerRule.INDER;
@@ -1906,6 +1907,32 @@ public class WorkflowServiceHelperTest extends WingsBaseTest {
 
     phaseStep.setWaitInterval(-1);
     assertThatThrownBy(() -> workflowServiceHelper.validateWaitInterval(workflow))
-        .isInstanceOf(InvalidRequestException.class);
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("Negative values for wait interval not allowed.");
+  }
+
+  @Test
+  @Owner(developers = DEEPAK_PUTHRAYA)
+  @Category(UnitTests.class)
+  public void testNegativeWaitIntervalWhenWaitIntervalIsGreaterThanAllowedValue() {
+    Workflow workflow = WorkflowServiceTestHelper.constructBasicWorkflowWithPhaseSteps();
+    BasicOrchestrationWorkflow basicOrchestrationWorkflow =
+        (BasicOrchestrationWorkflow) workflow.getOrchestrationWorkflow();
+
+    Map<String, WorkflowPhase> workflowPhaseIdMap = basicOrchestrationWorkflow.getWorkflowPhaseIdMap();
+    List<String> workflowPhaseIds = basicOrchestrationWorkflow.getWorkflowPhaseIds();
+    assertThat(workflowPhaseIdMap).isNotEmpty().size().isGreaterThan(0);
+    assertThat(workflowPhaseIds).isNotEmpty().size().isGreaterThan(0);
+    WorkflowPhase workflowPhase = workflowPhaseIdMap.get(workflowPhaseIds.get(0));
+
+    assertThat(workflowPhase.getPhaseSteps()).isNotEmpty().size().isGreaterThan(0);
+    PhaseStep phaseStep = workflowPhase.getPhaseSteps().get(0);
+    assertThat(phaseStep).isNotNull();
+
+    // Wait interval is 1 day 1 sec
+    phaseStep.setWaitInterval(24 * 60 * 60 + 1);
+    assertThatThrownBy(() -> workflowServiceHelper.validateWaitInterval(workflow))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("Wait Interval cannot be more than one day.");
   }
 }

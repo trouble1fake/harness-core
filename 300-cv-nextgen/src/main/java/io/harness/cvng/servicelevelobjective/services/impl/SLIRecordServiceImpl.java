@@ -218,6 +218,11 @@ public class SLIRecordServiceImpl implements SLIRecordService {
         .asList();
   }
 
+  @Override
+  public void delete(List<String> sliIds) {
+    hPersistence.delete(hPersistence.createQuery(SLIRecord.class).field(SLIRecordKeys.sliId).in(sliIds));
+  }
+
   private SLIRecord getLastSLIRecord(String sliId, Instant startTimeStamp) {
     return hPersistence.createQuery(SLIRecord.class, excludeAuthority)
         .filter(SLIRecordKeys.sliId, sliId)

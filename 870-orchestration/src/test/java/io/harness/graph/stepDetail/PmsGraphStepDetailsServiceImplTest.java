@@ -9,29 +9,32 @@ package io.harness.graph.stepDetail;
 
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.rule.OwnerRule.ALEXEI;
+import static io.harness.rule.OwnerRule.SAHIL;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import io.harness.OrchestrationTestBase;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.beans.stepDetail.StepDetailInstance;
+import io.harness.beans.stepDetail.NodeExecutionDetailsInfo;
+import io.harness.beans.stepDetail.NodeExecutionsInfo;
 import io.harness.category.element.UnitTests;
 import io.harness.engine.observers.StepDetailsUpdateObserver;
 import io.harness.observer.Subject;
 import io.harness.pms.data.stepdetails.PmsStepDetails;
-import io.harness.repositories.stepDetail.StepDetailsInstanceRepository;
+import io.harness.pms.data.stepparameters.PmsStepParameters;
+import io.harness.repositories.stepDetail.NodeExecutionsInfoRepository;
 import io.harness.rule.Owner;
 
-import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.joor.Reflect;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,7 +44,8 @@ import org.mockito.Mock;
 
 @OwnedBy(HarnessTeam.PIPELINE)
 public class PmsGraphStepDetailsServiceImplTest extends OrchestrationTestBase {
-  @Mock private StepDetailsInstanceRepository stepDetailsInstanceRepository;
+  @Mock private NodeExecutionsInfoRepository nodeExecutionsInfoRepository;
+
   @Mock private Subject<StepDetailsUpdateObserver> stepDetailsUpdateObserverSubject;
 
   @Inject @InjectMocks private PmsGraphStepDetailsServiceImpl pmsGraphStepDetailsService;
@@ -59,13 +63,61 @@ public class PmsGraphStepDetailsServiceImplTest extends OrchestrationTestBase {
     String planExecutionId = generateUuid();
     PmsStepDetails pmsStepDetails = new PmsStepDetails(new HashMap<>());
     String name = "name";
-    when(stepDetailsInstanceRepository.save(any())).thenReturn(null);
+    when(nodeExecutionsInfoRepository.save(any())).thenReturn(null);
     doNothing().when(stepDetailsUpdateObserverSubject).fireInform(any());
 
     pmsGraphStepDetailsService.addStepDetail(nodeExecutionId, planExecutionId, pmsStepDetails, name);
 
-    verify(stepDetailsInstanceRepository).save(any());
     verify(stepDetailsUpdateObserverSubject).fireInform(any(), any());
+  }
+
+  @Test
+  @Owner(developers = SAHIL)
+  @Category(UnitTests.class)
+  public void addStepInputs() {
+    String nodeExecutionId = generateUuid();
+    String planExecutionId = generateUuid();
+    PmsStepParameters pmsStepDetails = new PmsStepParameters(new HashMap<>());
+    when(nodeExecutionsInfoRepository.findByNodeExecutionId(any())).thenReturn(Optional.empty());
+    when(nodeExecutionsInfoRepository.save(any())).thenReturn(null);
+    doNothing().when(stepDetailsUpdateObserverSubject).fireInform(any());
+
+    pmsGraphStepDetailsService.addStepInputs(nodeExecutionId, planExecutionId, pmsStepDetails);
+    when(nodeExecutionsInfoRepository.findByNodeExecutionId(any()))
+        .thenReturn(Optional.of(NodeExecutionsInfo.builder().build()));
+    pmsGraphStepDetailsService.addStepInputs(nodeExecutionId, planExecutionId, pmsStepDetails);
+
+    verify(stepDetailsUpdateObserverSubject, times(1)).fireInform(any(), any());
+    verify(nodeExecutionsInfoRepository, times(1)).save(any());
+  }
+
+  @Test
+  @Owner(developers = SAHIL)
+  @Category(UnitTests.class)
+  public void testGetStepInputs() {
+    String nodeExecutionId = generateUuid();
+    String planExecutionId = generateUuid();
+    when(nodeExecutionsInfoRepository.findByNodeExecutionId(nodeExecutionId))
+        .thenReturn(Optional.of(NodeExecutionsInfo.builder().build()));
+    doNothing().when(stepDetailsUpdateObserverSubject).fireInform(any());
+
+    pmsGraphStepDetailsService.getStepInputs(planExecutionId, nodeExecutionId);
+
+    verify(nodeExecutionsInfoRepository, times(1)).findByNodeExecutionId(nodeExecutionId);
+  }
+
+  @Test
+  @Owner(developers = SAHIL)
+  @Category(UnitTests.class)
+  public void testGetStepInputsWithEmptyOptional() {
+    String nodeExecutionId = generateUuid();
+    String planExecutionId = generateUuid();
+    when(nodeExecutionsInfoRepository.findByNodeExecutionId(nodeExecutionId)).thenReturn(Optional.empty());
+    doNothing().when(stepDetailsUpdateObserverSubject).fireInform(any());
+
+    pmsGraphStepDetailsService.getStepInputs(planExecutionId, nodeExecutionId);
+
+    verify(nodeExecutionsInfoRepository, times(1)).findByNodeExecutionId(nodeExecutionId);
   }
 
   @Test
@@ -75,10 +127,15 @@ public class PmsGraphStepDetailsServiceImplTest extends OrchestrationTestBase {
     String planExecutionId = generateUuid();
     String nodeExecutionId = generateUuid();
 
-    List<StepDetailInstance> instanceList = ImmutableList.of(
-        StepDetailInstance.builder().stepDetails(PmsStepDetails.parse(new HashMap<>())).name("name").build());
+    NodeExecutionsInfo nodeExecutionsInfo = NodeExecutionsInfo.builder()
+                                                .stepDetails(NodeExecutionDetailsInfo.builder()
+                                                                 .stepDetails(PmsStepDetails.parse(new HashMap<>()))
+                                                                 .name("name")
+                                                                 .build())
+                                                .build();
 
-    when(stepDetailsInstanceRepository.findByNodeExecutionId(nodeExecutionId)).thenReturn(instanceList);
+    when(nodeExecutionsInfoRepository.findByNodeExecutionId(nodeExecutionId))
+        .thenReturn(Optional.of(nodeExecutionsInfo));
 
     Map<String, PmsStepDetails> stepDetails =
         pmsGraphStepDetailsService.getStepDetails(planExecutionId, nodeExecutionId);

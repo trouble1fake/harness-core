@@ -38,11 +38,11 @@ public class StackdriverDataCollectionInfo extends TimeSeriesDataCollectionInfo<
     List<List<String>> groupByFieldsList = new ArrayList<>();
     Map<String, List<String>> groupByResponseList = new HashMap<>();
     List<String> serviceInstanceFieldList = new ArrayList<>();
-    Map<String, String> serviceInstanceResponseFields = new HashMap<>();
+    List<String> serviceInstanceResponseFields = new ArrayList<>();
     metricDefinitions.forEach(metricDefinition -> {
       if (this.isCollectHostData() && metricDefinition.getServiceInstanceField() != null) {
         serviceInstanceFieldList.add(metricDefinition.getServiceInstanceField());
-        serviceInstanceResponseFields.put(metricDefinition.getMetricName(),
+        serviceInstanceResponseFields.add(
             metricDefinition.getServiceInstanceField().replace("\"", "").replace("label", "labels"));
       }
       metricIdentifiers.add(metricDefinition.getMetricIdentifier());

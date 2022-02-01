@@ -27,6 +27,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.data.structure.EmptyPredicate;
 import io.harness.engine.executions.plan.PlanExecutionService;
 import io.harness.exception.TriggerException;
 import io.harness.execution.PlanExecution;
@@ -55,6 +56,7 @@ import io.harness.pms.pipeline.PipelineEntity;
 import io.harness.pms.pipeline.service.PMSPipelineService;
 import io.harness.pms.pipeline.service.PMSPipelineTemplateHelper;
 import io.harness.pms.pipeline.service.PMSYamlSchemaService;
+import io.harness.pms.pipeline.yaml.BasicPipeline;
 import io.harness.pms.plan.execution.ExecutionHelper;
 import io.harness.pms.plan.execution.service.PMSExecutionService;
 import io.harness.pms.yaml.YamlUtils;
@@ -161,6 +163,8 @@ public class TriggerExecutionHelper {
                     pipelineEntity.getProjectIdentifier(), pipelineYaml, true)
                 .getMergedPipelineYaml();
       }
+      BasicPipeline basicPipeline = YamlUtils.read(pipelineYaml, BasicPipeline.class);
+
       String expandedJson = pmsPipelineService.fetchExpandedPipelineJSONFromYaml(pipelineEntity.getAccountId(),
           pipelineEntity.getOrgIdentifier(), pipelineEntity.getProjectIdentifier(), pipelineYaml);
 
@@ -169,6 +173,8 @@ public class TriggerExecutionHelper {
       planExecutionMetadataBuilder.triggerPayload(triggerPayload);
       planExecutionMetadataBuilder.expandedPipelineJson(expandedJson);
 
+      executionMetaDataBuilder.setIsNotificationConfigured(
+          EmptyPredicate.isNotEmpty(basicPipeline.getNotificationRules()));
       // Set Principle user as pipeline service.
       SecurityContextBuilder.setContext(new ServicePrincipal(PIPELINE_SERVICE.getServiceId()));
       pmsYamlSchemaService.validateYamlSchema(ngTriggerEntity.getAccountId(), ngTriggerEntity.getOrgIdentifier(),

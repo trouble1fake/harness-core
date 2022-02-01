@@ -14,15 +14,17 @@ import io.harness.data.structure.EmptyPredicate;
 import io.harness.engine.ExecutionCheck;
 import io.harness.engine.OrchestrationEngine;
 import io.harness.engine.executions.node.NodeExecutionService;
+import io.harness.engine.executions.plan.PlanService;
 import io.harness.engine.expressions.OrchestrationConstants;
-import io.harness.execution.NodeExecution;
 import io.harness.execution.NodeExecution.NodeExecutionKeys;
 import io.harness.expression.EngineExpressionEvaluator;
+import io.harness.plan.Node;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.execution.run.ExpressionBlock;
 import io.harness.pms.contracts.execution.run.NodeRunInfo;
 import io.harness.pms.contracts.steps.io.StepResponseProto;
+import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.expression.PmsEngineExpressionService;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -38,20 +40,21 @@ import lombok.extern.slf4j.Slf4j;
 public class RunPreFacilitationChecker extends ExpressionEvalPreFacilitationChecker {
   @Inject private OrchestrationEngine orchestrationEngine;
   @Inject private NodeExecutionService nodeExecutionService;
+  @Inject private PlanService planService;
   @Inject PmsEngineExpressionService pmsEngineExpressionService;
 
   @Override
-  protected ExecutionCheck performCheck(NodeExecution nodeExecution) {
+  protected ExecutionCheck performCheck(Ambiance ambiance, Node node) {
     log.info("Checking If Node should be Run with When Condition.");
-    Ambiance ambiance = nodeExecution.getAmbiance();
-    String whenCondition = nodeExecution.getNode().getWhenCondition();
+    String nodeExecutionId = AmbianceUtils.obtainCurrentRuntimeId(ambiance);
+    String whenCondition = node.getWhenCondition();
     if (EmptyPredicate.isNotEmpty(whenCondition)) {
       try {
         EngineExpressionEvaluator engineExpressionEvaluator =
             pmsEngineExpressionService.prepareExpressionEvaluator(ambiance);
         Object evaluatedExpression = engineExpressionEvaluator.evaluateExpression(whenCondition);
         boolean whenConditionValue = (Boolean) evaluatedExpression;
-        nodeExecutionService.updateV2(nodeExecution.getUuid(), ops -> {
+        nodeExecutionService.updateV2(nodeExecutionId, ops -> {
           ops.set(NodeExecutionKeys.nodeRunInfo,
               NodeRunInfo.newBuilder()
                   .setEvaluatedCondition(whenConditionValue)
@@ -60,14 +63,14 @@ public class RunPreFacilitationChecker extends ExpressionEvalPreFacilitationChec
                   .build());
         });
         if (!whenConditionValue) {
-          log.info(String.format("Skipping node: %s", nodeExecution.getUuid()));
+          log.info(String.format("Skipping node: %s", nodeExecutionId));
           StepResponseProto response =
               StepResponseProto.newBuilder()
                   .setStatus(Status.SKIPPED)
                   .setNodeRunInfo(
                       NodeRunInfo.newBuilder().setWhenCondition(whenCondition).setEvaluatedCondition(false).build())
                   .build();
-          orchestrationEngine.processStepResponse(nodeExecution.getAmbiance(), response);
+          orchestrationEngine.processStepResponse(ambiance, response);
           return ExecutionCheck.builder().proceed(false).reason("When Condition Evaluated to false").build();
         }
         return ExecutionCheck.builder().proceed(true).reason("When Condition Evaluated to true").build();

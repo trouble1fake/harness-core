@@ -12,7 +12,6 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.pms.commons.events.PmsEventSender;
 import io.harness.execution.NodeExecution;
-import io.harness.plan.PlanNode;
 import io.harness.pms.contracts.progress.ProgressEvent;
 import io.harness.pms.events.base.PmsEventCategory;
 import io.harness.tasks.BinaryResponseData;
@@ -30,8 +29,6 @@ public class RedisProgressEventPublisher implements ProgressEventPublisher {
   @Override
   public String publishEvent(String nodeExecutionId, BinaryResponseData progressData) {
     NodeExecution nodeExecution = nodeExecutionService.get(nodeExecutionId);
-    PlanNode planNode = nodeExecution.getNode();
-    String serviceName = planNode.getServiceName();
     ProgressEvent progressEvent = ProgressEvent.newBuilder()
                                       .setAmbiance(nodeExecution.getAmbiance())
                                       .setExecutionMode(nodeExecution.getMode())
@@ -39,7 +36,7 @@ public class RedisProgressEventPublisher implements ProgressEventPublisher {
                                       .setProgressBytes(ByteString.copyFrom(progressData.getData()))
                                       .build();
 
-    return eventSender.sendEvent(
-        nodeExecution.getAmbiance(), progressEvent.toByteString(), PmsEventCategory.PROGRESS_EVENT, serviceName, false);
+    return eventSender.sendEvent(nodeExecution.getAmbiance(), progressEvent.toByteString(),
+        PmsEventCategory.PROGRESS_EVENT, nodeExecution.module(), false);
   }
 }
