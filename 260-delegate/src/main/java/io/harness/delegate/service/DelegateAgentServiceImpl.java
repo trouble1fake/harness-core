@@ -2062,6 +2062,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     timeoutEnforcement.submit(() -> enforceDelegateTaskTimeout(delegateTaskPackage.getDelegateTaskId(), taskData));
 
     // Start task execution in same thread and measure duration.
+    delegateRunnableTask.run();
     metricRegistry.recordGaugeDuration(
         TASK_EXECUTION_TIME, new String[] {DELEGATE_NAME, taskData.getTaskType()}, delegateRunnableTask);
   }
