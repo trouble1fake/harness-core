@@ -72,18 +72,18 @@ public class GitFullSyncProcessorServiceImpl implements io.harness.gitsync.core.
   @Override
   public FullSyncMsvcProcessingResponse processFiles(
       Microservice microservice, List<GitFullSyncEntityInfo> entityInfoList) {
-    boolean failed = false;
+    boolean requestfailed = false;
     FullSyncResponse fullSyncResponse = null;
     try {
       fullSyncResponse = performSyncForEntities(microservice, entityInfoList);
     } catch (Exception e) {
-      failed = true;
+      requestfailed = true;
     }
-    boolean processingStatusFromFiles = setTheProcessingStatusOfFiles(fullSyncResponse, entityInfoList);
+    boolean isFileProcessingFailed = setTheProcessingStatusOfFiles(fullSyncResponse, entityInfoList);
     return FullSyncMsvcProcessingResponse.builder()
         .fullSyncFileResponses(
             fullSyncResponse == null ? Collections.emptyList() : fullSyncResponse.getFileResponseList())
-        .isStatusSuccess(processingStatusFromFiles || failed)
+        .isSyncFailed(isFileProcessingFailed || requestfailed)
         .build();
   }
 
@@ -108,7 +108,7 @@ public class GitFullSyncProcessorServiceImpl implements io.harness.gitsync.core.
       if (isNotEmpty(errorMsg)) {
         anyFilesFailed = true;
         gitFullSyncEntityService.updateStatus(
-            fullSyncEntityInfo.getUuid(), fullSyncEntityInfo.getAccountIdentifier(), FAILED);
+            fullSyncEntityInfo.getAccountIdentifier(), fullSyncEntityInfo.getUuid(), FAILED);
       } else {
         gitFullSyncEntityService.markSuccessful(
             fullSyncEntityInfo.getUuid(), fullSyncEntityInfo.getAccountIdentifier());
@@ -165,8 +165,8 @@ public class GitFullSyncProcessorServiceImpl implements io.harness.gitsync.core.
       if (updateResult.getModifiedCount() == 0L) {
         log.info("There is no job to run for the id {}, maybe the other thread is running it", fullSyncJob.getUuid());
       }
-      List<GitFullSyncEntityInfo> allEntitiesToBeSynced =
-          gitFullSyncEntityService.list(fullSyncJob.getAccountIdentifier(), fullSyncJob.getMessageId());
+      List<GitFullSyncEntityInfo> allEntitiesToBeSynced = gitFullSyncEntityService.listEntitiesToBeSynced(
+          fullSyncJob.getAccountIdentifier(), fullSyncJob.getMessageId());
       markTheGitFullSyncEntityAsQueued(allEntitiesToBeSynced);
       boolean processingFailed = false;
       final List<FullSyncFilesGroupedByMsvc> fullSyncFilesGroupedByMsvcs =
@@ -177,7 +177,7 @@ public class GitFullSyncProcessorServiceImpl implements io.harness.gitsync.core.
             fullSyncFilesGroupedByMsvc.getMicroservice());
         FullSyncMsvcProcessingResponse fullSyncMsvcProcessingResponse = processFiles(
             fullSyncFilesGroupedByMsvc.getMicroservice(), fullSyncFilesGroupedByMsvc.getGitFullSyncEntityInfoList());
-        processingFailed = !fullSyncMsvcProcessingResponse.isStatusSuccess();
+        processingFailed = fullSyncMsvcProcessingResponse.isSyncFailed();
         if (fullSyncFilesGroupedByMsvc.getMicroservice() == Microservice.CORE) {
           setTheRepoBranchForTheGitSyncConnector(fullSyncFilesGroupedByMsvc.getGitFullSyncEntityInfoList(),
               fullSyncMsvcProcessingResponse.getFullSyncFileResponses());

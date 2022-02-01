@@ -1459,7 +1459,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       if (taskEvent instanceof DelegateTaskAbortEvent) {
         abortDelegateTask((DelegateTaskAbortEvent) taskEvent);
       } else {
-        dispatchDelegateTask(taskEvent);
+        dispatchDelegateTaskAsync(taskEvent);
       }
     }
   }
@@ -1870,12 +1870,16 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       return;
     }
 
-    Future taskFuture = taskExecutor.submit(() -> dispatchDelegateTask(delegateTaskEvent));
-    log.info("Task submitted for execution");
+    DelegateTaskExecutionData taskExecutionData = DelegateTaskExecutionData.builder().build();
+    if (currentlyExecutingFutures.putIfAbsent(delegateTaskId, taskExecutionData) == null) {
+      Future taskFuture = taskExecutor.submit(() -> dispatchDelegateTask(delegateTaskEvent));
+      log.info("TaskId: {} submitted for execution", delegateTaskId);
+      taskExecutionData.setTaskFuture(taskFuture);
+      updateCounterIfLessThanCurrent(maxExecutingFuturesCount, currentlyExecutingFutures.size());
+      return;
+    }
 
-    DelegateTaskExecutionData taskExecutionData = DelegateTaskExecutionData.builder().taskFuture(taskFuture).build();
-    currentlyExecutingFutures.put(delegateTaskId, taskExecutionData);
-    updateCounterIfLessThanCurrent(maxExecutingFuturesCount, currentlyExecutingFutures.size());
+    log.info("Task [DelegateTaskEvent: {}] already queued, dropping this request ", delegateTaskEvent);
   }
 
   private void dispatchDelegateTask(DelegateTaskEvent delegateTaskEvent) {
@@ -1926,7 +1930,8 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       DelegateTaskPackage delegateTaskPackage = executeRestCall(
           delegateAgentManagerClient.acquireTask(delegateId, delegateTaskId, accountId, delegateInstanceId));
       if (delegateTaskPackage == null || delegateTaskPackage.getData() == null) {
-        log.warn("Delegate task data not available - accountId: {}", delegateTaskEvent.getAccountId());
+        log.warn("Delegate task data not available for task: {} - accountId: {}", delegateTaskId,
+            delegateTaskEvent.getAccountId());
         return;
       }
 
