@@ -9,9 +9,7 @@ package io.harness.plancreator.steps;
 
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 
-import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.annotations.dev.TargetModule;
 import io.harness.plancreator.execution.StepsExecutionConfig;
 import io.harness.pms.plan.creation.PlanCreatorUtils;
 import io.harness.pms.sdk.core.plan.PlanNode;
@@ -32,7 +30,6 @@ import java.util.Map;
 import java.util.Set;
 
 @OwnedBy(PIPELINE)
-@TargetModule(HarnessModule._882_PMS_SDK_CORE)
 public abstract class GenericStepsNodePlanCreator extends ChildrenPlanCreator<StepsExecutionConfig> {
   @Inject private KryoSerializer kryoSerializer;
 
