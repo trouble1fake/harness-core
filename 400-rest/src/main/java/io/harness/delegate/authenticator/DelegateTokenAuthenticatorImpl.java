@@ -142,7 +142,7 @@ public class DelegateTokenAuthenticatorImpl implements DelegateTokenAuthenticato
     return result;
   }
 
-  // TODO: Arpit associate delegate token correspondingly
+  // TODO: ARPIT check delegate is at correct level and filter the modify the query to filter correct scope tokens.
   private boolean decryptDelegateTokenByQuery(
       Query query, String accountId, DelegateTokenStatus status, EncryptedJWT encryptedJWT, boolean isNg) {
     try (HIterator<DelegateToken> iterator = new HIterator<>(query.fetch())) {
@@ -153,7 +153,6 @@ public class DelegateTokenAuthenticatorImpl implements DelegateTokenAuthenticato
           } else {
             decryptDelegateToken(encryptedJWT, iterator.next().getValue());
           }
-          // checkDelegateIsAtCorrectLevel(accountId,delegateHostName, iterator.next().getOwner());
           if (DelegateTokenStatus.ACTIVE == status) {
             if (!GlobalContextManager.isAvailable()) {
               initGlobalContextGuard(new GlobalContext());
@@ -189,15 +188,6 @@ public class DelegateTokenAuthenticatorImpl implements DelegateTokenAuthenticato
     try {
       encryptedJWT.decrypt(decrypter);
     } catch (JOSEException e) {
-      throw new InvalidTokenException("Invalid delegate token", USER_ADMIN);
-    }
-  }
-
-  private void checkDelegateIsAtCorrectLevel(String accountId, String delegateHostName, DelegateEntityOwner owner) {
-    // Since accountId and delegateName is unique so accountId and delegatgeHostName will also be unique
-    Delegate delegate = delegateService.getDelegateUsingHostName(accountId, delegateHostName);
-    if ((delegate.getOwner() == null && owner != null) || (owner == null && delegate.getOwner() != null)
-        || (owner != delegate.getOwner())) {
       throw new InvalidTokenException("Invalid delegate token", USER_ADMIN);
     }
   }
