@@ -781,10 +781,26 @@ public class DelegateTaskServiceClassicTest extends WingsBaseTest {
   @Owner(developers = BRETT)
   @Category(UnitTests.class)
   public void shouldFailIfAllDelegatesFailed_notAll() {
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
-        .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
-    DelegateTask delegateTask = saveDelegateTask(true, ImmutableSet.of("delegate2"), QUEUED);
+    DelegateTask delegateTask =
+        DelegateTask.builder()
+            .accountId(ACCOUNT_ID)
+            .waitId(generateUuid())
+            .setupAbstraction(Cd1SetupFields.APP_ID_FIELD, APP_ID)
+            .version(VERSION)
+            .data(TaskData.builder()
+                      .async(true)
+                      .taskType(TaskType.HTTP.name())
+                      .parameters(new Object[] {HttpTaskParameters.builder().url("https://www.google.com").build()})
+                      .timeout(DEFAULT_ASYNC_CALL_TIMEOUT)
+                      .build())
+            .validatingDelegateIds(ImmutableSet.of("delegate2"))
+            .validationCompleteDelegateIds(ImmutableSet.of("delegate3"))
+            .build();
+
+    when(assignDelegateService.getEligibleDelegatesToExecuteTask(delegateTask, null))
+        .thenReturn(new LinkedList<>(Arrays.asList(DELEGATE_ID)));
+    delegateTaskServiceClassic.processDelegateTask(delegateTask, QUEUED);
+
     delegateTaskServiceClassic.failIfAllDelegatesFailed(ACCOUNT_ID, DELEGATE_ID, delegateTask.getUuid(), true);
     delegateTask.setTaskActivityLogs(null);
     delegateTask.setBroadcastToDelegateIds(null);

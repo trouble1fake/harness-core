@@ -100,6 +100,7 @@ public class JsonExpanderTest extends CategoryTest {
     ExpansionRequest expansionRequest = ExpansionRequest.builder()
                                             .module(ModuleType.PMS)
                                             .fqn("fqn/connectorRef")
+                                            .key("connectorRef")
                                             .fieldValue(new TextNode("k8sConn"))
                                             .build();
     Set<ExpansionRequest> oneRequest = Collections.singleton(expansionRequest);
@@ -122,16 +123,19 @@ public class JsonExpanderTest extends CategoryTest {
     ExpansionRequest jiraConn1 = ExpansionRequest.builder()
                                      .module(ModuleType.PMS)
                                      .fqn("jir1/connectorRef")
+                                     .key("connectorRef")
                                      .fieldValue(new TextNode("jiraConn1"))
                                      .build();
     ExpansionRequest jiraConn2 = ExpansionRequest.builder()
                                      .module(ModuleType.PMS)
                                      .fqn("jir2/connectorRef")
+                                     .key("connectorRef")
                                      .fieldValue(new TextNode("jiraConn2"))
                                      .build();
     ExpansionRequest k8sConn = ExpansionRequest.builder()
                                    .module(ModuleType.CD)
                                    .fqn("k8s/connectorRef")
+                                   .key("connectorRef")
                                    .fieldValue(new TextNode("k8sConn"))
                                    .build();
     Set<ExpansionRequest> requests = new HashSet<>(Arrays.asList(jiraConn1, jiraConn2, k8sConn));

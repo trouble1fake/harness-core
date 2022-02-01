@@ -93,9 +93,10 @@ public class NodeExecution implements PersistentEntity, UuidAccess, PmsNodeExecu
   @Builder.Default @FdTtlIndex Date validUntil = Date.from(OffsetDateTime.now().plusMonths(TTL_MONTHS).toInstant());
 
   // Resolved StepParameters stored just before invoking step.
-  Map<String, Object> resolvedStepParameters;
-  Map<String, Object> resolvedStepInputs;
-  PmsStepParameters resolvedInputs;
+  @Deprecated Map<String, Object> resolvedStepParameters;
+  @Deprecated PmsStepParameters resolvedInputs;
+
+  PmsStepParameters resolvedParams;
 
   // For Wait Notify
   String notifyId;
@@ -124,8 +125,8 @@ public class NodeExecution implements PersistentEntity, UuidAccess, PmsNodeExecu
   List<String> timeoutInstanceIds;
   TimeoutDetails timeoutDetails;
 
+  // Todo: Move unitProgress and progressData to another collection
   @Singular @Deprecated List<UnitProgress> unitProgresses;
-
   Map<String, Object> progressData;
 
   AdviserResponse adviserResponse;
@@ -139,7 +140,9 @@ public class NodeExecution implements PersistentEntity, UuidAccess, PmsNodeExecu
   @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE) SkipType skipGraphType;
   @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE) String module;
   @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE) String name;
-  @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE) Boolean skipUnresolvedCheck;
+  @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE) StepType stepType;
+  @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE) String nodeId;
+  @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE) String identifier;
 
   public ExecutableResponse obtainLatestExecutableResponse() {
     if (isEmpty(executableResponses)) {
@@ -149,7 +152,10 @@ public class NodeExecution implements PersistentEntity, UuidAccess, PmsNodeExecu
   }
 
   @Override
-  public String getNodeId() {
+  public String nodeId() {
+    if (isNotEmpty(nodeId)) {
+      return nodeId;
+    }
     return AmbianceUtils.obtainCurrentSetupId(ambiance);
   }
 
@@ -183,22 +189,21 @@ public class NodeExecution implements PersistentEntity, UuidAccess, PmsNodeExecu
     return planNode.getName();
   }
 
-  public Boolean isSkipUnresolvedCheck() {
-    if (skipUnresolvedCheck != null) {
-      return skipUnresolvedCheck;
-    }
-    return planNode.isSkipUnresolvedExpressionsCheck();
-  }
-
   public String getPlanExecutionId() {
     return ambiance.getPlanExecutionId();
   }
 
-  public StepType getStepType() {
+  public StepType stepType() {
+    if (stepType != null) {
+      return stepType;
+    }
     return AmbianceUtils.getCurrentStepType(ambiance);
   }
 
-  public String getIdentifier() {
+  public String identifier() {
+    if (isNotEmpty(identifier)) {
+      return identifier;
+    }
     return AmbianceUtils.obtainStepIdentifier(ambiance);
   }
 
@@ -299,15 +304,19 @@ public class NodeExecution implements PersistentEntity, UuidAccess, PmsNodeExecu
   }
 
   public PmsStepParameters getPmsStepParameters() {
-    if (resolvedStepInputs != null) {
-      return PmsStepParameters.parse(
-          OrchestrationMapBackwardCompatibilityUtils.extractToOrchestrationMap(resolvedStepInputs));
-    }
     return PmsStepParameters.parse(resolvedInputs);
   }
 
   public OrchestrationMap getPmsProgressData() {
     return OrchestrationMapBackwardCompatibilityUtils.extractToOrchestrationMap(progressData);
+  }
+
+  public PmsStepParameters getResolvedStepParameters() {
+    if (resolvedStepParameters != null) {
+      return PmsStepParameters.parse(
+          OrchestrationMapBackwardCompatibilityUtils.extractToOrchestrationMap(resolvedStepParameters));
+    }
+    return resolvedParams;
   }
 
   public <T extends Node> T getNode() {

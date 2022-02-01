@@ -519,6 +519,7 @@ public class YamlResource {
   @ExceptionMetered
   public RestResponse<YamlPayload> getDefaults(
       @QueryParam("accountId") String accountId, @PathParam("uuid") String uuid) {
+    defaultsAuthHandler.authorizeUsage(uuid, accountId);
     return yamlResourceService.getDefaultVariables(accountId, uuid);
   }
 
@@ -537,7 +538,7 @@ public class YamlResource {
   @AuthRule(permissionType = MANAGE_ACCOUNT_DEFAULTS, skipAuth = true)
   public RestResponse<ServiceCommand> updateDefaults(
       @QueryParam("accountId") String accountId, YamlPayload yamlPayload, @PathParam("uuid") String uuid) {
-    defaultsAuthHandler.authorizeUpdate(uuid, accountId);
+    defaultsAuthHandler.authorizeUsage(uuid, accountId);
     return yamlService.update(yamlPayload, accountId, uuid);
   }
 

@@ -25,8 +25,12 @@ public class StageOverridesUtility {
         + "artifacts:\n"
         + "  primary:\n"
         + "  sidecars: []\n"
-        + "manifest: []\n"
-        + "variables: []\n";
+        + "manifests:\n"
+        + "   - manifest:\n"
+        + "       identifier: manifestIdentifier\n"
+        + "       spec:\n"
+        + "       type: K8sManifest\n";
+
     YamlField overrideYamlField;
     try {
       String yamlFieldWithUuid = YamlUtils.injectUuid(yamlField);

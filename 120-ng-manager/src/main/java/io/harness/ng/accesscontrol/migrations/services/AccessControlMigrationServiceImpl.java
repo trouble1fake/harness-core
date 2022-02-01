@@ -8,7 +8,8 @@
 package io.harness.ng.accesscontrol.migrations.services;
 
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
-import static io.harness.ng.core.invites.mapper.RoleBindingMapper.getDefaultResourceGroupIdentifier;
+import static io.harness.ng.core.invites.mapper.RoleBindingMapper.getDefaultResourceGroupIdentifierForAdmins;
+import static io.harness.ng.core.invites.mapper.RoleBindingMapper.getManagedAdminRole;
 
 import static java.util.Collections.emptyList;
 
@@ -61,7 +62,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.mongodb.core.query.Criteria;
 
@@ -242,7 +242,7 @@ public class AccessControlMigrationServiceImpl implements AccessControlMigration
 
     log.info("Created {} NON-MANAGED role assignments from UserMembership for scope: {}",
         createRoleAssignments(scope, false,
-            buildRoleAssignments(users, getManagedAdminRole(scope), getDefaultResourceGroupIdentifier(scope))),
+            buildRoleAssignments(users, getManagedAdminRole(scope), getDefaultResourceGroupIdentifierForAdmins(scope))),
         scope);
   }
 
@@ -259,7 +259,7 @@ public class AccessControlMigrationServiceImpl implements AccessControlMigration
     log.info("Created {} NON-MANAGED role assignments from CG Users for scope: {}",
         createRoleAssignments(scope, false,
             buildRoleAssignments(
-                currentGenUsers, getManagedAdminRole(scope), getDefaultResourceGroupIdentifier(scope))),
+                currentGenUsers, getManagedAdminRole(scope), getDefaultResourceGroupIdentifierForAdmins(scope))),
         scope);
   }
 
@@ -274,16 +274,6 @@ public class AccessControlMigrationServiceImpl implements AccessControlMigration
           emptyList(), emptyList(), UserMembershipUpdateSource.SYSTEM);
     } catch (DuplicateKeyException | DuplicateFieldException duplicateException) {
       // ignore
-    }
-  }
-
-  private static String getManagedAdminRole(Scope scope) {
-    if (!StringUtils.isEmpty(scope.getProjectIdentifier())) {
-      return "_project_admin";
-    } else if (!StringUtils.isEmpty(scope.getOrgIdentifier())) {
-      return "_organization_admin";
-    } else {
-      return "_account_admin";
     }
   }
 

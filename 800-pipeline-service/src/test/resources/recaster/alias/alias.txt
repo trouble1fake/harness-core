@@ -1,7 +1,5 @@
-io.harness.ngpipeline.status.BuildStatusUpdateParameter
 io.harness.steps.jira.update.JiraUpdateSpecParameters
 io.harness.steps.approval.step.jira.JiraApprovalSpecParameters
-io.harness.ngpipeline.artifact.bean.DockerArtifactOutcome
 io.harness.yaml.core.properties.NGProperties
 io.harness.steps.approval.step.jira.JiraApprovalOutcome
 io.harness.steps.approval.step.jira.beans.CriteriaSpecWrapper
@@ -15,7 +13,6 @@ io.harness.plancreator.steps.common.StepElementParameters
 io.harness.plancreator.flowcontrol.FlowControlConfig
 io.harness.steps.approval.step.jira.beans.KeyValuesCriteriaSpec
 io.harness.plancreator.steps.common.StageElementParameters
-io.harness.ngpipeline.artifact.bean.ArtifactsOutcome
 io.harness.when.beans.StageWhenCondition
 io.harness.pms.expressions.PMSExpressionEvaluatorTest$TestStepParameters
 io.harness.cf.pipeline.FeatureFlagStageStepParameters
@@ -41,7 +38,6 @@ io.harness.plancreator.execution.ExecutionElementConfig
 io.harness.steps.approval.step.harness.HarnessApprovalStepInfo
 io.harness.steps.http.HttpOutcome
 io.harness.advisers.rollback.OnFailRollbackParameters
-io.harness.ngpipeline.artifact.bean.GcrArtifactOutcome
 io.harness.steps.shellscript.ExecutionTarget
 io.harness.pms.sdk.core.plan.MapStepParameters
 io.harness.steps.shellscript.ShellScriptStepParameters
@@ -59,7 +55,6 @@ io.harness.steps.approval.step.harness.HarnessApprovalStepNode
 io.harness.plancreator.steps.barrier.BarrierStepNode
 io.harness.steps.shellscript.ShellScriptStepNode
 io.harness.steps.template.TemplateStepNode
-io.harness.ngpipeline.artifact.bean.EcrArtifactOutcome
 io.harness.steps.jira.JiraIssueOutcome
 io.harness.advisers.rollback.OnFailRollbackOutput
 io.harness.steps.jira.create.JiraCreateSpecParameters
@@ -70,7 +65,6 @@ parameterField
 io.harness.steps.approval.step.harness.HarnessApprovalOutcome
 io.harness.steps.common.steps.stepgroup.StepGroupStepParameters
 io.harness.steps.approval.step.jira.beans.JexlCriteriaSpec
-io.harness.ngpipeline.artifact.bean.SidecarsOutcome
 io.harness.pms.timeout.AbsoluteSdkTimeoutTrackerParameters
 io.harness.pms.yaml.ParameterFieldValueWrapper
 io.harness.pms.yaml.ParameterDocumentField
@@ -78,10 +72,11 @@ io.harness.yaml.core.failurestrategy.OnFailureConfig
 io.harness.yaml.core.failurestrategy.FailureStrategyConfig
 io.harness.yaml.core.failurestrategy.marksuccess.MarkAsSuccessFailureActionConfig
 io.harness.yaml.core.failurestrategy.rollback.StageRollbackFailureActionConfig
-io.harness.ngpipeline.pipeline.executions.beans.DockerArtifactSummary
 io.harness.advisers.rollback.RollbackTriggeredOutput
 io.harness.cdng.pipeline.stepinfo.ShellScriptStepInfo
 io.harness.steps.approval.step.servicenow.ServiceNowApprovalStepInfo
 io.harness.steps.approval.step.servicenow.ServiceNowApprovalSpecParameters
 io.harness.steps.servicenow.approval.ServiceNowApprovalStepNode
 io.harness.steps.approval.step.servicenow.ServiceNowApprovalOutcome
+io.harness.steps.approval.stage.ApprovalStageNode
+io.harness.cf.pipeline.FeatureFlagStageNode

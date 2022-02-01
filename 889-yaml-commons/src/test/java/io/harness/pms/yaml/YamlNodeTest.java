@@ -22,6 +22,7 @@ import io.harness.rule.Owner;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Objects;
 import org.junit.Before;
 import org.junit.Test;
@@ -87,5 +88,17 @@ public class YamlNodeTest extends CategoryTest {
     assertThat(stageName.extractStageLocalYamlPath()).isEqualTo("stage/name");
     YamlNode serviceConfig = stageInternal.getFieldOrThrow("spec").getNode().getFieldOrThrow("execution").getNode();
     assertThat(serviceConfig.extractStageLocalYamlPath()).isEqualTo("stage/spec/execution");
+  }
+
+  @Test
+  @Owner(developers = NAMAN)
+  @Category(UnitTests.class)
+  public void testGetStageLocalYamlPathForParallel() {
+    List<YamlNode> stages =
+        pipelineNode.getFieldOrThrow("pipeline").getNode().getFieldOrThrow("stages").getNode().asArray();
+    List<YamlNode> parallelStages = stages.get(1).getFieldOrThrow("parallel").getNode().asArray();
+    YamlNode stage0Parallel = parallelStages.get(0).getFieldOrThrow("stage").getNode();
+    YamlNode stage0ParallelName = stage0Parallel.getFieldOrThrow("name").getNode();
+    assertThat(stage0ParallelName.extractStageLocalYamlPath()).isEqualTo("stage/name");
   }
 }

@@ -16,6 +16,7 @@ import static io.harness.pms.yaml.YAMLFieldNameConstants.PROPERTIES;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.build.BuildStatusUpdateParameter;
 import io.harness.beans.execution.BranchWebhookEvent;
 import io.harness.beans.execution.ExecutionSource;
 import io.harness.beans.execution.PRWebhookEvent;
@@ -26,7 +27,6 @@ import io.harness.ci.integrationstage.CIIntegrationStageModifier;
 import io.harness.ci.integrationstage.IntegrationStageUtils;
 import io.harness.ci.plan.creator.codebase.CodebasePlanCreator;
 import io.harness.exception.InvalidRequestException;
-import io.harness.ngpipeline.status.BuildStatusUpdateParameter;
 import io.harness.plancreator.execution.ExecutionElementConfig;
 import io.harness.plancreator.stages.GenericStagePlanCreator;
 import io.harness.plancreator.stages.stage.StageElementConfig;

@@ -22,8 +22,6 @@ import software.wings.delegatetasks.ExceptionMessageSanitizer;
 import software.wings.settings.SettingValue;
 
 import com.google.inject.Inject;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.zeroturnaround.exec.StartedProcess;
 
@@ -51,28 +49,24 @@ public class ChartMuseumClientImpl implements ChartMuseumClient {
       String resourceDirectory, String basePath, boolean useLatestChartMuseumVersion) throws Exception {
     GCSHelmRepoConfig gcsHelmRepoConfig = (GCSHelmRepoConfig) helmRepoConfig;
     GcpConfig config = (GcpConfig) connectorConfig;
-
-    return chartMuseumClientHelper.startGCSChartMuseumServer(gcsHelmRepoConfig.getBucketName(), basePath,
-        config.getServiceAccountKeyFileContent(), resourceDirectory, useLatestChartMuseumVersion);
+    try {
+      return chartMuseumClientHelper.startGCSChartMuseumServer(gcsHelmRepoConfig.getBucketName(), basePath,
+          config.getServiceAccountKeyFileContent(), resourceDirectory, useLatestChartMuseumVersion);
+    } catch (Exception ex) {
+      throw ExceptionMessageSanitizer.sanitizeException(ex);
+    }
   }
 
   private ChartMuseumServer startAmazonS3ChartMuseumServer(HelmRepoConfig helmRepoConfig, SettingValue connectorConfig,
       String basePath, boolean useLatestChartMuseumVersion) throws Exception {
     AmazonS3HelmRepoConfig amazonS3HelmRepoConfig = (AmazonS3HelmRepoConfig) helmRepoConfig;
     AwsConfig awsConfig = (AwsConfig) connectorConfig;
-
     try {
       return chartMuseumClientHelper.startS3ChartMuseumServer(amazonS3HelmRepoConfig.getBucketName(), basePath,
           amazonS3HelmRepoConfig.getRegion(), awsConfig.isUseEc2IamCredentials(), awsConfig.getAccessKey(),
           awsConfig.getSecretKey(), awsConfig.isUseIRSA(), useLatestChartMuseumVersion);
     } catch (Exception ex) {
-      List<String> secrets = new ArrayList<>();
-      secrets.add(String.valueOf(awsConfig.getSecretKey()));
-      if (awsConfig.isUseEncryptedAccessKey()) {
-        secrets.add(String.valueOf(awsConfig.getAccessKey()));
-      }
-      ExceptionMessageSanitizer.sanitizeException(ex, secrets);
-      throw ex;
+      throw ExceptionMessageSanitizer.sanitizeException(ex);
     }
   }
 

@@ -183,7 +183,7 @@ public class HelmClientImplTest extends CategoryTest {
     assertThat(getCommandWithNoValueOverride(HelmVersion.V2, command, helmInstallCommandData))
         .isEqualTo("KUBECONFIG=~/.kube/dummy-config helm hist  crazy-helm --max 5");
     assertThat(getCommandWithCommandFlags(HelmVersion.V2, command, helmInstallCommandData))
-        .isEqualTo("KUBECONFIG=~/.kube/dummy-config helm hist --debug --tls crazy-helm --max 5");
+        .isEqualTo("KUBECONFIG=~/.kube/dummy-config helm hist  --tls crazy-helm --max 5");
     assertThat(getCommandWithNoKubeConfig(HelmVersion.V3, command, helmInstallCommandData))
         .isEqualTo("/client-tools/v3.1/helm hist crazy-helm   --max 5");
     assertThat(getCommandWithNoValueOverride(HelmVersion.V3, command, helmInstallCommandData))
@@ -202,7 +202,7 @@ public class HelmClientImplTest extends CategoryTest {
     assertThat(getCommandWithNoValueOverride(HelmVersion.V2, command, helmInstallCommandData))
         .isEqualTo("KUBECONFIG=~/.kube/dummy-config helm list  ^crazy-helm$");
     assertThat(getCommandWithCommandFlags(HelmVersion.V2, command, helmInstallCommandData))
-        .isEqualTo("KUBECONFIG=~/.kube/dummy-config helm list --debug --tls ^crazy-helm$");
+        .isEqualTo("KUBECONFIG=~/.kube/dummy-config helm list  --tls ^crazy-helm$");
     assertThat(getCommandWithNoKubeConfig(HelmVersion.V3, command, helmInstallCommandData))
         .isEqualTo("/client-tools/v3.1/helm list  --filter ^crazy-helm$");
     assertThat(getCommandWithNoValueOverride(HelmVersion.V3, command, helmInstallCommandData))

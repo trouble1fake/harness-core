@@ -92,7 +92,7 @@ public class PlanExecution implements PersistentRegularIterable, UuidAccess, Pms
   }
 
   @Override
-  public String getNodeId() {
+  public String nodeId() {
     return planId;
   }
 

@@ -12,7 +12,7 @@ import io.harness.ModuleType;
 import io.harness.accesscontrol.serializer.AccessControlClientRegistrars;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.cdng.creator.plan.stage.DeploymentStageConfig;
+import io.harness.cdng.creator.plan.stage.DeploymentStageNode;
 import io.harness.cdng.k8s.K8sCanaryStepNode;
 import io.harness.cdng.pipeline.CDStepInfo;
 import io.harness.morphia.MorphiaRegistrar;
@@ -38,7 +38,6 @@ public class CDNGRegistrars {
           .addAll(ManagerRegistrars.kryoRegistrars)
           .addAll(SMCoreRegistrars.kryoRegistrars)
           .addAll(DelegateServiceDriverRegistrars.kryoRegistrars)
-          .addAll(NGPipelineRegistrars.kryoRegistrars)
           .addAll(ConnectorNextGenRegistrars.kryoRegistrars)
           .addAll(GitOpsRegistrars.kryoRegistrars)
           .addAll(YamlBeansModuleRegistrars.kryoRegistrars)
@@ -54,7 +53,6 @@ public class CDNGRegistrars {
           .addAll(ManagerRegistrars.morphiaRegistrars)
           .addAll(SMCoreRegistrars.morphiaRegistrars)
           .addAll(DelegateServiceDriverRegistrars.morphiaRegistrars)
-          .addAll(NGPipelineRegistrars.morphiaRegistrars)
           .addAll(ConnectorNextGenRegistrars.morphiaRegistrars)
           .addAll(GitOpsRegistrars.morphiaRegistrars)
           .add(NGMorphiaRegistrar.class)
@@ -73,7 +71,11 @@ public class CDNGRegistrars {
                    .availableAtProjectLevel(true)
                    .availableAtOrgLevel(false)
                    .availableAtAccountLevel(false)
-                   .clazz(DeploymentStageConfig.class)
+                   .clazz(DeploymentStageNode.class)
+                   .yamlSchemaMetadata(YamlSchemaMetadata.builder()
+                                           .modulesSupported(ImmutableList.of(ModuleType.CD, ModuleType.PMS))
+                                           .yamlGroup(YamlGroup.builder().group(StepCategory.STAGE.name()).build())
+                                           .build())
                    .build())
           .add(YamlSchemaRootClass.builder()
                    .entityType(EntityType.DEPLOYMENT_STEPS)

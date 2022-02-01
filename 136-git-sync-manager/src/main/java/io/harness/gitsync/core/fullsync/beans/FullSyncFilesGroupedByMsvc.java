@@ -19,5 +19,4 @@ import lombok.Value;
 public class FullSyncFilesGroupedByMsvc {
   Microservice microservice;
   List<GitFullSyncEntityInfo> gitFullSyncEntityInfoList;
-  ;
 }

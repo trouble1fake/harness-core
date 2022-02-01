@@ -29,9 +29,12 @@ import io.harness.pms.contracts.execution.ExecutableResponse;
 import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.execution.events.SdkResponseEventProto;
 import io.harness.pms.contracts.execution.events.SpawnChildrenRequest;
+import io.harness.pms.data.stepparameters.PmsStepParameters;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.execution.utils.NodeProjectionUtils;
 import io.harness.pms.execution.utils.SdkResponseEventUtils;
+import io.harness.pms.expression.PmsEngineExpressionService;
+import io.harness.pms.utils.OrchestrationMapBackwardCompatibilityUtils;
 import io.harness.waiter.WaitNotifyEngine;
 
 import com.google.inject.Inject;
@@ -52,6 +55,7 @@ public class SpawnChildrenRequestProcessor implements SdkResponseProcessor {
   @Inject @Named("EngineExecutorService") private ExecutorService executorService;
   @Inject private WaitNotifyEngine waitNotifyEngine;
   @Inject @Named(OrchestrationPublisherName.PUBLISHER_NAME) private String publisherName;
+  @Inject private PmsEngineExpressionService pmsEngineExpressionService;
 
   @Override
   public void handleEvent(SdkResponseEventProto event) {
@@ -66,6 +70,10 @@ public class SpawnChildrenRequestProcessor implements SdkResponseProcessor {
         callbackIds.add(uuid);
         Node node = planService.fetchNode(ambiance.getPlanId(), child.getChildNodeId());
         Ambiance clonedAmbiance = AmbianceUtils.cloneForChild(ambiance, PmsLevelUtils.buildLevelFromNode(uuid, node));
+        boolean skipUnresolvedExpressionsCheck = node.isSkipUnresolvedExpressionsCheck();
+        log.info("Starting to Resolve step parameters and Inputs");
+        Object resolvedStepParameters = pmsEngineExpressionService.resolve(
+            clonedAmbiance, node.getStepParameters(), skipUnresolvedExpressionsCheck);
         NodeExecution childNodeExecution =
             NodeExecution.builder()
                 .uuid(uuid)
@@ -78,8 +86,13 @@ public class SpawnChildrenRequestProcessor implements SdkResponseProcessor {
                 .startTs(AmbianceUtils.getCurrentLevelStartTs(clonedAmbiance))
                 .originalNodeExecutionId(OrchestrationUtils.getOriginalNodeExecutionId(node))
                 .module(node.getServiceName())
+                .resolvedParams(PmsStepParameters.parse(
+                    OrchestrationMapBackwardCompatibilityUtils.extractToOrchestrationMap(resolvedStepParameters)))
                 .name(node.getName())
                 .skipGraphType(node.getSkipGraphType())
+                .identifier(node.getIdentifier())
+                .stepType(node.getStepType())
+                .nodeId(node.getUuid())
                 .build();
         nodeExecutionService.save(childNodeExecution);
         log.info("For Children Executable starting Child NodeExecution with id: {}", uuid);

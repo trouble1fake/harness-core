@@ -9,6 +9,9 @@ package io.harness.serializer.kryo;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.cdng.artifact.outcome.DockerArtifactOutcome;
+import io.harness.cdng.artifact.outcome.EcrArtifactOutcome;
+import io.harness.cdng.artifact.outcome.GcrArtifactOutcome;
 import io.harness.cdng.infra.beans.K8sDirectInfrastructureOutcome;
 import io.harness.cdng.infra.beans.K8sGcpInfrastructureOutcome;
 import io.harness.cdng.instance.outcome.DeploymentInfoOutcome;
@@ -50,5 +53,8 @@ public class NGBeanKryoRegistrar implements KryoRegistrar {
     kryo.register(ServiceOutcome.VariablesWrapperOutcome.class, 12507);
     kryo.register(StoreConfig.class, 8022);
     kryo.register(KustomizePatchesManifestOutcome.class, 12548);
+    kryo.register(DockerArtifactOutcome.class, 8007);
+    kryo.register(GcrArtifactOutcome.class, 390006);
+    kryo.register(EcrArtifactOutcome.class, 390007);
   }
 }

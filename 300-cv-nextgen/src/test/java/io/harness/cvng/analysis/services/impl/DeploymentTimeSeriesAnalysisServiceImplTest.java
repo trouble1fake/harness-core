@@ -176,7 +176,8 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
     DeploymentTimeSeriesAnalysisFilter deploymentTimeSeriesAnalysisFilter = DeploymentTimeSeriesAnalysisFilter.builder()
                                                                                 .healthSourceIdentifiers(null)
                                                                                 .filter(null)
-                                                                                .anomalous(false)
+                                                                                .anomalousMetricsOnly(false)
+                                                                                .anomalousNodesOnly(false)
                                                                                 .hostNames(null)
                                                                                 .build();
     PageParams pageParams = PageParams.builder().page(0).size(10).build();
@@ -222,7 +223,8 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
     DeploymentTimeSeriesAnalysisFilter deploymentTimeSeriesAnalysisFilter = DeploymentTimeSeriesAnalysisFilter.builder()
                                                                                 .healthSourceIdentifiers(null)
                                                                                 .filter(null)
-                                                                                .anomalous(false)
+                                                                                .anomalousMetricsOnly(false)
+                                                                                .anomalousNodesOnly(false)
                                                                                 .hostNames(null)
                                                                                 .build();
     PageParams pageParams = PageParams.builder().page(0).size(10).build();
@@ -251,7 +253,8 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
     DeploymentTimeSeriesAnalysisFilter deploymentTimeSeriesAnalysisFilter = DeploymentTimeSeriesAnalysisFilter.builder()
                                                                                 .healthSourceIdentifiers(null)
                                                                                 .filter(null)
-                                                                                .anomalous(false)
+                                                                                .anomalousMetricsOnly(false)
+                                                                                .anomalousNodesOnly(false)
                                                                                 .hostNames(Arrays.asList("node1"))
                                                                                 .build();
     PageParams pageParams = PageParams.builder().page(0).size(10).build();
@@ -292,7 +295,8 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
         DeploymentTimeSeriesAnalysisFilter.builder()
             .healthSourceIdentifiers(healthSourceIdentifiersFilter)
             .filter(null)
-            .anomalous(false)
+            .anomalousMetricsOnly(false)
+            .anomalousNodesOnly(false)
             .hostNames(null)
             .build();
     PageParams pageParams = PageParams.builder().page(0).size(10).build();
@@ -313,7 +317,8 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
     deploymentTimeSeriesAnalysisFilter = DeploymentTimeSeriesAnalysisFilter.builder()
                                              .healthSourceIdentifiers(Arrays.asList("some-identifier"))
                                              .filter(null)
-                                             .anomalous(false)
+                                             .anomalousMetricsOnly(false)
+                                             .anomalousNodesOnly(false)
                                              .hostName(null)
                                              .build();
 
@@ -341,7 +346,8 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
     DeploymentTimeSeriesAnalysisFilter deploymentTimeSeriesAnalysisFilter = DeploymentTimeSeriesAnalysisFilter.builder()
                                                                                 .healthSourceIdentifiers(null)
                                                                                 .filter(null)
-                                                                                .anomalous(false)
+                                                                                .anomalousMetricsOnly(false)
+                                                                                .anomalousNodesOnly(false)
                                                                                 .hostNames(Arrays.asList("node3"))
                                                                                 .build();
     PageParams pageParams = PageParams.builder().page(0).size(10).build();
@@ -380,7 +386,8 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
     DeploymentTimeSeriesAnalysisFilter deploymentTimeSeriesAnalysisFilter = DeploymentTimeSeriesAnalysisFilter.builder()
                                                                                 .healthSourceIdentifiers(null)
                                                                                 .filter(null)
-                                                                                .anomalous(false)
+                                                                                .anomalousMetricsOnly(false)
+                                                                                .anomalousNodesOnly(false)
                                                                                 .hostNames(Arrays.asList("randomnode"))
                                                                                 .build();
     PageParams pageParams = PageParams.builder().page(0).size(10).build();
@@ -393,7 +400,7 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
   @Test
   @Owner(developers = NEMANJA)
   @Category(UnitTests.class)
-  public void xtestGetMetrics_withAnomalousMetricsFilter() {
+  public void testGetMetrics_withAnomalousMetricsAndAnomalousNodesFilterAsTrue() {
     verificationJobService.create(accountId, createCanaryVerificationJobDTO());
     VerificationJobInstance verificationJobInstance = createVerificationJobInstance();
     CVConfig cvConfig = verificationJobInstance.getCvConfigMap().values().iterator().next();
@@ -405,7 +412,8 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
     DeploymentTimeSeriesAnalysisFilter deploymentTimeSeriesAnalysisFilter = DeploymentTimeSeriesAnalysisFilter.builder()
                                                                                 .healthSourceIdentifiers(null)
                                                                                 .filter(null)
-                                                                                .anomalous(true)
+                                                                                .anomalousMetricsOnly(true)
+                                                                                .anomalousNodesOnly(true)
                                                                                 .hostNames(null)
                                                                                 .build();
     PageParams pageParams = PageParams.builder().page(0).size(10).build();
@@ -418,10 +426,53 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
     assertThat(transactionMetricInfoSummaryPageDTO.getPageResponse().getContent()).isNotNull();
     assertThat(transactionMetricInfoSummaryPageDTO.getPageResponse().getContent().size()).isEqualTo(1);
     assertThat(
+        transactionMetricInfoSummaryPageDTO.getPageResponse().getContent().get(0).getTransactionMetric().getRisk())
+        .isNotEqualTo(Risk.HEALTHY);
+    assertThat(
         transactionMetricInfoSummaryPageDTO.getPageResponse().getContent().get(0).getTransactionMetric().getScore())
         .isEqualTo(2.5);
     assertThat(transactionMetricInfoSummaryPageDTO.getPageResponse().getContent().get(0).getConnectorName())
         .isEqualTo("AppDynamics Connector");
+    assertThat(transactionMetricInfoSummaryPageDTO.getPageResponse().getContent().get(0).getNodes().size())
+        .isEqualTo(2);
+    for (DeploymentTimeSeriesAnalysisDTO.HostData hostData :
+        transactionMetricInfoSummaryPageDTO.getPageResponse().getContent().get(0).getNodes()) {
+      assertThat(hostData.getRisk()).isNotEqualTo(Risk.HEALTHY);
+    }
+  }
+
+  @Test
+  @Owner(developers = KAPIL)
+  @Category(UnitTests.class)
+  public void testGetMetrics_withAnomalousMetricsAndAnomalousNodesFilterAsFalse() {
+    verificationJobService.create(accountId, createCanaryVerificationJobDTO());
+    VerificationJobInstance verificationJobInstance = createVerificationJobInstance();
+    CVConfig cvConfig = verificationJobInstance.getCvConfigMap().values().iterator().next();
+    String verificationJobInstanceId = verificationJobInstanceService.create(verificationJobInstance);
+    String verificationTaskId = verificationTaskService.createDeploymentVerificationTask(
+        accountId, cvConfig.getUuid(), verificationJobInstanceId, cvConfig.getType());
+    deploymentTimeSeriesAnalysisService.save(createDeploymentTimeSeriesAnalysis(verificationTaskId));
+
+    DeploymentTimeSeriesAnalysisFilter deploymentTimeSeriesAnalysisFilter = DeploymentTimeSeriesAnalysisFilter.builder()
+                                                                                .healthSourceIdentifiers(null)
+                                                                                .filter(null)
+                                                                                .anomalousMetricsOnly(false)
+                                                                                .anomalousNodesOnly(false)
+                                                                                .hostNames(null)
+                                                                                .build();
+    PageParams pageParams = PageParams.builder().page(0).size(10).build();
+    TransactionMetricInfoSummaryPageDTO transactionMetricInfoSummaryPageDTO =
+        deploymentTimeSeriesAnalysisService.getMetrics(
+            accountId, verificationJobInstanceId, deploymentTimeSeriesAnalysisFilter, pageParams);
+
+    assertThat(transactionMetricInfoSummaryPageDTO.getPageResponse().getPageIndex()).isEqualTo(0);
+    assertThat(transactionMetricInfoSummaryPageDTO.getPageResponse().getTotalPages()).isEqualTo(1);
+    assertThat(transactionMetricInfoSummaryPageDTO.getPageResponse().getContent()).isNotNull();
+    assertThat(transactionMetricInfoSummaryPageDTO.getPageResponse().getContent().size()).isEqualTo(2);
+    assertThat(transactionMetricInfoSummaryPageDTO.getPageResponse().getContent().get(0).getNodes().size())
+        .isEqualTo(3);
+    assertThat(transactionMetricInfoSummaryPageDTO.getPageResponse().getContent().get(1).getNodes().size())
+        .isEqualTo(2);
   }
 
   @Test
@@ -439,7 +490,8 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
     DeploymentTimeSeriesAnalysisFilter deploymentTimeSeriesAnalysisFilter = DeploymentTimeSeriesAnalysisFilter.builder()
                                                                                 .healthSourceIdentifiers(null)
                                                                                 .filter(null)
-                                                                                .anomalous(true)
+                                                                                .anomalousMetricsOnly(true)
+                                                                                .anomalousNodesOnly(true)
                                                                                 .hostNames(Arrays.asList("node2"))
                                                                                 .build();
     PageParams pageParams = PageParams.builder().page(0).size(10).build();
@@ -485,7 +537,8 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
     DeploymentTimeSeriesAnalysisFilter deploymentTimeSeriesAnalysisFilter = DeploymentTimeSeriesAnalysisFilter.builder()
                                                                                 .healthSourceIdentifiers(null)
                                                                                 .filter(null)
-                                                                                .anomalous(false)
+                                                                                .anomalousMetricsOnly(false)
+                                                                                .anomalousNodesOnly(false)
                                                                                 .hostNames(null)
                                                                                 .build();
     PageParams pageParams = PageParams.builder().page(0).size(10).build();
@@ -530,7 +583,8 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
     DeploymentTimeSeriesAnalysisFilter deploymentTimeSeriesAnalysisFilter = DeploymentTimeSeriesAnalysisFilter.builder()
                                                                                 .healthSourceIdentifiers(null)
                                                                                 .filter(null)
-                                                                                .anomalous(false)
+                                                                                .anomalousMetricsOnly(false)
+                                                                                .anomalousNodesOnly(false)
                                                                                 .hostNames(null)
                                                                                 .build();
     PageParams pageParams = PageParams.builder().page(0).size(10).build();
@@ -576,7 +630,8 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
     DeploymentTimeSeriesAnalysisFilter deploymentTimeSeriesAnalysisFilter = DeploymentTimeSeriesAnalysisFilter.builder()
                                                                                 .healthSourceIdentifiers(null)
                                                                                 .filter(null)
-                                                                                .anomalous(false)
+                                                                                .anomalousMetricsOnly(false)
+                                                                                .anomalousNodesOnly(false)
                                                                                 .hostName(null)
                                                                                 .build();
     PageParams pageParams = PageParams.builder().page(0).size(10).build();
@@ -690,7 +745,8 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
     DeploymentTimeSeriesAnalysisFilter deploymentTimeSeriesAnalysisFilter = DeploymentTimeSeriesAnalysisFilter.builder()
                                                                                 .healthSourceIdentifiers(null)
                                                                                 .filter(null)
-                                                                                .anomalous(false)
+                                                                                .anomalousMetricsOnly(false)
+                                                                                .anomalousNodesOnly(false)
                                                                                 .hostNames(null)
                                                                                 .transactionNames(null)
                                                                                 .build();
@@ -728,48 +784,48 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
                    .getContent()
                    .get(0)
                    .getNodeRiskCountDTO()
-                   .getRiskCounts()
-                   .get(2)
+                   .getNodeRiskCounts()
+                   .get(1)
                    .getCount())
         .isEqualTo(1);
     assertThat(transactionMetricInfoSummaryPageDTO.getPageResponse()
                    .getContent()
                    .get(0)
                    .getNodeRiskCountDTO()
-                   .getRiskCounts()
-                   .get(2)
-                   .getDisplayName())
-        .isEqualTo("Healthy");
-    assertThat(transactionMetricInfoSummaryPageDTO.getPageResponse()
-                   .getContent()
+                   .getNodeRiskCounts()
                    .get(0)
-                   .getNodeRiskCountDTO()
-                   .getRiskCounts()
-                   .get(5)
                    .getCount())
         .isEqualTo(2);
     assertThat(transactionMetricInfoSummaryPageDTO.getPageResponse()
                    .getContent()
+                   .get(0)
+                   .getNodeRiskCountDTO()
+                   .getNodeRiskCounts()
+                   .get(1)
+                   .getDisplayName())
+        .isEqualTo("Healthy");
+    assertThat(transactionMetricInfoSummaryPageDTO.getPageResponse()
+                   .getContent()
                    .get(1)
                    .getNodeRiskCountDTO()
-                   .getRiskCounts()
-                   .get(2)
+                   .getNodeRiskCounts()
+                   .get(0)
                    .getCount())
         .isEqualTo(1);
     assertThat(transactionMetricInfoSummaryPageDTO.getPageResponse()
                    .getContent()
                    .get(1)
                    .getNodeRiskCountDTO()
-                   .getRiskCounts()
-                   .get(5)
+                   .getNodeRiskCounts()
+                   .get(1)
                    .getCount())
         .isEqualTo(1);
     assertThat(transactionMetricInfoSummaryPageDTO.getPageResponse()
                    .getContent()
                    .get(1)
                    .getNodeRiskCountDTO()
-                   .getRiskCounts()
-                   .get(5)
+                   .getNodeRiskCounts()
+                   .get(0)
                    .getDisplayName())
         .isEqualTo("Unhealthy");
   }
@@ -829,7 +885,8 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
         DeploymentTimeSeriesAnalysisFilter.builder()
             .healthSourceIdentifiers(null)
             .filter(null)
-            .anomalous(false)
+            .anomalousMetricsOnly(false)
+            .anomalousNodesOnly(false)
             .hostNames(null)
             .transactionNames(Arrays.asList("/todolist/inside"))
             .build();
@@ -865,7 +922,8 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
         DeploymentTimeSeriesAnalysisFilter.builder()
             .healthSourceIdentifiers(null)
             .filter(null)
-            .anomalous(false)
+            .anomalousMetricsOnly(false)
+            .anomalousNodesOnly(false)
             .hostName(null)
             .hostNames(Arrays.asList("node1", "node2"))
             .transactionNames(null)

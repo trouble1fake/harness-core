@@ -272,6 +272,8 @@ public class NodeExecutionServiceImpl implements NodeExecutionService {
           NodeExecutionStartObserver::onNodeStart, NodeStartInfo.builder().nodeExecution(nodeExecution).build());
       return nodeExecution1;
     } else {
+      nodeExecutionStartSubject.fireInform(
+          NodeExecutionStartObserver::onNodeStart, NodeStartInfo.builder().nodeExecution(nodeExecution).build());
       return mongoTemplate.save(nodeExecution);
     }
   }
@@ -615,7 +617,7 @@ public class NodeExecutionServiceImpl implements NodeExecutionService {
   private Map<String, String> mapNodeExecutionUuidWithPlanNodeUuid(List<NodeExecution> nodeExecutionList) {
     Map<String, String> uuidMapper = new HashMap<>();
     for (NodeExecution nodeExecution : nodeExecutionList) {
-      uuidMapper.put(nodeExecution.getNodeId(), nodeExecution.getUuid());
+      uuidMapper.put(nodeExecution.nodeId(), nodeExecution.getUuid());
     }
     return uuidMapper;
   }
@@ -633,7 +635,7 @@ public class NodeExecutionServiceImpl implements NodeExecutionService {
       String parentId = nodeExecution.getParentId();
       RetryStageInfo stageDetail = RetryStageInfo.builder()
                                        .name(nodeExecution.name())
-                                       .identifier(nodeExecution.getIdentifier())
+                                       .identifier(nodeExecution.identifier())
                                        .parentId(parentId)
                                        .createdAt(nodeExecution.getCreatedAt())
                                        .status(ExecutionStatus.getExecutionStatus(nodeExecution.getStatus()))
