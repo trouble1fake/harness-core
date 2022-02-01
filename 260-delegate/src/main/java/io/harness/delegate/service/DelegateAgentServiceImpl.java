@@ -1459,7 +1459,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       if (taskEvent instanceof DelegateTaskAbortEvent) {
         abortDelegateTask((DelegateTaskAbortEvent) taskEvent);
       } else {
-        dispatchDelegateTask(taskEvent);
+        dispatchDelegateTaskAsync(taskEvent);
       }
     }
   }
@@ -1871,7 +1871,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     }
 
     Future taskFuture = taskExecutor.submit(() -> dispatchDelegateTask(delegateTaskEvent));
-    log.info("Task submitted for execution");
+    log.info("TaskId: {} submitted for execution", delegateTaskId);
 
     DelegateTaskExecutionData taskExecutionData = DelegateTaskExecutionData.builder().taskFuture(taskFuture).build();
     currentlyExecutingFutures.put(delegateTaskId, taskExecutionData);
