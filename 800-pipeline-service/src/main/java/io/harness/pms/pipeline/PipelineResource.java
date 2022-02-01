@@ -170,7 +170,6 @@ public class PipelineResource implements YamlSchemaResource {
 
   @POST
   @Path("/v2")
-  @Deprecated
   @ApiOperation(value = "Create a Pipeline", nickname = "createPipelineV2")
   @Operation(operationId = "postPipelineV2", summary = "Create a Pipeline API (V2 Version)",
       responses =
@@ -179,6 +178,7 @@ public class PipelineResource implements YamlSchemaResource {
         ApiResponse(responseCode = "default", description = "Returns created pipeline with metadata")
       })
   @NGAccessControlCheck(resourceType = "PIPELINE", permission = PipelineRbacPermissions.PIPELINE_CREATE_AND_EDIT)
+  @Deprecated
   public ResponseDTO<PipelineSaveResponse>
   createPipelineV2(@Parameter(description = PipelineResourceConstants.ACCOUNT_PARAM_MESSAGE, required = true) @NotNull
                    @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier String accountId,
@@ -327,7 +327,6 @@ public class PipelineResource implements YamlSchemaResource {
 
   @PUT
   @Path("/v2/{pipelineIdentifier}")
-  @Deprecated
   @ApiOperation(value = "Update a Pipeline", nickname = "putPipelineV2")
   @Operation(operationId = "updatePipelineV2", summary = "Updates a Pipeline by identifier (V2 Version)",
       responses =
@@ -336,6 +335,7 @@ public class PipelineResource implements YamlSchemaResource {
         ApiResponse(responseCode = "default", description = "Returns updated pipeline with metadata")
       })
   @NGAccessControlCheck(resourceType = "PIPELINE", permission = PipelineRbacPermissions.PIPELINE_CREATE_AND_EDIT)
+  @Deprecated
   public ResponseDTO<PipelineSaveResponse>
   updatePipelineV2(
       @Parameter(description = PipelineResourceConstants.IF_MATCH_PARAM_MESSAGE) @HeaderParam(IF_MATCH) String ifMatch,
