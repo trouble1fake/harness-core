@@ -33,7 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 public class DefaultsAuthHandler {
   @Inject UserService userService;
 
-  public void authorizeUpdate(String appId, String accountId) {
+  public void authorizeUsage(String appId, String accountId) {
     if (isEmpty(appId)) {
       throw new InvalidRequestException("Invalid argument, appId cannot be null/empty.");
     }

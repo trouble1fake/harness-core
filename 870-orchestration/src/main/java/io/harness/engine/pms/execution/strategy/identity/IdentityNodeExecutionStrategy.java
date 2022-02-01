@@ -16,6 +16,7 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.engine.OrchestrationEngine;
 import io.harness.engine.executions.node.NodeExecutionService;
+import io.harness.engine.executions.plan.PlanService;
 import io.harness.engine.pms.advise.AdviseHandlerFactory;
 import io.harness.engine.pms.advise.AdviserResponseHandler;
 import io.harness.engine.pms.commons.events.PmsEventSender;
@@ -27,11 +28,13 @@ import io.harness.execution.ExecutionModeUtils;
 import io.harness.execution.IdentityNodeExecutionMetadata;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.NodeExecution.NodeExecutionKeys;
+import io.harness.graph.stepDetail.service.PmsGraphStepDetailsService;
 import io.harness.logging.AutoLogContext;
 import io.harness.plan.IdentityPlanNode;
 import io.harness.pms.contracts.advisers.AdviseType;
 import io.harness.pms.contracts.advisers.AdviserResponse;
 import io.harness.pms.contracts.ambiance.Ambiance;
+import io.harness.pms.contracts.ambiance.Level;
 import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.execution.start.NodeStartEvent;
 import io.harness.pms.contracts.steps.io.StepResponseProto;
@@ -59,6 +62,7 @@ public class IdentityNodeExecutionStrategy
     implements NodeExecutionStrategy<IdentityPlanNode, NodeExecution, IdentityNodeExecutionMetadata> {
   @Inject private PmsEventSender eventSender;
   @Inject private NodeExecutionService nodeExecutionService;
+  @Inject private PlanService planService;
   @Inject private AdviseHandlerFactory adviseHandlerFactory;
   @Inject private WaitNotifyEngine waitNotifyEngine;
   @Inject private OrchestrationEngine orchestrationEngine;
@@ -67,11 +71,13 @@ public class IdentityNodeExecutionStrategy
   @Inject private IdentityNodeResumeHelper identityNodeResumeHelper;
   @Inject private TransactionHelper transactionHelper;
   @Inject @Named("EngineExecutorService") private ExecutorService executorService;
+  @Inject PmsGraphStepDetailsService pmsGraphStepDetailsService;
 
   private String SERVICE_NAME_IDENTITY = ModuleType.PMS.name().toLowerCase();
 
   private void setNodeExecutionParameters(Update update, NodeExecution originalExecution) {
     setUnset(update, NodeExecutionKeys.resolvedStepParameters, originalExecution.getResolvedStepParameters());
+    // Todo: Remove this after one month
     setUnset(update, NodeExecutionKeys.resolvedInputs, originalExecution.getResolvedInputs());
     setUnset(update, NodeExecutionKeys.mode, originalExecution.getMode());
     setUnset(update, NodeExecutionKeys.nodeRunInfo, originalExecution.getNodeRunInfo());
@@ -107,6 +113,13 @@ public class IdentityNodeExecutionStrategy
             .previousId(previousNodeExecution == null ? null : previousNodeExecution.getUuid())
             .unitProgresses(new ArrayList<>())
             .startTs(AmbianceUtils.getCurrentLevelStartTs(cloned))
+            .originalNodeExecutionId(node.getOriginalNodeExecutionId())
+            .module(node.getServiceName())
+            .name(node.getName())
+            .skipGraphType(node.getSkipGraphType())
+            .identifier(node.getIdentifier())
+            .stepType(node.getStepType())
+            .nodeId(node.getUuid())
             .build();
     NodeExecution savedNodeExecution = nodeExecutionService.save(nodeExecution);
     // TODO: Should add to an execution queue rather than submitting straight to thread pool
@@ -117,17 +130,19 @@ public class IdentityNodeExecutionStrategy
   @Override
   public void startExecution(Ambiance ambiance) {
     String newNodeExecutionId = Objects.requireNonNull(AmbianceUtils.obtainCurrentRuntimeId(ambiance));
-    NodeExecution newNodeExecution = nodeExecutionService.get(AmbianceUtils.obtainCurrentRuntimeId(ambiance));
-    IdentityPlanNode node = newNodeExecution.getNode();
+    IdentityPlanNode node = planService.fetchNode(ambiance.getPlanId(), AmbianceUtils.obtainCurrentSetupId(ambiance));
     try (AutoLogContext ignore = AmbianceUtils.autoLogContext(ambiance)) {
       NodeExecution originalExecution = nodeExecutionService.get(node.getOriginalNodeExecutionId());
 
       Update update = new Update();
       setNodeExecutionParameters(update, originalExecution);
-
+      if (originalExecution.getResolvedInputs() == null) {
+        pmsGraphStepDetailsService.copyStepDetailsForRetry(
+            ambiance.getPlanExecutionId(), originalExecution.getUuid(), newNodeExecutionId);
+      }
       // If Node is skipped then call the adviser response handler straight away
       if (originalExecution.getStatus() == Status.SKIPPED) {
-        newNodeExecution = nodeExecutionService.updateStatusWithUpdate(
+        NodeExecution newNodeExecution = nodeExecutionService.updateStatusWithUpdate(
             newNodeExecutionId, originalExecution.getStatus(), update, EnumSet.noneOf(Status.class));
         processAdviserResponse(ambiance, newNodeExecution.getAdviserResponse());
         return;
@@ -140,7 +155,7 @@ public class IdentityNodeExecutionStrategy
         return;
       }
 
-      newNodeExecution = nodeExecutionService.updateStatusWithUpdate(
+      NodeExecution newNodeExecution = nodeExecutionService.updateStatusWithUpdate(
           newNodeExecutionId, Status.RUNNING, update, EnumSet.noneOf(Status.class));
 
       // If not leaf node then we need to call the identity step
@@ -196,12 +211,12 @@ public class IdentityNodeExecutionStrategy
     NodeExecution nodeExecution = nodeExecutionService.update(
         nodeExecutionId, ops -> ops.set(NodeExecutionKeys.endTs, System.currentTimeMillis()));
     if (isNotEmpty(nodeExecution.getNotifyId())) {
-      IdentityPlanNode planNode = nodeExecution.getNode();
+      Level level = AmbianceUtils.obtainCurrentLevel(nodeExecution.getAmbiance());
       StepResponseNotifyData responseData = StepResponseNotifyData.builder()
-                                                .nodeUuid(planNode.getUuid())
+                                                .nodeUuid(level.getSetupId())
                                                 .failureInfo(nodeExecution.getFailureInfo())
-                                                .identifier(planNode.getIdentifier())
-                                                .group(planNode.getGroup())
+                                                .identifier(level.getIdentifier())
+                                                .group(level.getGroup())
                                                 .status(nodeExecution.getStatus())
                                                 .adviserResponse(nodeExecution.getAdviserResponse())
                                                 .build();

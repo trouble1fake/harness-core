@@ -10,6 +10,7 @@ package io.harness.serializer.morphia;
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.stepDetail.NodeExecutionsInfo;
 import io.harness.beans.stepDetail.StepDetailInstance;
 import io.harness.data.ExecutionSweepingOutputInstance;
 import io.harness.data.OutcomeInstance;
@@ -22,6 +23,7 @@ import io.harness.interrupts.Interrupt;
 import io.harness.morphia.MorphiaRegistrar;
 import io.harness.morphia.MorphiaRegistrarHelperPut;
 import io.harness.plan.Node;
+import io.harness.plan.NodeEntity;
 import io.harness.plan.Plan;
 import io.harness.pms.sdk.PmsSdkInstance;
 
@@ -40,9 +42,11 @@ public class OrchestrationBeansMorphiaRegistrar implements MorphiaRegistrar {
     set.add(Plan.class);
     set.add(PlanExecutionMetadata.class);
     set.add(StepDetailInstance.class);
+    set.add(NodeExecutionsInfo.class);
     set.add(Node.class);
     set.add(PmsNodeExecution.class);
     set.add(PmsNodeExecutionMetadata.class);
+    set.add(NodeEntity.class);
   }
 
   @Override

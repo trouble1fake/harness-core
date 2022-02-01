@@ -18,8 +18,9 @@ http_archive(
     sha256 = "d0f5f605d0d656007ce6c8b5a82df3037e1d8fe8b121ed42e536f569dec16113",
     strip_prefix = "protobuf-3.14.0",
     urls = [
-        "https://mirror.bazel.build/github.com/protocolbuffers/protobuf/archive/v3.14.0.tar.gz",
-        "https://github.com/protocolbuffers/protobuf/archive/v3.14.0.tar.gz",
+        "http://jfrogdev.dev.harness.io:80/artifactory/protobuf-github/archive/v3.14.0.tar.gz",
+        #"https://mirror.bazel.build/github.com/protocolbuffers/protobuf/archive/v3.14.0.tar.gz",
+        #"https://github.com/protocolbuffers/protobuf/archive/v3.14.0.tar.gz",
     ],
 )
 
@@ -1007,8 +1008,8 @@ go_repository(
 go_repository(
     name = "com_github_drone_go_scm",
     importpath = "github.com/drone/go-scm",
-    sum = "h1:35m/CcHkYjQ4BlOM7rIIwrki6uDUbUH+Kkb9rv6om3M=",
-    version = "v1.15.1",
+    sum = "h1:VU6C6r2Hxf5FZUjTazCH2xlXBe21JDg7gBcJvsL7twk=",
+    version = "v1.18.0",
 )
 
 go_repository(
@@ -4583,10 +4584,9 @@ plain_artifacts = [
     "io.confluent:kafka-schema-registry-client:5.5.1",
     "io.confluent:kafka-schema-serializer:5.5.1",
     "io.confluent:kafka-schema-serializer:5.5.1",
-    "io.debezium:debezium-api:1.5.4.Final",
-    "io.debezium:debezium-connector-mongodb:1.5.4.Final",
-    "io.debezium:debezium-core:1.5.4.Final",
-    "io.debezium:debezium-embedded:1.5.4.Final",
+    "io.debezium:debezium-api:1.7.2.Final",
+    "io.debezium:debezium-connector-mongodb:1.7.2.Final",
+    "io.debezium:debezium-core:1.7.2.Final",
     "io.dropwizard-bundles:dropwizard-configurable-assets-bundle:1.3.5",
     "io.dropwizard.metrics:metrics-annotation:4.0.5",
     "io.dropwizard.metrics:metrics-core:4.0.5",
@@ -4643,13 +4643,13 @@ plain_artifacts = [
     "io.grpc:grpc-services:1.33.1",
     "io.grpc:grpc-stub:1.33.1",
     "io.gsonfire:gson-fire:1.8.3",
-    "io.harness.cv:data-collection-dsl:0.31-RELEASE",
+    "io.harness.cv:data-collection-dsl:0.33-RELEASE",
     "io.harness:ff-java-server-sdk:1.0.5.1",
     "io.jsonwebtoken:jjwt:0.9.1",
-    "io.kubernetes:client-java-api:11.0.2",
-    "io.kubernetes:client-java-extended:11.0.2",
-    "io.kubernetes:client-java-proto:11.0.2",
-    "io.kubernetes:client-java:11.0.2",
+    "io.kubernetes:client-java-api:9.0.2",
+    "io.kubernetes:client-java-extended:9.0.2",
+    "io.kubernetes:client-java-proto:9.0.2",
+    "io.kubernetes:client-java:9.0.2",
     "io.leangen.graphql:spqr:0.11.2",
     "io.netty:netty-all:4.1.51.Final",
     "io.netty:netty-buffer:4.1.52.Final",
@@ -4772,9 +4772,8 @@ plain_artifacts = [
     "org.apache.httpcomponents:httpcore:4.4.14",
     "org.apache.httpcomponents:httpmime:4.5.13",
     "org.mybatis:mybatis:jar:3.5.7",
-    "org.apache.kafka:connect-api:2.6.1",
-    "org.apache.kafka:connect-runtime:2.6.1",
-    "org.apache.kafka:kafka-clients:2.6.1",
+    "org.apache.kafka:connect-api:2.8.1",
+    "org.apache.kafka:kafka-clients:2.8.1",
     "org.apache.logging.log4j:log4j-api:2.16.0",
     "org.apache.logging.log4j:log4j-to-slf4j:2.16.0",
     "org.apache.lucene:lucene-analyzers-common:8.5.1",
@@ -5129,6 +5128,24 @@ maven_install(
             version = "0.1.143",
             exclusions = [
                 "org.clojure:clojure",
+            ],
+        ),
+        maven.artifact(
+            group = "io.debezium",
+            artifact = "debezium-embedded",
+            version = "1.7.2.Final",
+            exclusions = [
+                "log4j:log4j",
+                "org.slf4j:slf4j-log4j12",
+            ],
+        ),
+        maven.artifact(
+            group = "org.apache.kafka",
+            artifact = "connect-runtime",
+            version = "2.8.1",
+            exclusions = [
+                "log4j:log4j",
+                "org.slf4j:slf4j-log4j12",
             ],
         ),
         maven_test_artifact("com.github.tomakehurst:wiremock-jre8-standalone:2.27.2"),

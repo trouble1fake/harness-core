@@ -39,8 +39,8 @@ OC_MAC_DIR="${IMAGES_DIR}/oc/darwin/$OC_VERSION/"
 
 mkdir -p $IMAGES_DIR
 
-cp dist/delegate/delegate-capsule.jar ${IMAGES_DIR}/delegate.jar
-cp dist/watcher/watcher-capsule.jar ${IMAGES_DIR}/watcher.jar
+cp -f dist/delegate/delegate-capsule.jar ${IMAGES_DIR}/delegate.jar
+cp -f dist/watcher/watcher-capsule.jar ${IMAGES_DIR}/watcher.jar
 
 curl "${JRE_SOURCE_URL_1}/${JRE_SOLARIS_1}" >"${JRE_SOLARIS_1}"
 curl "${JRE_SOURCE_URL_1}/${JRE_MACOSX_1}" >"${JRE_MACOSX_1}"
@@ -199,7 +199,7 @@ for tfConfigInspectVersion in v1.0 v1.1; do
 
 done
 
-for scmVersion in 0e23b6f1; do
+for scmVersion in 3ac4cefa; do
   echo "Adding scm" $scmVersion
 
   SCM_LINUX_DIR="${IMAGES_DIR}/scm/linux/$scmVersion/"
@@ -295,7 +295,7 @@ function setupClientUtils() {
       cp images/oc/${platform}/$ocversion/oc ${STORAGE_DIR_LOCATION}/harness-download/harness-oc/release/$ocversion/bin/${platform}/amd64/
     done
 
-    for scmVersion in 0e23b6f1; do
+    for scmVersion in 3ac4cefa; do
       mkdir -p ${STORAGE_DIR_LOCATION}/harness-download/harness-scm/release/$scmVersion/bin/${platform}/amd64/
       cp images/scm/${platform}/$scmVersion/scm ${STORAGE_DIR_LOCATION}/harness-download/harness-scm/release/$scmVersion/bin/${platform}/amd64/
     done

@@ -11,9 +11,14 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FeatureName;
 import io.harness.cdng.creator.filters.DeploymentStageFilterJsonCreator;
+import io.harness.cdng.creator.plan.StepsPlanCreator;
 import io.harness.cdng.creator.plan.artifact.ArtifactsPlanCreator;
 import io.harness.cdng.creator.plan.artifact.PrimaryArtifactPlanCreator;
+import io.harness.cdng.creator.plan.artifact.SideCarArtifactPlanCreator;
+import io.harness.cdng.creator.plan.artifact.SideCarListPlanCreator;
 import io.harness.cdng.creator.plan.execution.CDExecutionPMSPlanCreator;
+import io.harness.cdng.creator.plan.manifest.IndividualManifestPlanCreator;
+import io.harness.cdng.creator.plan.manifest.ManifestsPlanCreator;
 import io.harness.cdng.creator.plan.rollback.ExecutionStepsRollbackPMSPlanCreator;
 import io.harness.cdng.creator.plan.service.ServicePlanCreator;
 import io.harness.cdng.creator.plan.stage.DeploymentStagePMSPlanCreator;
@@ -70,6 +75,11 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
     planCreators.add(new ServicePlanCreator());
     planCreators.add(new ArtifactsPlanCreator());
     planCreators.add(new PrimaryArtifactPlanCreator());
+    planCreators.add(new SideCarListPlanCreator());
+    planCreators.add(new SideCarArtifactPlanCreator());
+    planCreators.add(new ManifestsPlanCreator());
+    planCreators.add(new IndividualManifestPlanCreator());
+    planCreators.add(new StepsPlanCreator());
     injectorUtils.injectMembers(planCreators);
     return planCreators;
   }
@@ -120,13 +130,16 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
             .setFeatureRestrictionName(FeatureRestrictionName.K8S_CANARY_DELETE.name())
             .setStepMetaData(StepMetaData.newBuilder().addCategory("Kubernetes").addFolderPaths("Kubernetes").build())
             .build();
-    StepInfo delete =
-        StepInfo.newBuilder()
-            .setName("Delete")
-            .setType(StepSpecTypeConstants.K8S_DELETE)
-            .setFeatureRestrictionName(FeatureRestrictionName.K8S_DELETE.name())
-            .setStepMetaData(StepMetaData.newBuilder().addCategory("Kubernetes").addFolderPaths("Kubernetes").build())
-            .build();
+    StepInfo delete = StepInfo.newBuilder()
+                          .setName("Delete")
+                          .setType(StepSpecTypeConstants.K8S_DELETE)
+                          .setFeatureRestrictionName(FeatureRestrictionName.K8S_DELETE.name())
+                          .setStepMetaData(StepMetaData.newBuilder()
+                                               .addCategory("Kubernetes")
+                                               .addCategory("Helm")
+                                               .addFolderPaths("Kubernetes")
+                                               .build())
+                          .build();
 
     StepInfo stageDeployment =
         StepInfo.newBuilder()
@@ -143,20 +156,26 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
             .setStepMetaData(StepMetaData.newBuilder().addCategory("Kubernetes").addFolderPaths("Kubernetes").build())
             .build();
 
-    StepInfo apply =
-        StepInfo.newBuilder()
-            .setName("Apply")
-            .setType(StepSpecTypeConstants.K8S_APPLY)
-            .setFeatureRestrictionName(FeatureRestrictionName.K8S_APPLY.name())
-            .setStepMetaData(StepMetaData.newBuilder().addCategory("Kubernetes").addFolderPaths("Kubernetes").build())
-            .build();
-    StepInfo scale =
-        StepInfo.newBuilder()
-            .setName("Scale")
-            .setType(StepSpecTypeConstants.K8S_SCALE)
-            .setFeatureRestrictionName(FeatureRestrictionName.K8S_SCALE.name())
-            .setStepMetaData(StepMetaData.newBuilder().addCategory("Kubernetes").addFolderPaths("Kubernetes").build())
-            .build();
+    StepInfo apply = StepInfo.newBuilder()
+                         .setName("Apply")
+                         .setType(StepSpecTypeConstants.K8S_APPLY)
+                         .setFeatureRestrictionName(FeatureRestrictionName.K8S_APPLY.name())
+                         .setStepMetaData(StepMetaData.newBuilder()
+                                              .addCategory("Kubernetes")
+                                              .addCategory("Helm")
+                                              .addFolderPaths("Kubernetes")
+                                              .build())
+                         .build();
+    StepInfo scale = StepInfo.newBuilder()
+                         .setName("Scale")
+                         .setType(StepSpecTypeConstants.K8S_SCALE)
+                         .setFeatureRestrictionName(FeatureRestrictionName.K8S_SCALE.name())
+                         .setStepMetaData(StepMetaData.newBuilder()
+                                              .addCategory("Kubernetes")
+                                              .addCategory("Helm")
+                                              .addFolderPaths("Kubernetes")
+                                              .build())
+                         .build();
 
     StepInfo k8sRollingRollback =
         StepInfo.newBuilder()

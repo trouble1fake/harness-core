@@ -1,0 +1,61 @@
+{
+  "data" : {
+    "pairs" : [ {
+      "request" : {
+        "path" : [ {
+          "matcher" : "exact",
+          "value" : "/controller/rest/applications"
+        } ],
+        "method" : [ {
+          "matcher" : "exact",
+          "value" : "GET"
+        } ],
+        "destination" : [ {
+          "matcher" : "exact",
+          "value" : "harness-test.saas.appdynamics.com"
+        } ],
+        "scheme" : [ {
+          "matcher" : "exact",
+          "value" : "https"
+        } ],
+        "query" : {
+          "output" : [ {
+            "matcher" : "exact",
+            "value" : "json"
+          } ]
+        },
+        "body" : [ {
+          "matcher" : "exact",
+          "value" : ""
+        } ]
+      },
+      "response" : {
+        "status" : 200,
+        "body" : "H4sIAAAAAAAAAL3SwYrCMBAG4LtPITk7kDStbb0qqAdBvMoeJsm0BDQtaaug+O7Wuh6FwNLNIZD5CXzkz3Ey7dd92JnDM7HFlOkLYF2DK9nsHRhqtLd1ayv3yj9ja/qTjGWUxL8T1LrqXLvuhoilXMUZNxEISgzEKjOQKZ1DziOucJ4hCc76m4/Zd0aIIU3y+RiCDXpHTQMruoQwBBeRFHIMiaETldjSUMy5cratvA0r6K0apaH9AfDWeQKn4UrqZSsKMLZBdSITiJM8Ff+DC3+tZMzftNzCDh2W5MNB/I+gyc8TyawhS+oDAAA=",
+        "encodedBody" : true,
+        "templated" : false,
+        "headers" : {
+          "Connection" : [ "keep-alive" ],
+          "Content-Encoding" : [ "gzip" ],
+          "Content-Length" : [ "236" ],
+          "Content-Type" : [ "application/json;charset=UTF-8" ],
+          "Date" : [ "Mon, 24 Jan 2022 12:32:19 GMT" ],
+          "Hoverfly" : [ "Was-Here" ],
+          "Server" : [ "AppDynamics" ],
+          "Set-Cookie" : [ "JSESSIONID=c12a63c6e9e2d4fcf966a2091829; Path=/controller; HttpOnly; Secure" ],
+          "X-Content-Type-Options" : [ "nosniff" ],
+          "X-Frame-Options" : [ "SAMEORIGIN" ],
+          "X-Xss-Protection" : [ "1; mode=block" ]
+        }
+      }
+    } ],
+    "globalActions" : {
+      "delays" : [ ]
+    }
+  },
+  "meta" : {
+    "schemaVersion" : "v5",
+    "hoverflyVersion" : "v1.1.5",
+    "timeExported" : "2022-01-24T12:32:23Z"
+  }
+}

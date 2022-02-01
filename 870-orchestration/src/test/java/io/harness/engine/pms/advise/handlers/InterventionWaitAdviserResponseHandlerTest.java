@@ -20,17 +20,17 @@ import io.harness.engine.executions.InterventionWaitTimeoutCallback;
 import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.executions.plan.PlanExecutionMetadataService;
 import io.harness.engine.executions.plan.PlanExecutionService;
+import io.harness.engine.utils.PmsLevelUtils;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.PlanExecution;
 import io.harness.execution.PlanExecutionMetadata;
+import io.harness.plan.PlanNode;
 import io.harness.pms.contracts.advisers.AdviseType;
 import io.harness.pms.contracts.advisers.AdviserResponse;
 import io.harness.pms.contracts.advisers.InterventionWaitAdvise;
 import io.harness.pms.contracts.ambiance.Ambiance;
-import io.harness.pms.contracts.ambiance.Level;
 import io.harness.pms.contracts.commons.RepairActionCode;
 import io.harness.pms.contracts.execution.Status;
-import io.harness.pms.contracts.plan.PlanNodeProto;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.repositories.TimeoutInstanceRepository;
@@ -43,7 +43,6 @@ import io.harness.timeout.trackers.absolute.AbsoluteTimeoutTrackerFactory;
 
 import com.google.inject.Inject;
 import com.google.protobuf.Duration;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import org.junit.Before;
@@ -67,30 +66,29 @@ public class InterventionWaitAdviserResponseHandlerTest extends OrchestrationTes
 
   @Before
   public void setup() {
-    Ambiance ambiance = Ambiance.newBuilder()
-                            .setPlanExecutionId(PLAN_EXECUTION_ID)
-                            .addAllLevels(Collections.singletonList(
-                                Level.newBuilder().setRuntimeId(NODE_EXECUTION_ID).setSetupId(NODE_SETUP_ID).build()))
-                            .build();
-
     planExecutionService.save(PlanExecution.builder().uuid(PLAN_EXECUTION_ID).status(Status.RUNNING).build());
     PlanExecutionMetadata planExecutionMetadata =
         PlanExecutionMetadata.builder().planExecutionId(PLAN_EXECUTION_ID).build();
     planExecutionMetadataService.save(planExecutionMetadata);
 
-    nodeExecution =
-        NodeExecution.builder()
-            .uuid(NODE_EXECUTION_ID)
-            .ambiance(ambiance)
-            .node(PlanNodeProto.newBuilder()
-                      .setUuid(NODE_SETUP_ID)
-                      .setName("DUMMY")
-                      .setIdentifier("dummy")
-                      .setStepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                      .build())
-            .startTs(System.currentTimeMillis())
-            .status(Status.FAILED)
-            .build();
+    PlanNode planNode = PlanNode.builder()
+                            .uuid(NODE_SETUP_ID)
+                            .name("DUMMY")
+                            .identifier("dummy")
+                            .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+                            .serviceName("CD")
+                            .build();
+    Ambiance ambiance = Ambiance.newBuilder()
+                            .setPlanExecutionId(PLAN_EXECUTION_ID)
+                            .addLevels(PmsLevelUtils.buildLevelFromNode(NODE_EXECUTION_ID, planNode))
+                            .build();
+    nodeExecution = NodeExecution.builder()
+                        .uuid(NODE_EXECUTION_ID)
+                        .ambiance(ambiance)
+                        .planNode(planNode)
+                        .startTs(System.currentTimeMillis())
+                        .status(Status.FAILED)
+                        .build();
     nodeExecutionService.save(nodeExecution);
     Duration timeout = Duration.newBuilder().setSeconds(java.time.Duration.ofDays(1).toMinutes() * 60).build();
     advise = InterventionWaitAdvise.newBuilder()

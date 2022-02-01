@@ -89,6 +89,17 @@ public interface ActivityService {
   Activity getLastActivityForService(String appId, String serviceId);
 
   /**
+   * Get the list of activities which are related to previous workflow executions for the same service.
+   *
+   * @param appId the app id
+   * @param serviceId the service id
+   * @param workflowExecutionId the current workflow id
+   * @return the list of activities for rollback
+   */
+  List<Activity> getRollbackActivitiesForService(
+      String appId, String serviceId, String workflowId, String workflowExecutionId);
+
+  /**
    * Gets lastproduction activity for service.
    *
    * @param appId     the app id

@@ -34,6 +34,8 @@ import io.harness.git.model.ChangeType;
 import io.harness.gitsync.helpers.GitContextHelper;
 import io.harness.gitsync.persistance.GitSyncSdkService;
 import io.harness.gitsync.scm.EntityObjectIdUtils;
+import io.harness.gitsync.utils.GitEntityFilePath;
+import io.harness.gitsync.utils.GitSyncSdkUtils;
 import io.harness.grpc.utils.StringValueUtils;
 import io.harness.pms.PmsFeatureFlagService;
 import io.harness.pms.contracts.governance.ExpansionRequestMetadata;
@@ -540,6 +542,20 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
     Set<ExpansionResponseBatch> expansionResponseBatches =
         jsonExpander.fetchExpansionResponses(expansionRequests, expansionRequestMetadata);
     return ExpansionsMerger.mergeExpansions(pipelineYaml, expansionResponseBatches);
+  }
+
+  @Override
+  public PipelineEntity updateGitFilePath(PipelineEntity pipelineEntity, String newFilePath) {
+    Criteria criteria = PMSPipelineServiceHelper.getPipelineEqualityCriteria(pipelineEntity.getAccountId(),
+        pipelineEntity.getOrgIdentifier(), pipelineEntity.getProjectIdentifier(), pipelineEntity.getIdentifier(), false,
+        null);
+
+    GitEntityFilePath gitEntityFilePath = GitSyncSdkUtils.getRootFolderAndFilePath(newFilePath);
+    Update update = new Update()
+                        .set(PipelineEntityKeys.filePath, gitEntityFilePath.getFilePath())
+                        .set(PipelineEntityKeys.rootFolder, gitEntityFilePath.getRootFolder());
+    return updatePipelineMetadata(pipelineEntity.getAccountId(), pipelineEntity.getOrgIdentifier(),
+        pipelineEntity.getProjectIdentifier(), criteria, update);
   }
 
   ExpansionRequestMetadata getRequestMetadata(String accountId, String orgIdentifier, String projectIdentifier) {

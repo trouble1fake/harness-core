@@ -96,6 +96,7 @@ message QueueTaskRequest {
 message AddStepDetailsInstanceRequest {
   string stepDetails = 1;
   string name = 2;
+  string nodeExecutionId = 3;
 }
 
 message HandleProgressRequest {

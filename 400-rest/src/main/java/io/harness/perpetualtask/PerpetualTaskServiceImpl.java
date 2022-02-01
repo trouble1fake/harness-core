@@ -61,6 +61,7 @@ public class PerpetualTaskServiceImpl implements PerpetualTaskService, DelegateO
   private PerpetualTaskServiceClientRegistry clientRegistry;
   private final BroadcasterFactory broadcasterFactory;
   private final PerpetualTaskScheduleService perpetualTaskScheduleService;
+  private static final int TASK_FAILED_EXECUTION_LIMIT = 5;
 
   @Inject private MainConfiguration mainConfiguration;
   @Inject private DelegateServiceClassicGrpcClient delegateServiceClassicGrpcClient;
@@ -280,12 +281,31 @@ public class PerpetualTaskServiceImpl implements PerpetualTaskService, DelegateO
 
   @Override
   public boolean triggerCallback(String taskId, long heartbeatMillis, PerpetualTaskResponse perpetualTaskResponse) {
-    return perpetualTaskRecordDao.saveHeartbeat(taskId, heartbeatMillis);
+    int responseCode = perpetualTaskResponse.getResponseCode();
+    long taskFailedExecutionCount = 0;
+    if (responseCode == 500) {
+      PerpetualTaskRecord taskRecord = perpetualTaskRecordDao.getTask(taskId);
+      taskFailedExecutionCount = taskRecord.getFailedExecutionCount();
+      taskFailedExecutionCount++;
+      boolean saveHeartbeat = perpetualTaskRecordDao.saveHeartbeat(taskId, heartbeatMillis, taskFailedExecutionCount);
+      if (taskFailedExecutionCount >= TASK_FAILED_EXECUTION_LIMIT) {
+        setTaskUnassigned(taskId);
+        updateTaskUnassignedReason(
+            taskId, PerpetualTaskUnassignedReason.MULTIPLE_FAILED_PERPETUAL_TASK, taskRecord.getAssignTryCount());
+      }
+      return saveHeartbeat;
+    }
+    return perpetualTaskRecordDao.saveHeartbeat(taskId, heartbeatMillis, taskFailedExecutionCount);
   }
 
   @Override
   public void updateTaskUnassignedReason(String taskId, PerpetualTaskUnassignedReason reason, int assignTryCount) {
     perpetualTaskRecordDao.updateTaskUnassignedReason(taskId, reason, assignTryCount);
+  }
+
+  @Override
+  public void setTaskUnassigned(String taskId) {
+    perpetualTaskRecordDao.setTaskUnassigned(taskId);
   }
 
   @Override

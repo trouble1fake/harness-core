@@ -17,6 +17,7 @@ import io.harness.pms.sdk.core.variables.beans.VariableCreationResponse;
 import io.harness.pms.yaml.YAMLFieldNameConstants;
 import io.harness.pms.yaml.YamlField;
 import io.harness.pms.yaml.YamlNode;
+import io.harness.pms.yaml.YamlUtils;
 import io.harness.rule.Owner;
 import io.harness.serializer.JsonUtils;
 
@@ -48,7 +49,9 @@ public class ApprovalStageVariableCreatorTest extends CategoryTest {
         approvalStageVariableCreator.createVariablesForChildrenNodes(null, yamlField);
     assertThat(variablesMap.get(STAGE_ID)).isNotNull();
     String yamlPath = variablesMap.get(STAGE_ID).getDependencies().getDependenciesMap().get(STAGE_ID);
-    YamlField specYaml = YamlField.fromYamlPath(json, yamlPath);
+    YamlField fullYamlField = YamlUtils.readTree(json);
+    assertThat(fullYamlField).isNotNull();
+    YamlField specYaml = fullYamlField.fromYamlPath(yamlPath);
     assertThat(yamlField.getNode().getFieldName()).isNotEmpty();
     assertThat(specYaml.getName()).isEqualTo("execution");
     assertThat(specYaml.getNode().fetchKeys()).containsExactlyInAnyOrder("steps", "rollbackSteps", "__uuid");

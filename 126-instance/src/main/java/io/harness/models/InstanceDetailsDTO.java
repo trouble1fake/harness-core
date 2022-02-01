@@ -9,6 +9,7 @@ package io.harness.models;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.dtos.instanceinfo.InstanceInfoDTO;
 import io.harness.models.infrastructuredetails.InfrastructureDetails;
 
 import lombok.Builder;
@@ -27,4 +28,5 @@ public class InstanceDetailsDTO {
   String deployedById;
   String deployedByName;
   String pipelineExecutionName;
+  InstanceInfoDTO instanceInfoDTO;
 }

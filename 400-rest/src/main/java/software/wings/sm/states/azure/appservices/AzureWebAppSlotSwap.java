@@ -18,7 +18,6 @@ import io.harness.delegate.task.azure.AzureTaskExecutionResponse;
 import io.harness.delegate.task.azure.appservice.webapp.request.AzureWebAppSwapSlotsParameters;
 import io.harness.delegate.task.azure.appservice.webapp.response.AzureWebAppSwapSlotsResponse;
 
-import software.wings.beans.Activity;
 import software.wings.beans.command.AzureWebAppCommandUnit;
 import software.wings.beans.command.CommandUnit;
 import software.wings.beans.command.CommandUnitDetails.CommandUnitType;
@@ -63,9 +62,9 @@ public class AzureWebAppSlotSwap extends AbstractAzureAppServiceState {
 
   @Override
   protected AzureTaskExecutionRequest buildTaskExecutionRequest(
-      ExecutionContext context, AzureAppServiceStateData azureAppServiceStateData, Activity activity) {
+      ExecutionContext context, AzureAppServiceStateData azureAppServiceStateData, String activityId) {
     AzureWebAppSwapSlotsParameters swapSlotsParameters =
-        buildSlotSwapParams(context, azureAppServiceStateData, activity);
+        buildSlotSwapParams(context, azureAppServiceStateData, activityId);
 
     return AzureTaskExecutionRequest.builder()
         .azureConfigDTO(azureVMSSStateHelper.createAzureConfigDTO(azureAppServiceStateData.getAzureConfig()))
@@ -76,10 +75,10 @@ public class AzureWebAppSlotSwap extends AbstractAzureAppServiceState {
 
   @Override
   protected StateExecutionData buildPreStateExecutionData(
-      Activity activity, ExecutionContext context, AzureAppServiceStateData azureAppServiceStateData) {
+      String activityId, ExecutionContext context, AzureAppServiceStateData azureAppServiceStateData) {
     AzureAppServiceSlotSetupContextElement contextElement = readContextElement(context);
     return AzureAppServiceSlotSwapExecutionData.builder()
-        .activityId(activity.getUuid())
+        .activityId(activityId)
         .infrastructureMappingId(azureAppServiceStateData.getInfrastructureMapping().getUuid())
         .resourceGroup(contextElement.getResourceGroup())
         .appServiceName(contextElement.getWebApp())
@@ -115,19 +114,19 @@ public class AzureWebAppSlotSwap extends AbstractAzureAppServiceState {
   }
 
   @Override
-  protected List<CommandUnit> commandUnits(boolean isGitFetch) {
+  protected List<CommandUnit> commandUnits(boolean isNonDocker, boolean isGitFetch) {
     return ImmutableList.of(new AzureWebAppCommandUnit(AzureConstants.SLOT_SWAP),
         new AzureWebAppCommandUnit(AzureConstants.DEPLOYMENT_STATUS));
   }
 
   private AzureWebAppSwapSlotsParameters buildSlotSwapParams(
-      ExecutionContext context, AzureAppServiceStateData azureAppServiceStateData, Activity activity) {
+      ExecutionContext context, AzureAppServiceStateData azureAppServiceStateData, String activityId) {
     AzureAppServiceSlotSetupContextElement contextElement = readContextElement(context);
 
     return AzureWebAppSwapSlotsParameters.builder()
         .accountId(azureAppServiceStateData.getApplication().getAccountId())
         .appId(azureAppServiceStateData.getApplication().getAppId())
-        .activityId(activity.getUuid())
+        .activityId(activityId)
         .commandName(APP_SERVICE_SLOT_SWAP)
         .timeoutIntervalInMin(contextElement.getAppServiceSlotSetupTimeOut())
         .subscriptionId(contextElement.getSubscriptionId())

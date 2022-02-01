@@ -13,8 +13,9 @@ import io.harness.cvng.core.services.api.demo.CVNGDemoDataIndexService;
 import io.harness.persistence.HPersistence;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import org.mongodb.morphia.query.UpdateOperations;
-
+@Singleton
 public class CVNGDemoDataIndexServiceImpl implements CVNGDemoDataIndexService {
   @Inject HPersistence hPersistence;
   @Override

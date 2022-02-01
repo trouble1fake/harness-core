@@ -20,6 +20,7 @@ import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.HealthSourceD
 import io.harness.cvng.core.beans.params.PageParams;
 import io.harness.cvng.core.beans.params.filterParams.DeploymentLogAnalysisFilter;
 import io.harness.cvng.core.beans.params.filterParams.DeploymentTimeSeriesAnalysisFilter;
+import io.harness.cvng.verificationjob.entities.VerificationJobInstance;
 import io.harness.ng.beans.PageResponse;
 import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.rest.RestResponse;
@@ -30,6 +31,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import javax.validation.constraints.NotNull;
@@ -83,6 +85,10 @@ public class CVNGStepResource {
       @NotEmpty @NotNull @PathParam("verifyStepExecutionId") String callBackId,
       @BeanParam DeploymentTimeSeriesAnalysisFilter deploymentTimeSeriesAnalysisFilter,
       @BeanParam PageParams pageParams) {
+    // TODO: below code is necessary for backward compatability and will be removed once we phase out hostName Filter
+    if (deploymentTimeSeriesAnalysisFilter.filterByHostName()) {
+      deploymentTimeSeriesAnalysisFilter.setHostNames(Arrays.asList(deploymentTimeSeriesAnalysisFilter.getHostName()));
+    }
     return new RestResponse(stepTaskService.getDeploymentActivityTimeSeriesData(
         accountId, callBackId, deploymentTimeSeriesAnalysisFilter, pageParams));
   }
@@ -122,5 +128,39 @@ public class CVNGStepResource {
       @BeanParam DeploymentLogAnalysisFilter deploymentLogAnalysisFilter, @BeanParam PageParams pageParams) {
     return new RestResponse(stepTaskService.getDeploymentActivityLogAnalysisResult(
         accountId, callBackId, label, deploymentLogAnalysisFilter, pageParams));
+  }
+
+  @GET
+  @Path("/{verifyStepExecutionId}/all-transaction-names")
+  @Timed
+  @ExceptionMetered
+  @ApiOperation(value = "get all the transaction names", nickname = "getVerifyStepTransactionNames")
+  public RestResponse<List<String>> getTransactionNames(@NotEmpty @NotNull @QueryParam("accountId") String accountId,
+      @NotEmpty @NotNull @PathParam("verifyStepExecutionId") String callBackId) {
+    return new RestResponse(stepTaskService.getTransactionNames(accountId, callBackId));
+  }
+
+  @GET
+  @Path("/{verifyStepExecutionId}/all-node-names")
+  @Timed
+  @ExceptionMetered
+  @ApiOperation(value = "get all the Node names", nickname = "getVerifyStepNodeNames")
+  public RestResponse<List<String>> getNodeNames(@NotEmpty @NotNull @QueryParam("accountId") String accountId,
+      @NotEmpty @NotNull @PathParam("verifyStepExecutionId") String callBackId) {
+    return new RestResponse(stepTaskService.getNodeNames(accountId, callBackId));
+  }
+
+  /**
+  This API is only for debugging. We have to have proper API once we show the logs in the UI.
+  */
+  @GET
+  @Path("/{verifyStepExecutionId}/execution-logs-debugging")
+  @Timed
+  @ExceptionMetered
+  @ApiOperation(value = "get execution logs debug", nickname = "getVerifyStepExecutionLogs")
+  public RestResponse<List<VerificationJobInstance.ProgressLog>> getVerifyStepExecutionLogs(
+      @NotEmpty @NotNull @QueryParam("accountId") String accountId,
+      @NotEmpty @NotNull @PathParam("verifyStepExecutionId") String callBackId) {
+    return new RestResponse(stepTaskService.getExecutionLogs(accountId, callBackId));
   }
 }

@@ -16,7 +16,6 @@ import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.ExecutionStatus;
 import io.harness.beans.KeyValuePair;
 import io.harness.delegate.beans.DelegateTaskNotifyResponseData;
-import io.harness.pms.sdk.core.data.Outcome;
 import io.harness.serializer.JsonUtils;
 import io.harness.serializer.XmlUtils;
 
@@ -50,7 +49,7 @@ import org.w3c.dom.Document;
 @EqualsAndHashCode(callSuper = true)
 @JsonTypeName("httpStateExecutionData")
 @TargetModule(HarnessModule._870_CG_ORCHESTRATION)
-public class HttpStateExecutionData extends StateExecutionData implements DelegateTaskNotifyResponseData, Outcome {
+public class HttpStateExecutionData extends StateExecutionData implements DelegateTaskNotifyResponseData {
   private String httpUrl;
   private String httpMethod;
   private int httpResponseCode;

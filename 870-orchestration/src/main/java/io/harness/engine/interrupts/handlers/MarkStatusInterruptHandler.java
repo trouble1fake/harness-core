@@ -89,7 +89,8 @@ public abstract class MarkStatusInterruptHandler implements InterruptHandler {
                   .build()));
 
       handlePlanStatus(interrupt.getPlanExecutionId(), nodeExecution.getUuid());
-      orchestrationEngine.concludeNodeExecution(nodeExecution.getAmbiance(), status, overrideStatusSet);
+      orchestrationEngine.concludeNodeExecution(
+          nodeExecution.getAmbiance(), status, nodeExecution.getStatus(), overrideStatusSet);
     } catch (Exception ex) {
       interruptService.markProcessed(interrupt.getUuid(), PROCESSED_UNSUCCESSFULLY);
       throw ex;

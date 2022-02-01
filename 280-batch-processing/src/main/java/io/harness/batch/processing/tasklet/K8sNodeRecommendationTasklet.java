@@ -143,14 +143,13 @@ public class K8sNodeRecommendationTasklet implements Tasklet {
     }
 
     RecommendationResponse recommendation = response.body();
-    recommendation.setInstanceCategory(InstanceCategory.ON_DEMAND);
 
     if (InstanceCategory.SPOT.equals(serviceProvider.getInstanceCategory())) {
-      double totalSpotPrice =
-          recommendation.getAccuracy().getMasterPrice() + recommendation.getAccuracy().getSpotPrice();
-      recommendation.getAccuracy().setTotalPrice(totalSpotPrice);
-
       recommendation.setInstanceCategory(InstanceCategory.SPOT);
+      recommendation.getAccuracy().setTotalPrice(recommendation.getAccuracy().getSpotPrice());
+    } else {
+      recommendation.setInstanceCategory(InstanceCategory.ON_DEMAND);
+      recommendation.getAccuracy().setTotalPrice(recommendation.getAccuracy().getRegularPrice());
     }
 
     return recommendation;

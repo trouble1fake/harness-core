@@ -68,7 +68,10 @@ public class NotificationHelper {
 
   public void sendNotification(
       Ambiance ambiance, PipelineEventType pipelineEventType, NodeExecution nodeExecution, Long updatedAt) {
-    String identifier = nodeExecution != null ? nodeExecution.getNode().getIdentifier() : "";
+    if (!ambiance.getMetadata().getIsNotificationConfigured()) {
+      return;
+    }
+    String identifier = nodeExecution != null ? AmbianceUtils.obtainStepIdentifier(nodeExecution.getAmbiance()) : "";
     String accountId = AmbianceUtils.getAccountId(ambiance);
     String orgIdentifier = AmbianceUtils.getOrgIdentifier(ambiance);
     String projectIdentifier = AmbianceUtils.getProjectIdentifier(ambiance);
@@ -147,9 +150,9 @@ public class NotificationHelper {
 
   List<NotificationRules> getNotificationRulesFromYaml(String yaml, Ambiance ambiance) throws IOException {
     BasicPipeline basicPipeline = YamlUtils.read(yaml, BasicPipeline.class);
-    return RecastOrchestrationUtils.fromJson(
-        (String) pmsEngineExpressionService.resolve(
-            ambiance, RecastOrchestrationUtils.toJson(basicPipeline.getNotificationRules()), true),
+    return RecastOrchestrationUtils.fromMap(
+        (Map<String, Object>) pmsEngineExpressionService.resolve(
+            ambiance, RecastOrchestrationUtils.toMap(basicPipeline.getNotificationRules()), true),
         List.class);
   }
 
@@ -189,7 +192,7 @@ public class NotificationHelper {
       endTs = updatedAt / 1000;
       startDate = new Date(startTs * 1000).toString();
       endDate = new Date(endTs * 1000).toString();
-      stepIdentifier = nodeExecution.getNode().getIdentifier();
+      stepIdentifier = AmbianceUtils.obtainStepIdentifier(nodeExecution.getAmbiance());
     } else {
       userName = ambiance.getMetadata().getTriggerInfo().getTriggeredBy().getIdentifier();
       startTs = planExecution.getStartTs() / 1000;

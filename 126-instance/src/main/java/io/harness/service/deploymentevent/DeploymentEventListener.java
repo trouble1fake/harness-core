@@ -12,6 +12,7 @@ import static io.harness.pms.yaml.YAMLFieldNameConstants.ROLLBACK_STEPS;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.cdng.artifact.outcome.ArtifactsOutcome;
 import io.harness.cdng.infra.beans.InfrastructureOutcome;
 import io.harness.cdng.instance.info.InstanceInfoService;
 import io.harness.cdng.service.steps.ServiceStepOutcome;
@@ -26,7 +27,6 @@ import io.harness.logging.AccountLogContext;
 import io.harness.logging.AutoLogContext;
 import io.harness.models.DeploymentEvent;
 import io.harness.models.constants.InstanceSyncFlow;
-import io.harness.ngpipeline.artifact.bean.ArtifactsOutcome;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.ambiance.Level;
 import io.harness.pms.contracts.steps.StepType;

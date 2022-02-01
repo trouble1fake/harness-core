@@ -74,6 +74,7 @@ public class FailureInterruptCallbackTest extends OrchestrationTestBase {
             .interruptId(interruptId)
             .interruptType(InterruptType.CUSTOM_FAILURE)
             .nodeExecutionId(nodeExecutionId)
+            .originalStatus(Status.INTERVENTION_WAITING)
             .interruptConfig(
                 InterruptConfig.newBuilder()
                     .setIssuedBy(
@@ -92,7 +93,8 @@ public class FailureInterruptCallbackTest extends OrchestrationTestBase {
     ArgumentCaptor<Ambiance> ambianceArgumentCaptor = ArgumentCaptor.forClass(Ambiance.class);
     verify(nodeExecutionService).update(eq(nodeExecutionId), any());
     verify(orchestrationEngine)
-        .concludeNodeExecution(ambianceArgumentCaptor.capture(), eq(Status.FAILED), eq(EnumSet.noneOf(Status.class)));
+        .concludeNodeExecution(ambianceArgumentCaptor.capture(), eq(Status.FAILED), eq(Status.INTERVENTION_WAITING),
+            eq(EnumSet.noneOf(Status.class)));
     verify(interruptService).markProcessed(eq(interruptId), eq(Interrupt.State.PROCESSED_SUCCESSFULLY));
 
     assertThat(ambianceArgumentCaptor.getValue()).isEqualTo(ambiance);

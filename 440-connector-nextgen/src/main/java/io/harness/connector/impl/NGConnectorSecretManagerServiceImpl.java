@@ -56,7 +56,7 @@ public class NGConnectorSecretManagerServiceImpl implements NGConnectorSecretMan
     ConnectorDTO connectorDTO = getConnectorDTO(accountIdentifier, orgIdentifier, projectIdentifier, identifier);
 
     if (!maskSecrets) {
-      connectorDTO = decrypt(accountIdentifier, projectIdentifier, orgIdentifier, connectorDTO);
+      connectorDTO = decrypt(accountIdentifier, orgIdentifier, projectIdentifier, connectorDTO);
     }
 
     return SecretManagerConfigDTOMapper.fromConnectorDTO(
@@ -65,7 +65,7 @@ public class NGConnectorSecretManagerServiceImpl implements NGConnectorSecretMan
 
   @Override
   public ConnectorDTO decrypt(
-      String accountIdentifier, String projectIdentifier, String orgIdentifier, ConnectorDTO connectorDTO) {
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, ConnectorDTO connectorDTO) {
     if (HARNESS_SECRET_MANAGER_IDENTIFIER.equals(connectorDTO.getConnectorInfo().getIdentifier())
         || harnessManagedConnectorHelper.isHarnessManagedSecretManager(connectorDTO.getConnectorInfo())) {
       projectIdentifier = null;

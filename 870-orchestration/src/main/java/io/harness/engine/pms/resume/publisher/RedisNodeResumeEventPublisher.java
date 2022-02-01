@@ -11,7 +11,6 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.engine.pms.commons.events.PmsEventSender;
 import io.harness.engine.pms.execution.strategy.identity.IdentityStep;
-import io.harness.plan.Node;
 import io.harness.pms.contracts.execution.ChildChainExecutableResponse;
 import io.harness.pms.contracts.execution.ExecutionMode;
 import io.harness.pms.contracts.execution.TaskChainExecutableResponse;
@@ -35,8 +34,6 @@ public class RedisNodeResumeEventPublisher implements NodeResumeEventPublisher {
 
   @Override
   public void publishEvent(ResumeMetadata resumeMetadata, Map<String, ByteString> responseMap, boolean isError) {
-    Node planNode = resumeMetadata.getPlanNode();
-    String serviceName = planNode.getServiceName();
     NodeResumeEvent.Builder resumeEventBuilder = NodeResumeEvent.newBuilder()
                                                      .setAmbiance(resumeMetadata.getAmbiance())
                                                      .setExecutionMode(resumeMetadata.getMode())
@@ -50,7 +47,7 @@ public class RedisNodeResumeEventPublisher implements NodeResumeEventPublisher {
     }
 
     eventSender.sendEvent(resumeEventBuilder.getAmbiance(), resumeEventBuilder.build().toByteString(),
-        PmsEventCategory.NODE_RESUME, serviceName, true);
+        PmsEventCategory.NODE_RESUME, resumeMetadata.getModule(), true);
   }
 
   @Override

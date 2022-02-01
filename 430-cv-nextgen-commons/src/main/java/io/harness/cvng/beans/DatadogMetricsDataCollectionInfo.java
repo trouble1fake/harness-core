@@ -11,6 +11,7 @@ import io.harness.data.structure.CollectionUtils;
 import io.harness.delegate.beans.connector.datadog.DatadogConnectorDTO;
 import io.harness.delegate.beans.cvng.datadog.DatadogUtils;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -25,11 +26,19 @@ public class DatadogMetricsDataCollectionInfo extends TimeSeriesDataCollectionIn
   private String groupName;
   private List<MetricCollectionInfo> metricDefinitions;
 
+  public List<MetricCollectionInfo> getMetricDefinitions() {
+    if (metricDefinitions == null) {
+      return new ArrayList<>();
+    }
+    return metricDefinitions;
+  }
+
   @Override
   public Map<String, Object> getDslEnvVariables(DatadogConnectorDTO connectorConfigDTO) {
     Map<String, Object> dslEnvVariables = new HashMap<>();
     List<String> queries = CollectionUtils.emptyIfNull(
-        metricDefinitions.stream()
+        getMetricDefinitions()
+            .stream()
             .map(metricCollectionInfo -> {
               if (isCollectHostData() && metricCollectionInfo.getServiceInstanceIdentifierTag() != null
                   && metricCollectionInfo.getGroupingQuery() != null) {
@@ -39,7 +48,7 @@ public class DatadogMetricsDataCollectionInfo extends TimeSeriesDataCollectionIn
             })
             .collect(Collectors.toList()));
     List<String> metricIdentifiers = CollectionUtils.emptyIfNull(
-        metricDefinitions.stream().map(MetricCollectionInfo::getMetricIdentifier).collect(Collectors.toList()));
+        getMetricDefinitions().stream().map(MetricCollectionInfo::getMetricIdentifier).collect(Collectors.toList()));
     dslEnvVariables.put("queries", queries);
     dslEnvVariables.put("groupName", groupName);
     dslEnvVariables.put("metricIdentifiers", metricIdentifiers);

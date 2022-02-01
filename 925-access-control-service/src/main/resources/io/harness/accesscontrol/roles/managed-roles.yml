@@ -1,6 +1,6 @@
 # Any edit in this file should accompany an increment in version.
 name: rolesConfiguration
-version: 14
+version: 15
 roles:
     - identifier: _project_admin
       name: Project Admin
@@ -109,6 +109,11 @@ roles:
         - core_governancePolicySets_view
         - chi_monitoredservice_view
         - chi_slo_view
+        - ff_featureflag_view
+        - ff_targetgroup_view
+        - ff_target_view
+        - ff_environment_apiKeyView
+        - ff_environment_view
       allowedScopeLevels:
         - project
       managed: true
@@ -121,6 +126,9 @@ roles:
         - core_organization_edit
         - core_organization_delete
         - core_project_create
+        - core_project_delete
+        - core_project_view
+        - core_project_edit
         - core_secret_view
         - core_secret_edit
         - core_secret_delete
@@ -169,6 +177,33 @@ roles:
         - core_governancePolicy_view
         - core_governancePolicy_edit
         - core_governancePolicy_delete
+        - core_pipeline_edit
+        - core_pipeline_delete
+        - core_pipeline_execute
+        - core_pipeline_view
+        - chi_monitoredservice_view
+        - chi_monitoredservice_edit
+        - chi_monitoredservice_delete
+        - chi_monitoredservice_toggle
+        - chi_slo_view
+        - chi_slo_edit
+        - chi_slo_delete
+        - ff_featureflag_edit
+        - ff_featureflag_delete
+        - ff_featureflag_view
+        - ff_targetgroup_view
+        - ff_targetgroup_edit
+        - ff_targetgroup_delete
+        - ff_environment_targetGroupEdit
+        - ff_target_view
+        - ff_environment_apiKeyView
+        - ff_environment_apiKeyCreate
+        - ff_environment_apiKeyDelete
+        - ff_environment_edit
+        - ff_environment_view
+        - ff_featureflag_toggle
+        - core_dashboards_view
+        - core_dashboards_edit
       allowedScopeLevels:
         - organization
       managed: true
@@ -192,6 +227,16 @@ roles:
         - core_template_view
         - core_governancePolicy_view
         - core_governancePolicySets_view
+        - core_project_view
+        - core_pipeline_view
+        - chi_monitoredservice_view
+        - chi_slo_view
+        - ff_featureflag_view
+        - ff_targetgroup_view
+        - ff_target_view
+        - ff_environment_apiKeyView
+        - ff_environment_view
+        - core_dashboards_view
       allowedScopeLevels:
         - organization
       managed: true
@@ -201,6 +246,9 @@ roles:
       permissions:
         - core_user_invite
         - core_organization_create
+        - core_organization_delete
+        - core_organization_view
+        - core_organization_edit
         - core_secret_view
         - core_secret_edit
         - core_secret_delete
@@ -257,6 +305,35 @@ roles:
         - core_governancePolicy_view
         - core_governancePolicy_edit
         - core_governancePolicy_delete
+        - core_project_delete
+        - core_project_view
+        - core_project_edit
+        - core_project_create
+        - core_pipeline_edit
+        - core_pipeline_delete
+        - core_pipeline_execute
+        - core_pipeline_view
+        - chi_monitoredservice_view
+        - chi_monitoredservice_edit
+        - chi_monitoredservice_delete
+        - chi_monitoredservice_toggle
+        - chi_slo_view
+        - chi_slo_edit
+        - chi_slo_delete
+        - ff_featureflag_edit
+        - ff_featureflag_delete
+        - ff_featureflag_view
+        - ff_targetgroup_view
+        - ff_targetgroup_edit
+        - ff_targetgroup_delete
+        - ff_environment_targetGroupEdit
+        - ff_target_view
+        - ff_environment_apiKeyView
+        - ff_environment_apiKeyCreate
+        - ff_environment_apiKeyDelete
+        - ff_environment_edit
+        - ff_environment_view
+        - ff_featureflag_toggle
       allowedScopeLevels:
         - account
       managed: true
@@ -282,6 +359,17 @@ roles:
         - core_template_view
         - core_governancePolicy_view
         - core_governancePolicySets_view
+        - core_project_view
+        - core_organization_view
+        - core_pipeline_view
+        - chi_monitoredservice_view
+        - chi_slo_view
+        - ff_featureflag_view
+        - ff_targetgroup_view
+        - ff_target_view
+        - ff_environment_apiKeyView
+        - ff_environment_view
+        - core_dashboards_view
       allowedScopeLevels:
         - account
       managed: true

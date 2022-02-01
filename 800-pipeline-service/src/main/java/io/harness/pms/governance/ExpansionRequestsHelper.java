@@ -12,17 +12,22 @@ import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 import io.harness.ModuleType;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
+import io.harness.pms.contracts.plan.ExpansionRequestType;
+import io.harness.pms.contracts.plan.JsonExpansionInfo;
+import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.sdk.PmsSdkInstance;
 import io.harness.pms.sdk.PmsSdkInstanceService;
 import io.harness.pms.yaml.YAMLFieldNameConstants;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @OwnedBy(PIPELINE)
 @Singleton
@@ -35,10 +40,18 @@ public class ExpansionRequestsHelper {
     activeInstances.forEach(sdkInstance -> {
       String sdkInstanceName = sdkInstance.getName();
       ModuleType module = ModuleType.fromString(sdkInstanceName);
-      List<String> expandableFieldsList = sdkInstance.getExpandableFields();
-      Set<String> expandableFields =
-          EmptyPredicate.isEmpty(expandableFieldsList) ? new HashSet<>() : new HashSet<>(expandableFieldsList);
-      expandableFieldsPerService.put(module, expandableFields);
+      List<JsonExpansionInfo> jsonExpansionInfo = sdkInstance.getJsonExpansionInfo();
+      if (EmptyPredicate.isEmpty(jsonExpansionInfo)) {
+        return;
+      }
+      Set<String> expandableKeys =
+          jsonExpansionInfo.stream()
+              .filter(expansionInfo -> expansionInfo.getExpansionType().equals(ExpansionRequestType.KEY))
+              .map(JsonExpansionInfo::getKey)
+              .collect(Collectors.toSet());
+      if (EmptyPredicate.isNotEmpty(expandableKeys)) {
+        expandableFieldsPerService.put(module, expandableKeys);
+      }
     });
     return expandableFieldsPerService;
   }
@@ -56,5 +69,28 @@ public class ExpansionRequestsHelper {
       supportedStepTypes.forEach(type -> typeToModule.put(type, module));
     });
     return typeToModule;
+  }
+
+  public List<LocalFQNExpansionInfo> getLocalFQNRequestMetadata() {
+    List<LocalFQNExpansionInfo> localFQNExpansionInfo = new ArrayList<>();
+
+    List<PmsSdkInstance> activeInstances = pmsSdkInstanceService.getActiveInstances();
+    for (PmsSdkInstance sdkInstance : activeInstances) {
+      String sdkInstanceName = sdkInstance.getName();
+      ModuleType module = ModuleType.fromString(sdkInstanceName);
+      List<JsonExpansionInfo> jsonExpansionInfo =
+          sdkInstance.getJsonExpansionInfo()
+              .stream()
+              .filter(info -> info.getExpansionType().equals(ExpansionRequestType.LOCAL_FQN))
+              .filter(info -> info.getStageType().getStepCategory().equals(StepCategory.STAGE))
+              .collect(Collectors.toList());
+      jsonExpansionInfo.forEach(info
+          -> localFQNExpansionInfo.add(LocalFQNExpansionInfo.builder()
+                                           .module(module)
+                                           .localFQN(info.getKey())
+                                           .stageType(info.getStageType().getType())
+                                           .build()));
+    }
+    return localFQNExpansionInfo;
   }
 }

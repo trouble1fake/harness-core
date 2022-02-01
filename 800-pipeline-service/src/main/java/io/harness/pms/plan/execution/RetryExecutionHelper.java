@@ -23,7 +23,6 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.plan.IdentityPlanNode;
 import io.harness.plan.Node;
 import io.harness.plan.Plan;
-import io.harness.plan.PlanNode;
 import io.harness.pms.execution.ExecutionStatus;
 import io.harness.pms.merger.YamlConfig;
 import io.harness.pms.merger.fqn.FQN;
@@ -278,9 +277,8 @@ public class RetryExecutionHelper {
         nodeExecutionService.mapNodeExecutionIdWithPlanNodeForGivenStageFQN(previousExecutionId, stagesFqn);
 
     // filtering nodes which need to be resumed/retried
-    updatedPlanNodes = planNodes.stream()
-                           .filter(node -> !stagesFqn.contains(((PlanNode) node).getStageFqn()))
-                           .collect(Collectors.toList());
+    updatedPlanNodes =
+        planNodes.stream().filter(node -> !stagesFqn.contains(node.getStageFqn())).collect(Collectors.toList());
 
     // converting planNode to IdentityNode
     List<Node> finalUpdatedPlanNodes = updatedPlanNodes;

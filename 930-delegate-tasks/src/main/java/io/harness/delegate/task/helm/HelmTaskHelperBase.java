@@ -62,6 +62,7 @@ import io.harness.delegate.exception.ManifestCollectionException;
 import io.harness.delegate.task.k8s.HelmChartManifestDelegateConfig;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.HelmClientException;
+import io.harness.exception.HelmClientRuntimeException;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.helm.HelmCliCommandType;
@@ -73,6 +74,8 @@ import io.harness.k8s.model.HelmVersion;
 import io.harness.logging.LogCallback;
 import io.harness.security.encryption.SecretDecryptionService;
 import io.harness.utils.FieldWithPlainTextOrSecretValueHelper;
+
+import software.wings.delegatetasks.ExceptionMessageSanitizer;
 
 import com.google.common.util.concurrent.UncheckedTimeoutException;
 import com.google.inject.Inject;
@@ -579,11 +582,16 @@ public class HelmTaskHelperBase {
       }
 
       return valuesFileContent;
+    } catch (HelmClientException ex) {
+      String errorMsg = format("Failed to fetch values yaml from %s repo. ",
+          helmChartManifestDelegateConfig.getStoreDelegateConfig().getType());
+      logCallback.saveExecutionLog(errorMsg + ExceptionUtils.getMessage(ex), WARN);
+      throw new HelmClientRuntimeException(ex);
     } catch (Exception ex) {
       String errorMsg = format("Failed to fetch values yaml from %s repo. ",
           helmChartManifestDelegateConfig.getStoreDelegateConfig().getType());
       logCallback.saveExecutionLog(errorMsg + ExceptionUtils.getMessage(ex), WARN);
-      return "";
+      throw ex;
     } finally {
       cleanup(workingDirectory);
     }
@@ -862,6 +870,7 @@ public class HelmTaskHelperBase {
         if (isNotEmpty(s3DecryptableEntityList)) {
           for (DecryptableEntity entity : s3HelmStoreConfig.getAwsConnector().getDecryptableEntities()) {
             decryptionService.decrypt(entity, s3HelmStoreConfig.getEncryptedDataDetails());
+            ExceptionMessageSanitizer.storeAllSecretsForSanitizing(entity, s3HelmStoreConfig.getEncryptedDataDetails());
           }
         }
         break;
@@ -872,6 +881,8 @@ public class HelmTaskHelperBase {
         if (isNotEmpty(gcsDecryptableEntityList)) {
           for (DecryptableEntity entity : gcsDecryptableEntityList) {
             decryptionService.decrypt(entity, gcsHelmStoreDelegateConfig.getEncryptedDataDetails());
+            ExceptionMessageSanitizer.storeAllSecretsForSanitizing(
+                entity, gcsHelmStoreDelegateConfig.getEncryptedDataDetails());
           }
         }
         break;
@@ -879,6 +890,7 @@ public class HelmTaskHelperBase {
         HttpHelmStoreDelegateConfig httpHelmStoreConfig = (HttpHelmStoreDelegateConfig) helmStoreDelegateConfig;
         for (DecryptableEntity entity : httpHelmStoreConfig.getHttpHelmConnector().getDecryptableEntities()) {
           decryptionService.decrypt(entity, httpHelmStoreConfig.getEncryptedDataDetails());
+          ExceptionMessageSanitizer.storeAllSecretsForSanitizing(entity, httpHelmStoreConfig.getEncryptedDataDetails());
         }
         break;
       default:

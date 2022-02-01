@@ -13,14 +13,14 @@ import io.harness.DelegateInfoHelper;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.GraphVertex;
+import io.harness.beans.GraphVertex.GraphVertexBuilder;
 import io.harness.beans.OrchestrationGraph;
 import io.harness.data.structure.CollectionUtils;
 import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.pms.data.PmsOutcomeService;
 import io.harness.execution.NodeExecution;
 import io.harness.generator.OrchestrationAdjacencyListGenerator;
-import io.harness.plan.IdentityPlanNode;
-import io.harness.plan.NodeType;
+import io.harness.pms.contracts.ambiance.Level;
 import io.harness.pms.contracts.execution.events.OrchestrationEventType;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.execution.utils.StatusUtils;
@@ -29,6 +29,7 @@ import io.harness.pms.sdk.core.resolver.outcome.mapper.PmsOutcomeMapper;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.util.Map;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 
 @OwnedBy(HarnessTeam.PIPELINE)
@@ -103,33 +104,33 @@ public class GraphStatusUpdateHelper {
 
   // Todo: Update only properties that will be changed. No need to construct full
   public GraphVertex convertFromNodeExecution(GraphVertex prevValue, NodeExecution nodeExecution) {
-    String stepType = nodeExecution.getNode().getStepType().getType();
-    if (nodeExecution.getNode().getNodeType().equals(NodeType.IDENTITY_PLAN_NODE)) {
-      stepType = ((IdentityPlanNode) nodeExecution.getNode()).getOriginalStepType().getType();
+    Level level = Objects.requireNonNull(AmbianceUtils.obtainCurrentLevel(nodeExecution.getAmbiance()));
+    GraphVertexBuilder prevValueBuilder =
+        prevValue.toBuilder()
+            .uuid(nodeExecution.getUuid())
+            .ambiance(nodeExecution.getAmbiance())
+            .planNodeId(level.getSetupId())
+            .identifier(level.getIdentifier())
+            .name(nodeExecution.name())
+            .startTs(nodeExecution.getStartTs())
+            .endTs(nodeExecution.getEndTs())
+            .initialWaitDuration(nodeExecution.getInitialWaitDuration())
+            .lastUpdatedAt(nodeExecution.getLastUpdatedAt())
+            .stepType(level.getStepType().getType())
+            .status(nodeExecution.getStatus())
+            .failureInfo(nodeExecution.getFailureInfo())
+            .skipInfo(nodeExecution.getSkipInfo())
+            .nodeRunInfo(nodeExecution.getNodeRunInfo())
+            .mode(nodeExecution.getMode())
+            .executableResponses(CollectionUtils.emptyIfNull(nodeExecution.getExecutableResponses()))
+            .interruptHistories(nodeExecution.getInterruptHistories())
+            .retryIds(nodeExecution.getRetryIds())
+            .skipType(nodeExecution.skipGraphType())
+            .unitProgresses(nodeExecution.getUnitProgresses())
+            .progressData(nodeExecution.getPmsProgressData());
+    if (nodeExecution.getResolvedInputs() != null) {
+      prevValueBuilder.stepParameters(nodeExecution.getPmsStepParameters());
     }
-    return prevValue.toBuilder()
-        .uuid(nodeExecution.getUuid())
-        .ambiance(nodeExecution.getAmbiance())
-        .planNodeId(nodeExecution.getNode().getUuid())
-        .identifier(nodeExecution.getNode().getIdentifier())
-        .name(nodeExecution.getNode().getName())
-        .startTs(nodeExecution.getStartTs())
-        .endTs(nodeExecution.getEndTs())
-        .initialWaitDuration(nodeExecution.getInitialWaitDuration())
-        .lastUpdatedAt(nodeExecution.getLastUpdatedAt())
-        .stepType(stepType)
-        .status(nodeExecution.getStatus())
-        .failureInfo(nodeExecution.getFailureInfo())
-        .skipInfo(nodeExecution.getSkipInfo())
-        .nodeRunInfo(nodeExecution.getNodeRunInfo())
-        .stepParameters(nodeExecution.getPmsStepParameters())
-        .mode(nodeExecution.getMode())
-        .executableResponses(CollectionUtils.emptyIfNull(nodeExecution.getExecutableResponses()))
-        .interruptHistories(nodeExecution.getInterruptHistories())
-        .retryIds(nodeExecution.getRetryIds())
-        .skipType(nodeExecution.getNode().getSkipGraphType())
-        .unitProgresses(nodeExecution.getUnitProgresses())
-        .progressData(nodeExecution.getPmsProgressData())
-        .build();
+    return prevValueBuilder.build();
   }
 }

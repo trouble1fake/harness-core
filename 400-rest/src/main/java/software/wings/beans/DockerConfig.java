@@ -31,9 +31,11 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.github.reinert.jjschema.Attributes;
 import com.github.reinert.jjschema.SchemaIgnore;
+import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import javax.ws.rs.core.UriBuilder;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -86,7 +88,9 @@ public class DockerConfig extends SettingValue implements EncryptableSetting, Ar
 
   // override the setter for URL to enforce that we always put / (slash) at the end
   public void setDockerRegistryUrl(String dockerRegistryUrl) {
-    this.dockerRegistryUrl = dockerRegistryUrl.endsWith("/") ? dockerRegistryUrl : dockerRegistryUrl.concat("/");
+    URI uri = UriBuilder.fromUri(dockerRegistryUrl).build();
+    this.dockerRegistryUrl =
+        UriBuilder.fromUri(dockerRegistryUrl).path(uri.getPath().endsWith("/") ? "" : "/").build().toString();
   }
 
   // NOTE: Do not remove this. As UI expects this field should be there

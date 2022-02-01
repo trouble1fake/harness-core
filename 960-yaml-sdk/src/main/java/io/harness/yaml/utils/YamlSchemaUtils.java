@@ -14,6 +14,8 @@ import static io.harness.yaml.schema.beans.SchemaConstants.EXECUTION_WRAPPER_CON
 import static io.harness.yaml.schema.beans.SchemaConstants.ONE_OF_NODE;
 import static io.harness.yaml.schema.beans.SchemaConstants.PROPERTIES_NODE;
 import static io.harness.yaml.schema.beans.SchemaConstants.REF_NODE;
+import static io.harness.yaml.schema.beans.SchemaConstants.STAGE_ELEMENT_WRAPPER_CONFIG;
+import static io.harness.yaml.schema.beans.SchemaConstants.STAGE_NODE;
 import static io.harness.yaml.schema.beans.SchemaConstants.STEP_NODE;
 
 import io.harness.EntityType;
@@ -301,7 +303,7 @@ public class YamlSchemaUtils {
       nameSpaceString = namespace + "/";
     }
     JsonNode executionWrapperConfigProperties = pipelineSchema.get(EXECUTION_WRAPPER_CONFIG_NODE).get(PROPERTIES_NODE);
-    ArrayNode oneOfNode = getOneOfNode(executionWrapperConfigProperties);
+    ArrayNode oneOfNode = getOneOfNode(executionWrapperConfigProperties, STEP_NODE);
     JsonNode stepsNode = executionWrapperConfigProperties.get(STEP_NODE);
 
     for (Class<?> clazz : newYamlSchemaSubtypesToBeAdded) {
@@ -314,7 +316,7 @@ public class YamlSchemaUtils {
       List<YamlSchemaWithDetails> stepSchemaWithDetails, ModuleType moduleType, Set<String> enabledFeatureFlags,
       Map<String, Boolean> featureRestrictionsMap) {
     JsonNode executionWrapperConfigProperties = pipelineSchema.get(EXECUTION_WRAPPER_CONFIG_NODE).get(PROPERTIES_NODE);
-    ArrayNode oneOfNode = getOneOfNode(executionWrapperConfigProperties);
+    ArrayNode oneOfNode = getOneOfNode(executionWrapperConfigProperties, STEP_NODE);
     JsonNode stepsNode = executionWrapperConfigProperties.get(STEP_NODE);
 
     for (YamlSchemaWithDetails schemaWithDetails : stepSchemaWithDetails) {
@@ -328,7 +330,23 @@ public class YamlSchemaUtils {
     ((ObjectNode) stepsNode).set(ONE_OF_NODE, oneOfNode);
   }
 
-  private boolean validateSchemaMetadata(YamlSchemaWithDetails yamlSchemaWithDetails, ModuleType moduleType,
+  public void addOneOfInStageElementWrapperConfig(
+      JsonNode pipelineSchema, List<YamlSchemaWithDetails> stepSchemaWithDetails) {
+    JsonNode stageElementWrapperConfigProperties =
+        pipelineSchema.get(STAGE_ELEMENT_WRAPPER_CONFIG).get(PROPERTIES_NODE);
+    ArrayNode oneOfNode = getOneOfNode(stageElementWrapperConfigProperties, STAGE_NODE);
+    JsonNode stepsNode = stageElementWrapperConfigProperties.get(STAGE_NODE);
+
+    for (YamlSchemaWithDetails schemaWithDetails : stepSchemaWithDetails) {
+      String nameSpaceString = getNamespaceFromModuleType(schemaWithDetails.getModuleType());
+      oneOfNode.add(JsonNodeUtils.upsertPropertyInObjectNode(new ObjectNode(JsonNodeFactory.instance), REF_NODE,
+          "#/definitions/" + nameSpaceString + schemaWithDetails.getSchemaClassName()));
+    }
+
+    ((ObjectNode) stepsNode).set(ONE_OF_NODE, oneOfNode);
+  }
+
+  protected boolean validateSchemaMetadata(YamlSchemaWithDetails yamlSchemaWithDetails, ModuleType moduleType,
       Set<String> enabledFeatureFlags, Map<String, Boolean> featureRestrictionsMap) {
     YamlSchemaMetadata yamlSchemaMetadata = yamlSchemaWithDetails.getYamlSchemaMetadata();
     if (yamlSchemaMetadata == null) {
@@ -346,7 +364,7 @@ public class YamlSchemaUtils {
     return validateByFeatureRestrictions(yamlSchemaMetadata, featureRestrictionsMap);
   }
 
-  private boolean validateByFeatureFlags(YamlSchemaMetadata yamlSchemaMetadata, Set<String> enabledFeatureFlags) {
+  protected boolean validateByFeatureFlags(YamlSchemaMetadata yamlSchemaMetadata, Set<String> enabledFeatureFlags) {
     List<String> requiredFeatureFlags = CollectionUtils.emptyIfNull(yamlSchemaMetadata.getFeatureFlags());
     for (String featureFlag : requiredFeatureFlags) {
       if (!enabledFeatureFlags.contains(featureFlag)) {
@@ -356,7 +374,7 @@ public class YamlSchemaUtils {
     return true;
   }
 
-  private boolean validateByFeatureRestrictions(
+  protected boolean validateByFeatureRestrictions(
       YamlSchemaMetadata yamlSchemaMetadata, Map<String, Boolean> featureRestrictionsMap) {
     List<String> requiredFeatureRestrictions = CollectionUtils.emptyIfNull(yamlSchemaMetadata.getFeatureRestrictions());
     for (String featureRestriction : requiredFeatureRestrictions) {
@@ -367,9 +385,11 @@ public class YamlSchemaUtils {
     return true;
   }
 
-  private String getNamespaceFromModuleType(ModuleType moduleType) {
+  protected String getNamespaceFromModuleType(ModuleType moduleType) {
     if (moduleType == ModuleType.CD) {
       return "cd/";
+    } else if (moduleType == ModuleType.CV) {
+      return "cvng/";
     } else if (moduleType == ModuleType.CI) {
       return "ci/";
     } else if (moduleType == ModuleType.CE) {
@@ -380,26 +400,24 @@ public class YamlSchemaUtils {
     return "";
   }
 
-  private ArrayNode getOneOfNode(JsonNode executionWrapperConfig) {
+  private ArrayNode getOneOfNode(JsonNode executionWrapperConfig, String nodeLevel) {
     ArrayNode oneOfList = new ArrayNode(JsonNodeFactory.instance);
-    JsonNode stepsNode = executionWrapperConfig.get(STEP_NODE);
-    if (executionWrapperConfig.get(STEP_NODE).get(REF_NODE) != null) {
-      String stepElementConfigRef = executionWrapperConfig.get(STEP_NODE).get(REF_NODE).toString().replace("\"", "");
+    JsonNode stepsNode = executionWrapperConfig.get(nodeLevel);
+    if (executionWrapperConfig.get(nodeLevel).get(REF_NODE) != null) {
+      String stepElementConfigRef = executionWrapperConfig.get(nodeLevel).get(REF_NODE).toString().replace("\"", "");
       JsonNodeUtils.deletePropertiesInJsonNode((ObjectNode) stepsNode, REF_NODE);
       oneOfList.add(JsonNodeUtils.upsertPropertyInObjectNode(
           new ObjectNode(JsonNodeFactory.instance), REF_NODE, stepElementConfigRef));
-    } else if (executionWrapperConfig.get(STEP_NODE).get(ONE_OF_NODE) != null) {
-      return (ArrayNode) executionWrapperConfig.get(STEP_NODE).get(ONE_OF_NODE);
+    } else if (executionWrapperConfig.get(nodeLevel).get(ONE_OF_NODE) != null) {
+      return (ArrayNode) executionWrapperConfig.get(nodeLevel).get(ONE_OF_NODE);
     }
     return oneOfList;
   }
 
   public Set<Class<?>> getNodeClassesByYamlGroup(List<YamlSchemaRootClass> yamlSchemaRootClasses, String yamlGroup,
       Set<String> enabledFeatureFlags, Map<String, Boolean> featureRestrictionsMap) {
-    return yamlSchemaRootClasses.stream()
-        .filter(yamlSchemaRootClass
-            -> yamlSchemaRootClass.getYamlSchemaMetadata() != null
-                && yamlSchemaRootClass.getYamlSchemaMetadata().getYamlGroup().getGroup().equals(yamlGroup))
+    return filterRootClassesByYamlGroup(yamlSchemaRootClasses, yamlGroup)
+        .stream()
         .filter(o -> validateByFeatureFlags(o.getYamlSchemaMetadata(), enabledFeatureFlags))
         .filter(o -> validateByFeatureRestrictions(o.getYamlSchemaMetadata(), featureRestrictionsMap))
         .map(YamlSchemaRootClass::getClazz)
@@ -408,11 +426,18 @@ public class YamlSchemaUtils {
 
   public List<EntityType> getNodeEntityTypesByYamlGroup(
       List<YamlSchemaRootClass> yamlSchemaRootClasses, String yamlGroup) {
+    return filterRootClassesByYamlGroup(yamlSchemaRootClasses, yamlGroup)
+        .stream()
+        .map(YamlSchemaRootClass::getEntityType)
+        .collect(Collectors.toList());
+  }
+
+  private List<YamlSchemaRootClass> filterRootClassesByYamlGroup(
+      List<YamlSchemaRootClass> yamlSchemaRootClasses, String yamlGroup) {
     return yamlSchemaRootClasses.stream()
         .filter(yamlSchemaRootClass
             -> yamlSchemaRootClass.getYamlSchemaMetadata() != null
                 && yamlSchemaRootClass.getYamlSchemaMetadata().getYamlGroup().getGroup().equals(yamlGroup))
-        .map(YamlSchemaRootClass::getEntityType)
         .collect(Collectors.toList());
   }
 }
