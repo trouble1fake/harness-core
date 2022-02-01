@@ -12,6 +12,8 @@ import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
+import io.harness.artifactory.ArtifactoryNgService;
+import io.harness.artifactory.ArtifactoryNgServiceImpl;
 import io.harness.artifacts.docker.client.DockerRestClientFactory;
 import io.harness.artifacts.docker.client.DockerRestClientFactoryImpl;
 import io.harness.artifacts.docker.service.DockerRegistryService;
@@ -1053,6 +1055,7 @@ public class DelegateModule extends AbstractModule {
     bind(ScmServiceClient.class).to(ScmServiceClientImpl.class);
     bind(ManifestCollectionService.class).to(HelmChartCollectionService.class);
     bind(AzureKubernetesClient.class).to(AzureKubernetesClientImpl.class);
+    bind(ArtifactoryNgService.class).to(ArtifactoryNgServiceImpl.class);
 
     // NG Delegate
     MapBinder<String, K8sRequestHandler> k8sTaskTypeToRequestHandler =

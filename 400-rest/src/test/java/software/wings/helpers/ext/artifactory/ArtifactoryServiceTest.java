@@ -16,6 +16,7 @@ import static io.harness.rule.OwnerRule.SRINIVAS;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.joor.Reflect.on;
 
 import io.harness.CategoryTest;
 import io.harness.annotations.dev.OwnedBy;
@@ -84,6 +85,7 @@ public class ArtifactoryServiceTest extends CategoryTest {
                             .password("dummy123!".toCharArray())
                             .build();
     artifactoryConfigAnonymous = ArtifactoryConfigRequest.builder().artifactoryUrl(url).build();
+    on(artifactoryService).set("artifactoryClient", new ArtifactoryClientImpl());
   }
 
   @Test

@@ -13,6 +13,8 @@ import io.harness.NGBeanModule;
 import io.harness.NGPipelineCommonsModule;
 import io.harness.WalkTreeModule;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.cdng.artifact.resources.artifactory.service.ArtifactoryResourceService;
+import io.harness.cdng.artifact.resources.artifactory.service.ArtifactoryResourceServiceImpl;
 import io.harness.cdng.artifact.resources.docker.service.DockerResourceService;
 import io.harness.cdng.artifact.resources.docker.service.DockerResourceServiceImpl;
 import io.harness.cdng.artifact.resources.ecr.service.EcrResourceService;
@@ -80,5 +82,6 @@ public class NGModule extends AbstractModule {
     bind(InstanceService.class).to(InstanceServiceImpl.class);
     bind(ServiceEntityService.class).to(ServiceEntityServiceImpl.class);
     bind(ServiceNowResourceService.class).to(ServiceNowResourceServiceImpl.class);
+    bind(ArtifactoryResourceService.class).to(ArtifactoryResourceServiceImpl.class);
   }
 }

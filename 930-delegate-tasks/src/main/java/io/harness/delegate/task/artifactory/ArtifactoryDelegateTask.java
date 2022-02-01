@@ -7,10 +7,16 @@
 
 package io.harness.delegate.task.artifactory;
 
+import static io.harness.logging.CommandExecutionStatus.SUCCESS;
+
+import io.harness.artifactory.ArtifactoryConfigRequest;
+import io.harness.artifactory.ArtifactoryNgService;
 import io.harness.connector.ConnectorValidationResult;
 import io.harness.delegate.beans.DelegateResponseData;
 import io.harness.delegate.beans.DelegateTaskPackage;
 import io.harness.delegate.beans.DelegateTaskResponse;
+import io.harness.delegate.beans.artifactory.ArtifactoryFetchBuildsResponse;
+import io.harness.delegate.beans.artifactory.ArtifactoryFetchRepositoriesResponse;
 import io.harness.delegate.beans.artifactory.ArtifactoryTaskParams;
 import io.harness.delegate.beans.artifactory.ArtifactoryTaskParams.TaskType;
 import io.harness.delegate.beans.artifactory.ArtifactoryTaskResponse;
@@ -25,8 +31,11 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.security.encryption.SecretDecryptionService;
 
+import software.wings.helpers.ext.jenkins.BuildDetails;
+
 import com.google.inject.Inject;
 import java.util.List;
+import java.util.Map;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import org.apache.commons.lang3.NotImplementedException;
@@ -36,6 +45,7 @@ public class ArtifactoryDelegateTask extends AbstractDelegateRunnableTask {
   @Inject ArtifactoryRequestMapper artifactoryRequestMapper;
   @Inject NGErrorHelper ngErrorHelper;
   @Inject ArtifactoryValidationHandler artifactoryValidationHandler;
+  @Inject ArtifactoryNgService artifactoryNgService;
 
   public ArtifactoryDelegateTask(DelegateTaskPackage delegateTaskPackage,
       ILogStreamingTaskClient logStreamingTaskClient, Consumer<DelegateTaskResponse> consumer,
@@ -59,9 +69,34 @@ public class ArtifactoryDelegateTask extends AbstractDelegateRunnableTask {
     switch (taskType) {
       case VALIDATE:
         return validateArtifactoryConfig(artifactoryConnectorDTO, encryptedDataDetails);
+      case FETCH_REPOSITORIES:
+        return fetchRepositories(artifactoryConnectorDTO, artifactoryTaskParams.getRepoType());
+      case FETCH_BUILDS:
+        return fetchFileBuilds(artifactoryTaskParams);
       default:
         throw new InvalidRequestException("No task found for " + taskType.name());
     }
+  }
+
+  private DelegateResponseData fetchFileBuilds(ArtifactoryTaskParams params) {
+    ArtifactoryConfigRequest artifactoryConfigRequest =
+        artifactoryRequestMapper.toArtifactoryRequest(params.getArtifactoryConnectorDTO());
+
+    List<BuildDetails> buildDetails = artifactoryNgService.getBuildDetails(
+        artifactoryConfigRequest, params.getRepoName(), params.getFilePath(), params.getMaxVersions());
+
+    return ArtifactoryFetchBuildsResponse.builder().commandExecutionStatus(SUCCESS).buildDetails(buildDetails).build();
+  }
+
+  private DelegateResponseData fetchRepositories(ArtifactoryConnectorDTO artifactoryConnectorDTO, String repoType) {
+    ArtifactoryConfigRequest artifactoryConfigRequest =
+        artifactoryRequestMapper.toArtifactoryRequest(artifactoryConnectorDTO);
+
+    Map<String, String> repositories = artifactoryNgService.getRepositories(artifactoryConfigRequest, repoType);
+    return ArtifactoryFetchRepositoriesResponse.builder()
+        .commandExecutionStatus(SUCCESS)
+        .repositories(repositories)
+        .build();
   }
 
   private DelegateResponseData validateArtifactoryConfig(

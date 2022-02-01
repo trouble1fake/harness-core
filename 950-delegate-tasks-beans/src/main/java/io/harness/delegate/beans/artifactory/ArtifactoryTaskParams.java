@@ -26,8 +26,12 @@ public class ArtifactoryTaskParams extends ConnectorTaskParams implements Execut
   ArtifactoryConnectorDTO artifactoryConnectorDTO;
   TaskType taskType;
   List<EncryptedDataDetail> encryptedDataDetails;
+  String repoType;
+  String repoName;
+  String filePath;
+  int maxVersions;
 
-  public enum TaskType { VALIDATE }
+  public enum TaskType { VALIDATE, FETCH_REPOSITORIES, FETCH_BUILDS }
 
   @Override
   public List<ExecutionCapability> fetchRequiredExecutionCapabilities(ExpressionEvaluator maskingEvaluator) {

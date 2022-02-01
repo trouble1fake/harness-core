@@ -7,10 +7,8 @@
 
 package software.wings.helpers.ext.jenkins;
 
-import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.annotations.dev.TargetModule;
 import io.harness.delegate.beans.artifact.ArtifactFileMetadata;
 
 import com.google.common.base.MoreObjects;
@@ -22,7 +20,6 @@ import java.util.Objects;
 import lombok.experimental.UtilityClass;
 
 @OwnedBy(HarnessTeam.CDC)
-@TargetModule(HarnessModule._960_API_SERVICES)
 public class BuildDetails {
   @UtilityClass
   public static final class BuildDetailsMetadataKeys {

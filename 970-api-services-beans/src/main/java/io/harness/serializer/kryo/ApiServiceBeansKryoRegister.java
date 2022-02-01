@@ -26,6 +26,7 @@ import io.harness.azure.model.SubscriptionData;
 import io.harness.azure.model.VirtualMachineScaleSetData;
 import io.harness.beans.NGInstanceUnitType;
 import io.harness.container.ContainerInfo;
+import io.harness.delegate.beans.artifact.ArtifactFileMetadata;
 import io.harness.deployment.InstanceDetails;
 import io.harness.ecs.EcsContainerDetails;
 import io.harness.exception.HelmClientException;
@@ -138,6 +139,7 @@ import software.wings.helpers.ext.gcb.models.StorageSource;
 import software.wings.helpers.ext.gcb.models.SubstitutionOption;
 import software.wings.helpers.ext.gcb.models.TimeSpan;
 import software.wings.helpers.ext.gcb.models.VerifyOption;
+import software.wings.helpers.ext.jenkins.BuildDetails;
 import software.wings.helpers.ext.jenkins.JobDetails;
 import software.wings.settings.SettingVariableTypes;
 import software.wings.utils.RepositoryFormat;
@@ -394,5 +396,8 @@ public class ApiServiceBeansKryoRegister implements KryoRegistrar {
     kryo.register(ServiceNowTicketNG.class, 97106);
     kryo.register(ServiceNowFieldValueNG.class, 97107);
     kryo.register(DelegateTokenGlobalContextData.class, 97108);
+    kryo.register(BuildDetails.class, 97109);
+    kryo.register(BuildDetails.BuildStatus.class, 97110);
+    kryo.register(ArtifactFileMetadata.class, 97111);
   }
 }
