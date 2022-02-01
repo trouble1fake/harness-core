@@ -7,8 +7,29 @@
 
 package io.harness.delegate.cf;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.inject.Singleton;
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+import static io.harness.delegate.cf.PcfCommandTaskBaseHelper.constructActiveAppName;
+import static io.harness.delegate.cf.PcfCommandTaskBaseHelper.constructInActiveAppName;
+import static io.harness.delegate.cf.PcfCommandTaskBaseHelper.getVersionChangeMessage;
+import static io.harness.logging.CommandExecutionStatus.FAILURE;
+import static io.harness.logging.CommandExecutionStatus.SUCCESS;
+import static io.harness.logging.LogLevel.ERROR;
+import static io.harness.logging.LogLevel.INFO;
+import static io.harness.logging.LogLevel.WARN;
+import static io.harness.pcf.CfCommandUnitConstants.Downsize;
+import static io.harness.pcf.CfCommandUnitConstants.Upsize;
+import static io.harness.pcf.CfCommandUnitConstants.Wrapup;
+import static io.harness.pcf.PcfUtils.encodeColor;
+import static io.harness.pcf.model.PcfConstants.PIVOTAL_CLOUD_FOUNDRY_LOG_PREFIX;
+
+import static software.wings.beans.LogColor.White;
+import static software.wings.beans.LogHelper.color;
+import static software.wings.beans.LogWeight.Bold;
+
+import static java.util.stream.Collectors.toList;
+import static org.apache.commons.lang3.StringUtils.isBlank;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
@@ -33,6 +54,13 @@ import io.harness.pcf.model.CfAppAutoscalarRequestData;
 import io.harness.pcf.model.CfRenameRequest;
 import io.harness.pcf.model.CfRequestConfig;
 import io.harness.security.encryption.EncryptedDataDetail;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.inject.Singleton;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -40,32 +68,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.cloudfoundry.operations.applications.ApplicationDetail;
 import org.cloudfoundry.operations.applications.ApplicationSummary;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import static io.harness.data.structure.EmptyPredicate.isEmpty;
-import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
-import static io.harness.delegate.cf.PcfCommandTaskBaseHelper.constructActiveAppName;
-import static io.harness.delegate.cf.PcfCommandTaskBaseHelper.constructInActiveAppName;
-import static io.harness.delegate.cf.PcfCommandTaskBaseHelper.getVersionChangeMessage;
-import static io.harness.logging.CommandExecutionStatus.FAILURE;
-import static io.harness.logging.CommandExecutionStatus.SUCCESS;
-import static io.harness.logging.LogLevel.ERROR;
-import static io.harness.logging.LogLevel.INFO;
-import static io.harness.logging.LogLevel.WARN;
-import static io.harness.pcf.CfCommandUnitConstants.Downsize;
-import static io.harness.pcf.CfCommandUnitConstants.Upsize;
-import static io.harness.pcf.CfCommandUnitConstants.Wrapup;
-import static io.harness.pcf.PcfUtils.encodeColor;
-import static io.harness.pcf.model.PcfConstants.PIVOTAL_CLOUD_FOUNDRY_LOG_PREFIX;
-import static java.util.stream.Collectors.toList;
-import static org.apache.commons.lang3.StringUtils.isBlank;
-import static software.wings.beans.LogColor.White;
-import static software.wings.beans.LogHelper.color;
-import static software.wings.beans.LogWeight.Bold;
 
 @NoArgsConstructor
 @Singleton

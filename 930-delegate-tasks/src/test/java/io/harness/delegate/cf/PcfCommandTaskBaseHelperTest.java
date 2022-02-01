@@ -7,6 +7,37 @@
 
 package io.harness.delegate.cf;
 
+import static io.harness.delegate.cf.CfTestConstants.ACCOUNT_ID;
+import static io.harness.delegate.cf.CfTestConstants.NOT_MANIFEST_YML_ELEMENT;
+import static io.harness.delegate.cf.CfTestConstants.RELEASE_NAME;
+import static io.harness.delegate.cf.CfTestConstants.RUNNING;
+import static io.harness.pcf.model.PcfConstants.HARNESS__INACTIVE__IDENTIFIER;
+import static io.harness.pcf.model.PcfConstants.INSTANCE_MANIFEST_YML_ELEMENT;
+import static io.harness.pcf.model.PcfConstants.MEMORY_MANIFEST_YML_ELEMENT;
+import static io.harness.pcf.model.PcfConstants.NAME_MANIFEST_YML_ELEMENT;
+import static io.harness.pcf.model.PcfConstants.RANDOM_ROUTE_MANIFEST_YML_ELEMENT;
+import static io.harness.pcf.model.PcfConstants.ROUTES_MANIFEST_YML_ELEMENT;
+import static io.harness.pcf.model.PcfConstants.TIMEOUT_MANIFEST_YML_ELEMENT;
+import static io.harness.rule.OwnerRule.ADWAIT;
+import static io.harness.rule.OwnerRule.ANIL;
+import static io.harness.rule.OwnerRule.ARVIND;
+import static io.harness.rule.OwnerRule.IVAN;
+
+import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import io.harness.CategoryTest;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
@@ -34,19 +65,6 @@ import io.harness.pcf.model.CfRenameRequest;
 import io.harness.pcf.model.CfRequestConfig;
 import io.harness.pcf.model.PcfConstants;
 import io.harness.rule.Owner;
-import org.cloudfoundry.operations.applications.ApplicationDetail;
-import org.cloudfoundry.operations.applications.ApplicationSummary;
-import org.cloudfoundry.operations.applications.InstanceDetail;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
-import org.mockito.Spy;
-import org.mockito.stubbing.Answer;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -63,36 +81,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
-
-import static io.harness.delegate.cf.CfTestConstants.ACCOUNT_ID;
-import static io.harness.delegate.cf.CfTestConstants.NOT_MANIFEST_YML_ELEMENT;
-import static io.harness.delegate.cf.CfTestConstants.RELEASE_NAME;
-import static io.harness.delegate.cf.CfTestConstants.RUNNING;
-import static io.harness.pcf.model.PcfConstants.HARNESS__INACTIVE__IDENTIFIER;
-import static io.harness.pcf.model.PcfConstants.INSTANCE_MANIFEST_YML_ELEMENT;
-import static io.harness.pcf.model.PcfConstants.MEMORY_MANIFEST_YML_ELEMENT;
-import static io.harness.pcf.model.PcfConstants.NAME_MANIFEST_YML_ELEMENT;
-import static io.harness.pcf.model.PcfConstants.RANDOM_ROUTE_MANIFEST_YML_ELEMENT;
-import static io.harness.pcf.model.PcfConstants.ROUTES_MANIFEST_YML_ELEMENT;
-import static io.harness.pcf.model.PcfConstants.TIMEOUT_MANIFEST_YML_ELEMENT;
-import static io.harness.rule.OwnerRule.ADWAIT;
-import static io.harness.rule.OwnerRule.ANIL;
-import static io.harness.rule.OwnerRule.ARVIND;
-import static io.harness.rule.OwnerRule.IVAN;
-import static org.apache.commons.lang3.StringUtils.EMPTY;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.fail;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import org.cloudfoundry.operations.applications.ApplicationDetail;
+import org.cloudfoundry.operations.applications.ApplicationSummary;
+import org.cloudfoundry.operations.applications.InstanceDetail;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.experimental.categories.Category;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
+import org.mockito.Spy;
+import org.mockito.stubbing.Answer;
 
 @OwnedBy(HarnessTeam.CDP)
 public class PcfCommandTaskBaseHelperTest extends CategoryTest {
