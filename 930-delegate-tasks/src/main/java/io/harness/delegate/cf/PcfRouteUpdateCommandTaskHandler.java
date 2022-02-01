@@ -374,9 +374,6 @@ public class PcfRouteUpdateCommandTaskHandler extends PcfCommandTaskHandler {
   CfInBuiltVariablesUpdateValues downsizeOldAppDuringDeployAndRenameApps(LogCallback executionLogCallback,
       CfCommandRouteUpdateRequest cfCommandRouteUpdateRequest, CfRequestConfig cfRequestConfig,
       CfRouteUpdateRequestConfigData pcfRouteUpdateConfigData, String configVarPath) throws PivotalClientApiException {
-    //    if (pcfRouteUpdateConfigData.isRollback()) {
-    //      return CfInBuiltVariablesUpdateValues.builder().build();
-    //    }
     if (pcfRouteUpdateConfigData.isDownsizeOldApplication()) {
       resizeOldApplications(cfCommandRouteUpdateRequest, cfRequestConfig, executionLogCallback, false, configVarPath);
     }
