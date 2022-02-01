@@ -23,14 +23,18 @@ public class AddPipelinesReferenceToUserGroups implements Migration {
 
   @Override
   public void migrate() {
-    log.info("Start - Adding Pipeline references to user groups");
-    try (HIterator<Pipeline> pipelines = new HIterator<>(wingsPersistence.createQuery(Pipeline.class).fetch())) {
-      for (Pipeline pipeline : pipelines) {
-        Set<String> existingUserGroups = pipelineService.getUserGroups(pipeline);
-        userGroupService.updateUserGroupParents(
-            new HashSet<>(), existingUserGroups, pipeline.getAccountId(), pipeline.getUuid(), pipeline.getAppId());
-        log.info("done for the pipeline with Id {}", pipeline.getUuid());
+    try {
+      log.info("Start - Adding Pipeline references to user groups");
+      try (HIterator<Pipeline> pipelineIterator =
+               new HIterator<>(wingsPersistence.createQuery(Pipeline.class).fetch())) {
+        while (pipelineIterator.hasNext()) {
+          final Pipeline pipeline = pipelineIterator.next();
+          Set<String> existingUserGroups = pipelineService.getUserGroups(pipeline);
+          userGroupService.updateUserGroupParents(
+              new HashSet<>(), existingUserGroups, pipeline.getAccountId(), pipeline.getUuid(), pipeline.getAppId());
+        }
       }
+      log.info("Adding Pipeline references to user groups finished successfully.");
     } catch (Exception ex) {
       log.error("Error while adding pipeline references in user groups", ex);
     }
