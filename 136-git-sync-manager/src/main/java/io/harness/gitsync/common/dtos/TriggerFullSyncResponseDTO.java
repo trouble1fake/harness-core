@@ -22,5 +22,6 @@ import lombok.Value;
 @Schema(name = "TriggerFullSyncResponse", description = "This has details to trigger Full Sync")
 @OwnedBy(DX)
 public class TriggerFullSyncResponseDTO {
+  // File to review
   @Schema(description = "Indicates whether Full Sync is triggered or not") Boolean isFullSyncTriggered;
 }

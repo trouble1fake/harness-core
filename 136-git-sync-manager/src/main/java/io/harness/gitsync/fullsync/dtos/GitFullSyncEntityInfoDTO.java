@@ -28,6 +28,7 @@ import lombok.experimental.FieldDefaults;
 @Schema(name = "FullSyncEntityInfo", description = "This contains full sync details of a Git Sync Entity")
 @OwnedBy(PL)
 public class GitFullSyncEntityInfoDTO {
+  // File to review
   @Schema(description = NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE) String accountIdentifier;
   @Schema(description = NGCommonEntityConstants.ORG_PARAM_MESSAGE) String orgIdentifier;
   @Schema(description = NGCommonEntityConstants.PROJECT_PARAM_MESSAGE) String projectIdentifier;
