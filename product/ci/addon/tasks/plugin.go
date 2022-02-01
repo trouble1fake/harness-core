@@ -8,8 +8,10 @@ package tasks
 import (
 	"context"
 	"fmt"
+	"github.com/wings-software/portal/commons/go/lib/filesystem"
 	"io"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/wings-software/portal/commons/go/lib/exec"
@@ -40,7 +42,7 @@ var (
 
 // PluginTask represents interface to execute a plugin step
 type PluginTask interface {
-	Run(ctx context.Context) (*pb.Artifact, int32, error)
+	Run(ctx context.Context) (map[string]string, *pb.Artifact, int32, error)
 }
 
 type pluginTask struct {
@@ -48,6 +50,8 @@ type pluginTask struct {
 	displayName       string
 	timeoutSecs       int64
 	numRetries        int32
+	envVarOutputs     []string
+	tmpFilePath       string
 	image             string
 	entrypoint        []string
 	environment       map[string]string
@@ -59,13 +63,15 @@ type pluginTask struct {
 	cmdContextFactory exec.CmdContextFactory
 	artifactFilePath  string
 	reports           []*pb.Report
+	fs                filesystem.FileSystem
 }
 
 // NewPluginTask creates a plugin step executor
-func NewPluginTask(step *pb.UnitStep, prevStepOutputs map[string]*pb.StepOutput,
+func NewPluginTask(step *pb.UnitStep, prevStepOutputs map[string]*pb.StepOutput, tmpFilePath string,
 	log *zap.SugaredLogger, w io.Writer, logMetrics bool, addonLogger *zap.SugaredLogger) PluginTask {
 	r := step.GetPlugin()
 	timeoutSecs := r.GetContext().GetExecutionTimeoutSecs()
+	fs := filesystem.NewOSFileSystem(log)
 	if timeoutSecs == 0 {
 		timeoutSecs = defaultPluginTimeout
 	}
@@ -87,6 +93,7 @@ func NewPluginTask(step *pb.UnitStep, prevStepOutputs map[string]*pb.StepOutput,
 		cmdContextFactory: exec.OsCommandContextGracefulWithLog(log),
 		logMetrics:        logMetrics,
 		log:               log,
+		fs:                fs,
 		procWriter:        w,
 		addonLogger:       addonLogger,
 		artifactFilePath:  r.GetArtifactFilePath(),
@@ -94,23 +101,24 @@ func NewPluginTask(step *pb.UnitStep, prevStepOutputs map[string]*pb.StepOutput,
 }
 
 // Executes customer provided plugin with retries and timeout handling
-func (t *pluginTask) Run(ctx context.Context) (*pb.Artifact, int32, error) {
+func (t *pluginTask) Run(ctx context.Context) (map[string]string, *pb.Artifact, int32, error) {
 	var err error
 	var o *pb.Artifact
+	var so map[string]string
 	for i := int32(1); i <= t.numRetries; i++ {
-		if o, err = t.execute(ctx, i); err == nil {
+		if so, o, err = t.execute(ctx, i); err == nil {
 			st := time.Now()
 			err = collectTestReports(ctx, t.reports, t.id, t.log)
 			if err != nil {
 				// If there's an error in collecting reports, we won't retry but
 				// the step will be marked as an error
 				t.log.Errorw("unable to collect test reports", zap.Error(err))
-				return nil, t.numRetries, err
+				return nil, nil, t.numRetries, err
 			}
 			if len(t.reports) > 0 {
 				t.log.Infow(fmt.Sprintf("collected test reports in %s time", time.Since(st)))
 			}
-			return o, i, nil
+			return so, o, i, nil
 		}
 	}
 	if err != nil {
@@ -120,9 +128,9 @@ func (t *pluginTask) Run(ctx context.Context) (*pb.Artifact, int32, error) {
 		if errc != nil {
 			t.log.Errorw("error while collecting test reports", zap.Error(errc))
 		}
-		return nil, t.numRetries, err
+		return nil, nil, t.numRetries, err
 	}
-	return nil, t.numRetries, err
+	return nil, nil, t.numRetries, err
 }
 
 // resolveExprInEnv resolves JEXL expressions & env var present in plugin settings environment variables
@@ -141,7 +149,7 @@ func (t *pluginTask) resolveExprInEnv(ctx context.Context) (map[string]string, e
 	return resolvedSecretMap, nil
 }
 
-func (t *pluginTask) execute(ctx context.Context, retryCount int32) (*pb.Artifact, error) {
+func (t *pluginTask) execute(ctx context.Context, retryCount int32) (map[string]string, *pb.Artifact, error) {
 	start := time.Now()
 	ctx, cancel := context.WithTimeout(ctx, time.Second*time.Duration(t.timeoutSecs))
 	defer cancel()
@@ -149,26 +157,30 @@ func (t *pluginTask) execute(ctx context.Context, retryCount int32) (*pb.Artifac
 	commands, err := t.getEntrypoint(ctx)
 	if err != nil {
 		logPluginErr(t.log, "failed to find entrypoint for plugin", t.id, commands, retryCount, start, err)
-		return nil, err
+		return nil, nil, err
 	}
 
 	if len(commands) == 0 {
 		err := fmt.Errorf("plugin entrypoint is empty")
 		logPluginErr(t.log, "entrypoint fetched from remote for plugin is empty", t.id, commands, retryCount, start, err)
-		return nil, err
+		return nil, nil, err
 	}
+
+	outputFile := filepath.Join(t.tmpFilePath, fmt.Sprintf("%s%s", t.id, outputEnvSuffix))
 
 	envVarsMap, err := t.resolveExprInEnv(ctx)
 	if err != nil {
 		logPluginErr(t.log, "failed to evaluate JEXL expression for settings", t.id, commands, retryCount, start, err)
-		return nil, err
+		return nil, nil, err
 	}
+
+	envVarsMap["OUTPUT_VARIABLES_LOCATION"] = outputFile
 
 	cmd := t.cmdContextFactory.CmdContextWithSleep(ctx, pluginCmdExitWaitTime, commands[0], commands[1:]...).
 		WithStdout(t.procWriter).WithStderr(t.procWriter).WithEnvVarsMap(envVarsMap)
 	err = runCmd(ctx, cmd, t.id, commands, retryCount, start, t.logMetrics, t.addonLogger)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	artifactFilePath := t.artifactFilePath
@@ -181,13 +193,32 @@ func (t *pluginTask) execute(ctx context.Context, retryCount int32) (*pb.Artifac
 		logPluginErr(t.addonLogger, "failed to retrieve artifacts from the plugin step", t.id, commands, retryCount, start, artifactErr)
 	}
 
+	stepOutput := make(map[string]string)
+	if len(t.envVarOutputs) != 0 {
+		var err error
+		outputVars, err := fetchOutputVariables(outputFile, t.fs, t.log)
+		if err != nil {
+			logCommandExecErr(t.log, "error encountered while fetching output of run step", t.id, "", retryCount, start, err)
+			return nil, nil, err
+		}
+
+		stepOutput = outputVars
+	}
+
 	t.addonLogger.Infow(
-		"Successfully executed plugin",
+		"Successfully executed plugin: artifact",
 		"arguments", commands,
 		"output", artifactProto,
 		"elapsed_time_ms", utils.TimeSince(start),
 	)
-	return artifactProto, err
+
+	t.addonLogger.Infow(
+		"Successfully executed plugin: step output",
+		"arguments", commands,
+		"output", stepOutput,
+		"elapsed_time_ms", utils.TimeSince(start),
+	)
+	return stepOutput, artifactProto, err
 }
 
 func (t *pluginTask) getEntrypoint(ctx context.Context) ([]string, error) {
