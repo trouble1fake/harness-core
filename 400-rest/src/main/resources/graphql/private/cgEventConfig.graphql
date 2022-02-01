@@ -85,6 +85,8 @@ enum EventType {
   pipeline_continue
   workflow_end
   workflow_start
+  workflow_pause
+  workflow_continue
 }
 
 type PipelineRule {
