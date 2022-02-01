@@ -68,12 +68,15 @@ import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.beans.DelegateTaskDetails;
 import io.harness.delegate.beans.FileBucket;
 import io.harness.delegate.beans.TaskData;
+import io.harness.delegate.beans.pcf.CfInBuiltVariablesUpdateValues;
 import io.harness.delegate.beans.pcf.CfRouteUpdateRequestConfigData;
 import io.harness.delegate.task.manifests.request.CustomManifestValuesFetchParams;
 import io.harness.delegate.task.pcf.CfCommandRequest;
 import io.harness.delegate.task.pcf.CfCommandRequest.PcfCommandType;
 import io.harness.delegate.task.pcf.PcfManifestsPackage;
 import io.harness.delegate.task.pcf.request.CfCommandRouteUpdateRequest;
+import io.harness.delegate.task.pcf.response.CfDeployCommandResponse;
+import io.harness.delegate.task.pcf.response.CfRouteUpdateCommandResponse;
 import io.harness.deployment.InstanceDetails;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.GeneralException;
@@ -837,7 +840,8 @@ public class PcfStateHelper {
     return findSetupSweepingOutput(context, sweepingOutputInquiry);
   }
 
-  public void updateInfoVariables(ExecutionContext context, PcfRouteUpdateStateExecutionData stateExecutionData) {
+  public void updateInfoVariables(ExecutionContext context, PcfRouteUpdateStateExecutionData stateExecutionData,
+      CfRouteUpdateCommandResponse routeUpdateCommandResponse) {
     SweepingOutputInstance sweepingOutputInstance = sweepingOutputService.find(
         context.prepareSweepingOutputInquiryBuilder().name(InfoVariables.SWEEPING_OUTPUT_NAME).build());
 
@@ -845,10 +849,62 @@ public class PcfStateHelper {
       InfoVariables infoVariables = (InfoVariables) sweepingOutputInstance.getValue();
       sweepingOutputService.deleteById(context.getAppId(), sweepingOutputInstance.getUuid());
       infoVariables.setNewAppRoutes(stateExecutionData.getPcfRouteUpdateRequestConfigData().getFinalRoutes());
+      updateAppDetails(infoVariables, routeUpdateCommandResponse);
       sweepingOutputService.ensure(context.prepareSweepingOutputBuilder(getSweepingOutputScope(context))
                                        .name(InfoVariables.SWEEPING_OUTPUT_NAME)
                                        .value(infoVariables)
                                        .build());
+    }
+  }
+
+  private void updateAppDetails(InfoVariables infoVariables, CfRouteUpdateCommandResponse routeUpdateCommandResponse) {
+    CfInBuiltVariablesUpdateValues updateValues = routeUpdateCommandResponse.getUpdatedValues();
+    if (updateValues == null) {
+      return;
+    }
+    String oldAppGuid = infoVariables.getOldAppGuid();
+    String oldAppName = infoVariables.getOldAppName();
+    String newAppGuid = infoVariables.getNewAppGuid();
+    String newAppName = infoVariables.getNewAppName();
+
+    if (isNotEmpty(updateValues.getNewAppGuid()) && isNotEmpty(newAppGuid)
+        && newAppGuid.equals(updateValues.getNewAppGuid()) && isNotEmpty(updateValues.getNewAppName())
+        && !updateValues.getNewAppName().equals(newAppName)) {
+      infoVariables.setNewAppGuid(updateValues.getNewAppGuid());
+      infoVariables.setNewAppName(updateValues.getNewAppName());
+    }
+    if (isNotEmpty(updateValues.getOldAppGuid()) && isNotEmpty(oldAppGuid)
+        && oldAppGuid.equals(updateValues.getOldAppGuid()) && isNotEmpty(updateValues.getOldAppName())
+        && !updateValues.getOldAppName().equals(oldAppName)) {
+      infoVariables.setOldAppGuid(updateValues.getOldAppGuid());
+      infoVariables.setOldAppName(updateValues.getOldAppName());
+    }
+  }
+
+  public void updateAppNamesVariables(ExecutionContext context, CfDeployCommandResponse cfDeployCommandResponse) {
+    SweepingOutputInstance sweepingOutputInstance = sweepingOutputService.find(
+        context.prepareSweepingOutputInquiryBuilder().name(InfoVariables.SWEEPING_OUTPUT_NAME).build());
+
+    if (sweepingOutputInstance != null) {
+      InfoVariables infoVariables = (InfoVariables) sweepingOutputInstance.getValue();
+      String oldAppGuid = infoVariables.getOldAppGuid();
+      String oldAppName = infoVariables.getOldAppName();
+
+      CfInBuiltVariablesUpdateValues updatedValues = cfDeployCommandResponse.getUpdatedValues();
+      String updatedOldAppName = updatedValues.getOldAppName();
+
+      if (isNotEmpty(oldAppGuid) && isNotEmpty(updatedValues.getOldAppGuid())
+          && oldAppGuid.equals(updatedValues.getOldAppGuid()) && isNotEmpty(updatedOldAppName)
+          && !updatedOldAppName.equals(oldAppName)) {
+        infoVariables.setOldAppGuid(updatedValues.getOldAppGuid());
+        infoVariables.setOldAppName(updatedOldAppName);
+
+        sweepingOutputService.deleteById(context.getAppId(), sweepingOutputInstance.getUuid());
+        sweepingOutputService.ensure(context.prepareSweepingOutputBuilder(getSweepingOutputScope(context))
+                                         .name(InfoVariables.SWEEPING_OUTPUT_NAME)
+                                         .value(infoVariables)
+                                         .build());
+      }
     }
   }
 

@@ -14,6 +14,8 @@ import static software.wings.beans.LogHelper.color;
 import static software.wings.beans.LogWeight.Bold;
 
 import io.harness.delegate.beans.pcf.CfAppSetupTimeDetails;
+import io.harness.delegate.beans.pcf.CfInBuiltVariablesUpdateValues;
+import io.harness.delegate.beans.pcf.CfInBuiltVariablesUpdateValues.CfInBuiltVariablesUpdateValuesBuilder;
 import io.harness.delegate.beans.pcf.CfRouteUpdateRequestConfigData;
 import io.harness.delegate.cf.PcfCommandTaskBaseHelper;
 import io.harness.logging.LogCallback;
@@ -40,13 +42,13 @@ import org.cloudfoundry.operations.applications.ApplicationSummary;
  */
 public class AppRenamingRollbackOperator implements AppRenamingOperator {
   @Override
-  public void renameApp(CfRouteUpdateRequestConfigData cfRouteUpdateConfigData, CfRequestConfig cfRequestConfig,
-      LogCallback executionLogCallback, CfDeploymentManager pcfDeploymentManager,
+  public CfInBuiltVariablesUpdateValues renameApp(CfRouteUpdateRequestConfigData cfRouteUpdateConfigData,
+      CfRequestConfig cfRequestConfig, LogCallback executionLogCallback, CfDeploymentManager pcfDeploymentManager,
       PcfCommandTaskBaseHelper pcfCommandTaskBaseHelper) throws PivotalClientApiException {
     AppNamingStrategy existingStrategy = AppNamingStrategy.get(cfRouteUpdateConfigData.getExistingAppNamingStrategy());
     if (AppNamingStrategy.VERSIONING == existingStrategy && !cfRouteUpdateConfigData.isNonVersioning()) {
       // versioning to versioning does not require renaming
-      return;
+      return CfInBuiltVariablesUpdateValues.builder().build();
     }
 
     executionLogCallback.saveExecutionLog(color("# Reverting app names", White, Bold));
@@ -57,12 +59,22 @@ public class AppRenamingRollbackOperator implements AppRenamingOperator {
     SortedMap<AppType, AppRenamingData> appTypeApplicationSummaryMap =
         getAppsInTheRenamingOrder(cfRouteUpdateConfigData, allReleases);
 
+    CfInBuiltVariablesUpdateValuesBuilder updateValuesBuilder = CfInBuiltVariablesUpdateValues.builder();
     Set<Map.Entry<AppType, AppRenamingData>> entries = appTypeApplicationSummaryMap.entrySet();
     for (Map.Entry<AppType, AppRenamingData> entry : entries) {
       AppRenamingData appRenamingData = entry.getValue();
       pcfCommandTaskBaseHelper.renameApp(
           appRenamingData.getAppSummary(), cfRequestConfig, executionLogCallback, appRenamingData.getNewName());
+
+      if (AppType.NEW == entry.getKey()) {
+        updateValuesBuilder.newAppGuid(appRenamingData.getGuid());
+        updateValuesBuilder.newAppName(appRenamingData.getNewName());
+      } else if (AppType.ACTIVE == entry.getKey()) {
+        updateValuesBuilder.oldAppGuid(appRenamingData.getGuid());
+        updateValuesBuilder.oldAppName(appRenamingData.getNewName());
+      }
     }
+    return updateValuesBuilder.build();
   }
 
   @Override

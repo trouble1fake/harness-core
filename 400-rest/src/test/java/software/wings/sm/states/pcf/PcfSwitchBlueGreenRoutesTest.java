@@ -118,6 +118,6 @@ public class PcfSwitchBlueGreenRoutesTest extends WingsBaseTest {
     assertThat(executionResponse.getExecutionStatus()).isEqualTo(ExecutionStatus.SUCCESS);
     assertThat(executionResponse.getErrorMessage()).isEqualTo("ERROR_MESSAGE");
     assertThat(executionResponse.getStateExecutionData()).isEqualTo(stateExecutionData);
-    verify(pcfStateHelper, times(1)).updateInfoVariables(context, stateExecutionData);
+    verify(pcfStateHelper, times(1)).updateInfoVariables(context, stateExecutionData, null);
   }
 }
