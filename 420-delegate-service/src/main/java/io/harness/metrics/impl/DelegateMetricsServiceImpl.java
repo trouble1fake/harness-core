@@ -33,9 +33,14 @@ public class DelegateMetricsServiceImpl implements DelegateMetricsService {
   public static final String DELEGATE_TASK_ACQUIRE_FAILED = "delegate_task_acquire_failed";
   public static final String DELEGATE_TASK_EXPIRED = "delegate_task_expired";
   public static final String DELEGATE_TASK_ACQUIRE_LIMIT_EXCEEDED = "delegate_task_acquire_limit_exceeded";
+  public static final String DELEGATE_TASK_REBROADCAST = "delegate_task_rebroadcast";
+  public static final String DELEGATE_TASK_VALIDATION = "delegate_task_validation";
+  public static final String DELEGATE_TASK_NO_FIRST_WHITELISTED = "delegate_task_no_first_whitelisted";
 
-  public static final String DELEGATE_REGISTRATION = "delegate_registration";
   public static final String DELEGATE_REGISTRATION_FAILED = "delegate_registration_failed";
+  public static final String DELEGATE_RESTARTED = "delegate_restarted";
+  public static final String DELEGATE_DISCONNECTED = "delegate_disconnected";
+  public static final String DELEGATE_DESTROYED = "destroy_delegate";
 
   @Inject private MetricService metricService;
   @Inject private DelegateTaskMetricContextBuilder metricContextBuilder;
@@ -64,6 +69,9 @@ public class DelegateMetricsServiceImpl implements DelegateMetricsService {
 
   @Override
   public void recordDelegateMetrics(Delegate delegate, String metricName) {
+    if (delegate == null) {
+      return;
+    }
     try (AutoMetricContext ignore = metricContextBuilder.getContext(delegate, Delegate.class)) {
       metricService.incCounter(metricName);
     }

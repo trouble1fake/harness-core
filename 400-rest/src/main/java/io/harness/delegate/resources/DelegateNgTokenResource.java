@@ -16,11 +16,11 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.delegate.beans.DelegateEntityOwner;
 import io.harness.delegate.beans.DelegateTokenDetails;
 import io.harness.delegate.beans.DelegateTokenStatus;
+import io.harness.delegate.service.intfc.DelegateNgTokenService;
 import io.harness.delegate.utils.DelegateEntityOwnerHelper;
 import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.rest.RestResponse;
-import io.harness.service.intfc.DelegateNgTokenService;
 
 import software.wings.security.annotations.AuthRule;
 import software.wings.security.annotations.Scope;
@@ -44,8 +44,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import lombok.extern.slf4j.Slf4j;
 
-@Api("/v2/delegate-token")
-@Path("/v2/delegate-token")
+@Api("/ng/delegate-token")
+@Path("/ng/delegate-token")
 @Produces("application/json")
 @Scope(DELEGATE)
 @Slf4j
@@ -71,6 +71,8 @@ public class DelegateNgTokenResource {
   public DelegateNgTokenResource(DelegateNgTokenService delegateTokenService) {
     this.delegateTokenService = delegateTokenService;
   }
+
+  // TODO: ARPIT implement a separate rbac for token (create/view/revoke)
 
   @POST
   @Timed
@@ -138,31 +140,5 @@ public class DelegateNgTokenResource {
       DelegateTokenStatus status) {
     DelegateEntityOwner owner = DelegateEntityOwnerHelper.buildOwner(orgId, projectId);
     return new RestResponse<>(delegateTokenService.getDelegateTokens(accountId, owner, status));
-  }
-
-  @PUT
-  @Path("default")
-  @Timed
-  @ExceptionMetered
-  @AuthRule(permissionType = MANAGE_DELEGATES)
-  @Operation(operationId = "upsertDefaultToken",
-      summary = "Creates or a default Delegate Token for account, org and project. "
-          + "If default token already exists its value will be re-generated.",
-      responses =
-      {
-        @io.swagger.v3.oas.annotations.responses.
-        ApiResponse(responseCode = "default", description = "200 Ok response if successfully created default token")
-      })
-  public RestResponse<Void>
-  upsertDefaultToken(@Parameter(description = NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE) @QueryParam(
-                         "accountId") @NotNull String accountId,
-      @Parameter(description = NGCommonEntityConstants.ORG_PARAM_MESSAGE) @QueryParam(
-          NGCommonEntityConstants.ORG_KEY) String orgId,
-      @Parameter(description = NGCommonEntityConstants.PROJECT_PARAM_MESSAGE) @QueryParam(
-          NGCommonEntityConstants.PROJECT_KEY) String projectId,
-      @Parameter(description = "skipIfExists") @QueryParam("skipIfExists") Boolean skipIfExists) {
-    delegateTokenService.upsertDefaultToken(
-        accountId, DelegateEntityOwnerHelper.buildOwner(orgId, projectId), skipIfExists);
-    return new RestResponse<>();
   }
 }

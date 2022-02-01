@@ -189,6 +189,7 @@ cp ../../alpn-boot-8.1.13.v20181017.jar .
 
 cp ../../dockerization/ci-manager/Dockerfile-ci-manager-jenkins-k8-openjdk ./Dockerfile
 cp ../../dockerization/ci-manager/Dockerfile-ci-manager-jenkins-k8-gcr-openjdk ./Dockerfile-gcr
+cp ../../dockerization/ci-manager/Dockerfile-ci-manager-jenkins-k8-gcr-openjdk-ubi ./Dockerfile-gcr-ubi
 cp -r ../../dockerization/ci-manager/scripts/ .
 cp ../../ci-manager-protocol.info .
 echo ${JDK} > jdk.txt

@@ -2,7 +2,7 @@
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.5-218
 
 RUN microdnf update \
- && microdnf install wget \
+ && microdnf install wget shadow-utils \
  && rm -rf /var/cache/yum \
  && microdnf clean all
 
@@ -18,12 +18,15 @@ RUN mkdir /opt/harness/plugins
 
 WORKDIR /opt/harness
 
+RUN groupadd harness
+RUN adduser -g harness -s /bin/bash -u 1001 harness
+
 RUN chmod -R 755 /opt/harness \
     && chgrp -R 0 /opt/harness  \
     && chmod -R g=u /opt/harness \
     && chown -R 1001 /opt/harness
 
-USER 1001
+USER harness:harness
 COPY --chown=1001 --from=adoptopenjdk/openjdk8:jre8u242-b08-ubi-minimal /opt/java/openjdk/ ./jdk8u242-b08-jre/
 
 CMD [ "./run.sh" ]

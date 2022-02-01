@@ -9,10 +9,12 @@ package io.harness.graph.stepDetail;
 
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.rule.OwnerRule.ALEXEI;
+import static io.harness.rule.OwnerRule.SAHIL;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -25,6 +27,7 @@ import io.harness.category.element.UnitTests;
 import io.harness.engine.observers.StepDetailsUpdateObserver;
 import io.harness.observer.Subject;
 import io.harness.pms.data.stepdetails.PmsStepDetails;
+import io.harness.pms.data.stepparameters.PmsStepParameters;
 import io.harness.repositories.stepDetail.NodeExecutionsInfoRepository;
 import io.harness.rule.Owner;
 
@@ -66,6 +69,55 @@ public class PmsGraphStepDetailsServiceImplTest extends OrchestrationTestBase {
     pmsGraphStepDetailsService.addStepDetail(nodeExecutionId, planExecutionId, pmsStepDetails, name);
 
     verify(stepDetailsUpdateObserverSubject).fireInform(any(), any());
+  }
+
+  @Test
+  @Owner(developers = SAHIL)
+  @Category(UnitTests.class)
+  public void addStepInputs() {
+    String nodeExecutionId = generateUuid();
+    String planExecutionId = generateUuid();
+    PmsStepParameters pmsStepDetails = new PmsStepParameters(new HashMap<>());
+    when(nodeExecutionsInfoRepository.findByNodeExecutionId(any())).thenReturn(Optional.empty());
+    when(nodeExecutionsInfoRepository.save(any())).thenReturn(null);
+    doNothing().when(stepDetailsUpdateObserverSubject).fireInform(any());
+
+    pmsGraphStepDetailsService.addStepInputs(nodeExecutionId, planExecutionId, pmsStepDetails);
+    when(nodeExecutionsInfoRepository.findByNodeExecutionId(any()))
+        .thenReturn(Optional.of(NodeExecutionsInfo.builder().build()));
+    pmsGraphStepDetailsService.addStepInputs(nodeExecutionId, planExecutionId, pmsStepDetails);
+
+    verify(stepDetailsUpdateObserverSubject, times(1)).fireInform(any(), any());
+    verify(nodeExecutionsInfoRepository, times(1)).save(any());
+  }
+
+  @Test
+  @Owner(developers = SAHIL)
+  @Category(UnitTests.class)
+  public void testGetStepInputs() {
+    String nodeExecutionId = generateUuid();
+    String planExecutionId = generateUuid();
+    when(nodeExecutionsInfoRepository.findByNodeExecutionId(nodeExecutionId))
+        .thenReturn(Optional.of(NodeExecutionsInfo.builder().build()));
+    doNothing().when(stepDetailsUpdateObserverSubject).fireInform(any());
+
+    pmsGraphStepDetailsService.getStepInputs(planExecutionId, nodeExecutionId);
+
+    verify(nodeExecutionsInfoRepository, times(1)).findByNodeExecutionId(nodeExecutionId);
+  }
+
+  @Test
+  @Owner(developers = SAHIL)
+  @Category(UnitTests.class)
+  public void testGetStepInputsWithEmptyOptional() {
+    String nodeExecutionId = generateUuid();
+    String planExecutionId = generateUuid();
+    when(nodeExecutionsInfoRepository.findByNodeExecutionId(nodeExecutionId)).thenReturn(Optional.empty());
+    doNothing().when(stepDetailsUpdateObserverSubject).fireInform(any());
+
+    pmsGraphStepDetailsService.getStepInputs(planExecutionId, nodeExecutionId);
+
+    verify(nodeExecutionsInfoRepository, times(1)).findByNodeExecutionId(nodeExecutionId);
   }
 
   @Test

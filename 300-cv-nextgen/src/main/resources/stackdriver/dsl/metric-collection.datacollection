@@ -48,8 +48,7 @@ while Var:index !=  Var:lengthOfItems {
 
 Var metricResponses = execute-parallel(Var:requests)
 Var returnList = []
-Var index = 0
-Var one = 1
+index = 0
 foreach metricResponse in Var:metricResponses {
   Var metricIdentifier =  Env:metricIdentifiers[Var:index]
   Var timeseriesList = extract(Var:metricResponse, $.timeSeries)
@@ -71,7 +70,7 @@ foreach metricResponse in Var:metricResponses {
 
       Var hostname = ""
       if Env:collectHostData == "true" {
-        Var serviceInstanceResponseField = Env:serviceInstanceResponseFields.get(Var:metricName)
+        Var serviceInstanceResponseField = Env:serviceInstanceResponseFields[Var:index]
         Var serviceInstancePath = concat("$.", Var:serviceInstanceResponseField)
         hostname = extract(Var:timeseries, Var:serviceInstancePath)
         print Var:hostname

@@ -199,7 +199,8 @@ public class ScmFacilitatorResource {
       {
         @io.swagger.v3.oas.annotations.responses.
         ApiResponse(description = "True if Saas is possible for given Repo Url")
-      })
+      },
+      hidden = true)
   public ResponseDTO<SaasGitDTO>
   isSaasGit(@Parameter(description = GitSyncApiConstants.REPO_URL_PARAM_MESSAGE) @QueryParam(
       NGCommonEntityConstants.REPO_URL) String repoURL) {

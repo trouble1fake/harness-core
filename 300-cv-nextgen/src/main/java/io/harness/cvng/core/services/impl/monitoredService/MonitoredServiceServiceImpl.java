@@ -316,6 +316,9 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
                                                      .serviceIdentifier(monitoredService.getServiceIdentifier())
                                                      .environmentIdentifier(monitoredService.getEnvironmentIdentifier())
                                                      .build();
+    monitoredServiceHandlers.forEach(baseMonitoredServiceHandler
+        -> baseMonitoredServiceHandler.beforeDelete(environmentParams,
+            createMonitoredServiceDTOFromEntity(monitoredService, environmentParams).getMonitoredServiceDTO()));
     healthSourceService.delete(projectParams.getAccountIdentifier(), projectParams.getOrgIdentifier(),
         projectParams.getProjectIdentifier(), monitoredService.getIdentifier(),
         monitoredService.getHealthSourceIdentifiers());

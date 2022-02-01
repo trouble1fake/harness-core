@@ -179,6 +179,17 @@ public class HarnessMetricRegistry {
     }
   }
 
+  public void recordGaugeDuration(String metricName, String[] labelValues, Runnable runnable) {
+    Gauge metric = (Gauge) namesToCollectors.get(getAbsoluteMetricName(metricName));
+    if (metric != null) {
+      if (labelValues != null) {
+        metric.labels(labelValues).setToTime(runnable);
+      } else {
+        metric.setToTime(runnable);
+      }
+    }
+  }
+
   public void updateMetricValue(String metricName, double value) {
     String name = getAbsoluteMetricName(metricName);
 

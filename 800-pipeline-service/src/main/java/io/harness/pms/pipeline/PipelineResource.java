@@ -62,6 +62,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -567,6 +568,7 @@ public class PipelineResource implements YamlSchemaResource {
   @GET
   @Path("/dummy-pmsSteps-api")
   @ApiOperation(value = "This is dummy api to expose pmsSteps", nickname = "dummyPmsStepsApi")
+  @Hidden
   public ResponseDTO<PmsAbstractStepNode> getPmsStepNodes() {
     return ResponseDTO.newResponse(new PmsAbstractStepNode() {
       @Override
@@ -584,6 +586,7 @@ public class PipelineResource implements YamlSchemaResource {
   @GET
   @Path("/dummy-templateStep-api")
   @ApiOperation(value = "This is dummy api to expose templateStepNode", nickname = "dummyTemplateStepApi")
+  @Hidden
   // do not delete this.
   public ResponseDTO<TemplateStepNode> getTemplateStepNode() {
     return ResponseDTO.newResponse(new TemplateStepNode());
