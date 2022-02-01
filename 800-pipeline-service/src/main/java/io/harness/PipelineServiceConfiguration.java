@@ -101,7 +101,7 @@ public class PipelineServiceConfiguration extends Configuration {
   @JsonProperty("notificationClient")
   @ConfigSecret
   private NotificationClientConfiguration notificationClientConfiguration;
-  @JsonProperty("eventsFramework") @ConfigSecret private EventsFrameworkConfiguration eventsFrameworkConfiguration;
+  @JsonProperty("eventsFramework") private EventsFrameworkConfiguration eventsFrameworkConfiguration;
   @JsonProperty("pipelineServiceBaseUrl") private String pipelineServiceBaseUrl;
   @JsonProperty("pmsApiBaseUrl") private String pmsApiBaseUrl;
   @JsonProperty("yamlSchemaClientConfig") private YamlSchemaClientConfig yamlSchemaClientConfig;
