@@ -90,14 +90,13 @@ public class ServiceLevelObjective
     return ZoneOffset.UTC; // hardcoding it to UTC for now. We need to ask it from user.
   }
 
-  public int getActiveErrorBudgetMinutes(List<Double> errorBudgetIncrementPercentages, LocalDateTime currentDateTime) {
-    int errorBudgetMinutes = getTotalErrorBudgetMinutes(currentDateTime);
-    return CollectionUtils.emptyIfNull(errorBudgetIncrementPercentages)
-               .stream()
-               .map(incrementPercentage -> (errorBudgetMinutes * incrementPercentage) / 100)
-               .mapToInt(minutes -> minutes.intValue())
-               .sum()
-        + errorBudgetMinutes;
+  public int getActiveErrorBudgetMinutes(
+      List<Double> orderedErrorBudgetIncrementPercentages, LocalDateTime currentDateTime) {
+    int activeErrorBudget = getTotalErrorBudgetMinutes(currentDateTime);
+    for (Double incrementPercentage : orderedErrorBudgetIncrementPercentages) {
+      activeErrorBudget = activeErrorBudget + (int) Math.floor((activeErrorBudget * incrementPercentage) / 100);
+    }
+    return activeErrorBudget;
   }
 
   public int getTotalErrorBudgetMinutes(LocalDateTime currentDateTime) {

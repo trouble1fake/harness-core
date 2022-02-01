@@ -108,12 +108,13 @@ public class SLOHealthIndicatorServiceImpl implements SLOHealthIndicatorService 
     LocalDateTime currentLocalDate = LocalDateTime.ofInstant(clock.instant(), serviceLevelObjective.getZoneOffset());
     List<SLOErrorBudgetResetDTO> errorBudgetResetDTOS =
         sloErrorBudgetResetService.getErrorBudgetResets(projectParams, serviceLevelObjective.getIdentifier());
-    int totalErrorBudgetMinutes =
-        serviceLevelObjective.getActiveErrorBudgetMinutes(CollectionUtils.emptyIfNull(errorBudgetResetDTOS)
-                                                              .stream()
-                                                              .map(dto -> dto.getErrorBudgetIncrementPercentage())
-                                                              .collect(Collectors.toList()),
-            currentLocalDate);
+    int totalErrorBudgetMinutes = serviceLevelObjective.getActiveErrorBudgetMinutes(
+        CollectionUtils.emptyIfNull(errorBudgetResetDTOS)
+            .stream()
+            .sorted((dto1, dto2) -> dto1.getCreatedAt().compareTo(dto2.getCreatedAt()))
+            .map(dto -> dto.getErrorBudgetIncrementPercentage())
+            .collect(Collectors.toList()),
+        currentLocalDate);
     ServiceLevelObjective.TimePeriod timePeriod = serviceLevelObjective.getCurrentTimeRange(currentLocalDate);
     Instant currentTimeMinute = DateTimeUtils.roundDownTo1MinBoundary(clock.instant());
     SLOGraphData sloGraphData = sliRecordService.getGraphData(serviceLevelIndicator.getUuid(),
