@@ -63,6 +63,8 @@ import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.EmbeddedUser;
+import io.harness.beans.EventType;
+import io.harness.beans.WorkflowType;
 import io.harness.category.element.UnitTests;
 import io.harness.exception.FailureType;
 import io.harness.ff.FeatureFlagService;
@@ -82,6 +84,7 @@ import software.wings.common.NotificationMessageResolver;
 import software.wings.dl.WingsPersistence;
 import software.wings.rules.Listeners;
 import software.wings.service.StaticMap;
+import software.wings.service.impl.WorkflowExecutionUpdate;
 import software.wings.service.impl.workflow.WorkflowNotificationDetails;
 import software.wings.service.impl.workflow.WorkflowNotificationHelper;
 import software.wings.service.intfc.AlertService;
@@ -137,6 +140,7 @@ public class StateMachineExecutorTest extends WingsBaseTest {
   @Mock private WorkflowExecutionService workflowExecutionService;
   @Mock private NotificationMessageResolver notificationMessageResolver;
   @Mock private WorkflowNotificationHelper workflowNotificationHelper;
+  @Mock private WorkflowExecutionUpdate workflowExecutionUpdate;
   @Mock private FeatureFlagService featureFlagService;
   @Mock private AppService appService;
   @Mock private ExecutionEventAdvice executionEventAdvice;
@@ -1226,8 +1230,18 @@ public class StateMachineExecutorTest extends WingsBaseTest {
     StateExecutionInstance initialStateExecutionInstance =
         aStateExecutionInstance().uuid(uuid).appId("appId").displayName("state1").stateName("stateA").build();
     wingsPersistence.save(initialStateExecutionInstance);
+    ArgumentCaptor<WorkflowExecution> workflowExecutionArgumentCaptor =
+        ArgumentCaptor.forClass(WorkflowExecution.class);
+    WorkflowExecution workflowExecution =
+        WorkflowExecution.builder().workflowType(WorkflowType.ORCHESTRATION).uuid("id1").build();
+    when(workflowExecutionService.getWorkflowExecution(any(), any())).thenReturn(workflowExecution);
     StateExecutionInstance updatedStateExecutionInstance = stateMachineExecutor.handleExecutionEventAdvice(
         context, initialStateExecutionInstance, RUNNING, executionEventAdvice);
+    // Change this to WF_Pause once that is merged.
+    verify(workflowExecutionUpdate)
+        .publish(workflowExecutionArgumentCaptor.capture(), any(), eq(EventType.PIPELINE_PAUSE));
+    assertThat(workflowExecutionArgumentCaptor.getValue().getUuid().equals("id1"));
+    assertThat(workflowExecutionArgumentCaptor.getValue().getWorkflowType().equals(WorkflowType.ORCHESTRATION));
     StateExecutionInstance persistedStateExecutionInstance =
         wingsPersistence.get(StateExecutionInstance.class, initialStateExecutionInstance.getUuid());
     assertThat(persistedStateExecutionInstance)
