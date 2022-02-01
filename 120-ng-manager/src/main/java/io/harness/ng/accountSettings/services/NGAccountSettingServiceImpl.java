@@ -9,10 +9,21 @@ package io.harness.ng.accountSettings.services;
 
 import io.harness.ng.core.account.AccountSettingResponseDTO;
 import io.harness.ng.core.account.AccountSettings;
+import io.harness.ng.core.account.AccountSettingsDTO;
+import io.harness.ng.core.account.AccountSettingsInfoDTO;
+
+import org.springframework.data.mongodb.core.MongoTemplate;
 
 public class NGAccountSettingServiceImpl implements NGAccountSettingService {
+  MongoTemplate mongoTemplate;
+
   @Override
   public AccountSettingResponseDTO update(AccountSettings accountSettings, String accountIdentifier) {
     return null;
+  }
+
+  @Override
+  public AccountSettingsInfoDTO create(String accountIdentifier, AccountSettingsDTO accountSettingsDTO) {
+    return mongoTemplate.save(accountSettingsDTO.getAccountSettingsInfoDTO());
   }
 }

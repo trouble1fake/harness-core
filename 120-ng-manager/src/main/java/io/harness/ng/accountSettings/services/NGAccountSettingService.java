@@ -9,7 +9,11 @@ package io.harness.ng.accountSettings.services;
 
 import io.harness.ng.core.account.AccountSettingResponseDTO;
 import io.harness.ng.core.account.AccountSettings;
+import io.harness.ng.core.account.AccountSettingsDTO;
+import io.harness.ng.core.account.AccountSettingsInfoDTO;
 
 public interface NGAccountSettingService {
   AccountSettingResponseDTO update(AccountSettings accountSettings, String accountIdentifier);
+
+  AccountSettingsInfoDTO create(String accountIdentifier, AccountSettingsDTO accountSettingsDTO);
 }
