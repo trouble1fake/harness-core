@@ -27,6 +27,7 @@ public interface ChangeSourceService {
   Set<ChangeSourceDTO> get(ServiceEnvironmentParams environmentParams, List<String> identifiers);
   ChangeSource get(ServiceEnvironmentParams serviceEnvironmentParams, String identifier);
   Set<ChangeSourceDTO> getByType(ServiceEnvironmentParams environmentParams, ChangeSourceType changeSourceType);
+  List<ChangeSource> getEntityByType(ServiceEnvironmentParams environmentParams, ChangeSourceType changeSourceType);
 
   void delete(ServiceEnvironmentParams environmentParams, List<String> identifiers);
 

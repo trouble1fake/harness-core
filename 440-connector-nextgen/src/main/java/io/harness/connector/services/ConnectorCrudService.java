@@ -53,6 +53,9 @@ public interface ConnectorCrudService {
 
   boolean delete(String accountIdentifier, String orgIdentifier, String projectIdentifier, String connectorIdentifier);
 
+  boolean delete(String accountIdentifier, String orgIdentifier, String projectIdentifier, String connectorIdentifier,
+      ChangeType changeType);
+
   ConnectorCatalogueResponseDTO getConnectorCatalogue();
 
   void updateConnectorEntityWithPerpetualtaskId(String accountIdentifier, String connectorOrgIdentifier,

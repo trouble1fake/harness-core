@@ -117,6 +117,12 @@ public class ChangeSourceServiceImpl implements ChangeSourceService {
   }
 
   @Override
+  public List<ChangeSource> getEntityByType(
+      ServiceEnvironmentParams environmentParams, ChangeSourceType changeSourceType) {
+    return createQuery(environmentParams).filter(ChangeSourceKeys.type, changeSourceType).asList();
+  }
+
+  @Override
   public void delete(@NonNull ServiceEnvironmentParams environmentParams, @NonNull List<String> identifiers) {
     List<ChangeSource> changeSources =
         createQuery(environmentParams).field(ChangeSourceKeys.identifier).in(identifiers).asList();
@@ -275,8 +281,11 @@ public class ChangeSourceServiceImpl implements ChangeSourceService {
   @Override
   public void generateDemoData(ChangeSource entity) {
     if (changeSourceTypeToDemoDataGeneratorMap.containsKey(entity.getType())) {
-      List<ChangeEventDTO> changeEvents = changeSourceTypeToDemoDataGeneratorMap.get(entity.getType()).generate(entity);
-      changeEvents.forEach(changeEvent -> changeEventService.register(changeEvent));
+      if (entity.shouldGenerateAutoDemoEvents()) {
+        List<ChangeEventDTO> changeEvents =
+            changeSourceTypeToDemoDataGeneratorMap.get(entity.getType()).generate(entity);
+        changeEvents.forEach(changeEvent -> changeEventService.register(changeEvent));
+      }
     }
   }
 }

@@ -145,4 +145,8 @@ public abstract class ChangeSource
   public boolean isEligibleForDemo() {
     return this.identifier.endsWith("_dev");
   }
+
+  public boolean shouldGenerateAutoDemoEvents() {
+    return !getIdentifier().contains("noautoevents");
+  }
 }

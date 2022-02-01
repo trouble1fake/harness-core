@@ -15,6 +15,7 @@ import static software.wings.utils.WingsTestConstants.ENV_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyList;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -29,6 +30,7 @@ import io.harness.exception.FunctorException;
 import io.harness.ff.FeatureFlagService;
 import io.harness.rule.Owner;
 import io.harness.security.encryption.EncryptedDataDetail;
+import io.harness.security.encryption.EncryptedRecordData;
 import io.harness.security.encryption.EncryptionType;
 
 import software.wings.WingsBaseTest;
@@ -40,6 +42,7 @@ import software.wings.service.intfc.security.SecretManager;
 import com.google.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
+import javax.cache.Cache;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.Mock;
@@ -49,6 +52,7 @@ public class SecretManagerFunctorTest extends WingsBaseTest {
   @Inject private FeatureFlagService featureFlagService;
   @Mock private ManagerDecryptionService managerDecryptionService;
   @Mock private SecretManager secretManager;
+  @Mock private Cache<String, EncryptedRecordData> secretsCache;
   private static final String ACCOUNT_ID = "ACCOUNT_ID";
   private static final String APP_ID = "APP_ID";
   private static final String WORKFLOW_EXECUTION_ID = "WORKFLOW_EXECUTION_ID";
@@ -61,6 +65,7 @@ public class SecretManagerFunctorTest extends WingsBaseTest {
 
     int token = HashGenerator.generateIntegerHash();
 
+    when(secretsCache.get(anyString())).thenReturn(null);
     SecretManagerFunctor secretManagerFunctor = buildFunctor(token, featureFlagService);
     assertFunctor(secretManagerFunctor);
 
@@ -121,6 +126,7 @@ public class SecretManagerFunctorTest extends WingsBaseTest {
         .managerDecryptionService(managerDecryptionService)
         .accountId(ACCOUNT_ID)
         .appId(APP_ID)
+        .secretsCache(secretsCache)
         .envId(ENV_ID)
         .workflowExecutionId(WORKFLOW_EXECUTION_ID)
         .expressionFunctorToken(token)

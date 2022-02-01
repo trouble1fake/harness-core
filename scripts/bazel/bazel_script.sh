@@ -101,7 +101,6 @@ BAZEL_MODULES="\
   //874-orchestration-delay:module \
   //876-orchestration-beans:module \
   //878-pipeline-service-utilities:module \
-  //878-pms-coupling:module \
   //879-pms-sdk:module \
   //882-pms-sdk-core:module \
   //884-pms-commons:module \
@@ -322,7 +321,6 @@ build_bazel_module 870-orchestration
 build_bazel_module 874-orchestration-delay
 build_bazel_module 876-orchestration-beans
 build_bazel_module 878-pipeline-service-utilities
-build_bazel_module 878-pms-coupling
 build_bazel_module 879-pms-sdk
 build_bazel_module 882-pms-sdk-core
 build_bazel_module 884-pms-commons

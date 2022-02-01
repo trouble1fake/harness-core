@@ -67,9 +67,12 @@ import io.harness.cvng.core.jobs.PersistentLockCleanup;
 import io.harness.cvng.core.jobs.SLIDataCollectionTaskCreateNextTaskHandler;
 import io.harness.cvng.core.jobs.ServiceGuardDataCollectionTaskCreateNextTaskHandler;
 import io.harness.cvng.core.services.CVNextGenConstants;
+import io.harness.cvng.core.services.api.SideKickService;
 import io.harness.cvng.exception.BadRequestExceptionMapper;
 import io.harness.cvng.exception.ConstraintViolationExceptionMapper;
 import io.harness.cvng.exception.NotFoundExceptionMapper;
+import io.harness.cvng.governance.beans.ExpansionKeysConstants;
+import io.harness.cvng.governance.services.SLOPolicyExpansionHandler;
 import io.harness.cvng.metrics.services.impl.CVNGMetricsPublisher;
 import io.harness.cvng.migration.CVNGSchemaHandler;
 import io.harness.cvng.migration.beans.CVNGSchema;
@@ -115,11 +118,16 @@ import io.harness.notification.module.NotificationClientModule;
 import io.harness.persistence.HPersistence;
 import io.harness.persistence.NoopUserProvider;
 import io.harness.persistence.UserProvider;
+import io.harness.pms.contracts.plan.ExpansionRequestType;
+import io.harness.pms.contracts.plan.JsonExpansionInfo;
+import io.harness.pms.contracts.steps.StepCategory;
+import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.events.base.PipelineEventConsumerController;
 import io.harness.pms.sdk.PmsSdkConfiguration;
 import io.harness.pms.sdk.PmsSdkInitHelper;
 import io.harness.pms.sdk.PmsSdkModule;
 import io.harness.pms.sdk.core.SdkDeployMode;
+import io.harness.pms.sdk.core.governance.JsonExpansionHandlerInfo;
 import io.harness.pms.sdk.execution.events.facilitators.FacilitatorEventRedisConsumer;
 import io.harness.pms.sdk.execution.events.interrupts.InterruptEventRedisConsumer;
 import io.harness.pms.sdk.execution.events.node.advise.NodeAdviseEventRedisConsumer;
@@ -128,6 +136,8 @@ import io.harness.pms.sdk.execution.events.node.start.NodeStartEventRedisConsume
 import io.harness.pms.sdk.execution.events.orchestrationevent.OrchestrationEventRedisConsumer;
 import io.harness.pms.sdk.execution.events.plan.CreatePartialPlanRedisConsumer;
 import io.harness.pms.sdk.execution.events.progress.ProgressEventRedisConsumer;
+import io.harness.pms.yaml.YAMLFieldNameConstants;
+import io.harness.pms.yaml.YamlNode;
 import io.harness.queue.QueueListenerController;
 import io.harness.queue.QueuePublisher;
 import io.harness.remote.client.ServiceHttpClientConfig;
@@ -415,6 +425,7 @@ public class VerificationApplication extends Application<VerificationConfigurati
     registerWaitEnginePublishers(injector);
     registerPmsSdkEvents(injector);
     registerDemoGenerationIterator(injector);
+    scheduleSidekickProcessing(injector);
     scheduleMaintenanceActivities(injector, configuration);
 
     log.info("Leaving startup maintenance mode");
@@ -423,6 +434,13 @@ public class VerificationApplication extends Application<VerificationConfigurati
     runMigrations(injector);
 
     log.info("Starting app done");
+  }
+
+  private void scheduleSidekickProcessing(Injector injector) {
+    ScheduledThreadPoolExecutor workflowVerificationExecutor =
+        new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat("side-kick").build());
+    workflowVerificationExecutor.scheduleWithFixedDelay(
+        () -> injector.getInstance(SideKickService.class).processNext(), 5, 5, TimeUnit.SECONDS);
   }
 
   private void registerUpdateProgressScheduler(Injector injector) {
@@ -482,7 +500,25 @@ public class VerificationApplication extends Application<VerificationConfigurati
         .filterCreationResponseMerger(new CVNGFilterCreationResponseMerger())
         .executionSummaryModuleInfoProviderClass(CVNGModuleInfoProvider.class)
         .eventsFrameworkConfiguration(config.getEventsFrameworkConfiguration())
+        .jsonExpansionHandlers(getJsonExpansionHandlers())
         .build();
+  }
+
+  private List<JsonExpansionHandlerInfo> getJsonExpansionHandlers() {
+    List<JsonExpansionHandlerInfo> jsonExpansionHandlers = new ArrayList<>();
+    JsonExpansionInfo sloPolicyInfo =
+        JsonExpansionInfo.newBuilder()
+            .setExpansionType(ExpansionRequestType.LOCAL_FQN)
+            .setKey(YAMLFieldNameConstants.STAGE + YamlNode.PATH_SEP + YAMLFieldNameConstants.SPEC)
+            .setExpansionKey(ExpansionKeysConstants.SLO_POLICY_EXPANSION_KEY)
+            .setStageType(StepType.newBuilder().setType("Deployment").setStepCategory(StepCategory.STAGE).build())
+            .build();
+    JsonExpansionHandlerInfo sloPolicyHandler = JsonExpansionHandlerInfo.builder()
+                                                    .jsonExpansionInfo(sloPolicyInfo)
+                                                    .expansionHandler(SLOPolicyExpansionHandler.class)
+                                                    .build();
+    jsonExpansionHandlers.add(sloPolicyHandler);
+    return jsonExpansionHandlers;
   }
 
   private void initMetrics(Injector injector) {
@@ -535,7 +571,7 @@ public class VerificationApplication extends Application<VerificationConfigurati
             .mode(PersistenceIterator.ProcessMode.PUMP)
             .clazz(AnalysisOrchestrator.class)
             .fieldName(AnalysisOrchestratorKeys.analysisOrchestrationIteration)
-            .targetInterval(ofSeconds(30))
+            .targetInterval(ofSeconds(15))
             .acceptableNoAlertDelay(ofSeconds(30))
             .executorService(workflowVerificationExecutor)
             .semaphore(new Semaphore(poolSize - 1))

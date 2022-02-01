@@ -11,15 +11,18 @@ import io.harness.ModuleType;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
+import io.harness.exception.InvalidRequestException;
 import io.harness.pms.contracts.plan.Dependencies;
 import io.harness.pms.contracts.plan.PlanCreationServiceGrpc;
 import io.harness.pms.contracts.plan.YamlFieldBlob;
 import io.harness.pms.plan.creation.PlanCreatorServiceInfo;
 import io.harness.pms.plan.creation.PlanCreatorUtils;
 import io.harness.pms.yaml.YamlField;
+import io.harness.pms.yaml.YamlUtils;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -81,12 +84,21 @@ public class PmsSdkHelper {
     }
 
     Map<String, Set<String>> supportedTypes = serviceInfo.getSupportedTypes();
+    YamlField fullYamlField;
+    try {
+      fullYamlField = YamlUtils.readTree(dependencies.getYaml());
+    } catch (IOException ex) {
+      String message = "Invalid yaml during plan creation";
+      log.error(message, ex);
+      throw new InvalidRequestException(message);
+    }
+
     return dependencies.getDependenciesMap()
         .entrySet()
         .stream()
         .filter(entry -> {
           try {
-            YamlField field = YamlField.fromYamlPath(dependencies.getYaml(), entry.getValue());
+            YamlField field = fullYamlField.fromYamlPath(entry.getValue());
             return PlanCreatorUtils.supportsField(supportedTypes, field);
           } catch (Exception e) {
             log.error("Invalid yaml field", e);

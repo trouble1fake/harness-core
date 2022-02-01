@@ -17,6 +17,7 @@ import io.harness.azure.utility.AzureResourceUtility;
 import io.harness.logging.LogCallback;
 
 import software.wings.delegatetasks.azure.AzureServiceCallBack;
+import software.wings.delegatetasks.azure.appservice.deployment.context.SwapSlotStatusVerifierContext;
 
 import com.microsoft.azure.management.monitor.EventData;
 import java.util.HashSet;
@@ -37,6 +38,13 @@ public class SwapSlotStatusVerifier extends SlotStatusVerifier {
     super(logCallback, slotName, azureWebClient, azureWebClientContext, restCallBack);
     startTime = DateTime.now().minusMinutes(1);
     this.azureMonitorClient = azureMonitorClient;
+  }
+
+  public SwapSlotStatusVerifier(SwapSlotStatusVerifierContext context) {
+    super(context.getLogCallback(), context.getSlotName(), context.getAzureWebClient(),
+        context.getAzureWebClientContext(), context.getRestCallBack());
+    startTime = DateTime.now().minusMinutes(1);
+    this.azureMonitorClient = context.getAzureMonitorClient();
   }
 
   @Override

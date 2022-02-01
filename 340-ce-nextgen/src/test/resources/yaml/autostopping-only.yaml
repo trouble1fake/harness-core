@@ -48,6 +48,10 @@ rules:
       - deployments
       - statefulsets
       - replicasets
+      - deployments/scale
+      - deployments/status
+      - statefulsets/status
+      - statefulsets/scale
     verbs:
       - patch
       - update

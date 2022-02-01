@@ -17,6 +17,7 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FeatureFlag;
 import io.harness.cdng.creator.plan.stage.DeploymentStageConfig;
+import io.harness.cdng.creator.plan.stage.DeploymentStageNode;
 import io.harness.encryption.Scope;
 import io.harness.jackson.JsonNodeUtils;
 import io.harness.plancreator.steps.ParallelStepElementConfig;
@@ -56,7 +57,7 @@ import lombok.extern.slf4j.Slf4j;
 @OwnedBy(HarnessTeam.CDP)
 @Slf4j
 public class CdYamlSchemaServiceImpl implements CdYamlSchemaService {
-  private static final String DEPLOYMENT_STAGE_CONFIG = YamlSchemaUtils.getSwaggerName(DeploymentStageConfig.class);
+  private static final String DEPLOYMENT_STAGE_NODE = YamlSchemaUtils.getSwaggerName(DeploymentStageNode.class);
   private static final String STEP_ELEMENT_CONFIG = YamlSchemaUtils.getSwaggerName(StepElementConfig.class);
   private static final Class<StepElementConfig> STEP_ELEMENT_CONFIG_CLASS = StepElementConfig.class;
 
@@ -91,8 +92,14 @@ public class CdYamlSchemaServiceImpl implements CdYamlSchemaService {
   @Override
   public List<YamlSchemaWithDetails> getDeploymentStageYamlSchemaWithDetails(
       String accountIdentifier, String projectIdentifier, String orgIdentifier, Scope scope) {
-    return yamlSchemaProvider.getCrossFunctionalStepsSchemaDetails(projectIdentifier, orgIdentifier, scope,
+    List<YamlSchemaWithDetails> yamlSchemaWithDetailsList = yamlSchemaProvider.getCrossFunctionalStepsSchemaDetails(
+        projectIdentifier, orgIdentifier, scope,
         YamlSchemaUtils.getNodeEntityTypesByYamlGroup(yamlSchemaRootClasses, StepCategory.STEP.name()), ModuleType.CD);
+    yamlSchemaWithDetailsList.addAll(
+        yamlSchemaProvider.getCrossFunctionalStepsSchemaDetails(projectIdentifier, orgIdentifier, scope,
+            YamlSchemaUtils.getNodeEntityTypesByYamlGroup(yamlSchemaRootClasses, StepCategory.STAGE.name()),
+            ModuleType.CD));
+    return yamlSchemaWithDetailsList;
   }
 
   @Override
@@ -158,10 +165,11 @@ public class CdYamlSchemaServiceImpl implements CdYamlSchemaService {
 
     return PartialSchemaDTO.builder()
         .namespace(CD_NAMESPACE)
-        .nodeName(DEPLOYMENT_STAGE_CONFIG)
+        .nodeName(DEPLOYMENT_STAGE_NODE)
         .schema(partialCdSchema)
         .nodeType(getDeploymentStageTypeName())
         .moduleType(ModuleType.CD)
+        .skipStageSchema(false)
         .build();
   }
 

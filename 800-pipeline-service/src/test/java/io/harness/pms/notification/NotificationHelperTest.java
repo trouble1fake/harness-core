@@ -7,6 +7,7 @@
 
 package io.harness.pms.notification;
 
+import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.notification.PipelineEventType.STAGE_FAILED;
 import static io.harness.notification.PipelineEventType.STAGE_SUCCESS;
 import static io.harness.rule.OwnerRule.BRIJESH;
@@ -31,6 +32,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.engine.executions.plan.PlanExecutionMetadataService;
 import io.harness.engine.executions.plan.PlanExecutionService;
+import io.harness.engine.utils.PmsLevelUtils;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.NodeExecution.NodeExecutionBuilder;
 import io.harness.execution.PlanExecution;
@@ -47,10 +49,12 @@ import io.harness.pms.contracts.plan.ExecutionMetadata;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.expression.PmsEngineExpressionService;
+import io.harness.pms.serializer.recaster.RecastOrchestrationUtils;
 import io.harness.rule.Owner;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.junit.Before;
 import org.junit.Test;
@@ -75,6 +79,7 @@ public class NotificationHelperTest extends CategoryTest {
           .setMetadata(
               ExecutionMetadata.newBuilder()
                   .setModuleType("cd")
+                  .setIsNotificationConfigured(true)
                   .setPipelineIdentifier("dummyPipeline")
                   .setTriggerInfo(
                       io.harness.pms.contracts.plan.ExecutionTriggerInfo.newBuilder()
@@ -138,6 +143,9 @@ public class NotificationHelperTest extends CategoryTest {
 
   String notificationRulesString =
       "{\"__recast\":\"java.util.ArrayList\",\"__encodedValue\":[{\"__recast\":\"io.harness.notification.bean.NotificationRules\",\"name\":\"N2\",\"enabled\":true,\"pipelineEvents\":[{\"__recast\":\"io.harness.notification.bean.PipelineEvent\",\"type\":\"ALL_EVENTS\",\"forStages\":null},{\"__recast\":\"io.harness.notification.bean.PipelineEvent\",\"type\":\"STAGE_FAILED\",\"forStages\":[\"stage1\"]}],\"notificationChannelWrapper\":{\"__recast\":\"parameterField\",\"__encodedValue\":{\"__recast\":\"io.harness.pms.yaml.ParameterDocumentField\",\"expressionValue\":null,\"expression\":false,\"valueDoc\":{\"__recast\":\"io.harness.pms.yaml.ParameterFieldValueWrapper\",\"value\":{\"__recast\":\"io.harness.notification.bean.NotificationChannelWrapper\",\"type\":\"Email\",\"notificationChannel\":{\"__recast\":\"io.harness.notification.channelDetails.PmsEmailChannel\",\"userGroups\":[],\"recipients\":[\"admin@harness.io\",\"test@harness.io\"]}}},\"valueClass\":\"io.harness.notification.bean.NotificationChannelWrapper\",\"typeString\":false,\"skipAutoEvaluation\":false,\"jsonResponseField\":false,\"responseField\":null}}}]}";
+  Map<String, Object> notificationRulesMap =
+      RecastOrchestrationUtils.toMap(RecastOrchestrationUtils.fromJson(notificationRulesString));
+
   @Before
   public void setup() {
     notificationClient = mock(NotificationClientImpl.class);
@@ -190,19 +198,29 @@ public class NotificationHelperTest extends CategoryTest {
   @Owner(developers = BRIJESH)
   @Category(UnitTests.class)
   public void testGetEventTypeForStage() {
+    String planExecutionId = generateUuid();
     PlanNode pipelinePlanNode = PlanNode.builder()
+                                    .uuid(generateUuid())
                                     .stepType(StepType.newBuilder().setStepCategory(StepCategory.PIPELINE).build())
                                     .identifier("dummyIdentifier")
                                     .build();
     PlanNode stagePlanNode = PlanNode.builder()
+                                 .uuid(generateUuid())
                                  .stepType(StepType.newBuilder().setStepCategory(StepCategory.STAGE).build())
                                  .identifier("dummyIdentifier")
                                  .build();
+
+    Ambiance.Builder ambianceBuilder =
+        Ambiance.newBuilder()
+            .setPlanExecutionId(planExecutionId)
+            .addLevels(PmsLevelUtils.buildLevelFromNode(generateUuid(), pipelinePlanNode));
     NodeExecutionBuilder nodeExecutionBuilder =
-        NodeExecution.builder().planNode(pipelinePlanNode).status(Status.SUCCEEDED);
+        NodeExecution.builder().ambiance(ambianceBuilder.build()).status(Status.SUCCEEDED);
     assertEquals(notificationHelper.getEventTypeForStage(nodeExecutionBuilder.build()), Optional.empty());
-    nodeExecutionBuilder.planNode(stagePlanNode);
-    assertEquals(notificationHelper.getEventTypeForStage(nodeExecutionBuilder.build()), Optional.of(STAGE_SUCCESS));
+    ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(generateUuid(), stagePlanNode));
+    assertEquals(
+        notificationHelper.getEventTypeForStage(nodeExecutionBuilder.ambiance(ambianceBuilder.build()).build()),
+        Optional.of(STAGE_SUCCESS));
     nodeExecutionBuilder.status(Status.FAILED);
     assertEquals(notificationHelper.getEventTypeForStage(nodeExecutionBuilder.build()), Optional.of(STAGE_FAILED));
     nodeExecutionBuilder.status(Status.ABORTED);
@@ -222,7 +240,7 @@ public class NotificationHelperTest extends CategoryTest {
         .thenReturn(Optional.of(PlanExecutionMetadata.builder().yaml(emailNotificationYaml).build()));
     ArgumentCaptor<NotificationChannel> notificationChannelArgumentCaptor =
         ArgumentCaptor.forClass(NotificationChannel.class);
-    doReturn(notificationRulesString).when(pmsEngineExpressionService).resolve(eq(ambiance), any(), eq(true));
+    doReturn(notificationRulesMap).when(pmsEngineExpressionService).resolve(eq(ambiance), any(), eq(true));
 
     notificationHelper.sendNotification(ambiance, PipelineEventType.PIPELINE_SUCCESS, nodeExecution, 1L);
     verify(notificationClient, times(1)).sendNotificationAsync(notificationChannelArgumentCaptor.capture());
@@ -253,7 +271,7 @@ public class NotificationHelperTest extends CategoryTest {
         .thenReturn(PlanExecution.builder().status(Status.SUCCEEDED).startTs(0L).endTs(0L).build());
     when(planExecutionMetadataService.findByPlanExecutionId(anyString()))
         .thenReturn(Optional.of(PlanExecutionMetadata.builder().yaml(allEventsYaml).build()));
-    doReturn(notificationRulesString).when(pmsEngineExpressionService).resolve(eq(ambiance), any(), eq(true));
+    doReturn(notificationRulesMap).when(pmsEngineExpressionService).resolve(eq(ambiance), any(), eq(true));
     for (int idx = 0; idx < pipelineEventTypeList.size(); idx++) {
       notificationHelper.sendNotification(ambiance, pipelineEventTypeList.get(idx), nodeExecution, 1L);
       verify(notificationClient, times(idx + 1)).sendNotificationAsync(any());

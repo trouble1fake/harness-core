@@ -8,6 +8,7 @@
 package software.wings.service.mappers.artifact;
 
 import static io.harness.rule.OwnerRule.ARCHIT;
+import static io.harness.rule.OwnerRule.DEEPAK_PUTHRAYA;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -18,29 +19,38 @@ import io.harness.rule.Owner;
 
 import software.wings.beans.DockerConfig;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 public class DockerConfigToInternalMapperTest extends CategoryTest {
-  DockerConfig dockerConfig;
-
-  @Before
-  public void setUp() throws Exception {
-    dockerConfig = DockerConfig.builder()
-                       .dockerRegistryUrl("REGISTRY_URL")
-                       .username("USERNAME")
-                       .password("PASSWORD".toCharArray())
-                       .build();
-  }
-
   @Test
   @Owner(developers = ARCHIT)
   @Category(UnitTests.class)
   public void testToDockerInternalConfig() {
+    DockerConfig dockerConfig = DockerConfig.builder()
+                                    .dockerRegistryUrl("https://registry.hub.docker.com")
+                                    .username("USERNAME")
+                                    .password("PASSWORD".toCharArray())
+                                    .build();
     DockerInternalConfig dockerInternalConfig = DockerConfigToInternalMapper.toDockerInternalConfig(dockerConfig);
     assertThat(dockerInternalConfig).isNotNull();
-    assertThat(dockerInternalConfig.getDockerRegistryUrl()).isEqualTo(dockerConfig.getDockerRegistryUrl());
+    assertThat(dockerInternalConfig.getDockerRegistryUrl()).isEqualTo("https://registry.hub.docker.com/");
+    assertThat(dockerInternalConfig.getUsername()).isEqualTo(dockerConfig.getUsername());
+    assertThat(dockerInternalConfig.getPassword()).isEqualTo(new String(dockerConfig.getPassword()));
+  }
+
+  @Test
+  @Owner(developers = DEEPAK_PUTHRAYA)
+  @Category(UnitTests.class)
+  public void testToDockerInternalConfigWithQueryParams() {
+    DockerConfig dockerConfig = DockerConfig.builder()
+                                    .dockerRegistryUrl("https://registry.hub.docker.com/v2?a=b&b=c")
+                                    .username("USERNAME")
+                                    .password("PASSWORD".toCharArray())
+                                    .build();
+    DockerInternalConfig dockerInternalConfig = DockerConfigToInternalMapper.toDockerInternalConfig(dockerConfig);
+    assertThat(dockerInternalConfig).isNotNull();
+    assertThat(dockerInternalConfig.getDockerRegistryUrl()).isEqualTo("https://registry.hub.docker.com/v2/?a=b&b=c");
     assertThat(dockerInternalConfig.getUsername()).isEqualTo(dockerConfig.getUsername());
     assertThat(dockerInternalConfig.getPassword()).isEqualTo(new String(dockerConfig.getPassword()));
   }

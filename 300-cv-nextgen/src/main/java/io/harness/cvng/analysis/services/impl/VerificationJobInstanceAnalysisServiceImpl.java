@@ -20,6 +20,7 @@ import io.harness.cvng.analysis.beans.DeploymentLogAnalysisDTO.HostSummary;
 import io.harness.cvng.analysis.beans.DeploymentTimeSeriesAnalysisDTO.HostInfo;
 import io.harness.cvng.analysis.beans.HealthAdditionalInfo;
 import io.harness.cvng.analysis.beans.Risk;
+import io.harness.cvng.analysis.beans.TransactionMetricInfo;
 import io.harness.cvng.analysis.entities.DeploymentLogAnalysis;
 import io.harness.cvng.analysis.entities.DeploymentTimeSeriesAnalysis;
 import io.harness.cvng.analysis.entities.HealthVerificationPeriod;
@@ -112,6 +113,8 @@ public class VerificationJobInstanceAnalysisServiceImpl implements VerificationJ
   @Override
   public CanaryBlueGreenAdditionalInfo getCanaryBlueGreenAdditionalInfo(
       String accountId, VerificationJobInstance verificationJobInstance) {
+    List<TransactionMetricInfo> transactionMetricInfoList =
+        deploymentTimeSeriesAnalysisService.getTransactionMetricInfos(accountId, verificationJobInstance.getUuid());
     List<DeploymentTimeSeriesAnalysis> deploymentTimeSeriesAnalysis =
         deploymentTimeSeriesAnalysisService.getLatestDeploymentTimeSeriesAnalysis(
             accountId, verificationJobInstance.getUuid(), DeploymentTimeSeriesAnalysisFilter.builder().build());
@@ -135,8 +138,7 @@ public class VerificationJobInstanceAnalysisServiceImpl implements VerificationJ
 
     updateDeploymentVerificationHostInfoFromAnalyses(
         deploymentTimeSeriesAnalysis, deploymentLogAnalysis, oldHosts, canaryBlueGreenAdditionalInfo);
-    updateHostInfoWithAnomalousCount(
-        canaryBlueGreenAdditionalInfo, deploymentTimeSeriesAnalysis, deploymentLogAnalysis);
+    updateHostInfoWithAnomalousCount(canaryBlueGreenAdditionalInfo, transactionMetricInfoList, deploymentLogAnalysis);
 
     canaryBlueGreenAdditionalInfo.setTrafficSplitPercentage(
         getTrafficSplitPercentage((CanaryBlueGreenVerificationJob) verificationJobInstance.getResolvedJob()));
@@ -260,21 +262,18 @@ public class VerificationJobInstanceAnalysisServiceImpl implements VerificationJ
   }
 
   private void updateHostInfoWithAnomalousCount(CanaryBlueGreenAdditionalInfo canaryBlueGreenAdditionalInfo,
-      List<DeploymentTimeSeriesAnalysis> deploymentTimeSeriesAnalysisList,
-      List<DeploymentLogAnalysis> deploymentLogAnalysisList) {
+      List<TransactionMetricInfo> TransactionMetricInfoList, List<DeploymentLogAnalysis> deploymentLogAnalysisList) {
     canaryBlueGreenAdditionalInfo.getCanary().forEach(hostSummaryInfo -> {
       int anomalousMetricsCount[] = new int[] {0};
       int anomalousLogClustersCount[] = new int[] {0};
-      for (DeploymentTimeSeriesAnalysis deploymentTimeSeriesAnalysis : deploymentTimeSeriesAnalysisList) {
-        deploymentTimeSeriesAnalysis.getTransactionMetricSummaries().forEach(transactionMetricHostData
-            -> anomalousMetricsCount[0] +=
-            transactionMetricHostData.getHostData()
-                .stream()
-                .filter(hostData
-                    -> hostData.getHostName().isPresent()
-                        && hostData.getHostName().get().equals(hostSummaryInfo.getHostName())
-                        && hostData.getRisk().isGreaterThanEq(Risk.OBSERVE))
-                .count());
+      for (TransactionMetricInfo transactionMetricInfo : TransactionMetricInfoList) {
+        anomalousMetricsCount[0] += transactionMetricInfo.getNodes()
+                                        .stream()
+                                        .filter(hostData
+                                            -> hostData.getHostName().isPresent()
+                                                && hostData.getHostName().get().equals(hostSummaryInfo.getHostName())
+                                                && hostData.getRisk().isGreaterThanEq(Risk.OBSERVE))
+                                        .count();
       }
       for (DeploymentLogAnalysis deploymentLogAnalysis : deploymentLogAnalysisList) {
         if (deploymentLogAnalysis.getHostSummaries() != null) {

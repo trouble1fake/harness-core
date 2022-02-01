@@ -31,6 +31,7 @@ import io.harness.ng.beans.PageResponse;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @OwnedBy(HarnessTeam.CV)
@@ -42,6 +43,10 @@ public interface ActivityService {
 
   void updateActivityStatus(Activity activity);
 
+  Optional<Activity> getAnyKubernetesEvent(
+      ServiceEnvironmentParams serviceEnvironmentParams, Instant startTime, Instant endTime);
+  Optional<Activity> getAnyDemoDeploymentEvent(ServiceEnvironmentParams dependencyServiceEnvParams, Instant startTime,
+      Instant endTime, ActivityVerificationStatus verificationStatus);
   Activity getActivityFromDTO(ActivityDTO activityDTO);
 
   String getDeploymentTagFromActivity(String accountId, String verificationJobInstanceId);

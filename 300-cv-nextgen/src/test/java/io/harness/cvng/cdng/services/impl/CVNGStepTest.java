@@ -63,7 +63,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
-import lombok.SneakyThrows;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -106,8 +105,9 @@ public class CVNGStepTest extends CvNextGenTestBase {
     FieldUtils.writeField(monitoredServiceService, "changeSourceService", changeSourceService, true);
     FieldUtils.writeField(cvngStep, "clock", builderFactory.getClock(), true);
   }
+
   @Test
-  @Owner(developers = KAMAL)
+  @Owner(developers = ABHIJITH)
   @Category(UnitTests.class)
   public void testExecuteAsync_noMonitoringSourceDefined() {
     Ambiance ambiance = getAmbiance();
@@ -125,24 +125,6 @@ public class CVNGStepTest extends CvNextGenTestBase {
 
   @Test
   @Owner(developers = ABHIJITH)
-  @Category(UnitTests.class)
-  public void testExecuteAsync_noMonitoringSourceDefinedSingleActivityFFOn() {
-    setSingleActivityFeatureflag(true);
-    Ambiance ambiance = getAmbiance();
-    StepInputPackage stepInputPackage = StepInputPackage.builder().build();
-    CVNGStepParameter cvngStepParameter = getCvngStepParameter();
-    AsyncExecutableResponse asyncExecutableResponse =
-        cvngStep.executeAsync(ambiance, cvngStepParameter, stepInputPackage, null);
-    assertThat(asyncExecutableResponse.getCallbackIdsList()).hasSize(1);
-    String callbackId = asyncExecutableResponse.getCallbackIds(0);
-    CVNGStepTask cvngStepTask =
-        hPersistence.createQuery(CVNGStepTask.class).filter(CVNGStepTaskKeys.callbackId, callbackId).get();
-    assertThat(cvngStepTask.getStatus()).isEqualTo(CVNGStepTask.Status.IN_PROGRESS);
-    assertThat(cvngStepTask.isSkip()).isTrue();
-  }
-
-  @Test
-  @Owner(developers = KAMAL)
   @Category(UnitTests.class)
   public void testExecuteAsync_whenHealthSourcesAreEmpty() {
     monitoredServiceService.createDefault(
@@ -163,45 +145,7 @@ public class CVNGStepTest extends CvNextGenTestBase {
   @Test
   @Owner(developers = ABHIJITH)
   @Category(UnitTests.class)
-  public void testExecuteAsync_whenHealthSourcesAreEmptySingleActivityFFOn() {
-    setSingleActivityFeatureflag(true);
-    monitoredServiceService.createDefault(
-        builderFactory.getContext().getProjectParams(), serviceIdentifier, envIdentifier);
-    Ambiance ambiance = getAmbiance();
-    StepInputPackage stepInputPackage = StepInputPackage.builder().build();
-    CVNGStepParameter cvngStepParameter = getCvngStepParameter();
-    AsyncExecutableResponse asyncExecutableResponse =
-        cvngStep.executeAsync(ambiance, cvngStepParameter, stepInputPackage, null);
-    assertThat(asyncExecutableResponse.getCallbackIdsList()).hasSize(1);
-    String callbackId = asyncExecutableResponse.getCallbackIds(0);
-    CVNGStepTask cvngStepTask =
-        hPersistence.createQuery(CVNGStepTask.class).filter(CVNGStepTaskKeys.callbackId, callbackId).get();
-    assertThat(cvngStepTask.getStatus()).isEqualTo(CVNGStepTask.Status.IN_PROGRESS);
-    assertThat(cvngStepTask.isSkip()).isTrue();
-  }
-
-  @Test
-  @Owner(developers = KAMAL)
-  @Category(UnitTests.class)
   public void testExecuteAsync_skipWhenMonitoredServiceDoesNotExists() {
-    Ambiance ambiance = getAmbiance();
-    StepInputPackage stepInputPackage = StepInputPackage.builder().build();
-    CVNGStepParameter cvngStepParameter = getCvngStepParameter();
-    AsyncExecutableResponse asyncExecutableResponse =
-        cvngStep.executeAsync(ambiance, cvngStepParameter, stepInputPackage, null);
-    assertThat(asyncExecutableResponse.getCallbackIdsList()).hasSize(1);
-    String callbackId = asyncExecutableResponse.getCallbackIds(0);
-    CVNGStepTask cvngStepTask =
-        hPersistence.createQuery(CVNGStepTask.class).filter(CVNGStepTaskKeys.callbackId, callbackId).get();
-    assertThat(cvngStepTask.getStatus()).isEqualTo(CVNGStepTask.Status.IN_PROGRESS);
-    assertThat(cvngStepTask.isSkip()).isTrue();
-  }
-
-  @Test
-  @Owner(developers = ABHIJITH)
-  @Category(UnitTests.class)
-  public void testExecuteAsync_skipWhenMonitoredServiceDoesNotExistsSingleActivityFFOn() {
-    setSingleActivityFeatureflag(true);
     Ambiance ambiance = getAmbiance();
     StepInputPackage stepInputPackage = StepInputPackage.builder().build();
     CVNGStepParameter cvngStepParameter = getCvngStepParameter();
@@ -215,31 +159,9 @@ public class CVNGStepTest extends CvNextGenTestBase {
   }
 
   @Test
-  @Owner(developers = KAMAL)
-  @Category(UnitTests.class)
-  public void testExecuteAsync_createActivity() throws IllegalAccessException {
-    setSingleActivityFeatureflag(false);
-    Ambiance ambiance = getAmbiance();
-    metricPackService.createDefaultMetricPackAndThresholds(accountId, orgIdentifier, projectIdentifier);
-    monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceDTO);
-    StepInputPackage stepInputPackage = StepInputPackage.builder().build();
-    CVNGStepParameter cvngStepParameter = getCvngStepParameter();
-    AsyncExecutableResponse asyncExecutableResponse =
-        cvngStep.executeAsync(ambiance, cvngStepParameter, stepInputPackage, null);
-    assertThat(asyncExecutableResponse.getCallbackIdsList()).hasSize(1);
-    String activityId = asyncExecutableResponse.getCallbackIds(0);
-    CVNGStepTask cvngStepTask =
-        hPersistence.createQuery(CVNGStepTask.class).filter(CVNGStepTaskKeys.activityId, activityId).get();
-    assertThat(cvngStepTask.getStatus()).isEqualTo(CVNGStepTask.Status.IN_PROGRESS);
-    Activity activity = activityService.get(activityId);
-    assertThat(activity.getActivityStartTime()).isEqualTo(Instant.ofEpochMilli(activityStartTime));
-  }
-
-  @Test
   @Owner(developers = ABHIJITH)
   @Category(UnitTests.class)
-  public void testExecuteAsync_createActivitySingleActivityFFOn() {
-    setSingleActivityFeatureflag(true);
+  public void testExecuteAsync_createActivity() {
     Ambiance ambiance = getAmbiance();
     metricPackService.createDefaultMetricPackAndThresholds(accountId, orgIdentifier, projectIdentifier);
     monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceDTO);
@@ -259,30 +181,6 @@ public class CVNGStepTest extends CvNextGenTestBase {
   @Owner(developers = KAMAL)
   @Category(UnitTests.class)
   public void testExecuteAsync_createDemoActivityFFOn() throws IllegalAccessException {
-    FeatureFlagService featureFlagService = mock(FeatureFlagService.class);
-    when(featureFlagService.isFeatureFlagEnabled(eq(accountId), eq("CVNG_VERIFY_STEP_DEMO"))).thenReturn(true);
-    FieldUtils.writeField(cvngStep, "featureFlagService", featureFlagService, true);
-    Ambiance ambiance = getAmbiance("verify_dev");
-    metricPackService.createDefaultMetricPackAndThresholds(accountId, orgIdentifier, projectIdentifier);
-    monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceDTO);
-    StepInputPackage stepInputPackage = StepInputPackage.builder().build();
-    CVNGStepParameter cvngStepParameter = getCvngStepParameter();
-    AsyncExecutableResponse asyncExecutableResponse =
-        cvngStep.executeAsync(ambiance, cvngStepParameter, stepInputPackage, null);
-    assertThat(asyncExecutableResponse.getCallbackIdsList()).hasSize(1);
-    String activityId = asyncExecutableResponse.getCallbackIds(0);
-    CVNGStepTask cvngStepTask =
-        hPersistence.createQuery(CVNGStepTask.class).filter(CVNGStepTaskKeys.activityId, activityId).get();
-    assertThat(cvngStepTask.getStatus()).isEqualTo(CVNGStepTask.Status.IN_PROGRESS);
-    Activity activity = activityService.get(activityId);
-    assertThat(activity.getActivityStartTime())
-        .isEqualTo(Instant.ofEpochMilli(activityStartTime).minus(Duration.ofMinutes(15)));
-  }
-
-  @Test
-  @Owner(developers = KAMAL)
-  @Category(UnitTests.class)
-  public void testExecuteAsync_createDemoActivityFFOnSingleActivityFFOn() throws IllegalAccessException {
     FeatureFlagService featureFlagService = mock(FeatureFlagService.class);
     when(featureFlagService.isFeatureFlagEnabled(eq(accountId), eq("CVNG_VERIFY_STEP_DEMO"))).thenReturn(true);
     when(featureFlagService.isFeatureFlagEnabled(eq(accountId), eq("CVNG_VERIFY_STEP_TO_SINGLE_ACTIVITY")))
@@ -360,27 +258,6 @@ public class CVNGStepTest extends CvNextGenTestBase {
     assertThat(verificationJobInstance.getName()).isEqualTo("verify_demo");
     assertThat(verificationJobInstance.getVerificationStatus())
         .isEqualTo(ActivityVerificationStatus.VERIFICATION_PASSED);
-  }
-
-  @Test
-  @Owner(developers = KAMAL)
-  @Category(UnitTests.class)
-  public void testExecuteAsync_createDemoActivityFFOff() {
-    setSingleActivityFeatureflag(false);
-    Ambiance ambiance = getAmbiance("verify_dev");
-    metricPackService.createDefaultMetricPackAndThresholds(accountId, orgIdentifier, projectIdentifier);
-    monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceDTO);
-    StepInputPackage stepInputPackage = StepInputPackage.builder().build();
-    CVNGStepParameter cvngStepParameter = getCvngStepParameter();
-    AsyncExecutableResponse asyncExecutableResponse =
-        cvngStep.executeAsync(ambiance, cvngStepParameter, stepInputPackage, null);
-    assertThat(asyncExecutableResponse.getCallbackIdsList()).hasSize(1);
-    String activityId = asyncExecutableResponse.getCallbackIds(0);
-    CVNGStepTask cvngStepTask =
-        hPersistence.createQuery(CVNGStepTask.class).filter(CVNGStepTaskKeys.activityId, activityId).get();
-    assertThat(cvngStepTask.getStatus()).isEqualTo(CVNGStepTask.Status.IN_PROGRESS);
-    Activity activity = activityService.get(activityId);
-    assertThat(activity.getActivityStartTime()).isEqualTo(Instant.ofEpochMilli(activityStartTime));
   }
 
   @Test
@@ -622,13 +499,5 @@ public class CVNGStepTest extends CvNextGenTestBase {
 
   private ParameterField<String> randomParameter() {
     return ParameterField.<String>builder().value(generateUuid()).build();
-  }
-
-  @SneakyThrows
-  private void setSingleActivityFeatureflag(boolean ff) {
-    FeatureFlagService featureFlagService = mock(FeatureFlagService.class);
-    when(featureFlagService.isFeatureFlagEnabled(eq(accountId), eq("CVNG_VERIFY_STEP_TO_SINGLE_ACTIVITY")))
-        .thenReturn(ff);
-    FieldUtils.writeField(cvngStep, "featureFlagService", featureFlagService, true);
   }
 }

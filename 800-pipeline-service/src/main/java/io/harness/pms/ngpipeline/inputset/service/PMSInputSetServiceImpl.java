@@ -20,6 +20,8 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.git.model.ChangeType;
 import io.harness.gitsync.helpers.GitContextHelper;
 import io.harness.gitsync.scm.EntityObjectIdUtils;
+import io.harness.gitsync.utils.GitEntityFilePath;
+import io.harness.gitsync.utils.GitSyncSdkUtils;
 import io.harness.grpc.utils.StringValueUtils;
 import io.harness.pms.gitsync.PmsGitSyncBranchContextGuard;
 import io.harness.pms.inputset.gitsync.InputSetYamlDTOMapper;
@@ -154,7 +156,7 @@ public class PMSInputSetServiceImpl implements PMSInputSetService {
 
     Update update = new Update();
     update.set(InputSetEntityKeys.isInvalid, isInvalid);
-    InputSetEntity inputSetEntity = inputSetRepository.switchValidationFlag(criteria, update);
+    InputSetEntity inputSetEntity = inputSetRepository.update(criteria, update);
     return inputSetEntity != null;
   }
 
@@ -257,5 +259,26 @@ public class PMSInputSetServiceImpl implements PMSInputSetService {
           "InputSets for Pipeline [%s] under Project[%s], Organization [%s] couldn't be deleted.",
           pipelineEntity.getIdentifier(), pipelineEntity.getProjectIdentifier(), pipelineEntity.getOrgIdentifier()));
     }
+  }
+
+  @Override
+  public InputSetEntity updateGitFilePath(InputSetEntity inputSetEntity, String newFilePath) {
+    Criteria criteria = Criteria.where(InputSetEntityKeys.accountId)
+                            .is(inputSetEntity.getAccountId())
+                            .and(InputSetEntityKeys.orgIdentifier)
+                            .is(inputSetEntity.getOrgIdentifier())
+                            .and(InputSetEntityKeys.projectIdentifier)
+                            .is(inputSetEntity.getProjectIdentifier())
+                            .and(InputSetEntityKeys.pipelineIdentifier)
+                            .is(inputSetEntity.getPipelineIdentifier())
+                            .and(InputSetEntityKeys.identifier)
+                            .is(inputSetEntity.getIdentifier());
+
+    GitEntityFilePath gitEntityFilePath = GitSyncSdkUtils.getRootFolderAndFilePath(newFilePath);
+    Update update = new Update()
+                        .set(InputSetEntityKeys.filePath, gitEntityFilePath.getFilePath())
+                        .set(InputSetEntityKeys.rootFolder, gitEntityFilePath.getRootFolder());
+    return inputSetRepository.update(inputSetEntity.getAccountId(), inputSetEntity.getOrgIdentifier(),
+        inputSetEntity.getProjectIdentifier(), criteria, update);
   }
 }

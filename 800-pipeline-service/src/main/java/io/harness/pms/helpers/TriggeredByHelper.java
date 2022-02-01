@@ -7,8 +7,9 @@
 
 package io.harness.pms.helpers;
 
-import io.harness.beans.EmbeddedUser;
 import io.harness.pms.contracts.plan.TriggeredBy;
+import io.harness.security.PrincipalHelper;
+import io.harness.security.dto.Principal;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -18,11 +19,11 @@ public class TriggeredByHelper {
   @Inject private CurrentUserHelper currentUserHelper;
 
   public TriggeredBy getFromSecurityContext() {
-    EmbeddedUser user = currentUserHelper.getFromSecurityContextFromPrincipal();
+    Principal principal = currentUserHelper.getPrincipalFromSecurityContext();
     return TriggeredBy.newBuilder()
-        .setUuid(user.getUuid())
-        .setIdentifier(user.getName())
-        .putExtraInfo("email", user.getEmail())
+        .setUuid(PrincipalHelper.getUuid(principal))
+        .setIdentifier(PrincipalHelper.getIdentifier(principal))
+        .putExtraInfo("email", PrincipalHelper.getEmail(principal))
         .build();
   }
 }

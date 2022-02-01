@@ -27,6 +27,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import lombok.NonNull;
 import lombok.experimental.UtilityClass;
@@ -46,6 +47,16 @@ public class AmbianceUtils {
       builder.setStageExecutionId(level.getRuntimeId());
     }
     return builder.addLevels(level).build();
+  }
+
+  public static String getRuntimeIdForGivenCategory(@NonNull Ambiance ambiance, StepCategory category) {
+    Optional<Level> stageLevel = Optional.empty();
+    for (Level level : ambiance.getLevelsList()) {
+      if (level.getStepType().getStepCategory() == category) {
+        stageLevel = Optional.of(level);
+      }
+    }
+    return stageLevel.get().getRuntimeId();
   }
 
   public static Ambiance cloneForChild(@NonNull Ambiance ambiance, @NonNull Level level) {
@@ -82,7 +93,12 @@ public class AmbianceUtils {
 
   public static String obtainCurrentSetupId(Ambiance ambiance) {
     Level level = obtainCurrentLevel(ambiance);
-    return level == null || isEmpty(level.getRuntimeId()) ? null : level.getSetupId();
+    return level == null || isEmpty(level.getSetupId()) ? null : level.getSetupId();
+  }
+
+  public static String obtainNodeType(Ambiance ambiance) {
+    Level level = obtainCurrentLevel(ambiance);
+    return level == null || isEmpty(level.getNodeType()) ? null : level.getNodeType();
   }
 
   public static Level obtainCurrentLevel(Ambiance ambiance) {
@@ -162,5 +178,10 @@ public class AmbianceUtils {
       }
     }
     return stageLevel;
+  }
+
+  public static boolean isRetry(Ambiance ambiance) {
+    Level level = Objects.requireNonNull(obtainCurrentLevel(ambiance));
+    return level.getRetryIndex() != 0;
   }
 }

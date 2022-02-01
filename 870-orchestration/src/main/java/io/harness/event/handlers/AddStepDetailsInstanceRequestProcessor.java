@@ -25,7 +25,7 @@ public class AddStepDetailsInstanceRequestProcessor implements SdkResponseProces
   @Override
   public void handleEvent(SdkResponseEventProto event) {
     PmsStepDetails stepDetail = PmsStepDetails.parse(event.getStepDetailsInstanceRequest().getStepDetails());
-    graphStepDetailsService.addStepDetail(SdkResponseEventUtils.getNodeExecutionId(event),
+    graphStepDetailsService.addStepDetail(event.getStepDetailsInstanceRequest().getNodeExecutionId(),
         SdkResponseEventUtils.getPlanExecutionId(event), stepDetail, event.getStepDetailsInstanceRequest().getName());
   }
 }

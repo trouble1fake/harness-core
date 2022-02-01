@@ -10,6 +10,7 @@ package io.harness.cvng.dashboard.services.impl;
 import static io.harness.cvng.core.utils.DateTimeUtils.roundDownTo5MinBoundary;
 import static io.harness.cvng.core.utils.DateTimeUtils.roundDownToMinBoundary;
 import static io.harness.cvng.dashboard.entities.HeatMap.HeatMapResolution.FIVE_MIN;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.persistence.HQuery.excludeAuthority;
 
 import io.harness.cvng.analysis.beans.Risk;
@@ -79,7 +80,7 @@ public class HeatMapServiceImpl implements HeatMapService {
     // update for service/env
     callables.add(() -> {
       updateRiskScore(category, accountId, orgIdentifier, projectIdentifier, serviceIdentifier, envIdentifier,
-          timeStamp, riskScore, anomalousMetricsCount, anomalousLogsCount);
+          cvConfig.getMonitoredServiceIdentifier(), timeStamp, riskScore, anomalousMetricsCount, anomalousLogsCount);
       return null;
     });
 
@@ -87,8 +88,8 @@ public class HeatMapServiceImpl implements HeatMapService {
   }
 
   private void updateRiskScore(CVMonitoringCategory category, String accountId, String orgIdentifier,
-      String projectIdentifier, String serviceIdentifier, String envIdentifier, Instant timeStamp, double riskScore,
-      long anomalousMetricsCount, long anomalousLogsCount) {
+      String projectIdentifier, String serviceIdentifier, String envIdentifier, String monitoredServiceIdentifier,
+      Instant timeStamp, double riskScore, long anomalousMetricsCount, long anomalousLogsCount) {
     UpdateOptions options = new UpdateOptions();
     options.upsert(true);
     for (HeatMapResolution heatMapResolution : HeatMapResolution.values()) {
@@ -96,6 +97,8 @@ public class HeatMapServiceImpl implements HeatMapService {
       Instant bucketEndTime = bucketStartTime.plusMillis(heatMapResolution.getBucketSize().toMillis());
       Instant heatMapStartTime = getBoundaryOfResolution(timeStamp, heatMapResolution.getResolution());
       Instant heatMapEndTime = heatMapStartTime.plusMillis(heatMapResolution.getResolution().toMillis());
+
+      // TODO: Add monitoredServiceIdentifier to the filter and remove service_env after migration
 
       Query<HeatMap> heatMapQuery = hPersistence.createQuery(HeatMap.class)
                                         .filter(HeatMapKeys.accountId, accountId)
@@ -186,10 +189,12 @@ public class HeatMapServiceImpl implements HeatMapService {
     heatMapMap.forEach((key, value) -> {
       SortedSet<HeatMapRisk> risks = new TreeSet<>(
           value.getHeatMapRisks().stream().filter(x -> x.getRiskScore() != -1).collect(Collectors.toList()));
-      HeatMapRisk last = risks.last();
-      if (last.getEndTime().isAfter(bucketEndTime)) {
-        value.setHeatMapRisks(Lists.newArrayList(last));
-        uniqueHeatMaps.add(value);
+      if (isNotEmpty(risks)) {
+        HeatMapRisk last = risks.last();
+        if (last.getEndTime().isAfter(bucketEndTime)) {
+          value.setHeatMapRisks(Lists.newArrayList(last));
+          uniqueHeatMaps.add(value);
+        }
       }
     });
     return uniqueHeatMaps;

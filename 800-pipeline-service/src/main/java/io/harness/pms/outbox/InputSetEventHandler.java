@@ -51,7 +51,7 @@ public class InputSetEventHandler {
                                 .resource(ResourceDTO.fromResource(outboxEvent.getResource()))
                                 .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))
                                 .action(Action.CREATE)
-                                .module(ModuleType.PMS)
+                                .module(ModuleType.CORE)
                                 .timestamp(outboxEvent.getCreatedAt())
                                 .newYaml(event.getInputSet().getYaml())
                                 .build();
@@ -72,7 +72,7 @@ public class InputSetEventHandler {
                                 .resource(ResourceDTO.fromResource(outboxEvent.getResource()))
                                 .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))
                                 .action(Action.UPDATE)
-                                .module(ModuleType.PMS)
+                                .module(ModuleType.CORE)
                                 .timestamp(outboxEvent.getCreatedAt())
                                 .oldYaml(event.getOldInputSet().getYaml())
                                 .newYaml(event.getNewInputSet().getYaml())
@@ -94,7 +94,7 @@ public class InputSetEventHandler {
                                 .resource(ResourceDTO.fromResource(outboxEvent.getResource()))
                                 .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))
                                 .action(Action.DELETE)
-                                .module(ModuleType.PMS)
+                                .module(ModuleType.CORE)
                                 .timestamp(outboxEvent.getCreatedAt())
                                 .oldYaml(event.getInputSet().getYaml())
                                 .build();

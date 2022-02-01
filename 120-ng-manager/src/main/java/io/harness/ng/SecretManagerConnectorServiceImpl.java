@@ -236,7 +236,15 @@ public class SecretManagerConnectorServiceImpl implements ConnectorService {
   @Override
   public boolean delete(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, String connectorIdentifier) {
-    return defaultConnectorService.delete(accountIdentifier, orgIdentifier, projectIdentifier, connectorIdentifier);
+    return defaultConnectorService.delete(
+        accountIdentifier, orgIdentifier, projectIdentifier, connectorIdentifier, NONE);
+  }
+
+  @Override
+  public boolean delete(String accountIdentifier, String orgIdentifier, String projectIdentifier,
+      String connectorIdentifier, ChangeType changeType) {
+    return defaultConnectorService.delete(
+        accountIdentifier, orgIdentifier, projectIdentifier, connectorIdentifier, changeType);
   }
 
   @Override
@@ -347,8 +355,8 @@ public class SecretManagerConnectorServiceImpl implements ConnectorService {
   }
 
   @Override
-  public ConnectorDTO fullSyncEntity(EntityDetailProtoDTO entityDetailProtoDTO) {
-    return defaultConnectorService.fullSyncEntity(entityDetailProtoDTO);
+  public ConnectorDTO fullSyncEntity(EntityDetailProtoDTO entityDetailProtoDTO, boolean isFullSyncingToDefaultBranch) {
+    return defaultConnectorService.fullSyncEntity(entityDetailProtoDTO, isFullSyncingToDefaultBranch);
   }
 
   @Override

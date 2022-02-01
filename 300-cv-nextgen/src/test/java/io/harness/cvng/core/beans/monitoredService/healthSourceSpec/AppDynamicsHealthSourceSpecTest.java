@@ -7,6 +7,7 @@
 
 package io.harness.cvng.core.beans.monitoredService.healthSourceSpec;
 
+import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.rule.OwnerRule.KANHAIYA;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -61,6 +62,7 @@ public class AppDynamicsHealthSourceSpecTest extends CvNextGenTestBase {
   String envIdentifier;
   String identifier;
   String name;
+  String monitoredServiceIdentifier;
   List<MetricPackDTO> metricPackDTOS;
   BuilderFactory builderFactory;
 
@@ -76,7 +78,7 @@ public class AppDynamicsHealthSourceSpecTest extends CvNextGenTestBase {
     tierName = "tierName";
     feature = "Application Monitoring";
     connectorIdentifier = "connectorRef";
-
+    monitoredServiceIdentifier = generateUuid();
     identifier = "identifier";
     name = "some-name";
     metricPackDTOS =
@@ -151,9 +153,9 @@ public class AppDynamicsHealthSourceSpecTest extends CvNextGenTestBase {
   @Owner(developers = KANHAIYA)
   @Category(UnitTests.class)
   public void getCVConfigUpdateResult_whenNoConfigExist() {
-    CVConfigUpdateResult cvConfigUpdateResult =
-        appDynamicsHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier, envIdentifier,
-            serviceIdentifier, identifier, name, Collections.emptyList(), metricPackService);
+    CVConfigUpdateResult cvConfigUpdateResult = appDynamicsHealthSourceSpec.getCVConfigUpdateResult(accountId,
+        orgIdentifier, projectIdentifier, envIdentifier, serviceIdentifier, monitoredServiceIdentifier, identifier,
+        name, Collections.emptyList(), metricPackService);
     assertThat(cvConfigUpdateResult.getUpdated()).isEmpty();
     assertThat(cvConfigUpdateResult.getDeleted()).isEmpty();
     List<CVConfig> added = cvConfigUpdateResult.getAdded();
@@ -178,8 +180,9 @@ public class AppDynamicsHealthSourceSpecTest extends CvNextGenTestBase {
     List<CVConfig> cvConfigs = new ArrayList<>();
     cvConfigs.add(
         createCVConfig(MetricPack.builder().accountId(accountId).category(CVMonitoringCategory.PERFORMANCE).build()));
-    CVConfigUpdateResult result = appDynamicsHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier,
-        projectIdentifier, envIdentifier, serviceIdentifier, identifier, name, cvConfigs, metricPackService);
+    CVConfigUpdateResult result =
+        appDynamicsHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier, envIdentifier,
+            serviceIdentifier, monitoredServiceIdentifier, identifier, name, cvConfigs, metricPackService);
     assertThat(result.getDeleted()).hasSize(1);
     AppDynamicsCVConfig appDynamicsCVConfig = (AppDynamicsCVConfig) result.getDeleted().get(0);
     assertThat(appDynamicsCVConfig.getMetricPack().getCategory()).isEqualTo(CVMonitoringCategory.PERFORMANCE);
@@ -192,8 +195,9 @@ public class AppDynamicsHealthSourceSpecTest extends CvNextGenTestBase {
     List<CVConfig> cvConfigs = new ArrayList<>();
     cvConfigs.add(
         createCVConfig(MetricPack.builder().accountId(accountId).category(CVMonitoringCategory.PERFORMANCE).build()));
-    CVConfigUpdateResult result = appDynamicsHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier,
-        projectIdentifier, envIdentifier, serviceIdentifier, identifier, name, cvConfigs, metricPackService);
+    CVConfigUpdateResult result =
+        appDynamicsHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier, envIdentifier,
+            serviceIdentifier, monitoredServiceIdentifier, identifier, name, cvConfigs, metricPackService);
     assertThat(result.getAdded()).hasSize(3);
     result.getAdded().stream().map(cvConfig -> (AppDynamicsCVConfig) cvConfig).forEach(this::assertCommon);
     assertThat(result.getAdded()
@@ -230,8 +234,9 @@ public class AppDynamicsHealthSourceSpecTest extends CvNextGenTestBase {
     List<CVConfig> cvConfigs = new ArrayList<>();
     cvConfigs.add(createCVConfig(metricPackService.getMetricPack(accountId, orgIdentifier, projectIdentifier,
         DataSourceType.APP_DYNAMICS, CVNextGenConstants.ERRORS_PACK_IDENTIFIER)));
-    CVConfigUpdateResult result = appDynamicsHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier,
-        projectIdentifier, envIdentifier, serviceIdentifier, identifier, name, cvConfigs, metricPackService);
+    CVConfigUpdateResult result =
+        appDynamicsHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier, envIdentifier,
+            serviceIdentifier, monitoredServiceIdentifier, identifier, name, cvConfigs, metricPackService);
     assertThat(result.getUpdated()).hasSize(1);
     AppDynamicsCVConfig appDynamicsCVConfig = (AppDynamicsCVConfig) result.getUpdated().get(0);
     assertCommon(appDynamicsCVConfig);
@@ -253,6 +258,7 @@ public class AppDynamicsHealthSourceSpecTest extends CvNextGenTestBase {
     assertThat(cvConfig.getMetricPack().getAccountId()).isEqualTo(accountId);
     assertThat(cvConfig.getMetricPack().getOrgIdentifier()).isEqualTo(orgIdentifier);
     assertThat(cvConfig.getMetricPack().getDataSourceType()).isEqualTo(DataSourceType.APP_DYNAMICS);
+    assertThat(cvConfig.getMonitoredServiceIdentifier()).isEqualTo(monitoredServiceIdentifier);
   }
 
   private CVConfig createCVConfig(MetricPack metricPack) {

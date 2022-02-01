@@ -25,6 +25,7 @@ import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.pms.commons.events.PmsEventSender;
 import io.harness.execution.NodeExecution;
 import io.harness.interrupts.InterruptEffect;
+import io.harness.plan.PlanNode;
 import io.harness.pms.contracts.advisers.AdviserObtainment;
 import io.harness.pms.contracts.advisers.AdviserType;
 import io.harness.pms.contracts.ambiance.Ambiance;
@@ -35,7 +36,6 @@ import io.harness.pms.contracts.interrupts.InterruptConfig;
 import io.harness.pms.contracts.interrupts.InterruptType;
 import io.harness.pms.contracts.interrupts.IssuedBy;
 import io.harness.pms.contracts.interrupts.TimeoutIssuer;
-import io.harness.pms.contracts.plan.PlanNodeProto;
 import io.harness.rule.Owner;
 
 import com.google.common.collect.ImmutableList;
@@ -58,6 +58,14 @@ public class RedisNodeAdviseEventPublisherTest extends OrchestrationTestBase {
   @Category(UnitTests.class)
   public void shouldTestPublishEvent() {
     String planExecutionId = generateUuid();
+    PlanNode planNode =
+        PlanNode.builder()
+            .uuid(generateUuid())
+            .identifier("IDENTIFIER")
+            .adviserObtainment(
+                AdviserObtainment.newBuilder().setType(AdviserType.newBuilder().setType("type").buildPartial()).build())
+            .serviceName("serviceName")
+            .build();
     NodeExecution nodeExecution =
         NodeExecution.builder()
             .uuid(generateUuid())
@@ -78,24 +86,17 @@ public class RedisNodeAdviseEventPublisherTest extends OrchestrationTestBase {
                     .build()))
             .status(Status.RUNNING)
             .retryIds(new ArrayList<>())
-            .node(PlanNodeProto.newBuilder()
-                      .addAdviserObtainments(AdviserObtainment.newBuilder()
-                                                 .setType(AdviserType.newBuilder().setType("type").buildPartial())
-                                                 .build())
-                      .setServiceName("serviceName")
-                      .build())
+            .planNode(planNode)
             .build();
 
     String eventId = generateUuid();
 
-    when(nodeExecutionService.get(any())).thenReturn(nodeExecution);
     when(eventSender.sendEvent(any(), any(), any(), anyString(), anyBoolean())).thenReturn(eventId);
 
-    String actualEventId = publisher.publishEvent(nodeExecution.getUuid(), Status.ABORTED);
+    String actualEventId = publisher.publishEvent(nodeExecution, planNode, Status.ABORTED);
 
     assertThat(actualEventId).isEqualTo(eventId);
 
-    verify(nodeExecutionService).get(anyString());
     verify(eventSender).sendEvent(any(), any(), any(), anyString(), anyBoolean());
   }
 }

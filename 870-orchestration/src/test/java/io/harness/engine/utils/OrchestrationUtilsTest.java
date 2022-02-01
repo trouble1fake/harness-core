@@ -7,6 +7,7 @@
 
 package io.harness.engine.utils;
 
+import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.rule.OwnerRule.PRASHANT;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -58,12 +59,16 @@ public class OrchestrationUtilsTest extends CategoryTest {
   @Owner(developers = PRASHANT)
   @Category(UnitTests.class)
   public void testIsStageNode() {
-    NodeExecution nodeExecution =
-        NodeExecution.builder()
-            .planNode(PlanNode.builder()
-                          .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STAGE).build())
-                          .build())
+    PlanNode planNode =
+        PlanNode.builder()
+            .uuid(generateUuid())
+            .identifier("PIPELINE")
+            .stepType(StepType.newBuilder().setType("PIPELINE").setStepCategory(StepCategory.STAGE).build())
             .build();
+
+    Ambiance ambiance =
+        Ambiance.newBuilder().addLevels(PmsLevelUtils.buildLevelFromNode(generateUuid(), planNode)).build();
+    NodeExecution nodeExecution = NodeExecution.builder().ambiance(ambiance).planNode(planNode).build();
     assertThat(OrchestrationUtils.isStageNode(nodeExecution)).isTrue();
     assertThat(OrchestrationUtils.isPipelineNode(nodeExecution)).isFalse();
   }
@@ -72,13 +77,16 @@ public class OrchestrationUtilsTest extends CategoryTest {
   @Owner(developers = PRASHANT)
   @Category(UnitTests.class)
   public void testIsPipelineNode() {
-    NodeExecution nodeExecution =
-        NodeExecution.builder()
-            .planNode(
-                PlanNode.builder()
-                    .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.PIPELINE).build())
-                    .build())
+    PlanNode planNode =
+        PlanNode.builder()
+            .uuid(generateUuid())
+            .identifier("PIPELINE")
+            .stepType(StepType.newBuilder().setType("PIPELINE").setStepCategory(StepCategory.PIPELINE).build())
             .build();
+
+    Ambiance ambiance =
+        Ambiance.newBuilder().addLevels(PmsLevelUtils.buildLevelFromNode(generateUuid(), planNode)).build();
+    NodeExecution nodeExecution = NodeExecution.builder().ambiance(ambiance).planNode(planNode).build();
     assertThat(OrchestrationUtils.isPipelineNode(nodeExecution)).isTrue();
     assertThat(OrchestrationUtils.isStageNode(nodeExecution)).isFalse();
   }

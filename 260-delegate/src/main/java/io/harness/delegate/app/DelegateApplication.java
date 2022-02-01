@@ -133,18 +133,29 @@ public class DelegateApplication {
     if (!ImmutableSet.of("ONPREM", "KUBERNETES_ONPREM").contains(System.getenv().get(DEPLOY_MODE))) {
       injector.getInstance(PingPongClient.class).startAsync();
     }
-    Runtime.getRuntime().addShutdownHook(new Thread(() -> injector.getInstance(PingPongClient.class).stopAsync()));
     DelegateAgentService delegateService = injector.getInstance(DelegateAgentService.class);
-    delegateService.run(watched);
+    delegateService.run(watched, false);
 
     System.exit(0);
   }
 
   private void addShutdownHook(Injector injector, MessageService messageService) {
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+      try {
+        injector.getInstance(DelegateAgentService.class).shutdown(false);
+      } catch (final InterruptedException e) {
+        log.error("Delegate shutdown interrupted", e);
+        Thread.currentThread().interrupt();
+      }
+
       messageService.closeChannel(DELEGATE, processId);
       messageService.closeData(DELEGATE_DASH + processId);
       log.info("Message service has been closed.");
+
+      final PingPongClient pingPongClient = injector.getInstance(PingPongClient.class);
+      if (pingPongClient != null) {
+        pingPongClient.stopAsync();
+      }
 
       injector.getInstance(ExecutorService.class).shutdown();
       injector.getInstance(EventPublisher.class).shutdown();

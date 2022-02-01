@@ -58,15 +58,15 @@ public class CustomHealthSourceSpec extends MetricHealthSourceSpec {
 
   @Override
   public HealthSource.CVConfigUpdateResult getCVConfigUpdateResult(String accountId, String orgIdentifier,
-      String projectIdentifier, String environmentRef, String serviceRef, String identifier, String name,
-      List<CVConfig> existingCVConfigs, MetricPackService metricPackService) {
+      String projectIdentifier, String environmentRef, String serviceRef, String monitoredServiceIdentifier,
+      String identifier, String name, List<CVConfig> existingCVConfigs, MetricPackService metricPackService) {
     List<CustomHealthCVConfig> existingDBCVConfigs = (List<CustomHealthCVConfig>) (List<?>) existingCVConfigs;
     Map<String, CustomHealthCVConfig> existingConfigs = new HashMap<>();
     existingDBCVConfigs.forEach(
         config -> existingConfigs.put(getKey(config.getGroupName(), config.getCategory()), config));
 
-    Map<String, CustomHealthCVConfig> currentCVConfigs =
-        getCVConfigs(accountId, orgIdentifier, projectIdentifier, environmentRef, serviceRef, identifier, name);
+    Map<String, CustomHealthCVConfig> currentCVConfigs = getCVConfigs(accountId, orgIdentifier, projectIdentifier,
+        environmentRef, serviceRef, monitoredServiceIdentifier, identifier, name);
 
     Set<String> deleted = Sets.difference(existingConfigs.keySet(), currentCVConfigs.keySet());
     Set<String> added = Sets.difference(currentCVConfigs.keySet(), existingConfigs.keySet());
@@ -85,7 +85,8 @@ public class CustomHealthSourceSpec extends MetricHealthSourceSpec {
   }
 
   public Map<String, CustomHealthCVConfig> getCVConfigs(String accountId, String orgIdentifier,
-      String projectIdentifier, String environmentRef, String serviceRef, String identifier, String name) {
+      String projectIdentifier, String environmentRef, String serviceRef, String monitoredServiceIdentifier,
+      String identifier, String name) {
     Map<String, CustomHealthCVConfig> cvConfigMap = new HashMap<>();
     metricDefinitions.forEach(metricDefinition -> {
       String groupName = metricDefinition.getGroupName();
@@ -129,6 +130,7 @@ public class CustomHealthSourceSpec extends MetricHealthSourceSpec {
                                                 .envIdentifier(environmentRef)
                                                 .connectorIdentifier(getConnectorRef())
                                                 .monitoringSourceName(name)
+                                                .monitoredServiceIdentifier(monitoredServiceIdentifier)
                                                 .build();
       mappedCVConfig.setMetricPack(
           mappedCVConfig.generateMetricPack(metricDefinition.getMetricName(), metricDefinition.getRiskProfile()));

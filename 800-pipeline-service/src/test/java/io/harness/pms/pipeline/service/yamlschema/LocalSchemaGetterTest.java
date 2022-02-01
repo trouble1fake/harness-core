@@ -27,6 +27,7 @@ import io.harness.yaml.schema.beans.YamlSchemaDetailsWrapper;
 import io.harness.yaml.schema.beans.YamlSchemaMetadata;
 import io.harness.yaml.schema.beans.YamlSchemaWithDetails;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import org.junit.Before;
@@ -84,12 +85,14 @@ public class LocalSchemaGetterTest {
                                                       .moduleType(ModuleType.PMS)
                                                       .schemaClassName("HttpStepNode")
                                                       .build();
-    doReturn(Collections.singletonList(yamlSchemaWithDetails))
+    List<YamlSchemaWithDetails> yamlSchemaWithDetailsList = new ArrayList<>();
+    yamlSchemaWithDetailsList.add(yamlSchemaWithDetails);
+    doReturn(yamlSchemaWithDetailsList)
         .when(yamlSchemaProvider)
         .getCrossFunctionalStepsSchemaDetails(any(), any(), any(), any(), any());
     YamlSchemaDetailsWrapper yamlSchemaDetailsWrapper = localSchemaGetter.getSchemaDetails();
 
-    assertEquals(yamlSchemaDetailsWrapper.getYamlSchemaWithDetailsList().size(), 1);
+    assertEquals(yamlSchemaDetailsWrapper.getYamlSchemaWithDetailsList().size(), 2);
     assertEquals(yamlSchemaDetailsWrapper.getYamlSchemaWithDetailsList().get(0).getModuleType(), ModuleType.PMS);
     assertEquals(yamlSchemaDetailsWrapper.getYamlSchemaWithDetailsList().get(0).getSchemaClassName(), "HttpStepNode");
     assertEquals(

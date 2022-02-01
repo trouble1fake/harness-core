@@ -14,6 +14,7 @@ import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.PageRequest;
 import io.harness.beans.PageResponse;
 
+import software.wings.beans.appmanifest.ApplicationManifest;
 import software.wings.beans.appmanifest.HelmChart;
 import software.wings.service.intfc.ownership.OwnedByApplicationManifest;
 
@@ -57,4 +58,6 @@ public interface HelmChartService extends OwnedByApplicationManifest {
       String accountId, String appId, String serviceId, String appManifestName, String chartVersion);
 
   List<HelmChart> fetchChartsFromRepo(String accountId, String appId, String serviceId, String appManifestName);
+
+  HelmChart createHelmChartWithVersionForAppManifest(ApplicationManifest appManifest, String versionNumber);
 }

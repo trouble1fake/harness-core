@@ -46,6 +46,7 @@ import io.harness.cvng.core.entities.DatadogLogCVConfig;
 import io.harness.cvng.core.entities.DatadogMetricCVConfig;
 import io.harness.cvng.core.entities.DeletedCVConfig;
 import io.harness.cvng.core.entities.DeploymentDataCollectionTask;
+import io.harness.cvng.core.entities.ErrorTrackingCVConfig;
 import io.harness.cvng.core.entities.HostRecord;
 import io.harness.cvng.core.entities.LogCVConfig;
 import io.harness.cvng.core.entities.LogRecord;
@@ -59,6 +60,7 @@ import io.harness.cvng.core.entities.PrometheusCVConfig;
 import io.harness.cvng.core.entities.SLIDataCollectionTask;
 import io.harness.cvng.core.entities.ServiceDependency;
 import io.harness.cvng.core.entities.ServiceGuardDataCollectionTask;
+import io.harness.cvng.core.entities.SideKick;
 import io.harness.cvng.core.entities.SplunkCVConfig;
 import io.harness.cvng.core.entities.StackdriverCVConfig;
 import io.harness.cvng.core.entities.StackdriverLogCVConfig;
@@ -78,6 +80,7 @@ import io.harness.cvng.dashboard.entities.HeatMap;
 import io.harness.cvng.migration.beans.CVNGSchema;
 import io.harness.cvng.servicelevelobjective.entities.RatioServiceLevelIndicator;
 import io.harness.cvng.servicelevelobjective.entities.SLIRecord;
+import io.harness.cvng.servicelevelobjective.entities.SLOErrorBudgetReset;
 import io.harness.cvng.servicelevelobjective.entities.SLOHealthIndicator;
 import io.harness.cvng.servicelevelobjective.entities.ServiceLevelIndicator;
 import io.harness.cvng.servicelevelobjective.entities.ServiceLevelObjective;
@@ -173,6 +176,7 @@ public class CVNextGenMorphiaRegister implements MorphiaRegistrar {
     set.add(StackdriverLogCVConfig.class);
     set.add(DatadogMetricCVConfig.class);
     set.add(DatadogLogCVConfig.class);
+    set.add(ErrorTrackingCVConfig.class);
     set.add(MonitoredService.class);
     set.add(HarnessCDChangeSource.class);
     set.add(ChangeSource.class);
@@ -194,6 +198,8 @@ public class CVNextGenMorphiaRegister implements MorphiaRegistrar {
     set.add(SLOHealthIndicator.class);
     set.add(ThresholdServiceLevelIndicator.class);
     set.add(SLIRecord.class);
+    set.add(SideKick.class);
+    set.add(SLOErrorBudgetReset.class);
   }
 
   @Override

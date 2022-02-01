@@ -163,6 +163,8 @@ public class PMSYamlSchemaServiceImpl implements PMSYamlSchemaService {
     // Merging the schema for all steps that are moved to new schema.
     ObjectNode finalMergedDefinitions = yamlSchemaProvider.mergeAllV2StepsDefinitions(projectIdentifier, orgIdentifier,
         scope, mergedDefinitions, pmsYamlSchemaHelper.getNodeEntityTypesByYamlGroup(StepCategory.STEP.name()));
+    yamlSchemaProvider.mergeAllV2StepsDefinitions(projectIdentifier, orgIdentifier, scope, mergedDefinitions,
+        pmsYamlSchemaHelper.getNodeEntityTypesByYamlGroup(StepCategory.STAGE.name()));
     YamlSchemaTransientHelper.removeV2StepEnumsFromStepElementConfig(finalMergedDefinitions.get(STEP_ELEMENT_CONFIG));
     ObjectNode stageElementConfig = (ObjectNode) pipelineDefinitions.get(STAGE_ELEMENT_CONFIG);
     YamlSchemaTransientHelper.deleteSpecNodeInStageElementConfig(stageElementConfig);
@@ -171,8 +173,12 @@ public class PMSYamlSchemaServiceImpl implements PMSYamlSchemaService {
 
     List<ModuleType> enabledModules = obtainEnabledModules(projectIdentifier, accountIdentifier, orgIdentifier);
     enabledModules.add(ModuleType.PMS);
-    List<YamlSchemaWithDetails> stepsSchemaWithDetails =
+    List<YamlSchemaWithDetails> schemaWithDetailsList =
         fetchSchemaWithDetailsFromModules(accountIdentifier, enabledModules);
+    List<YamlSchemaWithDetails> stepsSchemaWithDetails =
+        schemaWithDetailsList.stream()
+            .filter(o -> o.getYamlSchemaMetadata().getYamlGroup().getGroup().equals(StepCategory.STEP.name()))
+            .collect(Collectors.toList());
     CompletableFutures<List<PartialSchemaDTO>> completableFutures = new CompletableFutures<>(executor);
     for (ModuleType enabledModule : enabledModules) {
       List<YamlSchemaWithDetails> moduleYamlSchemaDetails =
@@ -190,7 +196,6 @@ public class PMSYamlSchemaServiceImpl implements PMSYamlSchemaService {
           partialSchemaDtoMap.put(partialSchemaDTOList1.get(0).getModuleType(), partialSchemaDTOList1);
         }
       }
-      mergeCVIntoCDIfPresent(partialSchemaDtoMap);
 
       partialSchemaDtoMap.values().forEach(partialSchemaDTOList1
           -> partialSchemaDTOList1.forEach(partialSchemaDTO
@@ -200,6 +205,7 @@ public class PMSYamlSchemaServiceImpl implements PMSYamlSchemaService {
       log.error(format("[PMS] Exception while merging yaml schema: %s", e.getMessage()), e);
     }
 
+    pmsYamlSchemaHelper.processStageSchema(schemaWithDetailsList, pipelineDefinitions);
     // Remove duplicate if then statements from stage element config. Keep references only to new ones we added above.
     removeDuplicateIfThenFromStageElementConfig(stageElementConfig);
 
@@ -226,6 +232,7 @@ public class PMSYamlSchemaServiceImpl implements PMSYamlSchemaService {
     }
   }
 
+  // TODO(Brijesh): Will remove this method.
   private void mergeCVIntoCDIfPresent(Map<ModuleType, List<PartialSchemaDTO>> partialSchemaDTOMap) {
     if (!partialSchemaDTOMap.containsKey(ModuleType.CD) || !partialSchemaDTOMap.containsKey(ModuleType.CV)) {
       partialSchemaDTOMap.remove(ModuleType.CV);

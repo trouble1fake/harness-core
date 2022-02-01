@@ -68,11 +68,11 @@ public class DatadogLogHealthSourceSpec extends HealthSourceSpec {
 
   @Override
   public HealthSource.CVConfigUpdateResult getCVConfigUpdateResult(String accountId, String orgIdentifier,
-      String projectIdentifier, String environmentRef, String serviceRef, String identifier, String name,
-      List<CVConfig> existingCVConfigs, MetricPackService metricPackService) {
+      String projectIdentifier, String environmentRef, String serviceRef, String monitoredServiceIdentifier,
+      String identifier, String name, List<CVConfig> existingCVConfigs, MetricPackService metricPackService) {
     Map<Key, DatadogLogCVConfig> existingConfigMap = getExistingCVConfigMap(existingCVConfigs);
-    Map<Key, DatadogLogCVConfig> currentConfigMap = getCurrentCVConfigMap(
-        accountId, orgIdentifier, projectIdentifier, environmentRef, serviceRef, identifier, name);
+    Map<Key, DatadogLogCVConfig> currentConfigMap = getCurrentCVConfigMap(accountId, orgIdentifier, projectIdentifier,
+        environmentRef, serviceRef, monitoredServiceIdentifier, identifier, name);
 
     Set<Key> deleted = Sets.difference(existingConfigMap.keySet(), currentConfigMap.keySet());
     Set<Key> added = Sets.difference(currentConfigMap.keySet(), existingConfigMap.keySet());
@@ -110,9 +110,10 @@ public class DatadogLogHealthSourceSpec extends HealthSourceSpec {
   }
 
   private Map<Key, DatadogLogCVConfig> getCurrentCVConfigMap(String accountId, String orgIdentifier,
-      String projectIdentifier, String environmentRef, String serviceRef, String identifier, String name) {
-    List<DatadogLogCVConfig> cvConfigsFromThisObj =
-        toCVConfigs(accountId, orgIdentifier, projectIdentifier, environmentRef, serviceRef, identifier, name);
+      String projectIdentifier, String environmentRef, String serviceRef, String monitoredServiceIdentifier,
+      String identifier, String name) {
+    List<DatadogLogCVConfig> cvConfigsFromThisObj = toCVConfigs(accountId, orgIdentifier, projectIdentifier,
+        environmentRef, serviceRef, monitoredServiceIdentifier, identifier, name);
     Map<Key, DatadogLogCVConfig> currentCVConfigsMap = new HashMap<>();
     for (DatadogLogCVConfig datadogLogCVConfig : cvConfigsFromThisObj) {
       currentCVConfigsMap.put(getKeyFromCVConfig(datadogLogCVConfig), datadogLogCVConfig);
@@ -129,7 +130,7 @@ public class DatadogLogHealthSourceSpec extends HealthSourceSpec {
   }
 
   private List<DatadogLogCVConfig> toCVConfigs(String accountId, String orgIdentifier, String projectIdentifier,
-      String environmentRef, String serviceRef, String identifier, String name) {
+      String environmentRef, String serviceRef, String monitoredServiceIdentifier, String identifier, String name) {
     List<DatadogLogCVConfig> cvConfigs = new ArrayList<>();
     queries.forEach(queryDTO -> {
       DatadogLogCVConfig datadogLogCVConfig = DatadogLogCVConfig.builder()
@@ -147,6 +148,7 @@ public class DatadogLogHealthSourceSpec extends HealthSourceSpec {
                                                   .serviceInstanceIdentifier(queryDTO.getServiceInstanceIdentifier())
                                                   .indexes(queryDTO.getIndexes())
                                                   .category(CVMonitoringCategory.ERRORS)
+                                                  .monitoredServiceIdentifier(monitoredServiceIdentifier)
                                                   .build();
       cvConfigs.add(datadogLogCVConfig);
     });
