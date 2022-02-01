@@ -67,7 +67,7 @@ public class HttpHelmValidationHandler implements ConnectorValidationHandler {
           helmValidationParams.getHttpHelmConnectorDTO().getHelmRepoUrl(),
           helmTaskHelperBase.getHttpHelmUsername(helmValidationParams.getHttpHelmConnectorDTO()),
           helmTaskHelperBase.getHttpHelmPassword(helmValidationParams.getHttpHelmConnectorDTO()), workingDirectory,
-          defaultHelmVersion, DEFAULT_TIMEOUT_IN_MILLIS);
+          defaultHelmVersion, DEFAULT_TIMEOUT_IN_MILLIS, false);
 
       helmTaskHelperBase.removeRepo(repoName, workingDirectory, defaultHelmVersion, DEFAULT_TIMEOUT_IN_MILLIS);
       helmTaskHelperBase.cleanup(workingDirectory);
