@@ -78,18 +78,20 @@ public class ExpansionRequestsHelper {
     for (PmsSdkInstance sdkInstance : activeInstances) {
       String sdkInstanceName = sdkInstance.getName();
       ModuleType module = ModuleType.fromString(sdkInstanceName);
-      List<JsonExpansionInfo> jsonExpansionInfo =
-          sdkInstance.getJsonExpansionInfo()
-              .stream()
-              .filter(info -> info.getExpansionType().equals(ExpansionRequestType.LOCAL_FQN))
-              .filter(info -> info.getStageType().getStepCategory().equals(StepCategory.STAGE))
-              .collect(Collectors.toList());
-      jsonExpansionInfo.forEach(info
-          -> localFQNExpansionInfo.add(LocalFQNExpansionInfo.builder()
-                                           .module(module)
-                                           .localFQN(info.getKey())
-                                           .stageType(info.getStageType().getType())
-                                           .build()));
+      if (EmptyPredicate.isNotEmpty(sdkInstance.getJsonExpansionInfo())) {
+        List<JsonExpansionInfo> jsonExpansionInfo =
+            sdkInstance.getJsonExpansionInfo()
+                .stream()
+                .filter(info -> info.getExpansionType().equals(ExpansionRequestType.LOCAL_FQN))
+                .filter(info -> info.getStageType().getStepCategory().equals(StepCategory.STAGE))
+                .collect(Collectors.toList());
+        jsonExpansionInfo.forEach(info
+            -> localFQNExpansionInfo.add(LocalFQNExpansionInfo.builder()
+                                             .module(module)
+                                             .localFQN(info.getKey())
+                                             .stageType(info.getStageType().getType())
+                                             .build()));
+      }
     }
     return localFQNExpansionInfo;
   }
