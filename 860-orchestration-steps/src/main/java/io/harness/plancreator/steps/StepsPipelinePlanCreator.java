@@ -5,40 +5,26 @@
  * https://polyformproject.org/wp-content/uploads/2020/06/PolyForm-Shield-1.0.0.txt.
  */
 
-package io.harness.cdng.creator.plan;
+package io.harness.plancreator.steps;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.cdng.advisers.RollbackCustomAdviser;
 import io.harness.plancreator.execution.StepsExecutionConfig;
-import io.harness.plancreator.steps.GenericStepsNodePlanCreator;
-import io.harness.pms.contracts.advisers.AdviserObtainment;
 import io.harness.pms.contracts.facilitators.FacilitatorObtainment;
 import io.harness.pms.contracts.facilitators.FacilitatorType;
 import io.harness.pms.contracts.steps.SkipType;
 import io.harness.pms.execution.OrchestrationFacilitatorType;
-import io.harness.pms.plan.creation.PlanCreatorUtils;
 import io.harness.pms.sdk.core.plan.PlanNode;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationContext;
-import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationResponse;
-import io.harness.pms.sdk.core.plan.creation.creators.ChildrenPlanCreator;
 import io.harness.pms.sdk.core.steps.io.StepParameters;
-import io.harness.pms.yaml.DependenciesUtils;
 import io.harness.pms.yaml.YAMLFieldNameConstants;
-import io.harness.pms.yaml.YamlField;
-import io.harness.steps.YamlTypes;
 import io.harness.steps.common.NGSectionStepParameters;
 import io.harness.steps.common.NGSectionStepWithRollbackInfo;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 @OwnedBy(HarnessTeam.PIPELINE)
-public class StepsPlanCreator extends GenericStepsNodePlanCreator {
+public class StepsPipelinePlanCreator extends GenericStepsNodePlanCreator {
   @Override
   public PlanNode createPlanForParentNode(
       PlanCreationContext ctx, StepsExecutionConfig config, List<String> childrenNodeIds) {
@@ -53,7 +39,6 @@ public class StepsPlanCreator extends GenericStepsNodePlanCreator {
             FacilitatorObtainment.newBuilder()
                 .setType(FacilitatorType.newBuilder().setType(OrchestrationFacilitatorType.CHILD).build())
                 .build())
-        .adviserObtainment(AdviserObtainment.newBuilder().setType(RollbackCustomAdviser.ADVISER_TYPE).build())
         .skipGraphType(SkipType.SKIP_NODE)
         .build();
   }

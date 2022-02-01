@@ -16,7 +16,6 @@ import static io.harness.pms.yaml.YAMLFieldNameConstants.STEP_GROUP;
 import io.harness.advisers.nextstep.NextStepAdviserParameters;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
-import io.harness.plancreator.utils.CommonPlanCreatorUtils;
 import io.harness.pms.contracts.advisers.AdviserObtainment;
 import io.harness.pms.contracts.advisers.AdviserType;
 import io.harness.pms.contracts.facilitators.FacilitatorObtainment;
@@ -66,20 +65,18 @@ public class StepGroupPMSPlanCreator extends ChildrenPlanCreator<StepGroupElemen
     List<YamlField> dependencyNodeIdsList = getDependencyNodeIdsList(ctx);
 
     LinkedHashMap<String, PlanCreationResponse> responseMap = new LinkedHashMap<>();
-    for (YamlField yamlField : dependencyNodeIdsList) {
-      Map<String, YamlField> yamlFieldMap = new HashMap<>();
-      yamlFieldMap.put(yamlField.getNode().getUuid(), yamlField);
-      responseMap.put(yamlField.getNode().getUuid(),
-          PlanCreationResponse.builder().dependencies(DependenciesUtils.toDependenciesProto(yamlFieldMap)).build());
-    }
 
     // Add Steps Node
     if (EmptyPredicate.isNotEmpty(dependencyNodeIdsList)) {
       YamlField stepsField =
           Preconditions.checkNotNull(ctx.getCurrentField().getNode().getField(YAMLFieldNameConstants.STEPS));
-      PlanNode stepsNode = CommonPlanCreatorUtils.getStepsPlanNode(
-          stepsField.getNode().getUuid(), dependencyNodeIdsList.get(0).getNode().getUuid(), "Steps Element");
-      responseMap.put(stepsNode.getUuid(), PlanCreationResponse.builder().node(stepsNode.getUuid(), stepsNode).build());
+      String stepsUuid = stepsField.getNode().getUuid();
+      Map<String, YamlField> stepsYamlFieldMap = new HashMap<>();
+      stepsYamlFieldMap.put(stepsUuid, stepsField);
+      responseMap.put(stepsUuid,
+          PlanCreationResponse.builder()
+              .dependencies(DependenciesUtils.toDependenciesProto(stepsYamlFieldMap))
+              .build());
     }
 
     return responseMap;

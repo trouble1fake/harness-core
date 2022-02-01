@@ -7,12 +7,10 @@
 
 package io.harness.plancreator.execution;
 
-import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
-
+import com.google.common.base.Preconditions;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.plancreator.beans.OrchestrationConstants;
-import io.harness.plancreator.utils.CommonPlanCreatorUtils;
 import io.harness.pms.contracts.facilitators.FacilitatorObtainment;
 import io.harness.pms.contracts.facilitators.FacilitatorType;
 import io.harness.pms.execution.OrchestrationFacilitatorType;
@@ -26,19 +24,17 @@ import io.harness.pms.sdk.core.steps.io.StepParameters;
 import io.harness.pms.yaml.DependenciesUtils;
 import io.harness.pms.yaml.YAMLFieldNameConstants;
 import io.harness.pms.yaml.YamlField;
-import io.harness.pms.yaml.YamlNode;
 import io.harness.steps.common.NGExecutionStep;
 import io.harness.steps.common.NGSectionStepParameters;
 
-import com.google.common.base.Preconditions;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
+
+import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 
 @OwnedBy(PIPELINE)
 public class ExecutionPmsPlanCreator extends ChildrenPlanCreator<ExecutionElementConfig> {
@@ -47,20 +43,17 @@ public class ExecutionPmsPlanCreator extends ChildrenPlanCreator<ExecutionElemen
       PlanCreationContext ctx, ExecutionElementConfig config) {
     LinkedHashMap<String, PlanCreationResponse> responseMap = new LinkedHashMap<>();
     List<YamlField> stepYamlFields = ctx.getStepYamlFields();
-    for (YamlField stepYamlField : stepYamlFields) {
-      Map<String, YamlField> stepYamlFieldMap = new HashMap<>();
-      stepYamlFieldMap.put(stepYamlField.getNode().getUuid(), stepYamlField);
-      responseMap.put(stepYamlField.getNode().getUuid(),
-          PlanCreationResponse.builder().dependencies(DependenciesUtils.toDependenciesProto(stepYamlFieldMap)).build());
-    }
-
     // Add Steps Node
     if (EmptyPredicate.isNotEmpty(stepYamlFields)) {
       YamlField stepsField =
           Preconditions.checkNotNull(ctx.getCurrentField().getNode().getField(YAMLFieldNameConstants.STEPS));
-      PlanNode stepsNode = CommonPlanCreatorUtils.getStepsPlanNode(
-          stepsField.getNode().getUuid(), stepYamlFields.get(0).getNode().getUuid(), "Steps Element");
-      responseMap.put(stepsNode.getUuid(), PlanCreationResponse.builder().node(stepsNode.getUuid(), stepsNode).build());
+      String stepsUuid = stepsField.getNode().getUuid();
+      Map<String, YamlField> stepsYamlFieldMap = new HashMap<>();
+      stepsYamlFieldMap.put(stepsUuid, stepsField);
+      responseMap.put(stepsUuid,
+          PlanCreationResponse.builder()
+              .dependencies(DependenciesUtils.toDependenciesProto(stepsYamlFieldMap))
+              .build());
     }
     return responseMap;
   }
@@ -97,30 +90,5 @@ public class ExecutionPmsPlanCreator extends ChildrenPlanCreator<ExecutionElemen
   @Override
   public Map<String, Set<String>> getSupportedTypes() {
     return Collections.singletonMap(YAMLFieldNameConstants.EXECUTION, Collections.singleton(PlanCreatorUtils.ANY_TYPE));
-  }
-
-  private List<YamlField> getStepYamlFields(PlanCreationContext planCreationContext) {
-    List<YamlNode> yamlNodes = Optional
-                                   .of(Preconditions
-                                           .checkNotNull(planCreationContext.getCurrentField().getNode().getField(
-                                               YAMLFieldNameConstants.STEPS))
-                                           .getNode()
-                                           .asArray())
-                                   .orElse(Collections.emptyList());
-    List<YamlField> stepFields = new LinkedList<>();
-
-    yamlNodes.forEach(yamlNode -> {
-      YamlField stepField = yamlNode.getField(YAMLFieldNameConstants.STEP);
-      YamlField stepGroupField = yamlNode.getField(YAMLFieldNameConstants.STEP_GROUP);
-      YamlField parallelStepField = yamlNode.getField(YAMLFieldNameConstants.PARALLEL);
-      if (stepField != null) {
-        stepFields.add(stepField);
-      } else if (stepGroupField != null) {
-        stepFields.add(stepGroupField);
-      } else if (parallelStepField != null) {
-        stepFields.add(parallelStepField);
-      }
-    });
-    return stepFields;
   }
 }
