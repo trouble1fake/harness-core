@@ -116,7 +116,7 @@ public class InternalContainerParamsProvider {
       K8PodDetails k8PodDetails, String workDirPath, String logPrefix, Ambiance ambiance) {
     Map<String, String> envVars = new HashMap<>();
     final String accountID = AmbianceUtils.getAccountId(ambiance);
-    final String stepIdentifier = AmbianceUtils.obtainStepIdentifier(ambiance);
+    final String stepIdentifier = AmbianceUtils.obtainCurrentSetupId(ambiance);
     final String orgID = AmbianceUtils.getOrgIdentifier(ambiance);
     final String projectID = AmbianceUtils.getProjectIdentifier(ambiance);
     final String pipelineID = ambiance.getMetadata().getPipelineIdentifier();

@@ -27,6 +27,7 @@ import io.harness.pms.execution.OrchestrationFacilitatorType;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.pms.yaml.YAMLFieldNameConstants;
 import io.harness.yaml.YamlSchemaTypes;
+import io.harness.yaml.core.variables.OutputNGVariable;
 import io.harness.yaml.extended.ci.container.ContainerResource;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -70,6 +71,7 @@ public class SecurityStepInfo implements CIStepInfo, WithConnectorRef {
   @NotNull @ApiModelProperty(dataType = STRING_CLASSPATH) private ParameterField<String> image;
   @NotNull @ApiModelProperty(dataType = STRING_CLASSPATH) private ParameterField<String> connectorRef;
   private ContainerResource resources;
+  private List<OutputNGVariable> outputVariables;
 
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
   @ApiModelProperty(hidden = true)
@@ -88,18 +90,20 @@ public class SecurityStepInfo implements CIStepInfo, WithConnectorRef {
   private ParameterField<ImagePullPolicy> imagePullPolicy;
 
   @Builder
-  @ConstructorProperties({"identifier", "name", "retry", "settings", "image", "connectorRef", "resources", "reports",
-      "entrypoint", "envVariables", "harnessInternalImage", "privileged", "runAsUser", "imagePullPolicy"})
+  @ConstructorProperties(
+      {"identifier", "name", "retry", "settings", "outputVariables", "image", "connectorRef", "resources", "reports",
+          "entrypoint", "envVariables", "harnessInternalImage", "privileged", "runAsUser", "imagePullPolicy"})
   public SecurityStepInfo(String identifier, String name, Integer retry, ParameterField<Map<String, JsonNode>> settings,
-      ParameterField<String> image, ParameterField<String> connectorRef, ContainerResource resources,
-      UnitTestReport reports, List<String> entrypoint, Map<String, String> envVariables, boolean harnessManagedImage,
-      ParameterField<Boolean> privileged, ParameterField<Integer> runAsUser,
+      List<OutputNGVariable> outputVariables, ParameterField<String> image, ParameterField<String> connectorRef,
+      ContainerResource resources, UnitTestReport reports, List<String> entrypoint, Map<String, String> envVariables,
+      boolean harnessManagedImage, ParameterField<Boolean> privileged, ParameterField<Integer> runAsUser,
       ParameterField<ImagePullPolicy> imagePullPolicy) {
     this.identifier = identifier;
     this.name = name;
     this.retry = Optional.ofNullable(retry).orElse(DEFAULT_RETRY);
 
     this.settings = settings;
+    this.outputVariables = outputVariables;
     this.image = image;
     this.connectorRef = connectorRef;
     this.entrypoint = entrypoint;
