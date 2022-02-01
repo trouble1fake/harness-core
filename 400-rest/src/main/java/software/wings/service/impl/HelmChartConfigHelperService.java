@@ -132,7 +132,7 @@ public class HelmChartConfigHelperService {
 
     if (HelmVersion.V3.equals(getHelmVersionFromService(context))) {
       helmChartConfigParamsBuilder.useRepoFlags(
-          featureFlagService.isEnabled(FeatureName.USE_HELM_REPO_FLAGS, context.getAccountId()));
+          featureFlagService.isEnabled(FeatureName.USE_HELM_REPO_FLAGS_DEPLOYMENT, context.getAccountId()));
     }
 
     if (isNotBlank(helmChartConfig.getChartName())) {

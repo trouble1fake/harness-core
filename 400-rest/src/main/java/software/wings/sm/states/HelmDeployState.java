@@ -1044,7 +1044,7 @@ public class HelmDeployState extends State {
 
             if (HelmVersion.V3.equals(helmVersion)) {
               helmChartConfigTaskParams.setUseRepoFlags(
-                  featureFlagService.isEnabled(USE_HELM_REPO_FLAGS, context.getAccountId()));
+                  featureFlagService.isEnabled(USE_HELM_REPO_FLAGS_DEPLOYMENT, context.getAccountId()));
             }
 
             manifestConfig = K8sDelegateManifestConfig.builder()
