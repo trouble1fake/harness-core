@@ -9,6 +9,7 @@ package io.harness;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.secret.ConfigSecret;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
@@ -19,6 +20,6 @@ import lombok.Data;
 @Builder
 public class OrchestrationStepConfig {
   @JsonProperty("ffServerBaseUrl") private String ffServerBaseUrl;
-  @JsonProperty("ffServerApiKey") private String ffServerApiKey;
+  @JsonProperty("ffServerApiKey") @ConfigSecret private String ffServerApiKey;
   @JsonProperty("ffServerSSLVerify") private Boolean ffServerSSLVerify;
 }
