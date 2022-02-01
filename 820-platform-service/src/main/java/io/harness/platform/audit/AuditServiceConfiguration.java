@@ -11,7 +11,6 @@ import static io.harness.annotations.dev.HarnessTeam.PL;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.mongo.MongoConfig;
-import io.harness.secret.ConfigSecret;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AccessLevel;
@@ -24,6 +23,6 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @OwnedBy(PL)
 public class AuditServiceConfiguration {
-  @JsonProperty("mongo") @ConfigSecret MongoConfig mongoConfig;
+  @JsonProperty("mongo") MongoConfig mongoConfig;
   @JsonProperty("enableAuditService") boolean enableAuditService;
 }

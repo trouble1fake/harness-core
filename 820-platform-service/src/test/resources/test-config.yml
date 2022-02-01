@@ -120,10 +120,6 @@ auditServiceConfig:
 
   enableAuditService: true
 
-secretsConfiguration:
-  secretResolutionEnabled: false
-  gcpSecretManagerProject: harness-playground
-
 resourceGroupServiceConfig:
   resourceClients:
     ng-manager:

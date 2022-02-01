@@ -40,7 +40,6 @@ import io.harness.platform.resourcegroup.ResourceGroupServiceModule;
 import io.harness.platform.resourcegroup.ResourceGroupServiceSetup;
 import io.harness.remote.NGObjectMapperHelper;
 import io.harness.request.RequestContextFilter;
-import io.harness.secret.ConfigSecretUtils;
 import io.harness.security.InternalApiAuthFilter;
 import io.harness.security.NextGenAuthenticationFilter;
 import io.harness.security.annotations.InternalApi;
@@ -145,7 +144,6 @@ public class PlatformApplication extends Application<PlatformConfiguration> {
         appConfig.getCommonPoolConfig().getTimeUnit(),
         new ThreadFactoryBuilder().setNameFormat("main-app-pool-%d").build()));
     log.info("Starting Platform Application ...");
-    ConfigSecretUtils.resolveSecrets(appConfig.getSecretsConfiguration(), appConfig);
     MaintenanceController.forceMaintenance(true);
     GodInjector godInjector = new GodInjector();
     godInjector.put(NOTIFICATION_SERVICE,

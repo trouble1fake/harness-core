@@ -10,7 +10,6 @@ package io.harness.platform;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.secret.ConfigSecret;
 
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -22,7 +21,7 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PlatformSecrets {
-  @ConfigSecret String ngManagerServiceSecret;
-  @ConfigSecret String jwtAuthSecret;
-  @ConfigSecret String jwtIdentityServiceSecret;
+  String ngManagerServiceSecret;
+  String jwtAuthSecret;
+  String jwtIdentityServiceSecret;
 }
