@@ -73,8 +73,10 @@ import io.harness.delegate.beans.pcf.CfRouteUpdateRequestConfigData;
 import io.harness.delegate.task.manifests.request.CustomManifestValuesFetchParams;
 import io.harness.delegate.task.pcf.CfCommandRequest;
 import io.harness.delegate.task.pcf.CfCommandRequest.PcfCommandType;
+import io.harness.delegate.task.pcf.CfCommandResponse;
 import io.harness.delegate.task.pcf.PcfManifestsPackage;
 import io.harness.delegate.task.pcf.request.CfCommandRouteUpdateRequest;
+import io.harness.delegate.task.pcf.response.CfCommandExecutionResponse;
 import io.harness.delegate.task.pcf.response.CfDeployCommandResponse;
 import io.harness.delegate.task.pcf.response.CfRouteUpdateCommandResponse;
 import io.harness.deployment.InstanceDetails;
@@ -841,7 +843,7 @@ public class PcfStateHelper {
   }
 
   public void updateInfoVariables(ExecutionContext context, PcfRouteUpdateStateExecutionData stateExecutionData,
-      CfRouteUpdateCommandResponse routeUpdateCommandResponse) {
+      CfCommandExecutionResponse executionResponse) {
     SweepingOutputInstance sweepingOutputInstance = sweepingOutputService.find(
         context.prepareSweepingOutputInquiryBuilder().name(InfoVariables.SWEEPING_OUTPUT_NAME).build());
 
@@ -849,7 +851,7 @@ public class PcfStateHelper {
       InfoVariables infoVariables = (InfoVariables) sweepingOutputInstance.getValue();
       sweepingOutputService.deleteById(context.getAppId(), sweepingOutputInstance.getUuid());
       infoVariables.setNewAppRoutes(stateExecutionData.getPcfRouteUpdateRequestConfigData().getFinalRoutes());
-      updateAppDetails(infoVariables, routeUpdateCommandResponse);
+      updateAppDetails(infoVariables, executionResponse);
       sweepingOutputService.ensure(context.prepareSweepingOutputBuilder(getSweepingOutputScope(context))
                                        .name(InfoVariables.SWEEPING_OUTPUT_NAME)
                                        .value(infoVariables)
@@ -857,7 +859,13 @@ public class PcfStateHelper {
     }
   }
 
-  private void updateAppDetails(InfoVariables infoVariables, CfRouteUpdateCommandResponse routeUpdateCommandResponse) {
+  private void updateAppDetails(InfoVariables infoVariables, CfCommandExecutionResponse executionResponse) {
+    CfCommandResponse pcfCommandResponse = executionResponse.getPcfCommandResponse();
+    if (!(pcfCommandResponse instanceof CfRouteUpdateCommandResponse)) {
+      return;
+    }
+
+    CfRouteUpdateCommandResponse routeUpdateCommandResponse = (CfRouteUpdateCommandResponse) pcfCommandResponse;
     CfInBuiltVariablesUpdateValues updateValues = routeUpdateCommandResponse.getUpdatedValues();
     if (updateValues == null) {
       return;
@@ -884,13 +892,13 @@ public class PcfStateHelper {
   public void updateAppNamesVariables(ExecutionContext context, CfDeployCommandResponse cfDeployCommandResponse) {
     SweepingOutputInstance sweepingOutputInstance = sweepingOutputService.find(
         context.prepareSweepingOutputInquiryBuilder().name(InfoVariables.SWEEPING_OUTPUT_NAME).build());
+    CfInBuiltVariablesUpdateValues updatedValues = cfDeployCommandResponse.getUpdatedValues();
 
-    if (sweepingOutputInstance != null) {
+    if (sweepingOutputInstance != null && updatedValues != null) {
       InfoVariables infoVariables = (InfoVariables) sweepingOutputInstance.getValue();
       String oldAppGuid = infoVariables.getOldAppGuid();
       String oldAppName = infoVariables.getOldAppName();
 
-      CfInBuiltVariablesUpdateValues updatedValues = cfDeployCommandResponse.getUpdatedValues();
       String updatedOldAppName = updatedValues.getOldAppName();
 
       if (isNotEmpty(oldAppGuid) && isNotEmpty(updatedValues.getOldAppGuid())

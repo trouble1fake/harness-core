@@ -266,8 +266,6 @@ public class PcfSwitchBlueGreenRoutes extends State {
     try {
       String activityId = response.keySet().iterator().next();
       CfCommandExecutionResponse executionResponse = (CfCommandExecutionResponse) response.values().iterator().next();
-      CfRouteUpdateCommandResponse routeUpdateCommandResponse =
-          (CfRouteUpdateCommandResponse) executionResponse.getPcfCommandResponse();
       ExecutionStatus executionStatus = executionResponse.getCommandExecutionStatus() == CommandExecutionStatus.SUCCESS
           ? ExecutionStatus.SUCCESS
           : ExecutionStatus.FAILED;
@@ -279,7 +277,7 @@ public class PcfSwitchBlueGreenRoutes extends State {
       stateExecutionData.setStatus(executionStatus);
       stateExecutionData.setErrorMsg(executionResponse.getErrorMessage());
       if (executionStatus == ExecutionStatus.SUCCESS) {
-        pcfStateHelper.updateInfoVariables(context, stateExecutionData, routeUpdateCommandResponse);
+        pcfStateHelper.updateInfoVariables(context, stateExecutionData, executionResponse);
       }
 
       if (!isRollback()) {
