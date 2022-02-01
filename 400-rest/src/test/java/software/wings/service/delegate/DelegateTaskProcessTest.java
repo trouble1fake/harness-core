@@ -864,8 +864,8 @@ public class DelegateTaskProcessTest extends WingsBaseTest {
     Delegate delegate = createDelegate(accountId);
     when(accountDelegatesCache.get(accountId)).thenReturn(singletonList(delegate));
     when(delegateCache.get(accountId, delegate.getUuid(), false)).thenReturn(delegate);
-    AwsConfig awsConfig = new AwsConfig(
-        "ACCESS_KEY".toCharArray(), null, "", "", false, "aws-delegate", null, false, false, null, null, false, null);
+    AwsConfig awsConfig = new AwsConfig("ACCESS_KEY".toCharArray(), null, "", "", false, "aws-delegate", null, false,
+        false, null, null, null, false, null);
     AwsEc2ListInstancesRequest request = AwsEc2ListInstancesRequest.builder()
                                              .awsConfig(awsConfig)
                                              .encryptionDetails(new ArrayList<>())

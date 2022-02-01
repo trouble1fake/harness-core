@@ -118,6 +118,7 @@ import io.harness.shell.ShellExecutionData;
 import io.harness.spotinst.model.ElastiGroup;
 import io.harness.spotinst.model.ElastiGroupCapacity;
 
+import software.wings.beans.AmazonClientSDKDefaultBackoffStrategy;
 import software.wings.beans.AwsCrossAccountAttributes;
 import software.wings.beans.AzureImageDefinition;
 import software.wings.beans.AzureImageGallery;
@@ -394,5 +395,6 @@ public class ApiServiceBeansKryoRegister implements KryoRegistrar {
     kryo.register(ServiceNowTicketNG.class, 97106);
     kryo.register(ServiceNowFieldValueNG.class, 97107);
     kryo.register(DelegateTokenGlobalContextData.class, 97108);
+    kryo.register(AmazonClientSDKDefaultBackoffStrategy.class, 97109);
   }
 }

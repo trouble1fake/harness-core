@@ -32,6 +32,7 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
 import io.harness.serializer.JsonUtils;
 
+import software.wings.beans.AmazonClientSDKDefaultBackoffStrategy;
 import software.wings.beans.AwsCrossAccountAttributes;
 
 import com.amazonaws.AmazonClientException;
@@ -81,6 +82,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 @Singleton
 @Slf4j
@@ -198,10 +200,21 @@ public class AwsApiHelperService {
     AWSCredentialsProvider credentialsProvider = getAwsCredentialsProvider(awsConfig);
     builder.withCredentials(credentialsProvider);
     ClientConfiguration clientConfiguration = new ClientConfiguration();
-    RetryPolicy retryPolicy = new RetryPolicy(new PredefinedRetryPolicies.SDKDefaultRetryCondition(),
-        new PredefinedBackoffStrategies.SDKDefaultBackoffStrategy(), DEFAULT_BACKOFF_MAX_ERROR_RETRIES, false);
+    RetryPolicy retryPolicy = getRetryPolicy(awsConfig);
     clientConfiguration.setRetryPolicy(retryPolicy);
     builder.withClientConfiguration(clientConfiguration);
+  }
+
+  @NotNull
+  private RetryPolicy getRetryPolicy(AwsInternalConfig awsConfig) {
+    AmazonClientSDKDefaultBackoffStrategy defaultBackoffStrategy = awsConfig.getAmazonClientSDKDefaultBackoffStrategy();
+    return defaultBackoffStrategy != null
+        ? new RetryPolicy(new PredefinedRetryPolicies.SDKDefaultRetryCondition(),
+            new PredefinedBackoffStrategies.SDKDefaultBackoffStrategy(defaultBackoffStrategy.getBaseDelayInMs(),
+                defaultBackoffStrategy.getThrottledBaseDelayInMs(), defaultBackoffStrategy.getMaxBackoffInMs()),
+            defaultBackoffStrategy.getMaxErrorRetry(), false)
+        : new RetryPolicy(new PredefinedRetryPolicies.SDKDefaultRetryCondition(),
+            new PredefinedBackoffStrategies.SDKDefaultBackoffStrategy(), DEFAULT_BACKOFF_MAX_ERROR_RETRIES, false);
   }
 
   public AWSCredentialsProvider getAwsCredentialsProvider(AwsInternalConfig awsConfig) {

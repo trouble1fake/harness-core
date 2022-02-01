@@ -10,6 +10,7 @@ package io.harness.aws.beans;
 import io.harness.encryption.Encrypted;
 
 import software.wings.annotation.EncryptableSetting;
+import software.wings.beans.AmazonClientSDKDefaultBackoffStrategy;
 import software.wings.beans.AwsCrossAccountAttributes;
 import software.wings.settings.SettingVariableTypes;
 
@@ -34,6 +35,7 @@ public class AwsInternalConfig implements EncryptableSetting {
   private String defaultRegion;
   private boolean assumeCrossAccountRole;
   private boolean useIRSA;
+  private AmazonClientSDKDefaultBackoffStrategy amazonClientSDKDefaultBackoffStrategy;
 
   @Override
   public SettingVariableTypes getSettingType() {

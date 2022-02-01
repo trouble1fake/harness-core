@@ -28,6 +28,7 @@ public class AwsConfigToInternalMapper {
         .crossAccountAttributes(awsConfig.getCrossAccountAttributes())
         .defaultRegion(awsConfig.getDefaultRegion())
         .useIRSA(awsConfig.isUseIRSA())
+        .amazonClientSDKDefaultBackoffStrategy(awsConfig.getAmazonClientSDKDefaultBackoffStrategy())
         .build();
   }
 }

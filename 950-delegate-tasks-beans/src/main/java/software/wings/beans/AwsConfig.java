@@ -68,6 +68,7 @@ public class AwsConfig extends SettingValue implements EncryptableSetting, Cloud
   private boolean assumeCrossAccountRole;
   private AwsCrossAccountAttributes crossAccountAttributes;
   private String defaultRegion;
+  private AmazonClientSDKDefaultBackoffStrategy amazonClientSDKDefaultBackoffStrategy;
 
   @Attributes(title = "Use Encrypted Access Key") private boolean useEncryptedAccessKey;
   @JsonView(JsonViews.Internal.class) @SchemaIgnore private String encryptedAccessKey;
@@ -78,7 +79,8 @@ public class AwsConfig extends SettingValue implements EncryptableSetting, Cloud
 
   public AwsConfig(char[] accessKey, char[] secretKey, String accountId, String encryptedSecretKey,
       boolean useEc2IamCredentials, String tag, CCMConfig ccmConfig, boolean useIRSA, boolean assumeCrossAccountRole,
-      AwsCrossAccountAttributes crossAccountAttributes, String defaultRegion, boolean useEncryptedAccessKey,
+      AwsCrossAccountAttributes crossAccountAttributes, String defaultRegion,
+      AmazonClientSDKDefaultBackoffStrategy amazonClientSDKDefaultBackoffStrategy, boolean useEncryptedAccessKey,
       String encryptedAccessKey) {
     this();
     this.accessKey = accessKey == null ? null : accessKey.clone();
@@ -94,6 +96,7 @@ public class AwsConfig extends SettingValue implements EncryptableSetting, Cloud
     this.defaultRegion = defaultRegion;
     this.useEncryptedAccessKey = useEncryptedAccessKey;
     this.encryptedAccessKey = encryptedAccessKey;
+    this.amazonClientSDKDefaultBackoffStrategy = amazonClientSDKDefaultBackoffStrategy;
   }
 
   @Override

@@ -113,6 +113,14 @@ public interface PcfConstants {
   String INTERIM_APP_NAME_SUFFIX = DELIMITER + INTERIM;
   String INACTIVE_APP_NAME_SUFFIX = DELIMITER + HARNESS__INACTIVE__IDENTIFIER;
 
+  String BASE_DELAY_ACCOUNT_VARIABLE = "${account.defaults.AmazonSDKDefaultBackoffStrategy_baseDelay}";
+  String THROTTLED_BASE_DELAY_ACCOUNT_VARIABLE =
+      "${account.defaults.AmazonSDKDefaultBackoffStrategy_throttledBaseDelay}";
+  String MAX_BACKOFF_ACCOUNT_VARIABLE = "${account.defaults.AmazonSDKDefaultBackoffStrategy_maxBackoff}";
+  String MAX_ERROR_RETRY_ACCOUNT_VARIABLE = "${account.defaults.AmazonSDKDefaultBackoffStrategy_maxErrorRetry}";
+
+  String NULL_STR = "null";
+
   static boolean isInterimApp(String applicationName) {
     return isNotEmpty(applicationName) && applicationName.endsWith(INTERIM_APP_NAME_SUFFIX);
   }

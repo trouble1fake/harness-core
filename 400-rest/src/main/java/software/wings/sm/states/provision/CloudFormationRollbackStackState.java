@@ -225,6 +225,7 @@ public class CloudFormationRollbackStackState extends CloudFormationState {
        * For details, see CD-4767
        */
       AwsConfig awsConfig = getAwsConfig(configParameter.getAwsConfigId());
+      setAmazonClientSDKDefaultBackoffStrategyIfExists(context, awsConfig);
       String roleArnRendered = executionContext.renderExpression(configParameter.getCloudFormationRoleArn());
       CloudFormationCreateStackRequestBuilder builder = CloudFormationCreateStackRequest.builder().awsConfig(awsConfig);
       if (CloudFormationCreateStackRequest.CLOUD_FORMATION_STACK_CREATE_URL.equals(configParameter.getCreateType())) {
@@ -315,6 +316,7 @@ public class CloudFormationRollbackStackState extends CloudFormationState {
     CloudFormationRollbackInfoElement stackElement = stackElementOptional.get();
     ExecutionContextImpl executionContext = (ExecutionContextImpl) context;
     AwsConfig awsConfig = getAwsConfig(stackElement.getAwsConfigId());
+    setAmazonClientSDKDefaultBackoffStrategyIfExists(context, awsConfig);
     DelegateTask delegateTask;
     if (!stackElement.isStackExisted()) {
       CloudFormationDeleteStackRequest request =
