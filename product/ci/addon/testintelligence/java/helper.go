@@ -7,14 +7,17 @@ package java
 
 import (
 	"bufio"
+	"encoding/xml"
 	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"strings"
+
 	"github.com/mattn/go-zglob"
 	"github.com/wings-software/portal/commons/go/lib/filesystem"
 	"github.com/wings-software/portal/product/ci/common/external"
 	"go.uber.org/zap"
-	"io"
-	"path/filepath"
-	"strings"
 )
 
 var (
@@ -30,6 +33,65 @@ func getFiles(path string) ([]string, error) {
 		return []string{}, err
 	}
 	return matches, err
+}
+
+// Checks if a given XML file has an "harnessArgLine".
+//
+// Args:
+//     filePath (string): The absolute path to XML file to be checked.
+//
+// Returns:
+//     bool:  True if the Harness tag exists, false otherwise
+//     error: error if there's any, nil otherwise
+
+func checkHarnessTag(filePath string) (bool, error) {
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		log.Errorw("Failed to read file at: ", filePath)
+		return false, err
+	}
+	harnessTag := "harnessArgLine" // FIXME: Make this a global constant or a flag.
+	xmlDecoder := xml.NewDecoder(strings.NewReader(string(data)))
+	for {
+		token, err := xmlDecoder.Token()
+		if err != nil {
+			if err == io.EOF {
+				return false, nil
+			}
+			return false, err
+		}
+		if se, ok := token.(xml.StartElement); ok {
+			if se.Name.Local == harnessTag {
+				return true, nil
+			}
+		}
+	}
+}
+
+// Scan all XML files in the workspace and detect if any of them have harnessArgLine tag.
+
+func DetectHarnessTag() (bool, error) {
+	// Get all the XML files from $HARNESS_WORKSPACE
+	wp, _ := GetWrkspcPath()
+	files, _ := getFiles(fmt.Sprintf("%s/**/*.xml", wp))
+	foundHarnessTag := false
+	err := nil
+
+	// Check each XML file for the harnessArgLine tag.
+	for _, f := range files {
+		absPath, err := filepath.Abs(f)
+		if err == nil {
+			fmt.Println("Checking file: ", absPath)
+			log.Infow(fmt.Sprintf("Checking XML file %s for Harness tag", absPath))
+			found, _ := checkHarnessTag(absPath)
+			if found {
+				foundHarnessTag = true
+			}
+		} else {
+			log.Errorw("Failed to absolute path. Error", err)
+		}
+	}
+	return foundHarnessTag, err
 }
 
 // detect java packages by reading all the files and parsing their package names

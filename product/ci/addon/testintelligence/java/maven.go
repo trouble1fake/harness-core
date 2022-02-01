@@ -8,12 +8,13 @@ package java
 import (
 	"context"
 	"fmt"
+	"regexp"
+	"strings"
+
 	"github.com/wings-software/portal/commons/go/lib/exec"
 	"github.com/wings-software/portal/commons/go/lib/filesystem"
 	"github.com/wings-software/portal/product/ci/ti-service/types"
 	"go.uber.org/zap"
-	"regexp"
-	"strings"
 )
 
 var (
@@ -48,6 +49,12 @@ func (m *mavenRunner) GetCmd(ctx context.Context, tests []types.RunnableTest, us
 	instrArg := agentArg
 	re := regexp.MustCompile(`(-Duser\.\S*)`)
 	s := re.FindAllString(userArgs, -1)
+	argLineStr := "argLine"
+	hasHarnessTag := DetectHarnessTag()
+	if hasHarnessTag {
+		argLineStr = "harnessArgLine"
+	}
+
 	if s != nil {
 		// If user args are present, move them to instrumentation
 		userArgs = re.ReplaceAllString(userArgs, "")                        // Remove from arg
@@ -55,7 +62,7 @@ func (m *mavenRunner) GetCmd(ctx context.Context, tests []types.RunnableTest, us
 	}
 	if runAll {
 		// Run all the tests
-		return strings.TrimSpace(fmt.Sprintf("%s -am -DargLine=%s %s", mavenCmd, instrArg, userArgs)), nil
+		return strings.TrimSpace(fmt.Sprintf("%s -am -D%s=%s %s", mavenCmd, argLineStr, instrArg, userArgs)), nil
 	}
 	if len(tests) == 0 {
 		return fmt.Sprintf("echo \"Skipping test run, received no tests to execute\""), nil
@@ -77,5 +84,5 @@ func (m *mavenRunner) GetCmd(ctx context.Context, tests []types.RunnableTest, us
 		}
 	}
 	testStr := strings.Join(ut, ",")
-	return strings.TrimSpace(fmt.Sprintf("%s -Dtest=%s -am -DargLine=%s %s", mavenCmd, testStr, instrArg, userArgs)), nil
+	return strings.TrimSpace(fmt.Sprintf("%s -Dtest=%s -am -D%s=%s %s", mavenCmd, testStr, argLineStr, instrArg, userArgs)), nil
 }
