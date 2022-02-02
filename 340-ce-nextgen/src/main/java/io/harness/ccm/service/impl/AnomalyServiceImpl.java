@@ -11,7 +11,7 @@ import io.harness.ccm.budget.utils.BudgetUtils;
 import io.harness.ccm.commons.constants.AnomalyFieldConstants;
 import io.harness.ccm.commons.dao.anomaly.AnomalyDao;
 import io.harness.ccm.commons.entities.anomaly.AnomalyData;
-import io.harness.ccm.commons.entities.anomaly.AnomalyFeedback;
+import io.harness.ccm.commons.entities.anomaly.AnomalyFeedbackDTO;
 import io.harness.ccm.commons.entities.anomaly.AnomalyQueryDTO;
 import io.harness.ccm.commons.entities.anomaly.PerspectiveAnomalyData;
 import io.harness.ccm.commons.utils.AnomalyQueryBuilder;
@@ -68,7 +68,8 @@ public class AnomalyServiceImpl implements AnomalyService {
   }
 
   @Override
-  public Boolean updateAnomalyFeedback(@NonNull String accountIdentifier, String anomalyId, AnomalyFeedback feedback) {
+  public Boolean updateAnomalyFeedback(
+      @NonNull String accountIdentifier, String anomalyId, AnomalyFeedbackDTO feedback) {
     // Todo: Add Update Query
     return true;
   }

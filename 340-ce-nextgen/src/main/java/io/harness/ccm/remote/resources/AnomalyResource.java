@@ -14,7 +14,7 @@ import io.harness.NGCommonEntityConstants;
 import io.harness.accesscontrol.AccountIdentifier;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.ccm.commons.entities.anomaly.AnomalyData;
-import io.harness.ccm.commons.entities.anomaly.AnomalyFeedback;
+import io.harness.ccm.commons.entities.anomaly.AnomalyFeedbackDTO;
 import io.harness.ccm.commons.entities.anomaly.AnomalyQueryDTO;
 import io.harness.ccm.commons.entities.anomaly.PerspectiveAnomalyData;
 import io.harness.ccm.graphql.dto.perspectives.PerspectiveQueryDTO;
@@ -122,12 +122,10 @@ public class AnomalyResource {
             description = "Report Anomaly Feedback", content = { @Content(mediaType = MediaType.APPLICATION_JSON) })
       })
   public ResponseDTO<Boolean>
-  listAnomalies(@Parameter(required = true, description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
-                    NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier @NotNull @Valid String accountId,
+  reportAnomalyFeedback(@Parameter(required = true, description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
+                            NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier @NotNull @Valid String accountId,
       @Parameter(required = true, description = "Unique identifier for perspective") @QueryParam("anomalyId")
-      String anomalyId, @RequestBody(required = true, description = "Feedback", content = {
-        @Content(mediaType = MediaType.TEXT_PLAIN)
-      }) AnomalyFeedback feedback) {
+      String anomalyId, @RequestBody(required = true, description = "Feedback") AnomalyFeedbackDTO feedback) {
     return ResponseDTO.newResponse(anomalyService.updateAnomalyFeedback(accountId, anomalyId, feedback));
   }
 }
