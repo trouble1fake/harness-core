@@ -15,7 +15,7 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.cdng.CDNGTestBase;
-import io.harness.cdng.creator.plan.StepsPlanCreator;
+import io.harness.cdng.creator.plan.CDStepsPlanCreator;
 import io.harness.plancreator.execution.StepsExecutionConfig;
 import io.harness.pms.plan.creation.PlanCreatorUtils;
 import io.harness.pms.sdk.core.plan.PlanNode;
@@ -43,7 +43,8 @@ import org.mockito.InjectMocks;
 
 @OwnedBy(HarnessTeam.CDC)
 public class StepsPlanCreatorTest extends CDNGTestBase {
-  @Inject @InjectMocks StepsPlanCreator stepsPlanCreator;
+  @Inject @InjectMocks
+  CDStepsPlanCreator stepsPlanCreator;
 
   private YamlField getYamlFieldFromGivenFileName(String file) throws IOException {
     ClassLoader classLoader = this.getClass().getClassLoader();
