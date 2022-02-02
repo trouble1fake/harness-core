@@ -9,12 +9,7 @@ package io.harness.ccm.commons.entities.batch;
 
 import io.harness.annotation.StoreIn;
 import io.harness.ccm.HarnessServiceInfoNG;
-import io.harness.ccm.commons.beans.Container;
-import io.harness.ccm.commons.beans.HarnessServiceInfo;
-import io.harness.ccm.commons.beans.InstanceState;
-import io.harness.ccm.commons.beans.InstanceType;
-import io.harness.ccm.commons.beans.Resource;
-import io.harness.ccm.commons.beans.StorageResource;
+import io.harness.ccm.commons.beans.*;
 import io.harness.mongo.index.CompoundMongoIndex;
 import io.harness.mongo.index.FdIndex;
 import io.harness.mongo.index.FdTtlIndex;
@@ -116,6 +111,7 @@ public final class InstanceData implements PersistentEntity, UuidAware, CreatedA
   Instant usageStopTime;
   Instant activeInstanceIterator;
   InstanceState instanceState;
+  Pricing pricing;
 
   long createdAt;
   long lastUpdatedAt;
@@ -128,5 +124,6 @@ public final class InstanceData implements PersistentEntity, UuidAware, CreatedA
   public static final class InstanceDataKeys {
     private InstanceDataKeys() {}
     public static final String CLOUD_PROVIDER = "metaData.cloud_provider";
+    public static final String PRICING_SOURCE = "pricing.source";
   }
 }

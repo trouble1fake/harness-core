@@ -45,6 +45,13 @@ public class BQConst {
       + "WHERE productfamily = 'Compute Instance' AND "
       + "usagestartdate  >= '%s' AND usagestartdate < '%s' AND resourceid IS NOT NULL LIMIT 1";
 
+  public static final String AWS_PRICING_DATA = "SELECT resourceid, MAX(unblendedcost) as cost "
+      + "FROM `%s` "
+      + "WHERE resourceid IN "
+      + "( '%s' )  AND "
+      + "usagestartdate  >= '%s' AND usagestartdate < '%s' "
+      + "GROUP BY  resourceid; ";
+
   public static final String CLOUD_PROVIDER_AGG_DATA =
       "SELECT count(*) AS count, cloudProvider FROM `%s` GROUP BY cloudProvider";
 

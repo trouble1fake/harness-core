@@ -9,6 +9,7 @@ package io.harness.batch.processing.config;
 
 import io.harness.batch.processing.billing.writer.InstanceBillingAggregationDataTasklet;
 import io.harness.batch.processing.billing.writer.InstanceBillingDataTasklet;
+import io.harness.batch.processing.billing.writer.InstancePricingDataTasklet;
 import io.harness.batch.processing.ccm.BatchJobType;
 import io.harness.batch.processing.svcmetrics.BatchJobExecutionListener;
 
@@ -32,8 +33,18 @@ public class BillingBatchConfiguration {
   @Autowired private BatchJobExecutionListener batchJobExecutionListener;
 
   @Bean
+  public Tasklet instancePricingDataTasklet() {
+    return new InstancePricingDataTasklet();
+  }
+
+  @Bean
   public Tasklet instanceBillingDataTasklet() {
     return new InstanceBillingDataTasklet();
+  }
+
+  @Bean
+  public Step instancePricingStep() {
+    return stepBuilderFactory.get("instancePricingStep").tasklet(instancePricingDataTasklet()).build();
   }
 
   @Bean
@@ -43,11 +54,12 @@ public class BillingBatchConfiguration {
 
   @Bean
   @Qualifier(value = "instanceBillingHourlyJob")
-  public Job instanceBillingHourlyJob(Step instanceBillingStep) {
+  public Job instanceBillingHourlyJob(Step instancePricingStep, Step instanceBillingStep) {
     return jobBuilderFactory.get(BatchJobType.INSTANCE_BILLING_HOURLY.name())
         .incrementer(new RunIdIncrementer())
         .listener(batchJobExecutionListener)
-        .start(instanceBillingStep)
+        .start(instancePricingStep)
+        .next(instanceBillingStep)
         .build();
   }
 
@@ -55,11 +67,12 @@ public class BillingBatchConfiguration {
 
   @Bean
   @Qualifier(value = "instanceBillingJob")
-  public Job instanceBillingJob(Step instanceBillingStep) {
+  public Job instanceBillingJob(Step instancePricingStep, Step instanceBillingStep) {
     return jobBuilderFactory.get(BatchJobType.INSTANCE_BILLING.name())
         .incrementer(new RunIdIncrementer())
         .listener(batchJobExecutionListener)
-        .start(instanceBillingStep)
+        .start(instancePricingStep)
+        .next(instanceBillingStep)
         .build();
   }
 

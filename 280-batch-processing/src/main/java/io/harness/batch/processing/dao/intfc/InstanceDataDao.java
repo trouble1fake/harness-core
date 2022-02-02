@@ -52,4 +52,7 @@ public interface InstanceDataDao {
 
   List<InstanceData> getInstanceDataListsOfTypes(
       String accountId, int batchSize, Instant startTime, Instant endTime, List<InstanceType> instanceTypes);
+
+  List<InstanceData> getInstanceDataListForPricingUpdate(
+      String accountId, int batchSize, Instant startTime, Instant endTime);
 }

@@ -22,6 +22,7 @@ import io.harness.batch.processing.support.ActiveInstanceIterator;
 import io.harness.batch.processing.tasklet.util.InstanceMetaDataUtils;
 import io.harness.ccm.commons.beans.InstanceState;
 import io.harness.ccm.commons.beans.InstanceType;
+import io.harness.ccm.commons.beans.PricingSource;
 import io.harness.ccm.commons.constants.InstanceMetaDataConstants;
 import io.harness.ccm.commons.entities.batch.InstanceData;
 import io.harness.ccm.commons.entities.batch.InstanceData.InstanceDataKeys;
@@ -242,6 +243,21 @@ public class InstanceDataDaoImpl implements InstanceDataDao {
       String accountId, int batchSize, Instant startTime, Instant endTime, List<InstanceType> instanceTypes) {
     Query<InstanceData> query = getActiveInstanceQuery(accountId, startTime, endTime, instanceTypes);
     return query.asList(new FindOptions().limit(batchSize));
+  }
+
+  @Override
+  public List<InstanceData> getInstanceDataListForPricingUpdate(String accountId, int batchSize, Instant startTime, Instant endTime) {
+    return hPersistence.createQuery(InstanceData.class, excludeCount)
+        .filter(InstanceDataKeys.accountId, accountId)
+        .field(InstanceDataKeys.PRICING_SOURCE)
+        .notIn(Collections.singletonList(PricingSource.CUR_REPORT_INSTANCE_ID))
+        .field(InstanceDataKeys.activeInstanceIterator)
+        .greaterThanOrEq(startTime)
+        .field(InstanceDataKeys.usageStartTime)
+        .lessThanOrEq(endTime)
+        .order(InstanceDataKeys.accountId + "," + InstanceDataKeys.instanceType + ","
+            + InstanceDataKeys.activeInstanceIterator)
+        .asList(new FindOptions().limit(batchSize));
   }
 
   private Query<InstanceData> getActiveInstanceQuery(

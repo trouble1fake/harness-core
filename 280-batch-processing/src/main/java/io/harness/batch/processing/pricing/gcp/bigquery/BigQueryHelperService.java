@@ -9,7 +9,9 @@ package io.harness.batch.processing.pricing.gcp.bigquery;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.batch.processing.ccm.InstanceFamilyAndRegion;
 import io.harness.batch.processing.pricing.vmpricing.VMInstanceBillingData;
+import io.harness.ccm.commons.beans.Pricing;
 import io.harness.ccm.commons.entities.batch.CEMetadataRecord.CEMetadataRecordBuilder;
 
 import java.time.Instant;
@@ -30,4 +32,13 @@ public interface BigQueryHelperService {
 
   Map<String, VMInstanceBillingData> getAzureVMBillingData(
       List<String> resourceIds, Instant startTime, Instant endTime, String dataSetId);
+
+  Map<String, Pricing> getAwsPricingDataByResourceIds(
+      List<String> resourceIds, Instant startTime, Instant endTime, String dataSetId);
+
+  Map<InstanceFamilyAndRegion, Pricing> getAwsPricingDataByInstanceFamilyAndRegion(
+      List<InstanceFamilyAndRegion> instanceFamilyAndRegions, Instant startTime, Instant endTime, String dataSetId);
+
+  Map<String, Pricing> getAwsPricingDataByInstanceFamily(
+      List<String> instanceFamilies, Instant startTime, Instant endTime, String dataSetId);
 }
