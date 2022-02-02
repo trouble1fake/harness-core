@@ -7,15 +7,21 @@
 
 package io.harness.ng.core.accountsetting.services;
 
+import static java.lang.String.format;
+
+import io.harness.exception.DuplicateFieldException;
+import io.harness.exception.WingsException;
 import io.harness.ng.core.accountsetting.AccountSettingMapper;
+import io.harness.ng.core.accountsetting.dto.AccountSettingResponseDTO;
+import io.harness.ng.core.accountsetting.dto.AccountSettingType;
 import io.harness.ng.core.accountsetting.dto.AccountSettingsDTO;
-import io.harness.ng.core.accountsetting.dto.AccountSettingsInfoDTO;
 import io.harness.ng.core.accountsetting.entities.AccountSettings;
 import io.harness.repositories.accountsetting.AccountSettingRepository;
 
 import com.google.inject.Inject;
 import java.util.List;
 import lombok.AllArgsConstructor;
+import org.springframework.dao.DuplicateKeyException;
 
 @AllArgsConstructor(onConstructor = @__({ @Inject }))
 public class NGAccountSettingServiceImpl implements NGAccountSettingService {
@@ -23,31 +29,55 @@ public class NGAccountSettingServiceImpl implements NGAccountSettingService {
   private AccountSettingRepository accountSettingRepository;
 
   @Override
-  public AccountSettingsDTO update(AccountSettingsDTO accountSettingsDTO, String accountIdentifier) {
+  public AccountSettingResponseDTO update(AccountSettingsDTO accountSettingsDTO, String accountIdentifier) {
     final AccountSettings accountSettings =
         accountSettingMapper.toAccountSetting(accountSettingsDTO, accountIdentifier);
-    accountSettingRepository.upsert(accountSettings, accountIdentifier);
-    return accountSettingsDTO;
+    accountSettings.setLastModifiedAt(System.currentTimeMillis());
+
+    AccountSettings updatedAccountSetting = null;
+    try {
+      updatedAccountSetting = accountSettingRepository.upsert(accountSettings, accountIdentifier);
+    } catch (WingsException ex) {
+      //      throw new DuplicateFieldException(format("Account Setting already created for account [%s] org [%s]
+      //      project [%s] already exists", accountSettings.getAccountIdentifier(), accountSettings.getOrgIdentifier(),
+      //      accountSettings.getProjectIdentifier()));
+    }
+    return getResponse(updatedAccountSetting);
   }
 
   @Override
-  public AccountSettingsDTO create(AccountSettingsDTO accountSettingsDTO, String accountIdentifier) {
+  public AccountSettingResponseDTO create(AccountSettingsDTO accountSettingsDTO, String accountIdentifier) {
     final AccountSettings accountSettings =
         accountSettingMapper.toAccountSetting(accountSettingsDTO, accountIdentifier);
-    final AccountSettings save = accountSettingRepository.save(accountSettings);
-    return accountSettingsDTO;
+    accountSettings.setLastModifiedAt(System.currentTimeMillis());
+    AccountSettings savedAccountSetting = null;
+    try {
+      savedAccountSetting = accountSettingRepository.save(accountSettings);
+    } catch (DuplicateKeyException ex) {
+      throw new DuplicateFieldException(
+          format("Account Setting already created for account [%s] org [%s] project [%s] already exists",
+              accountSettings.getAccountIdentifier(), accountSettings.getOrgIdentifier(),
+              accountSettings.getProjectIdentifier()));
+    }
+    return getResponse(savedAccountSetting);
   }
 
   @Override
-  public List<AccountSettings> list(String accountId, String orgIdentifier, String projectIdentifier, String type) {
+  public List<AccountSettings> list(
+      String accountId, String orgIdentifier, String projectIdentifier, AccountSettingType type) {
     return accountSettingRepository.findAll(accountId, orgIdentifier, projectIdentifier, type);
   }
 
   @Override
-  public AccountSettingsDTO get(String accountId, String orgIdentifier, String projectIdentifier, String type) {
+  public AccountSettingResponseDTO get(
+      String accountId, String orgIdentifier, String projectIdentifier, AccountSettingType type) {
     final AccountSettings byScopeIdentifiersAndType =
         accountSettingRepository.findByScopeIdentifiersAndType(accountId, orgIdentifier, projectIdentifier, type);
-    final AccountSettingsInfoDTO accountSettingsInfoDTO = accountSettingMapper.toDTO(byScopeIdentifiersAndType);
-    return AccountSettingsDTO.builder().accountSettingsInfoDTO(accountSettingsInfoDTO).build();
+    return getResponse(byScopeIdentifiersAndType);
+  }
+
+  private AccountSettingResponseDTO getResponse(AccountSettings accountSettings) {
+    AccountSettingResponseDTO accountSettingResponseDTO = accountSettingMapper.toDTO(accountSettings);
+    return accountSettingResponseDTO;
   }
 }

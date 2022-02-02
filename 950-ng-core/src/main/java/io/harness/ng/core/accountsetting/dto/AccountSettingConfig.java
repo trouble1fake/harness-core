@@ -13,7 +13,7 @@ import io.harness.annotations.dev.OwnedBy;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 
+@OwnedBy(HarnessTeam.PL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonSubTypes({ @JsonSubTypes.Type(value = ConnectorSettings.class, name = "Connector") })
-@OwnedBy(HarnessTeam.PL)
 public class AccountSettingConfig {}

@@ -9,6 +9,7 @@ package io.harness.serializer.morphia;
 
 import io.harness.morphia.MorphiaRegistrar;
 import io.harness.morphia.MorphiaRegistrarHelperPut;
+import io.harness.ng.core.accountsetting.entities.AccountSettings;
 import io.harness.ng.core.activityhistory.entity.ConnectivityCheckDetail;
 import io.harness.ng.core.activityhistory.entity.EntityUsageActivityDetail;
 import io.harness.ng.core.activityhistory.entity.NGActivity;
@@ -23,6 +24,7 @@ public class NGCoreMorphiaClassesRegistrar implements MorphiaRegistrar {
     set.add(Environment.class);
     set.add(ServiceEntity.class);
     set.add(NGActivity.class);
+    set.add(AccountSettings.class);
     set.add(ConnectivityCheckDetail.class);
     set.add(EntityUsageActivityDetail.class);
   }

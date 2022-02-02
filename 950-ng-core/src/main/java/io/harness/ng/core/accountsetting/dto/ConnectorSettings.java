@@ -7,16 +7,13 @@
 
 package io.harness.ng.core.accountsetting.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.AccessLevel;
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.FieldDefaults;
+import lombok.*;
+import org.springframework.data.annotation.TypeAlias;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
-@JsonIgnoreProperties(ignoreUnknown = true)
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@Builder
+@TypeAlias("io.harness.ng.core.accountsetting.dto.ConnectorSettings")
 public class ConnectorSettings extends AccountSettingConfig {
-  @Getter(value = AccessLevel.PRIVATE) @Setter private Boolean builtInSMDisabled = Boolean.FALSE;
+  Boolean builtInSMDisabled = Boolean.FALSE;
 }

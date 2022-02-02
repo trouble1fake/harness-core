@@ -7,6 +7,7 @@
 
 package io.harness.repositories.accountsetting;
 
+import io.harness.ng.core.accountsetting.dto.AccountSettingType;
 import io.harness.ng.core.accountsetting.dto.AccountSettingsDTO;
 import io.harness.ng.core.accountsetting.entities.AccountSettings;
 
@@ -15,10 +16,11 @@ import java.util.List;
 public interface AccountSettingCustomRepository {
   AccountSettings save(AccountSettings objectToSave);
 
-  List<AccountSettings> findAll(String accountId, String orgIdentifier, String projectIdentifier, String type);
+  List<AccountSettings> findAll(
+      String accountId, String orgIdentifier, String projectIdentifier, AccountSettingType type);
 
   AccountSettings upsert(AccountSettings accountSettings, String accountIdentifier);
 
   AccountSettings findByScopeIdentifiersAndType(
-      String accountId, String orgIdentifier, String projectIdentifier, String type);
+      String accountId, String orgIdentifier, String projectIdentifier, AccountSettingType type);
 }

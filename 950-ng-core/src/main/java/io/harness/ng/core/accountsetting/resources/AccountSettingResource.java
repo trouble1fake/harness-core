@@ -10,6 +10,7 @@ package io.harness.ng.core.accountsetting.resources;
 import static io.harness.NGCommonEntityConstants.*;
 
 import io.harness.NGCommonEntityConstants;
+import io.harness.ng.core.accountsetting.dto.AccountSettingResponseDTO;
 import io.harness.ng.core.accountsetting.dto.AccountSettingsDTO;
 import io.harness.ng.core.accountsetting.entities.AccountSettings;
 import io.harness.ng.core.accountsetting.services.NGAccountSettingService;
@@ -67,7 +68,7 @@ public class AccountSettingResource {
 
   @GET
   @ApiOperation(value = "Gets account setting", nickname = "getAccountSetting")
-  public ResponseDTO<AccountSettingsDTO> getAccountSetting(
+  public ResponseDTO<AccountSettingResponseDTO> getAccountSetting(
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
       @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
       @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
@@ -93,7 +94,7 @@ public class AccountSettingResource {
         @io.swagger.v3.oas.annotations.responses.
         ApiResponse(responseCode = "default", description = "Returns created account setting")
       })
-  public ResponseDTO<AccountSettingsDTO>
+  public ResponseDTO<AccountSettingResponseDTO>
   create(@RequestBody(required = true, description = "Details of the ACcountSetting to create") @Valid
          @NotNull AccountSettingsDTO accountSettingsDTO,
       @Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
@@ -111,13 +112,11 @@ public class AccountSettingResource {
         @io.swagger.v3.oas.annotations.responses.
         ApiResponse(responseCode = "default", description = "Returns created account setting")
       })
-  public ResponseDTO<AccountSettingsDTO>
+  public ResponseDTO<AccountSettingResponseDTO>
   update(@RequestBody(required = true, description = "Details of the ACcountSetting to create") @Valid
          @NotNull AccountSettingsDTO accountSettingsDTO,
       @Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
-          NGCommonEntityConstants.ACCOUNT_KEY) @NotNull String accountIdentifier
-
-  ) {
+          NGCommonEntityConstants.ACCOUNT_KEY) @NotNull String accountIdentifier) {
     return ResponseDTO.newResponse(accountSettingService.update(accountSettingsDTO, accountIdentifier));
   }
 }

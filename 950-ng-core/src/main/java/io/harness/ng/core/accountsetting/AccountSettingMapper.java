@@ -7,29 +7,32 @@
 
 package io.harness.ng.core.accountsetting;
 
+import io.harness.ng.core.accountsetting.dto.AccountSettingResponseDTO;
 import io.harness.ng.core.accountsetting.dto.AccountSettingsDTO;
-import io.harness.ng.core.accountsetting.dto.AccountSettingsInfoDTO;
 import io.harness.ng.core.accountsetting.entities.AccountSettings;
 
 public class AccountSettingMapper {
   public AccountSettings toAccountSetting(AccountSettingsDTO accountSettingsDTO, String accountIdentifier) {
-    final AccountSettingsInfoDTO accountSettingsInfoDTO = accountSettingsDTO.getAccountSettingsInfoDTO();
     return AccountSettings.builder()
-        .accountIdentifier(accountSettingsInfoDTO.getAccountIdentifier())
-        .projectIdentifier(accountSettingsInfoDTO.getProjectIdentifier())
-        .orgIdentifier(accountSettingsInfoDTO.getOrgIdentifier())
-        .type(accountSettingsInfoDTO.getType())
-        .accountSettingConfig(accountSettingsInfoDTO.getAccountSettingConfig())
+        .accountIdentifier(accountSettingsDTO.getAccountIdentifier())
+        .projectIdentifier(accountSettingsDTO.getProjectIdentifier())
+        .orgIdentifier(accountSettingsDTO.getOrgIdentifier())
+        .type(accountSettingsDTO.getType())
+        .config(accountSettingsDTO.getConfig())
         .build();
   }
 
-  public AccountSettingsInfoDTO toDTO(AccountSettings accountSettings) {
-    return AccountSettingsInfoDTO.builder()
-        .accountIdentifier(accountSettings.getAccountIdentifier())
-        .orgIdentifier(accountSettings.getOrgIdentifier())
-        .projectIdentifier(accountSettings.getProjectIdentifier())
-        .type(accountSettings.getType())
-        .accountSettingConfig(accountSettings.getAccountSettingConfig())
+  public AccountSettingResponseDTO toDTO(AccountSettings accountSettings) {
+    return AccountSettingResponseDTO.builder()
+        .accountSettings(AccountSettingsDTO.builder()
+                             .accountIdentifier(accountSettings.getAccountIdentifier())
+                             .orgIdentifier(accountSettings.getOrgIdentifier())
+                             .projectIdentifier(accountSettings.getProjectIdentifier())
+                             .type(accountSettings.getType())
+                             .config(accountSettings.getConfig())
+                             .build())
+        .createdAt(accountSettings.getCreatedAt())
+        .lastModifiedAt(accountSettings.getLastModifiedAt())
         .build();
   }
 }
