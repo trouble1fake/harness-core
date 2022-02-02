@@ -352,6 +352,7 @@ public class PipelineResource implements YamlSchemaResource {
       throws IOException {
     log.info(String.format("Updating pipeline with identifier %s in project %s, org %s, account %s", pipelineId,
         projectId, orgId, accountId));
+
     String expandedPipelineJSON =
         pmsPipelineService.fetchExpandedPipelineJSONFromYaml(accountId, orgId, projectId, yaml);
     GovernanceMetadata governanceMetadata = governanceService.evaluateGovernancePolicies(
