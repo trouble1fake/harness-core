@@ -88,7 +88,7 @@ public class GlobalKmsServiceImplTest extends CategoryTest {
   static final String CHECK_FOR_HARNESS_SUPPORT_USER = "checkForHarnessSupportUser";
   static final String CHECK_CONNECTOR_TYPE_AND_CREDENTIALS_MATCH = "checkConnectorTypeAndCredentialsMatch";
   static final String CHECK_CONNECTOR_HAS_ONLY_ACCOUNT_SCOPE_INFO = "checkConnectorHasOnlyAccountScopeInfo";
-  static final String CHECK_GLOBAL_KMS_SECRET_EXISTS = "checkGlobalKmsSecretExists";
+  static final String GET_GLOBAL_KMS_SECRET_OR_THROW = "getGlobalKmsSecretOrThrow";
 
   @Before
   public void setup() {
@@ -249,13 +249,12 @@ public class GlobalKmsServiceImplTest extends CategoryTest {
     PowerMockito.doNothing().when(
         globalKmsService, CHECK_CONNECTOR_TYPE_AND_CREDENTIALS_MATCH, connectorDTO, secretDTOV2);
     PowerMockito.doNothing().when(globalKmsService, CHECK_CONNECTOR_HAS_ONLY_ACCOUNT_SCOPE_INFO, connectorDTO);
-    PowerMockito.doNothing().when(globalKmsService, CHECK_GLOBAL_KMS_SECRET_EXISTS, secretDTOV2);
     Whitebox.invokeMethod(globalKmsService, CAN_UPDATE_GLOBAL_KMS, connectorDTO, secretDTOV2);
+    verifyPrivate(globalKmsService, times(1)).invoke(GET_USER_PRINCIPAL_OR_THROW);
     verifyPrivate(globalKmsService, times(1)).invoke(CHECK_FOR_HARNESS_SUPPORT_USER, userPrincipal.getName());
     verifyPrivate(globalKmsService, times(1))
         .invoke(CHECK_CONNECTOR_TYPE_AND_CREDENTIALS_MATCH, connectorDTO, secretDTOV2);
     verifyPrivate(globalKmsService, times(1)).invoke(CHECK_CONNECTOR_HAS_ONLY_ACCOUNT_SCOPE_INFO, connectorDTO);
-    verifyPrivate(globalKmsService, times(1)).invoke(CHECK_GLOBAL_KMS_SECRET_EXISTS, secretDTOV2);
   }
 
   @Test
@@ -410,22 +409,23 @@ public class GlobalKmsServiceImplTest extends CategoryTest {
   @Test
   @Owner(developers = NISHANT)
   @Category(UnitTests.class)
-  public void testCheckGlobalKmsSecretExists() throws Exception {
+  public void testGetGlobalKmsSecretOrThrow() throws Exception {
     SecretDTOV2 secretDTOV2 = getSecretDTOV2();
     SecretResponseWrapper secretResponseWrapper = getSecretResponseWrapper();
     when(ngSecretService.get(GLOBAL_ACCOUNT_ID, secretDTOV2.getOrgIdentifier(), secretDTOV2.getProjectIdentifier(),
              secretDTOV2.getIdentifier()))
         .thenReturn(Optional.of(secretResponseWrapper));
-    Whitebox.invokeMethod(globalKmsService, CHECK_GLOBAL_KMS_SECRET_EXISTS, secretDTOV2);
+    SecretDTOV2 secretDTO = Whitebox.invokeMethod(globalKmsService, GET_GLOBAL_KMS_SECRET_OR_THROW, secretDTOV2);
     verify(ngSecretService, times(1))
         .get(GLOBAL_ACCOUNT_ID, secretDTOV2.getOrgIdentifier(), secretDTOV2.getProjectIdentifier(),
             secretDTOV2.getIdentifier());
+    assertNotNull(secretDTO);
   }
 
   @Test
   @Owner(developers = NISHANT)
   @Category(UnitTests.class)
-  public void testCheckGlobalKmsSecretExists_secret_not_exist() throws Exception {
+  public void testGetGlobalKmsSecretOrThrow_secret_not_exist() throws Exception {
     SecretDTOV2 secretDTOV2 = getSecretDTOV2();
     when(ngSecretService.get(GLOBAL_ACCOUNT_ID, secretDTOV2.getOrgIdentifier(), secretDTOV2.getProjectIdentifier(),
              secretDTOV2.getIdentifier()))
@@ -433,7 +433,7 @@ public class GlobalKmsServiceImplTest extends CategoryTest {
     exceptionRule.expect(InvalidRequestException.class);
     exceptionRule.expectMessage(
         String.format("Secret with identifier %s does not exist in global scope", secretDTOV2.getIdentifier()));
-    Whitebox.invokeMethod(globalKmsService, CHECK_GLOBAL_KMS_SECRET_EXISTS, secretDTOV2);
+    Whitebox.invokeMethod(globalKmsService, GET_GLOBAL_KMS_SECRET_OR_THROW, secretDTOV2);
     verify(ngSecretService, times(1))
         .get(GLOBAL_ACCOUNT_ID, secretDTOV2.getOrgIdentifier(), secretDTOV2.getProjectIdentifier(),
             secretDTOV2.getIdentifier());
