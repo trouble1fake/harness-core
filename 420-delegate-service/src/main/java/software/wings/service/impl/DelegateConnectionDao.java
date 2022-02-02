@@ -77,8 +77,8 @@ public class DelegateConnectionDao {
                                                        .project(DelegateConnectionKeys.lastHeartbeat, true)
                                                        .asList();
 
-    return delegateConnections.stream().collect(Collectors.groupingBy(delegateConnection
-        -> delegateConnection.getDelegateId(),
+    return delegateConnections.stream().collect(Collectors.groupingBy(
+        DelegateConnection::getDelegateId,
         Collectors.mapping(delegateConnection
             -> DelegateConnectionDetails.builder()
                    .uuid(delegateConnection.getUuid())
@@ -141,6 +141,7 @@ public class DelegateConnectionDao {
 
   public DelegateConnection upsertCurrentConnection(
       String accountId, String delegateId, String delegateConnectionId, String version, String location) {
+    log.info("Trying to upsert the connection for delegate {} version {}", delegateId, version);
     Query<DelegateConnection> query = persistence.createQuery(DelegateConnection.class)
                                           .filter(DelegateConnectionKeys.accountId, accountId)
                                           .filter(DelegateConnectionKeys.uuid, delegateConnectionId);

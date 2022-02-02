@@ -75,7 +75,7 @@ public class DelegateStreamHandler extends AtmosphereHandlerAdapter {
              AutoLogContext ignore2 = new DelegateLogContext(delegateId, OVERRIDE_ERROR)) {
           String delegateConnectionId = req.getParameter("delegateConnectionId");
           String delegateVersion = req.getParameter("version");
-
+          log.info("Using delegateVersion({})", delegateVersion);
           // These 2 will be sent by ECS delegate only
           String sequenceNum = req.getParameter("sequenceNum");
           String delegateToken = req.getParameter("delegateToken");
@@ -121,7 +121,7 @@ public class DelegateStreamHandler extends AtmosphereHandlerAdapter {
            AutoLogContext ignore2 = new DelegateLogContext(delegateId, OVERRIDE_ERROR)) {
         String delegateConnectionId = req.getParameter("delegateConnectionId");
         String delegateVersion = req.getParameter("version");
-
+        log.info("Using delegateVersion1({})", delegateVersion);
         Delegate delegate = JsonUtils.asObject(CharStreams.toString(req.getReader()), Delegate.class);
         delegate.setUuid(delegateId);
         delegateService.register(delegate);

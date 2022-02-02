@@ -3029,6 +3029,7 @@ public class DelegateServiceImpl implements DelegateService {
     if (isEmpty(version)) {
       version = accountService.getAccountPrimaryDelegateVersion(accountId);
     }
+    log.info("Registering heartbeat with version {}", version);
     DelegateConnection previousDelegateConnection = delegateConnectionDao.upsertCurrentConnection(
         accountId, delegateId, heartbeat.getDelegateConnectionId(), version, heartbeat.getLocation());
 

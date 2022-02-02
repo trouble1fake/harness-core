@@ -30,8 +30,7 @@ public class VersionInfoManager {
   private static final String VERSION_INFO_YAML = "main/resources-filtered/versionInfo.yaml";
 
   private final VersionInfo versionInfo;
-
-  private String fullVersion;
+  private final String fullVersion;
 
   private static String initVersionInfo() {
     String versionInfo = VersionInfoManager.INIT_VERSION_INFO;
@@ -40,6 +39,9 @@ public class VersionInfoManager {
       final InputStream stream = VersionInfoManager.class.getClassLoader().getResourceAsStream(VERSION_INFO_YAML);
       if (stream != null) {
         versionInfo = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        log.info("versionInfo.yaml is {}", versionInfo);
+      } else {
+        log.error("versionInfo.yaml stream was null, using default versioning");
       }
     } catch (IOException exception) {
       log.error("Error reading version info from file: {}", VERSION_INFO_YAML);
