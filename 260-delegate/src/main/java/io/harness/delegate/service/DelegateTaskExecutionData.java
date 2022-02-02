@@ -18,6 +18,10 @@ import lombok.Data;
 @Builder
 @TargetModule(HarnessModule._420_DELEGATE_AGENT)
 public class DelegateTaskExecutionData {
+  private long taskReceivedTime;
+  private long taskDispatchTime;
+  private long taskAcquireTime;
+  private long taskValidationTime;
   private long executionStartTime;
   private Future<?> taskFuture;
 }

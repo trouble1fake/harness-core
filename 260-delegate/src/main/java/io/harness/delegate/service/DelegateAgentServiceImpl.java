@@ -381,6 +381,16 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   private final AtomicInteger maxValidatingTasksCount = new AtomicInteger();
   private final AtomicInteger maxExecutingTasksCount = new AtomicInteger();
   private final AtomicInteger maxExecutingFuturesCount = new AtomicInteger();
+  private final AtomicInteger taskReceivedCount = new AtomicInteger();
+  private final AtomicInteger dispatchTaskCount = new AtomicInteger();
+  private final AtomicInteger acquiredTaskCount = new AtomicInteger();
+  private final AtomicInteger validatingTaskCount = new AtomicInteger();
+  private final AtomicInteger executingTaskCount = new AtomicInteger();
+  private final AtomicLong totDispatchTime = new AtomicLong();
+  private final AtomicLong totValidationTime = new AtomicLong();
+  private final AtomicLong totAcquireTime = new AtomicLong();
+  private final AtomicLong totRunTime = new AtomicLong();
+  private final AtomicLong totAgentTaskExecTime = new AtomicLong();
 
   private final AtomicLong lastHeartbeatSentAt = new AtomicLong(System.currentTimeMillis());
   private final AtomicLong frozenAt = new AtomicLong(-1);
@@ -1814,16 +1824,38 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     }
   }
 
-  @Getter(lazy = true)
-  private final Map<String, ThreadPoolExecutor> logExecutors =
-      NullSafeImmutableMap.<String, ThreadPoolExecutor>builder()
-          .putIfNotNull("taskExecutor", taskExecutor)
-          .putIfNotNull("timeoutEnforcement", timeoutEnforcement)
-          .putIfNotNull("taskPollExecutor", taskPollExecutor)
-          .build();
-
   public Map<String, String> obtainPerformance() {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    final int numTaskExecuted = executingTaskCount.getAndSet(0);
+    if (numTaskExecuted > 0) {
+      builder.put("taskExecuted", Integer.toString(numTaskExecuted));
+      builder.put("avgAgentTaskExecTime", Double.toString(totAgentTaskExecTime.getAndSet(0L) / numTaskExecuted));
+      builder.put("avgRunTime", Double.toString(totRunTime.getAndSet(0L) / numTaskExecuted));
+    }
+
+    final int numTaskReceived = taskReceivedCount.getAndSet(0);
+    if (numTaskReceived > 0) {
+      builder.put("taskReceived", Integer.toString(numTaskReceived));
+    }
+
+    final int numTaskDispatched = dispatchTaskCount.getAndSet(0);
+    if (numTaskDispatched > 0) {
+      builder.put("taskDispatched", Integer.toString(numTaskDispatched));
+      builder.put("avgTaskDispatchTime", Double.toString(totDispatchTime.getAndSet(0L) / numTaskDispatched));
+    }
+
+    final int numTaskAcquired = acquiredTaskCount.getAndSet(0);
+    if (numTaskAcquired > 0) {
+      builder.put("taskAcquired", Integer.toString(numTaskAcquired));
+      builder.put("avgAcquireTime", Double.toString(totAcquireTime.getAndSet(0L) / numTaskAcquired));
+    }
+
+    final int numTaskValidated = validatingTaskCount.getAndSet(0);
+    if (numTaskValidated > 0) {
+      builder.put("taskValidated", Integer.toString(numTaskValidated));
+      builder.put("avgValidationTime", Double.toString(totValidationTime.getAndSet(0L) / numTaskValidated));
+    }
+
     builder.put("maxValidatingTasksCount", Integer.toString(maxValidatingTasksCount.getAndSet(0)));
     builder.put("maxExecutingTasksCount", Integer.toString(maxExecutingTasksCount.getAndSet(0)));
     builder.put("maxExecutingFuturesCount", Integer.toString(maxExecutingFuturesCount.getAndSet(0)));
@@ -1832,15 +1864,11 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     builder.put("cpu-process", Double.toString(Precision.round(osBean.getProcessCpuLoad() * 100, 2)));
     builder.put("cpu-system", Double.toString(Precision.round(osBean.getSystemCpuLoad() * 100, 2)));
 
-    for (Entry<String, ThreadPoolExecutor> executorEntry : getLogExecutors().entrySet()) {
-      builder.put(executorEntry.getKey(), Integer.toString(executorEntry.getValue().getActiveCount()));
-    }
     MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
 
     memoryUsage(builder, "heap-", memoryMXBean.getHeapMemoryUsage());
 
     memoryUsage(builder, "non-heap-", memoryMXBean.getNonHeapMemoryUsage());
-
     return builder.build();
   }
 
@@ -1880,11 +1908,13 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       return;
     }
 
+    taskReceivedCount.incrementAndGet();
     DelegateTaskExecutionData taskExecutionData = DelegateTaskExecutionData.builder().build();
     if (currentlyExecutingFutures.putIfAbsent(delegateTaskId, taskExecutionData) == null) {
       Future taskFuture = taskExecutor.submit(() -> dispatchDelegateTask(delegateTaskEvent));
       log.info("TaskId: {} submitted for execution", delegateTaskId);
       taskExecutionData.setTaskFuture(taskFuture);
+      taskExecutionData.setTaskReceivedTime(clock.millis());
       updateCounterIfLessThanCurrent(maxExecutingFuturesCount, currentlyExecutingFutures.size());
       return;
     }
@@ -1933,6 +1963,11 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         return;
       }
 
+      dispatchTaskCount.incrementAndGet();
+      DelegateTaskExecutionData taskExecutionData = currentlyExecutingFutures.get(delegateTaskId);
+      if (taskExecutionData != null) {
+        taskExecutionData.setTaskDispatchTime(clock.millis());
+      }
       currentlyAcquiringTasks.add(delegateTaskId);
 
       log.debug("Try to acquire DelegateTask - accountId: {}", accountId);
@@ -1944,6 +1979,10 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
             delegateTaskEvent.getAccountId());
         return;
       }
+      if (taskExecutionData != null) {
+        taskExecutionData.setTaskAcquireTime(taskExecutionData.getTaskReceivedTime());
+      }
+      acquiredTaskCount.incrementAndGet();
 
       if (isEmpty(delegateTaskPackage.getDelegateId())) {
         // Not whitelisted. Perform validation.
@@ -1985,6 +2024,11 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         // Tools might be installed asynchronously, so get the flag early on
         final boolean areAllClientToolsInstalled = isClientToolsInstallationFinished();
         currentlyValidatingTasks.remove(taskId);
+        validatingTaskCount.incrementAndGet();
+        DelegateTaskExecutionData taskExecutionData = currentlyExecutingFutures.get(taskId);
+        if (taskExecutionData != null) {
+          taskExecutionData.setTaskValidationTime(clock.millis());
+        }
         log.info("Removed from validating futures on post validation");
         List<DelegateConnectionResult> results = Optional.ofNullable(delegateConnectionResults).orElse(emptyList());
         boolean validated = results.stream().allMatch(DelegateConnectionResult::isValidated);
@@ -2316,8 +2360,20 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
           delegateExpressionEvaluator.cleanup();
         }
         currentlyExecutingTasks.remove(taskId);
-        if (currentlyExecutingFutures.remove(taskId) != null) {
+        DelegateTaskExecutionData taskExecutionData = currentlyExecutingFutures.remove(taskId);
+        executingTaskCount.incrementAndGet();
+        if (taskExecutionData != null) {
           log.debug("Removed from executing futures on post execution");
+          // Update task agent metric for this task.
+          totDispatchTime.addAndGet(taskExecutionData.getTaskDispatchTime() - taskExecutionData.getTaskReceivedTime());
+          totAcquireTime.addAndGet(taskExecutionData.getTaskAcquireTime() - taskExecutionData.getTaskDispatchTime());
+          if (taskExecutionData.getTaskValidationTime() > 0) {
+            totValidationTime.addAndGet(
+                taskExecutionData.getTaskValidationTime() - taskExecutionData.getTaskAcquireTime());
+          }
+          final long currentTime = clock.millis();
+          totRunTime.addAndGet(currentTime - taskExecutionData.getExecutionStartTime());
+          totAgentTaskExecTime.addAndGet(currentTime - taskExecutionData.getTaskReceivedTime());
         }
         if (response != null && response.errorBody() != null && !response.isSuccessful()) {
           response.errorBody().close();
