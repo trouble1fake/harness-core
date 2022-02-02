@@ -10,11 +10,13 @@ package io.harness.pms.pipeline;
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 import static io.harness.rule.OwnerRule.NAMAN;
 import static io.harness.rule.OwnerRule.SAMARTH;
+import static io.harness.rule.OwnerRule.SATYAM;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 
@@ -31,6 +33,8 @@ import io.harness.git.model.ChangeType;
 import io.harness.gitsync.sdk.EntityGitDetails;
 import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.ng.core.template.TemplateMergeResponseDTO;
+import io.harness.pms.contracts.governance.GovernanceMetadata;
+import io.harness.pms.governance.PipelineSaveResponse;
 import io.harness.pms.pipeline.PipelineEntity.PipelineEntityKeys;
 import io.harness.pms.pipeline.mappers.NodeExecutionToExecutioNodeMapper;
 import io.harness.pms.pipeline.service.PMSPipelineService;
@@ -72,7 +76,6 @@ public class PipelineResourceTest extends CategoryTest {
   private final String ORG_IDENTIFIER = "orgId";
   private final String PROJ_IDENTIFIER = "projId";
   private final String PIPELINE_IDENTIFIER = "basichttpFail";
-
   private final String PLAN_EXECUTION_ID = "planId";
   private final String STAGE_NODE_ID = "stageNodeId";
   private String yaml;
@@ -157,6 +160,20 @@ public class PipelineResourceTest extends CategoryTest {
   }
 
   @Test
+  @Owner(developers = SATYAM)
+  @Category(UnitTests.class)
+  public void testCreatePipelineV2() throws IOException {
+    doReturn(entityWithVersion).when(pmsPipelineService).create(entity);
+    doReturn(GovernanceMetadata.newBuilder().setDeny(true).build())
+        .when(mockGovernanceService)
+        .evaluateGovernancePolicies(anyString(), anyString(), anyString(), anyString(), anyString(), anyString());
+    ResponseDTO<PipelineSaveResponse> responseDTO =
+        pipelineResource.createPipelineV2(ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER, null, yaml);
+    assertThat(responseDTO.getData().getGovernanceMetadata()).isNotNull();
+    assertThat(responseDTO.getData().getGovernanceMetadata().getDeny()).isTrue();
+  }
+
+  @Test
   @Owner(developers = SAMARTH)
   @Category(UnitTests.class)
   public void testCreatePipelineWithSchemaErrors() {
@@ -231,6 +248,19 @@ public class PipelineResourceTest extends CategoryTest {
     ResponseDTO<String> responseDTO = pipelineResource.updatePipeline(
         null, ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER, PIPELINE_IDENTIFIER, null, yaml);
     assertThat(responseDTO.getData()).isEqualTo(PIPELINE_IDENTIFIER);
+  }
+
+  @Test
+  @Owner(developers = SATYAM)
+  @Category(UnitTests.class)
+  public void testUpdatePipelineV2() throws IOException {
+    doReturn(entityWithVersion).when(pmsPipelineService).updatePipelineYaml(entity, ChangeType.MODIFY);
+    doReturn(GovernanceMetadata.newBuilder().setDeny(true).build())
+        .when(mockGovernanceService)
+        .evaluateGovernancePolicies(anyString(), anyString(), anyString(), anyString(), anyString(), anyString());
+    ResponseDTO<PipelineSaveResponse> responseDTO = pipelineResource.updatePipelineV2(
+        null, ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER, PIPELINE_IDENTIFIER, null, yaml);
+    assertThat(responseDTO.getData().getGovernanceMetadata().getDeny()).isTrue();
   }
 
   @Test
