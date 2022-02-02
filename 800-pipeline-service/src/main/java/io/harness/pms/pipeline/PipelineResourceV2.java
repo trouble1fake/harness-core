@@ -100,8 +100,8 @@ public class PipelineResourceV2 implements YamlSchemaResource {
   private final GovernanceService governanceService;
 
   @POST
-  @ApiOperation(value = "Create a Pipeline", nickname = "createPipelineV2")
-  @Operation(operationId = "postPipelineV2", summary = "Create a Pipeline API (V2 Version)",
+  @ApiOperation(value = "Create a Pipeline", nickname = "createPipelineWithGovernance")
+  @Operation(operationId = "createPipelineWithGovernance", summary = "Create a Pipeline API with Governance Checks",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -148,8 +148,9 @@ public class PipelineResourceV2 implements YamlSchemaResource {
 
   @PUT
   @Path("/{pipelineIdentifier}")
-  @ApiOperation(value = "Update a Pipeline", nickname = "putPipelineV2")
-  @Operation(operationId = "updatePipelineV2", summary = "Updates a Pipeline by identifier (V2 Version)",
+  @ApiOperation(value = "Update a Pipeline", nickname = "updatePipelineWithGovernance")
+  @Operation(operationId = "updatePipelineWithGovernance",
+      summary = "Updates a Pipeline by identifier with Governance Checks",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
