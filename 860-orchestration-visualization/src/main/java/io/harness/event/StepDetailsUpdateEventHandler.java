@@ -45,11 +45,10 @@ public class StepDetailsUpdateEventHandler {
             PipelineExecutionSummaryEntity.PlanExecutionSummaryKeys.layoutNodeMap + "." + stageUuid + ".stepDetails",
             stepDetails);
       }
-      return orchestrationGraph;
     } catch (Exception e) {
       log.error("Graph update for Step Details update event failed for node [{}]", nodeExecutionId, e);
-      throw e;
     }
+    return orchestrationGraph;
   }
 
   public OrchestrationGraph handleStepInputEvent(
