@@ -168,11 +168,11 @@ public class ServiceLevelObjectiveResource {
   @ExceptionMetered
   @Path("{identifier}/resetErrorBudget")
   @ApiOperation(value = "reset Error budget history", nickname = "resetErrorBudget")
-  @NGAccessControlCheck(resourceType = SLO, permission = VIEW_PERMISSION)
+  @NGAccessControlCheck(resourceType = SLO, permission = EDIT_PERMISSION)
   public RestResponse<SLOErrorBudgetResetDTO> resetErrorBudget(
       @ApiParam(required = true) @NotNull @QueryParam("accountId") @AccountIdentifier String accountId,
       @ApiParam(required = true) @NotNull @QueryParam("orgIdentifier") @OrgIdentifier String orgIdentifier,
-      @ApiParam(required = true) @NotNull @QueryParam("projectIdentifier") @ResourceIdentifier String projectIdentifier,
+      @ApiParam(required = true) @NotNull @QueryParam("projectIdentifier") @ProjectIdentifier String projectIdentifier,
       @ApiParam(required = true) @NotNull @PathParam("identifier") @ResourceIdentifier String sloIdentifier,
       @NotNull @Valid @Body SLOErrorBudgetResetDTO sloErrorBudgetResetDTO) {
     ProjectParams projectParams = ProjectParams.builder()
@@ -193,7 +193,7 @@ public class ServiceLevelObjectiveResource {
   public RestResponse<List<SLOErrorBudgetResetDTO>> getErrorBudgetResetHistory(
       @ApiParam(required = true) @NotNull @QueryParam("accountId") @AccountIdentifier String accountId,
       @ApiParam(required = true) @NotNull @QueryParam("orgIdentifier") @OrgIdentifier String orgIdentifier,
-      @ApiParam(required = true) @NotNull @QueryParam("projectIdentifier") @ResourceIdentifier String projectIdentifier,
+      @ApiParam(required = true) @NotNull @QueryParam("projectIdentifier") @ProjectIdentifier String projectIdentifier,
       @ApiParam(required = true) @NotNull @PathParam("identifier") @ResourceIdentifier String sloIdentifier) {
     ProjectParams projectParams = ProjectParams.builder()
                                       .accountIdentifier(accountId)

@@ -153,13 +153,13 @@ public class HelmTaskHelperTest extends WingsBaseTest {
     doNothing()
         .when(helmTaskHelperBase)
         .addRepo("vault", "vault", "https://helm-server", "admin", "secret-text".toCharArray(), "/home", V3,
-            LONG_TIMEOUT_INTERVAL);
+            LONG_TIMEOUT_INTERVAL, false);
     helmTaskHelper.addRepo("vault", "vault", "https://helm-server", "admin", "secret-text".toCharArray(), "/home", V3,
         LONG_TIMEOUT_INTERVAL);
 
     verify(helmTaskHelperBase)
         .addRepo("vault", "vault", "https://helm-server", "admin", "secret-text".toCharArray(), "/home", V3,
-            LONG_TIMEOUT_INTERVAL);
+            LONG_TIMEOUT_INTERVAL, false);
   }
 
   @Test
@@ -178,7 +178,7 @@ public class HelmTaskHelperTest extends WingsBaseTest {
     assertThatExceptionOfType(HelmClientException.class)
         .isThrownBy(()
                         -> helmTaskHelper.addRepo("vault", "vault", "https://helm-server", "admin",
-                            "secret-text".toCharArray(), "/home", V3, LONG_TIMEOUT_INTERVAL, false, StringUtils.EMPTY))
+                            "secret-text".toCharArray(), "/home", V3, LONG_TIMEOUT_INTERVAL, StringUtils.EMPTY))
         .withMessageContaining(
             "Failed to add helm repo. Executed command v3/helm repo add vault https://helm-server --username admin --password *******");
   }
@@ -191,7 +191,7 @@ public class HelmTaskHelperTest extends WingsBaseTest {
     assertThatExceptionOfType(HelmClientException.class)
         .isThrownBy(()
                         -> helmTaskHelper.addRepo("vault", "vault", "https://helm-server", "admin",
-                            "secret-text".toCharArray(), "/home", V3, LONG_TIMEOUT_INTERVAL, false, StringUtils.EMPTY));
+                            "secret-text".toCharArray(), "/home", V3, LONG_TIMEOUT_INTERVAL, StringUtils.EMPTY));
   }
 
   private void testAddRepoSuccess() {
@@ -537,19 +537,19 @@ public class HelmTaskHelperTest extends WingsBaseTest {
         .executeCommand(anyMap(), anyString(), anyString(), anyString(), anyLong(), eq(HelmCliCommandType.REPO_ADD));
 
     helmTaskHelperBase.addRepo(
-        "repo", "repo", "http://null-password-url", "username", null, "chart", V3, LONG_TIMEOUT_INTERVAL);
+        "repo", "repo", "http://null-password-url", "username", null, "chart", V3, LONG_TIMEOUT_INTERVAL, false);
     verify(helmTaskHelperBase)
         .executeCommand(anyMap(), eq("v3/helm repo add repo http://null-password-url --username username "),
             anyString(), anyString(), anyLong(), eq(HelmCliCommandType.REPO_ADD));
 
     helmTaskHelperBase.addRepo(
-        "repo", "repo", "http://repo-url", "username", emptyPassword, "chart", V3, LONG_TIMEOUT_INTERVAL);
+        "repo", "repo", "http://repo-url", "username", emptyPassword, "chart", V3, LONG_TIMEOUT_INTERVAL, false);
     verify(helmTaskHelperBase)
         .executeCommand(anyMap(), eq("v3/helm repo add repo http://repo-url --username username "), anyString(),
             anyString(), anyLong(), eq(HelmCliCommandType.REPO_ADD));
 
     helmTaskHelperBase.addRepo(
-        "repo", "repo", "http://repo-url", " ", passwordWithWhitespaces, "chart", V3, LONG_TIMEOUT_INTERVAL);
+        "repo", "repo", "http://repo-url", " ", passwordWithWhitespaces, "chart", V3, LONG_TIMEOUT_INTERVAL, false);
     verify(helmTaskHelperBase)
         .executeCommand(anyMap(), eq("v3/helm repo add repo http://repo-url  "), anyString(), anyString(), anyLong(),
             eq(HelmCliCommandType.REPO_ADD));
@@ -569,19 +569,19 @@ public class HelmTaskHelperTest extends WingsBaseTest {
         "repo", "repo", "http://null-password-url", "username", null, "chart", V3, LONG_TIMEOUT_INTERVAL);
     verify(helmTaskHelperBase)
         .addRepo(eq("repo"), eq("repo"), eq("http://null-password-url"), eq("username"), any(), eq("chart"), any(),
-            anyLong());
+            anyLong(), eq(false));
 
     helmTaskHelper.addRepo(
         "repo", "repo", "http://repo-url", "username", emptyPassword, "chart", V3, LONG_TIMEOUT_INTERVAL);
     verify(helmTaskHelperBase)
         .addRepo(eq("repo"), eq("repo"), eq("http://repo-url"), eq("username"), eq(emptyPassword), eq("chart"), any(),
-            anyLong());
+            anyLong(), eq(false));
 
     helmTaskHelper.addRepo(
         "repo", "repo", "http://repo-url", " ", passwordWithWhitespaces, "chart", V3, LONG_TIMEOUT_INTERVAL);
     verify(helmTaskHelperBase)
         .addRepo(eq("repo"), eq("repo"), eq("http://repo-url"), eq(" "), eq(passwordWithWhitespaces), eq("chart"),
-            any(), anyLong());
+            any(), anyLong(), eq(false));
   }
 
   @Test

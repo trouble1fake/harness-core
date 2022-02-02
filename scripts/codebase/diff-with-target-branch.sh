@@ -17,7 +17,7 @@ fi
 
 if [ -z "${ghprbTargetBranch}" ]
 then
-  ghprbTargetBranch=`git rev-parse --abbrev-ref HEAD | sed -e "s/^\([^@]*\)$/\1@master/" | sed -e "s/^.*@//"`
+  ghprbTargetBranch=`git rev-parse --abbrev-ref HEAD | sed -e "s/^\([^@]*\)$/\1@develop/" | sed -e "s/^.*@//"`
 fi
 
 BASE_SHA=`git merge-base origin/${ghprbTargetBranch} HEAD`

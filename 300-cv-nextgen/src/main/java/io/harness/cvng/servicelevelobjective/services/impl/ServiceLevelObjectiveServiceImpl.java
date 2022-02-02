@@ -119,6 +119,7 @@ public class ServiceLevelObjectiveServiceImpl implements ServiceLevelObjectiveSe
     }
     serviceLevelIndicatorService.deleteByIdentifier(projectParams, serviceLevelObjective.getServiceLevelIndicators());
     sloErrorBudgetResetService.clearErrorBudgetResets(projectParams, identifier);
+    sloHealthIndicatorService.delete(projectParams, serviceLevelObjective.getIdentifier());
     return hPersistence.delete(serviceLevelObjective);
   }
 

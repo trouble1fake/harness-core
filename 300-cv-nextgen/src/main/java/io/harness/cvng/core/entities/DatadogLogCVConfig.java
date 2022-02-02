@@ -8,7 +8,6 @@
 package io.harness.cvng.core.entities;
 
 import static io.harness.cvng.core.utils.ErrorMessageUtils.generateErrorMessageFromParam;
-import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -18,6 +17,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -39,6 +39,10 @@ public class DatadogLogCVConfig extends LogCVConfig {
 
   List<String> indexes;
   String serviceInstanceIdentifier;
+
+  public List<String> getIndexes() {
+    return indexes != null ? indexes : new ArrayList<>();
+  }
 
   @Override
   protected void validateParams() {
@@ -68,15 +72,14 @@ public class DatadogLogCVConfig extends LogCVConfig {
       throw new IllegalStateException(e);
     }
   }
+
   public static class DatadogLogCVConfigUpdatableEntity
       extends LogCVConfigUpdatableEntity<DatadogLogCVConfig, DatadogLogCVConfig> {
     @Override
     public void setUpdateOperations(
         UpdateOperations<DatadogLogCVConfig> updateOperations, DatadogLogCVConfig datadogLogCVConfig) {
       setCommonOperations(updateOperations, datadogLogCVConfig);
-      if (isNotEmpty(datadogLogCVConfig.getIndexes())) {
-        updateOperations.set(DatadogLogCVConfigKeys.indexes, datadogLogCVConfig.getIndexes());
-      }
+      updateOperations.set(DatadogLogCVConfigKeys.indexes, datadogLogCVConfig.getIndexes());
       updateOperations.set(
           DatadogLogCVConfigKeys.serviceInstanceIdentifier, datadogLogCVConfig.getServiceInstanceIdentifier());
     }

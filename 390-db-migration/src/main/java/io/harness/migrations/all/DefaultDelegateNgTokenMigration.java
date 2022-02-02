@@ -9,11 +9,11 @@ package io.harness.migrations.all;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.delegate.service.intfc.DelegateNgTokenService;
 import io.harness.migrations.Migration;
 import io.harness.persistence.HIterator;
 import io.harness.persistence.HPersistence;
 import io.harness.persistence.HQuery;
-import io.harness.service.intfc.DelegateNgTokenService;
 
 import software.wings.beans.Account;
 

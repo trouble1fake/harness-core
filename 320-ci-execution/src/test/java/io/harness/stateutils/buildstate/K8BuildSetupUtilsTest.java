@@ -16,6 +16,7 @@ import static io.harness.common.CIExecutionConstants.HARNESS_CI_INDIRECT_LOG_UPL
 import static io.harness.common.CIExecutionConstants.HARNESS_ORG_ID_VARIABLE;
 import static io.harness.common.CIExecutionConstants.HARNESS_PROJECT_ID_VARIABLE;
 import static io.harness.common.CIExecutionConstants.HARNESS_STAGE_ID_VARIABLE;
+import static io.harness.common.CIExecutionConstants.HARNESS_STEP_ID_VARIABLE;
 import static io.harness.common.CIExecutionConstants.LOG_SERVICE_ENDPOINT_VARIABLE;
 import static io.harness.common.CIExecutionConstants.LOG_SERVICE_TOKEN_VARIABLE;
 import static io.harness.common.CIExecutionConstants.SECRET_KEY_MINIO_VARIABLE;
@@ -62,6 +63,7 @@ import io.harness.ng.core.dto.secrets.SecretDTOV2;
 import io.harness.ng.core.dto.secrets.SecretResponseWrapper;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.plan.ExecutionMetadata;
+import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.rbac.PipelineRbacHelper;
 import io.harness.pms.sdk.core.resolver.outputs.ExecutionSweepingOutputService;
 import io.harness.rule.Owner;
@@ -167,6 +169,8 @@ public class K8BuildSetupUtilsTest extends CIExecutionTestBase {
     Ambiance ambiance =
         Ambiance.newBuilder().putAllSetupAbstractions(setupAbstractions).setMetadata(executionMetadata).build();
 
+    String stepIdentifier = AmbianceUtils.obtainStepIdentifier(ambiance);
+
     NGAccess ngAccess =
         BaseNGAccess.builder().accountIdentifier(accountID).orgIdentifier(orgID).projectIdentifier(projectID).build();
     K8PodDetails k8PodDetails = K8PodDetails.builder().stageID(stageID).build();
@@ -208,6 +212,7 @@ public class K8BuildSetupUtilsTest extends CIExecutionTestBase {
     stepEnvVars.put(HARNESS_PROJECT_ID_VARIABLE, projectID);
     stepEnvVars.put(HARNESS_BUILD_ID_VARIABLE, String.valueOf(buildID));
     stepEnvVars.put(HARNESS_STAGE_ID_VARIABLE, stageID);
+    stepEnvVars.put(HARNESS_STEP_ID_VARIABLE, stepIdentifier);
     stepEnvVars.put(HARNESS_CI_INDIRECT_LOG_UPLOAD_FF, "true");
     stepEnvVars.putAll(ciExecutionPlanTestHelper.getEnvVariables(true));
 

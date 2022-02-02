@@ -112,7 +112,7 @@ public class InstallUtils {
 
   private static final String scmBaseDir = "./client-tools/scm/";
   private static final String scmBinary = "scm";
-  private static final String defaultScmVersion = "0e23b6f1";
+  private static final String defaultScmVersion = "3ac4cefa";
 
   private static final String KUBECTL_CDN_PATH = "public/shared/tools/kubectl/release/%s/bin/%s/amd64/kubectl";
   private static final String CHART_MUSEUM_CDN_PATH =
@@ -227,19 +227,12 @@ public class InstallUtils {
         return true;
       }
 
-      String version = System.getenv().get("KUBECTL_VERSION");
-
-      if (StringUtils.isEmpty(version)) {
-        version = kubectlVersion;
-        log.info("No version configured. Using kubectl version", version);
-      }
-
-      String kubectlDirectory = kubectlBaseDir + version;
+      String kubectlDirectory = kubectlBaseDir + kubectlVersion;
 
       if (validateKubectlExists(kubectlDirectory)) {
         String kubectlPath = Paths.get(kubectlDirectory + "/kubectl").toAbsolutePath().normalize().toString();
-        kubectlPaths.put(version, kubectlPath);
-        log.info("kubectl version {} already installed", version);
+        kubectlPaths.put(kubectlVersion, kubectlPath);
+        log.info("kubectl version {} already installed", kubectlVersion);
         return true;
       }
 
@@ -247,7 +240,7 @@ public class InstallUtils {
 
       createDirectoryIfDoesNotExist(kubectlDirectory);
 
-      String downloadUrl = getKubectlDownloadUrl(configuration, version);
+      String downloadUrl = getKubectlDownloadUrl(configuration, kubectlVersion);
 
       log.info("download Url is {}", downloadUrl);
 
@@ -264,7 +257,7 @@ public class InstallUtils {
 
       if (result.getExitValue() == 0) {
         String kubectlPath = Paths.get(kubectlDirectory + "/kubectl").toAbsolutePath().normalize().toString();
-        kubectlPaths.put(version, kubectlPath);
+        kubectlPaths.put(kubectlVersion, kubectlPath);
         log.info(result.outputUTF8());
         if (validateKubectlExists(kubectlDirectory)) {
           log.info("kubectl path: {}", kubectlPath);

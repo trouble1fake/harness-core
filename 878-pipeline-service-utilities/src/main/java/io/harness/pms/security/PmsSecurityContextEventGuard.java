@@ -23,6 +23,7 @@ import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.rbac.PrincipalTypeProtoToPrincipalTypeMapper;
 import io.harness.security.SecurityContextBuilder;
 import io.harness.security.dto.ApiKeyPrincipal;
+import io.harness.security.dto.ServiceAccountPrincipal;
 import io.harness.security.dto.ServicePrincipal;
 import io.harness.security.dto.UserPrincipal;
 
@@ -61,6 +62,10 @@ public class PmsSecurityContextEventGuard implements AutoCloseable {
         return new ServicePrincipal(principal);
       case API_KEY:
         return new ApiKeyPrincipal(principal);
+      case SERVICE_ACCOUNT:
+        return new ServiceAccountPrincipal(principal,
+            executionTriggerInfo.getTriggeredBy().getExtraInfoMap().get("email"),
+            executionTriggerInfo.getTriggeredBy().getIdentifier());
       default:
         throw new AccessDeniedException("Unknown Principal Type", WingsException.USER);
     }

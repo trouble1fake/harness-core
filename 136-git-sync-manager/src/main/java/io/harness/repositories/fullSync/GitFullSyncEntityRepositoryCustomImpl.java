@@ -49,4 +49,9 @@ public class GitFullSyncEntityRepositoryCustomImpl implements GitFullSyncEntityR
   public long count(Criteria criteria) {
     return mongoTemplate.count(new Query(criteria), GitFullSyncEntityInfo.class);
   }
+
+  @Override
+  public List<GitFullSyncEntityInfo> findAll(Criteria criteria) {
+    return mongoTemplate.find(new Query(criteria), GitFullSyncEntityInfo.class);
+  }
 }

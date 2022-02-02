@@ -847,7 +847,7 @@ public class DelegateSetupResourceTest extends CategoryTest {
                                 .get();
     DelegateSetupDetails details = DelegateSetupDetails.builder().delegateType(DOCKER).name("name1").build();
     verify(delegateService, atLeastOnce())
-        .validateDockerSetupDetailsNg(anyString(), eq(details), eq(DelegateType.DOCKER));
+        .validateDelegateSetupDetails(anyString(), eq(details), eq(DelegateType.DOCKER));
 
     assertThat(restResponse.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
   }
