@@ -175,7 +175,7 @@ public class PipelineResource implements YamlSchemaResource {
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
-        ApiResponse(responseCode = "default", description = "Returns created pipeline with metadata")
+        ApiResponse(responseCode = "default", description = "New endpoint: createPipelineWithGovernance")
       })
   @NGAccessControlCheck(resourceType = "PIPELINE", permission = PipelineRbacPermissions.PIPELINE_CREATE_AND_EDIT)
   @Deprecated
@@ -332,7 +332,7 @@ public class PipelineResource implements YamlSchemaResource {
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
-        ApiResponse(responseCode = "default", description = "Returns updated pipeline with metadata")
+        ApiResponse(responseCode = "default", description = "New endpoint: updatePipelineWithGovernance")
       })
   @NGAccessControlCheck(resourceType = "PIPELINE", permission = PipelineRbacPermissions.PIPELINE_CREATE_AND_EDIT)
   @Deprecated
