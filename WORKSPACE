@@ -5205,6 +5205,18 @@ maven_install(
     version_conflict_policy = "pinned",
 )
 
+maven_install(
+    name = "batch",
+    artifacts = [
+        "com.fasterxml.jackson.core:jackson-databind:2.11.3",
+        "com.squareup.okhttp3:okhttp:4.9.0",
+    ],
+    repositories = [
+        "http://jfrogdev.dev.harness.io:80/artifactory/portal-maven",
+        "https://harness.jfrog.io/harness/thirdparty-annonymous",
+    ],
+    version_conflict_policy = "pinned",
+)
 
 maven_install(
     name = "maven_checkstyle",
