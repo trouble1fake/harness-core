@@ -59,6 +59,7 @@ import io.harness.data.structure.EmptyPredicate;
 import io.harness.data.structure.UUIDGenerator;
 import io.harness.delegate.beans.pcf.CfAppRenameInfo;
 import io.harness.delegate.beans.pcf.CfAppSetupTimeDetails;
+import io.harness.delegate.beans.pcf.CfInBuiltVariablesUpdateValues;
 import io.harness.delegate.beans.pcf.CfInternalInstanceElement;
 import io.harness.delegate.beans.pcf.CfServiceData;
 import io.harness.delegate.cf.apprenaming.AppNamingStrategy;
@@ -725,12 +726,14 @@ public class PcfCommandTaskBaseHelper {
   public void resetState(List<ApplicationSummary> previousReleases, ApplicationSummary activeApplication,
       ApplicationSummary inactiveApplication, String releaseNamePrefix, CfRequestConfig cfRequestConfig,
       boolean nonVersioning, @Nullable Deque<CfAppRenameInfo> renames, Integer activeAppRevision,
-      LogCallback executionLogCallback) throws PivotalClientApiException {
+      LogCallback executionLogCallback, CfInBuiltVariablesUpdateValues updateValues) throws PivotalClientApiException {
     Integer maxVersion = getMaxVersion(previousReleases, activeAppRevision);
 
     String activeAppName = constructActiveAppName(releaseNamePrefix, maxVersion, nonVersioning);
     if (null != activeApplication && !activeApplication.getName().equals(activeAppName)) {
       renameApp(activeApplication, cfRequestConfig, executionLogCallback, activeAppName);
+      updateValues.setOldAppGuid(activeApplication.getId());
+      updateValues.setOldAppName(activeAppName);
       if (null != renames) {
         renames.add(CfAppRenameInfo.builder()
                         .guid(activeApplication.getId())

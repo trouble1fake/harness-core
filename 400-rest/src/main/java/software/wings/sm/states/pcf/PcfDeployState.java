@@ -476,6 +476,8 @@ public class PcfDeployState extends State {
                          .skipVerification(skipVerification)
                          .build())
               .build());
+    } else {
+      pcfStateHelper.updateAppNamesVariables(context, cfDeployCommandResponse);
     }
 
     InstanceElementListParam instanceElementListParam =

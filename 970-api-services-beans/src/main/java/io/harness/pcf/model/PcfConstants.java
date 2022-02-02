@@ -33,8 +33,8 @@ public interface PcfConstants {
   String ENABLE_AUTOSCALING = "enable-autoscaling";
   String DISABLE_AUTOSCALING = "disable-autoscaling";
   String CONFIGURE_AUTOSCALING = "cf configure-autoscaling";
-  String CF_APP_AUTOSCALAR_VALIDATION = "cf_appautoscalar";
-  String CF_CLI_NEED_TO_BE_INSTALLED = "CF_CLI_INSTALLATION_REQUIRED";
+  String DEFAULT_CF_CLI_INSTALLATION_PATH = "cf";
+  String PATH_SYSTEM_VARIABLE_STR = "PATH";
 
   String MANIFEST_YML = "manifest.yml";
   String VARS_YML = "vars.yml";
@@ -92,7 +92,6 @@ public interface PcfConstants {
 
   String FILE_START_SERVICE_MANIFEST_REGEX = "\\$\\{service\\.manifest}";
   String FILE_START_REPO_ROOT_REGEX = "\\$\\{service\\.manifest\\.repoRoot}";
-  String SERVICE_CLI_REGEX = "\\$\\{service\\.cli}";
 
   String PCF_AUTOSCALAR_MANIFEST_INSTANCE_LIMITS_ELE = "instance_limits";
   String PCF_AUTOSCALAR_MANIFEST_RULES_ELE = "rules";
