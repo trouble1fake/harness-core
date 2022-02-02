@@ -47,20 +47,18 @@ public class ExecutionPmsPlanCreator extends ChildrenPlanCreator<ExecutionElemen
       PlanCreationContext ctx, ExecutionElementConfig config) {
     LinkedHashMap<String, PlanCreationResponse> responseMap = new LinkedHashMap<>();
     List<YamlField> stepYamlFields = ctx.getStepYamlFields();
-    for (YamlField stepYamlField : stepYamlFields) {
-      Map<String, YamlField> stepYamlFieldMap = new HashMap<>();
-      stepYamlFieldMap.put(stepYamlField.getNode().getUuid(), stepYamlField);
-      responseMap.put(stepYamlField.getNode().getUuid(),
-          PlanCreationResponse.builder().dependencies(DependenciesUtils.toDependenciesProto(stepYamlFieldMap)).build());
-    }
 
     // Add Steps Node
     if (EmptyPredicate.isNotEmpty(stepYamlFields)) {
       YamlField stepsField =
-          Preconditions.checkNotNull(ctx.getCurrentField().getNode().getField(YAMLFieldNameConstants.STEPS));
-      PlanNode stepsNode = CommonPlanCreatorUtils.getStepsPlanNode(
-          stepsField.getNode().getUuid(), stepYamlFields.get(0).getNode().getUuid(), "Steps Element");
-      responseMap.put(stepsNode.getUuid(), PlanCreationResponse.builder().node(stepsNode.getUuid(), stepsNode).build());
+              Preconditions.checkNotNull(ctx.getCurrentField().getNode().getField(YAMLFieldNameConstants.STEPS));
+      String stepsNodeId = stepsField.getNode().getUuid();
+      Map<String, YamlField> stepsYamlFieldMap = new HashMap<>();
+      stepsYamlFieldMap.put(stepsNodeId, stepsField);
+      responseMap.put(stepsNodeId,
+              PlanCreationResponse.builder()
+                      .dependencies(DependenciesUtils.toDependenciesProto(stepsYamlFieldMap))
+                      .build());
     }
     return responseMap;
   }
