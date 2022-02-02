@@ -19,6 +19,7 @@ import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.rest.RestResponse;
 
+import org.apache.commons.lang3.tuple.Pair;
 import software.wings.security.annotations.AuthRule;
 import software.wings.security.annotations.Scope;
 import software.wings.service.intfc.DelegateSelectionLogsService;
@@ -105,16 +106,16 @@ public class DelegateSelectionLogResource {
   @GET
   @Timed
   @ExceptionMetered
-  @Operation(operationId = "getSelectionLogs", summary = "Retrieves list of Selection Logs for the Task Id.",
+  @Operation(operationId = "getSelectionLogs", summary = "Retrieves list of Selection Logs for the Task Id group by Assessement.",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "default",
             description = "A list of Task Selection logs. It includes delegateId, delegateType, delegateName, "
                 + "delegateHostName, delegateProfileName, conclusion, message, eventTimestamp and profileScopingRulesDetails")
       })
-  public RestResponse<Map<String, List<DelegateSelectionLogParams>>>
+  public RestResponse<List<Pair<String, List<DelegateSelectionLogParams>>>>
   getSelectionLogsV3(@Parameter(description = "Account id") @QueryParam("accountId") String accountId,
       @Parameter(description = "Task id") @QueryParam("taskId") String taskId) {
-    return new RestResponse(delegateSelectionLogsService.fetchTaskSelectionLogs(accountId, taskId));
+    return new RestResponse(delegateSelectionLogsService.fetchTaskSelectionLogsGroupByAssessment(accountId, taskId));
   }
 }

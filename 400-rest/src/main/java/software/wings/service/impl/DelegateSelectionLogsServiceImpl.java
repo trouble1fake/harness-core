@@ -40,6 +40,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 
 @Singleton
 @Slf4j
@@ -204,7 +205,7 @@ public class DelegateSelectionLogsServiceImpl implements DelegateSelectionLogsSe
   }
 
   @Override
-  public Map<String, List<DelegateSelectionLogParams>> fetchTaskSelectionLogsGroupByAssessment(
+  public List<Pair<String, List<DelegateSelectionLogParams>>> fetchTaskSelectionLogsGroupByAssessment(
       String accountId, String taskId) {
     List<DelegateSelectionLog> delegateSelectionLogsList = persistence.createQuery(DelegateSelectionLog.class)
                                                                .filter(DelegateSelectionLogKeys.accountId, accountId)
@@ -212,12 +213,12 @@ public class DelegateSelectionLogsServiceImpl implements DelegateSelectionLogsSe
                                                                .asList();
     Map<String, List<DelegateSelectionLog>> logs =
         delegateSelectionLogsList.stream().collect(Collectors.groupingBy(DelegateSelectionLog::getConclusion));
-    Map<String, List<DelegateSelectionLogParams>> delegateSelectionLogs = new HashMap<>();
+    List<Pair<String, List<DelegateSelectionLogParams>>> delegateSelectionLogs = new ArrayList<>();
     for (String assessment : selectionLogOrder) {
       if (logs.containsKey(assessment)) {
         List<DelegateSelectionLogParams> delegateSelectionLogParams =
             logs.get(assessment).stream().map(this::buildSelectionLogParams).collect(Collectors.toList());
-        delegateSelectionLogs.put(assessment, delegateSelectionLogParams);
+        delegateSelectionLogs.add(Pair.of(assessment, delegateSelectionLogParams));
       }
     }
     return delegateSelectionLogs;
