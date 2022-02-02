@@ -14,6 +14,7 @@ import io.harness.grpc.client.GrpcClientConfig;
 import io.harness.mongo.MongoConfig;
 import io.harness.notification.SeedDataConfiguration;
 import io.harness.notification.SmtpConfig;
+import io.harness.secret.ConfigSecret;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AccessLevel;
@@ -26,8 +27,8 @@ import lombok.experimental.FieldDefaults;
 @Builder(toBuilder = true)
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class NotificationServiceConfiguration {
-  @JsonProperty("mongo") MongoConfig mongoConfig;
-  @JsonProperty("smtp") private SmtpConfig smtpConfig;
+  @JsonProperty("mongo") @ConfigSecret MongoConfig mongoConfig;
+  @JsonProperty("smtp") @ConfigSecret private SmtpConfig smtpConfig;
   @JsonProperty("seedDataConfiguration") private SeedDataConfiguration seedDataConfiguration;
   @JsonProperty("delegateServiceGrpcConfig") private GrpcClientConfig delegateServiceGrpcConfig;
 }
