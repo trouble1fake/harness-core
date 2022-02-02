@@ -50,7 +50,6 @@ import software.wings.sm.ExecutionInterruptManager;
 import software.wings.sm.StateExecutionInstance;
 import software.wings.sm.StateExecutionInstance.StateExecutionInstanceKeys;
 import software.wings.sm.StateMachineExecutor;
-import software.wings.sm.StateType;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;

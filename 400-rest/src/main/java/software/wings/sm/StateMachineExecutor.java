@@ -1572,8 +1572,7 @@ public class StateMachineExecutor implements StateInspectionListener {
         MapperUtils.mapObject(stateExecutionInstance.getStateParams(), currentState);
       }
       currentState.handleAbortEvent(context);
-      if (featureFlagService.isEnabled(TIMEOUT_FAILURE_SUPPORT, context.getAccountId()) && finalStatus == EXPIRED) {
-      } else {
+      if (!(featureFlagService.isEnabled(TIMEOUT_FAILURE_SUPPORT, context.getAccountId()) && finalStatus == EXPIRED)) {
         updated = terminateAndTransition(context, stateExecutionInstance, finalStatus, errorMessage);
         invokeAdvisors(ExecutionEvent.builder()
                            .failureTypes(EnumSet.<FailureType>of(FailureType.EXPIRED))
