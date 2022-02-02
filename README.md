@@ -11,10 +11,10 @@ harness-core Project Dev environment setup instructions
 ```
 
 2. Download and Install Java 8
-dd
-NOTE: Brew will download and install latest version of OpenJDK/JRE, its recommended to install OpenJDK/JRE_1.8.0_242 to be in sync with version everyone is using in the team. 
 
-Download OpenJDK 1.8-242 (jdk8u242-b08) JRE Installer from [Java archive downloads](https://adoptopenjdk.net/archive.html), unzip it, then set `JAVA_HOME` and `PATH` accordingly.
+   *Note: Brew will download and install the latest version of OpenJDK/JRE, its recommended to install OpenJDK/JRE_1.8.0_242 to be in sync with the version everyone is using in the team.*
+
+   To setup the recommended version, download the OpenJDK 1.8-242 (jdk8u242-b08) JRE .pkg from [AdoptOpenJDK](https://github.com/AdoptOpenJDK/openjdk8-binaries/releases/tag/jdk8u242-b08) and install it. Make sure to update `JAVA_HOME` and `PATH` accordingly (see step 5).
 
 3. Install bazel:
 ```
@@ -260,7 +260,10 @@ helper shell scripts:
 
 1. Install IntelliJ
    
-   **NOTE** Bazel plugin usually doesn't support the latest IntelliJ versions, so install the [last supported version](https://github.com/bazelbuild/intellij/blob/master/intellij_platform_sdk/build_defs.bzl#L11).
+   It's recommended to install the latest version of IntelliJ that's supported by the Bazel Plugin. To find the latest supported version, please refer to the [bazel github project](https://github.com/bazelbuild/intellij/blob/master/intellij_platform_sdk/build_defs.bzl#L11).
+
+   After identifying the desired version of IntelliJ, you can download it from [jetbrains.com](https://www.jetbrains.com/idea/download/other.html).
+
 2. Import `harness-core` as a Bazel project
    1. Open `File > Import Bazel Project...`
    1. Enter `/path/to/repo/harness-core` for Workspace, click Next
@@ -279,10 +282,17 @@ helper shell scripts:
    assign whatever key combination you would like it to be triggered on.
 
 4. Install Lombok Plugin: https://projectlombok.org/setup/intellij
+   
+   *Not required for IntelliJ 2020.3 and later versions - the Lombok Plugin comes pre-bundled with IntelliJ*
+
 5. Install SonarLint plugin:
    - This plugin is really helpful to analyze your code for issues as you code.
    - Go to `Preferences -> Plugins` ->  type SonarLint -> Install plugin. (Will need to restart Intellij)
-   - Go to `Preferences -> Tools -> SonarLint`. Check "Automatically trigger analysis". Add a connection to `https://sonar.harness.io`. You'll need to create a custom token.
+   - Go to `Preferences -> Tools -> SonarLint`.
+   
+      Check "Automatically trigger analysis".
+   
+      Add a SonarQube connection to `https://sonar.harness.io` (requires VPN connection). As part of the connection-setup you'll be directed to sonar.harness.io to create a custom security token.
    - Go to `Preferences -> Tools -> SonarLint -> Project Settings`. Check "Bind project to sonarqube", and select the connection, and set project as `portal_bazel`. This is so that we use the same rules locally instead of the default rules.
     ![config image](img/sonar-config.png).
    - Go to `Preferences -> Editor -> Colorscheme -> Sonarlint`. For Blocker, Critical & Major, untick "Inherit values from" checkbox and configure a different highlighting style. These violations are treated as release blockers and this configuration is to highlight them differently from regular warnings.
