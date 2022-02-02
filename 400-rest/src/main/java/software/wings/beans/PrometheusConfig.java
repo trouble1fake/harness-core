@@ -7,13 +7,17 @@
 
 package software.wings.beans;
 
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+
 import io.harness.delegate.beans.executioncapability.ExecutionCapability;
 import io.harness.delegate.beans.executioncapability.ExecutionCapabilityDemander;
 import io.harness.delegate.task.mixin.HttpConnectionExecutionCapabilityGenerator;
+import io.harness.encryption.Encrypted;
 import io.harness.expression.ExpressionEvaluator;
 
 import software.wings.annotation.EncryptableSetting;
 import software.wings.audit.ResourceType;
+import software.wings.jersey.JsonViews;
 import software.wings.security.UsageRestrictions;
 import software.wings.settings.SettingValue;
 import software.wings.sm.StateType;
@@ -21,6 +25,7 @@ import software.wings.sm.states.APMVerificationState;
 import software.wings.yaml.setting.VerificationProviderYaml;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.fasterxml.jackson.annotation.JsonView;
 import com.github.reinert.jjschema.Attributes;
 import com.github.reinert.jjschema.SchemaIgnore;
 import java.util.Arrays;
@@ -30,6 +35,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.apache.commons.codec.binary.Base64;
 import org.hibernate.validator.constraints.NotEmpty;
 
 /**
@@ -42,6 +48,10 @@ import org.hibernate.validator.constraints.NotEmpty;
 public class PrometheusConfig extends SettingValue implements EncryptableSetting, ExecutionCapabilityDemander {
   public static final String VALIDATION_URL = "api/v1/query?query=up";
   @Attributes(title = "URL", required = true) private String url;
+  @Attributes(title = "username") private String username;
+  @Attributes(title = "password") @Encrypted(fieldName = "password") private char[] password;
+
+  @JsonView(JsonViews.Internal.class) @SchemaIgnore private String encryptedPassword;
 
   @SchemaIgnore @NotEmpty private String accountId;
 
@@ -49,10 +59,13 @@ public class PrometheusConfig extends SettingValue implements EncryptableSetting
     super(StateType.PROMETHEUS.name());
   }
 
-  public PrometheusConfig(String url, String accountId) {
+  public PrometheusConfig(String url, String accountId, char[] password, String username, String encryptedPassword) {
     this();
     this.url = url;
     this.accountId = accountId;
+    this.username = username;
+    this.encryptedPassword = encryptedPassword;
+    this.password = password;
   }
 
   @Override
@@ -71,13 +84,28 @@ public class PrometheusConfig extends SettingValue implements EncryptableSetting
   }
 
   public APMValidateCollectorConfig createAPMValidateCollectorConfig(String urlToFetch) {
+    HashMap<String, String> headersMap = new HashMap();
+    if (isNotEmpty(username)) {
+      if (isNotEmpty(password)) {
+        headersMap.put("Authorization",
+            String.format("Basic %s",
+                Base64.encodeBase64String(String.format("%s:%s", username, new String(password)).getBytes())));
+      } else if (isNotEmpty(encryptedPassword)) {
+        headersMap.put("Authorization", String.format("Basic %s:${password}", username));
+      }
+    }
+
     return APMValidateCollectorConfig.builder()
         .baseUrl(url)
         .url(urlToFetch)
         .collectionMethod(APMVerificationState.Method.GET)
-        .headers(new HashMap<>())
+        .headers(headersMap)
         .options(new HashMap<>())
         .build();
+  }
+
+  public boolean usesBasicAuth() {
+    return isNotEmpty(username) && (isNotEmpty(password) || isNotEmpty(encryptedPassword));
   }
 
   @Data

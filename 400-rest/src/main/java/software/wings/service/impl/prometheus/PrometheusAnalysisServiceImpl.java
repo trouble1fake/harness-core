@@ -16,9 +16,11 @@ import static software.wings.service.impl.ThirdPartyApiCallLog.createApiCallLog;
 
 import io.harness.eraro.ErrorCode;
 import io.harness.exception.VerificationOperationException;
+import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.serializer.JsonUtils;
 import io.harness.serializer.YamlUtils;
 
+import software.wings.annotation.EncryptableSetting;
 import software.wings.beans.APMValidateCollectorConfig;
 import software.wings.beans.PrometheusConfig;
 import software.wings.beans.SettingAttribute;
@@ -35,6 +37,7 @@ import software.wings.service.impl.apm.APMMetricInfo;
 import software.wings.service.impl.apm.MLServiceUtils;
 import software.wings.service.intfc.SettingsService;
 import software.wings.service.intfc.prometheus.PrometheusAnalysisService;
+import software.wings.service.intfc.security.SecretManager;
 import software.wings.sm.states.APMVerificationState.Method;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -68,6 +71,7 @@ public class PrometheusAnalysisServiceImpl implements PrometheusAnalysisService 
   @Inject private SettingsService settingsService;
   @Inject private DelegateProxyFactory delegateProxyFactory;
   @Inject private MLServiceUtils mlServiceUtils;
+  @Inject private SecretManager secretManager;
 
   private static final URL PROMETHEUS_URL_ = PrometheusAnalysisServiceImpl.class.getResource("/apm/prometheus.yml");
   private static final String PROMETHEUS_YAML;
@@ -181,6 +185,12 @@ public class PrometheusAnalysisServiceImpl implements PrometheusAnalysisService 
                                         .build();
       final PrometheusConfig prometheusConfig = (PrometheusConfig) settingAttribute.getValue();
       APMValidateCollectorConfig apmValidateCollectorConfig = prometheusConfig.createAPMValidateCollectorConfig(url);
+      apmValidateCollectorConfig.setUsesBase64Header(prometheusConfig.usesBasicAuth());
+
+      List<EncryptedDataDetail> encryptionDetails =
+          secretManager.getEncryptionDetails((EncryptableSetting) settingAttribute.getValue(), null, null);
+      apmValidateCollectorConfig.setEncryptedDataDetails(encryptionDetails);
+
       final String validateResponseJson =
           delegateProxyFactory.get(APMDelegateService.class, taskContext).fetch(apmValidateCollectorConfig, apiCallLog);
       PrometheusMetricDataResponse response =

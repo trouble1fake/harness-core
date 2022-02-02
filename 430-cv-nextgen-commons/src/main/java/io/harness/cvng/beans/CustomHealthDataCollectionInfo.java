@@ -10,6 +10,7 @@ package io.harness.cvng.beans;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 
 import io.harness.cvng.beans.customhealth.TimestampInfo;
+import io.harness.datacollection.exception.DataCollectionException;
 import io.harness.delegate.beans.connector.customhealthconnector.CustomHealthConnectorDTO;
 import io.harness.delegate.beans.connector.customhealthconnector.CustomHealthMethod;
 import io.harness.delegate.beans.cvng.customhealth.CustomHealthConnectorValidationInfoUtils;

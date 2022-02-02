@@ -7,6 +7,7 @@
 
 package software.wings.sm.states;
 
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.waiter.OrchestrationNotifyEventListener.ORCHESTRATION;
 
@@ -45,6 +46,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.FieldNameConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.mongodb.morphia.annotations.Transient;
@@ -106,6 +108,7 @@ public class PrometheusState extends AbstractMetricAnalysisState {
             .encryptedDataDetails(secretManager.getEncryptionDetails(
                 prometheusConfig, context.getAppId(), context.getWorkflowExecutionId()))
             .hosts(hosts)
+            .usesBasicAuth(isNotEmpty(prometheusConfig.getUsername()) && isNotEmpty(prometheusConfig.getPassword()))
             .stateType(StateType.PROMETHEUS)
             .applicationId(context.getAppId())
             .stateExecutionId(context.getStateExecutionInstanceId())

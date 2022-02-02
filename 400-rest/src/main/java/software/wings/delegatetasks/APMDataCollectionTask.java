@@ -76,6 +76,7 @@ import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.xerces.impl.dv.util.Base64;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import retrofit2.Call;
@@ -293,7 +294,12 @@ public class APMDataCollectionTask extends AbstractDelegateDataCollectionTask {
       }
       for (Map.Entry<String, String> entry : input.entrySet()) {
         if (entry.getValue().startsWith("${")) {
-          output.put(entry.getKey(), decryptedFields.get(entry.getValue().substring(2, entry.getValue().length() - 1)));
+          if (dataCollectionInfo.isUsesBasicAuth()) {
+            output.put(entry.getKey(), encodeBasicAuthHeader(entry.getValue()));
+          } else {
+            output.put(
+                entry.getKey(), decryptedFields.get(entry.getValue().substring(2, entry.getValue().length() - 1)));
+          }
         } else {
           output.put(entry.getKey(), entry.getValue());
         }
@@ -503,6 +509,17 @@ public class APMDataCollectionTask extends AbstractDelegateDataCollectionTask {
           .filter(Optional::isPresent)
           .forEach(response -> responses.add(response.get()));
       return responses;
+    }
+
+    private String encodeBasicAuthHeader(Object entry) {
+      if (entry == null)
+        return null;
+      String headerValue = (String) entry;
+      String[] basicAuthHeader = headerValue.split("\\s+");
+      if (isNotEmpty(basicAuthHeader) && basicAuthHeader.length == 2 && "Basic".equals(basicAuthHeader[0])) {
+        return String.format("%s %s", basicAuthHeader[0], Base64.encode(basicAuthHeader[1].getBytes()));
+      }
+      return null;
     }
 
     /**

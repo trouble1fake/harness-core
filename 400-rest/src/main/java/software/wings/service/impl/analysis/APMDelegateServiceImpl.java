@@ -7,6 +7,7 @@
 
 package software.wings.service.impl.analysis;
 
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import static software.wings.common.VerificationConstants.AZURE_BASE_URL;
@@ -34,6 +35,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.xerces.impl.dv.util.Base64;
 import org.json.JSONObject;
 import retrofit2.Call;
 import retrofit2.Retrofit;
@@ -169,8 +171,12 @@ public class APMDelegateServiceImpl implements APMDelegateService {
                     .postCollect(resolveDollarReferences(config.getUrl()), resolveDollarReferences(config.getHeaders()),
                         resolveDollarReferences(config.getOptions()), body);
     } else {
+      Map<String, Object> resolvedHeaders = resolveDollarReferences(config.getHeaders());
+      if (config.isUsesBase64Header()) {
+        encodeBasicAuthHeader(resolvedHeaders);
+      }
       request = getAPMRestClient(config.getBaseUrl())
-                    .collect(resolveDollarReferences(config.getUrl()), resolveDollarReferences(config.getHeaders()),
+                    .collect(resolveDollarReferences(config.getUrl()), resolvedHeaders,
                         resolveDollarReferences(config.getOptions()));
     }
     return request;
@@ -214,5 +220,22 @@ public class APMDelegateServiceImpl implements APMDelegateService {
     Map<String, String> header = new HashMap<>();
     header.put("Authorization", headerVal);
     return header;
+  }
+
+  private void encodeBasicAuthHeader(Map<String, Object> headers) {
+    if (isEmpty(headers)) {
+      return;
+    }
+
+    for (Map.Entry<String, Object> entry : headers.entrySet()) {
+      if (entry == null)
+        continue;
+      String headerValue = (String) entry.getValue();
+      String[] basicAuthHeader = headerValue.split("\\s+");
+      if (isNotEmpty(basicAuthHeader) && basicAuthHeader.length == 2 && "Basic".equals(basicAuthHeader[0])) {
+        headers.put(
+            entry.getKey(), String.format("%s %s", basicAuthHeader[0], Base64.encode(basicAuthHeader[1].getBytes())));
+      }
+    }
   }
 }
