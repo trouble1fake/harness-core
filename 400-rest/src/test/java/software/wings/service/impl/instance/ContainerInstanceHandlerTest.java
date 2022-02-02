@@ -45,6 +45,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyList;
@@ -69,6 +70,7 @@ import io.harness.beans.PageResponse;
 import io.harness.category.element.UnitTests;
 import io.harness.container.ContainerInfo;
 import io.harness.delegate.task.helm.HelmChartInfo;
+import io.harness.exception.runtime.NoInstancesException;
 import io.harness.k8s.model.HarnessLabels;
 import io.harness.k8s.model.K8sContainer;
 import io.harness.k8s.model.K8sPod;
@@ -2012,7 +2014,7 @@ public class ContainerInstanceHandlerTest extends WingsBaseTest {
   @Test
   @Owner(developers = ABOSII)
   @Category(UnitTests.class)
-  public void shouldUpdateInstancesFromPerpetualTaskResponseNewPod() {
+  public void shouldUpdateInstancesFromPerpetualTaskResponseNewPod() throws Exception {
     List<Instance> instancesInDb = asList(createK8sPodInstance("instance1", "release1", "namespace1"),
         createK8sPodInstance("instance2", "release1", "namespace1"),
         createK8sPodInstance("instance3", "release1", "namespace1"));
@@ -2025,7 +2027,7 @@ public class ContainerInstanceHandlerTest extends WingsBaseTest {
   @Test
   @Owner(developers = ABOSII)
   @Category(UnitTests.class)
-  public void shouldUpdateInstancesFromPerpetualTaskResponseNoNewPods() {
+  public void shouldUpdateInstancesFromPerpetualTaskResponseNoNewPods() throws Exception {
     List<Instance> instancesInDb = asList(createK8sPodInstance("instance1", "release1", "namespace1"),
         createK8sPodInstance("instance2", "release1", "namespace1"),
         createK8sPodInstance("instance3", "release1", "namespace1"));
@@ -2038,7 +2040,7 @@ public class ContainerInstanceHandlerTest extends WingsBaseTest {
   @Test
   @Owner(developers = ABOSII)
   @Category(UnitTests.class)
-  public void shouldUpdateInstancesFromPerpetualTaskResponseDeletedPods() {
+  public void shouldUpdateInstancesFromPerpetualTaskResponseDeletedPods() throws Exception {
     List<Instance> instancesInDb = asList(createK8sPodInstance("instance1", "release1", "namespace1"),
         createK8sPodInstance("instance2", "release1", "namespace1"),
         createK8sPodInstance("instance3", "release1", "namespace1"));
@@ -2050,7 +2052,7 @@ public class ContainerInstanceHandlerTest extends WingsBaseTest {
   @Test
   @Owner(developers = ABOSII)
   @Category(UnitTests.class)
-  public void shouldUpdateInstancesFromPerpetualTaskResponseMixed() {
+  public void shouldUpdateInstancesFromPerpetualTaskResponseMixed() throws Exception {
     List<Instance> instancesInDb = asList(createK8sPodInstance("instance1", "release1", "namespace1"),
         createK8sPodInstance("instance2", "release1", "namespace1"),
         createK8sPodInstance("instance3", "release1", "namespace1"));
@@ -2064,7 +2066,7 @@ public class ContainerInstanceHandlerTest extends WingsBaseTest {
   @Test
   @Owner(developers = ABOSII)
   @Category(UnitTests.class)
-  public void shouldUpdateInstancesFromPerpetualTaskResponseReleaseAndNamespaceAwareNewPods() {
+  public void shouldUpdateInstancesFromPerpetualTaskResponseReleaseAndNamespaceAwareNewPods() throws Exception {
     List<Instance> instancesInDb = Arrays.asList(createK8sPodInstance("instance1", "releaseX", "namespaceX"),
         createK8sPodInstance("instance2", "releaseX", "namespaceX"),
         createK8sPodInstance("instance3", "releaseX", "namespaceY"),
@@ -2080,7 +2082,7 @@ public class ContainerInstanceHandlerTest extends WingsBaseTest {
   @Test
   @Owner(developers = YOGESH)
   @Category(UnitTests.class)
-  public void shouldUpdateInstancesFromPerpetualTaskResponseReleaseAndNamespaceAwareNewPodsHelm() {
+  public void shouldUpdateInstancesFromPerpetualTaskResponseReleaseAndNamespaceAwareNewPodsHelm() throws Exception {
     List<Instance> instancesInDb =
         Arrays.asList(createKubernetesContainerInstance("instance1", "releaseX", "namespaceX"),
             createKubernetesContainerInstance("instance2", "releaseX", "namespaceX"),
@@ -2097,7 +2099,7 @@ public class ContainerInstanceHandlerTest extends WingsBaseTest {
   @Test
   @Owner(developers = ABOSII)
   @Category(UnitTests.class)
-  public void shouldUpdateInstancesFromPerpetualTaskResponseReleaseAndNamespaceAwareNoNewPods() {
+  public void shouldUpdateInstancesFromPerpetualTaskResponseReleaseAndNamespaceAwareNoNewPods() throws Exception {
     List<Instance> instancesInDb = Arrays.asList(createK8sPodInstance("instance1", "releaseX", "namespaceX"),
         createK8sPodInstance("instance2", "releaseX", "namespaceX"),
         createK8sPodInstance("instance3", "releaseX", "namespaceY"),
@@ -2113,7 +2115,7 @@ public class ContainerInstanceHandlerTest extends WingsBaseTest {
   @Test
   @Owner(developers = YOGESH)
   @Category(UnitTests.class)
-  public void shouldUpdateInstancesFromPerpetualTaskResponseReleaseAndNamespaceAwareNoNewPodsHelm() {
+  public void shouldUpdateInstancesFromPerpetualTaskResponseReleaseAndNamespaceAwareNoNewPodsHelm() throws Exception {
     List<Instance> instancesInDb =
         Arrays.asList(createKubernetesContainerInstance("instance1", "releaseX", "namespaceX"),
             createKubernetesContainerInstance("instance2", "releaseX", "namespaceX"),
@@ -2130,7 +2132,7 @@ public class ContainerInstanceHandlerTest extends WingsBaseTest {
   @Test
   @Owner(developers = ABOSII)
   @Category(UnitTests.class)
-  public void shouldUpdateInstancesFromPerpetualTaskResponseReleaseAndNamespaceAwareDeletedPods() {
+  public void shouldUpdateInstancesFromPerpetualTaskResponseReleaseAndNamespaceAwareDeletedPods() throws Exception {
     List<Instance> instancesInDb = Arrays.asList(createK8sPodInstance("instance1", "releaseX", "namespaceX"),
         createK8sPodInstance("instance2", "releaseX", "namespaceX"),
         createK8sPodInstance("instance3", "releaseX", "namespaceX"),
@@ -2146,7 +2148,7 @@ public class ContainerInstanceHandlerTest extends WingsBaseTest {
   @Test
   @Owner(developers = YOGESH)
   @Category(UnitTests.class)
-  public void shouldUpdateInstancesFromPerpetualTaskResponseReleaseAndNamespaceAwareDeletedPodsHelm() {
+  public void shouldUpdateInstancesFromPerpetualTaskResponseReleaseAndNamespaceAwareDeletedPodsHelm() throws Exception {
     List<Instance> instancesInDb =
         Arrays.asList(createKubernetesContainerInstance("instance1", "releaseX", "namespaceX"),
             createKubernetesContainerInstance("instance2", "releaseX", "namespaceX"),
@@ -2163,7 +2165,7 @@ public class ContainerInstanceHandlerTest extends WingsBaseTest {
   @Test
   @Owner(developers = ABOSII)
   @Category(UnitTests.class)
-  public void shouldUpdateInstancesFromPerpetualTaskResponseReleaseAndNamespaceAwareMixed() {
+  public void shouldUpdateInstancesFromPerpetualTaskResponseReleaseAndNamespaceAwareMixed() throws Exception {
     List<Instance> instancesInDb = Arrays.asList(createK8sPodInstance("instance1", "releaseX", "namespaceX"),
         createK8sPodInstance("instance2", "releaseX", "namespaceX"),
         createK8sPodInstance("instance3", "releaseX", "namespaceX"),
@@ -2182,7 +2184,7 @@ public class ContainerInstanceHandlerTest extends WingsBaseTest {
   @Test
   @Owner(developers = ABOSII)
   @Category(UnitTests.class)
-  public void shouldUpdateInstancesFromPerpetualTaskResponseReleaseAndNamespaceAwareMixedHelm() {
+  public void shouldUpdateInstancesFromPerpetualTaskResponseReleaseAndNamespaceAwareMixedHelm() throws Exception {
     List<Instance> instancesInDb =
         Arrays.asList(createKubernetesContainerInstance("instance1", "releaseX", "namespaceX"),
             createKubernetesContainerInstance("instance2", "releaseX", "namespaceX"),
@@ -2202,7 +2204,7 @@ public class ContainerInstanceHandlerTest extends WingsBaseTest {
   @Test
   @Owner(developers = ABOSII)
   @Category(UnitTests.class)
-  public void shouldAddInstancesFromPerpetualTaskEvenIfNoAnyOtherInstancesExistsInDb() {
+  public void shouldAddInstancesFromPerpetualTaskEvenIfNoAnyOtherInstancesExistsInDb() throws Exception {
     List<Instance> instancesInDb = Arrays.asList(createK8sPodInstance("instance4", "releaseY", "namespaceX"),
         createK8sPodInstance("instance5", "releaseY", "namespaceX"),
         createK8sPodInstance("instance6", "releaseY", "namespaceY"));
@@ -2214,8 +2216,34 @@ public class ContainerInstanceHandlerTest extends WingsBaseTest {
         instancesInDb, instanceSyncResponse, asList("instance1", "instance2", "instance3"), emptyList());
   }
 
+  @Test
+  @Owner(developers = ABOSII)
+  @Category(UnitTests.class)
+  public void shouldThrowNoInstancesExceptionInstancesExistsInDb() {
+    List<Instance> instancesInDb = Arrays.asList(createK8sPodInstance("instance1", "releaseX", "namespaceX"),
+        createK8sPodInstance("instance2", "releaseX", "namespaceX"));
+
+    K8sInstanceSyncResponse instanceSyncResponse = creteK8sPodSyncResponseWith("releaseX", "namespaceX");
+
+    assertThatThrownBy(()
+                           -> assertSavedAndDeletedInstances(
+                               instancesInDb, instanceSyncResponse, emptyList(), asList("instance1", "instance2")))
+        .isInstanceOf(NoInstancesException.class);
+  }
+
+  @Test
+  @Owner(developers = ABOSII)
+  @Category(UnitTests.class)
+  public void shouldThrowNoInstancesExceptionNOInstancesExistsInDb() {
+    K8sInstanceSyncResponse instanceSyncResponse = creteK8sPodSyncResponseWith("releaseX", "namespaceX");
+
+    assertThatThrownBy(
+        () -> assertSavedAndDeletedInstances(emptyList(), instanceSyncResponse, emptyList(), emptyList()))
+        .isInstanceOf(NoInstancesException.class);
+  }
+
   private void assertSavedAndDeletedInstances(List<Instance> instancesInDb, K8sInstanceSyncResponse syncResponse,
-      List<String> savedInstances, List<String> deletedInstances) {
+      List<String> savedInstances, List<String> deletedInstances) throws Exception {
     ContainerInfrastructureMapping infrastructureMapping =
         DirectKubernetesInfrastructureMapping.builder()
             .appId(APP_ID)
@@ -2224,9 +2252,14 @@ public class ContainerInstanceHandlerTest extends WingsBaseTest {
     infrastructureMapping.setUuid(UUID);
 
     doReturn(instancesInDb).when(instanceService).getInstancesForAppAndInframapping(APP_ID, UUID);
+    Exception thrownException = null;
 
-    containerInstanceHandler.processInstanceSyncResponseFromPerpetualTask(
-        infrastructureMapping, K8sTaskExecutionResponse.builder().k8sTaskResponse(syncResponse).build());
+    try {
+      containerInstanceHandler.processInstanceSyncResponseFromPerpetualTask(
+          infrastructureMapping, K8sTaskExecutionResponse.builder().k8sTaskResponse(syncResponse).build());
+    } catch (Exception e) {
+      thrownException = e;
+    }
 
     ArgumentCaptor<Instance> savedInstancesCaptor = ArgumentCaptor.forClass(Instance.class);
     ArgumentCaptor<Set<String>> deletedInstancesCaptor =
@@ -2244,6 +2277,10 @@ public class ContainerInstanceHandlerTest extends WingsBaseTest {
         .containsExactlyInAnyOrderElementsOf(savedInstances);
     assertThat(deletedInstancesCaptor.getAllValues().stream().flatMap(Set::stream).collect(Collectors.toList()))
         .containsExactlyInAnyOrderElementsOf(deletedInstances);
+
+    if (thrownException != null) {
+      throw thrownException;
+    }
   }
 
   private void assertSavedAndDeletedInstances(List<Instance> instancesInDb, ContainerSyncResponse containerSyncResponse,

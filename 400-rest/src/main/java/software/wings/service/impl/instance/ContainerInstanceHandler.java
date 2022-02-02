@@ -42,6 +42,7 @@ import io.harness.delegate.beans.DelegateResponseData;
 import io.harness.delegate.task.helm.HelmChartInfo;
 import io.harness.exception.GeneralException;
 import io.harness.exception.K8sPodSyncException;
+import io.harness.exception.runtime.NoInstancesException;
 import io.harness.expression.ExpressionEvaluator;
 import io.harness.k8s.model.K8sContainer;
 import io.harness.k8s.model.K8sPod;
@@ -182,6 +183,17 @@ public class ContainerInstanceHandler extends InstanceHandler implements Instanc
       // In case if there is no any entry in containerMetadataInstanceMap (meaning that there is no any instance in db
       // for given release name and namespace) we will add all instances from perpetual task response
       if (perpetualTaskMetadata != null && !containerMetadataInstanceMap.containsKey(perpetualTaskMetadata)) {
+        // Current logic is to catch any exception and if there is no successful sync status during 7 days then delete
+        // all infra perpetual tasks. We're exploiting this to handle the case when replica is scaled down to 0 and
+        // after n time is scaled back, so we will delete perpetual task only if after 7 days there are no pods
+        if (isEmpty(syncResponse.getK8sPodInfoList())) {
+          // In this case there is nothing to be processed since there is no instances in db that need to be removed
+          log.info("Still there is no pods found for [app: {}, namespace: {}, release name: {}]", appId,
+              syncResponse.getNamespace(), syncResponse.getReleaseName());
+          throw new NoInstancesException(format("No pods found for namespace: %s and release name: %s",
+              syncResponse.getNamespace(), syncResponse.getReleaseName()));
+        }
+
         processK8sPodsInstances(containerInfraMapping, perpetualTaskMetadata, emptyList(), deploymentSummaryMap,
             syncResponse.getK8sPodInfoList());
         return;
@@ -213,6 +225,17 @@ public class ContainerInstanceHandler extends InstanceHandler implements Instanc
                 && syncResponse.getReleaseName().equals(containerMetadata.getReleaseName())) {
               processK8sPodsInstances(containerInfraMapping, containerMetadata, instancesInDB, deploymentSummaryMap,
                   syncResponse.getK8sPodInfoList());
+
+              // Current logic is to catch any exception and if there is no successful sync status during 7 days then
+              // delete all infra perpetual tasks. We're exploiting this to handle the case when replica is scaled down
+              // to 0 and after n time is scaled back, so we will delete perpetual task only if after 7 days there are
+              // no pods
+              if (isEmpty(syncResponse.getK8sPodInfoList())) {
+                log.info("No pods found for [app: {}, namespace: {}, release name: {}]", appId,
+                    syncResponse.getNamespace(), syncResponse.getReleaseName());
+                throw new NoInstancesException(format("No pods found for namespace: %s and release name: %s",
+                    syncResponse.getNamespace(), syncResponse.getReleaseName()));
+              }
             }
           } else {
             // For iterator and new deployment flow will fetch existing pods from cluster
