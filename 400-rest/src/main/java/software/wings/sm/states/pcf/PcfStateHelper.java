@@ -843,20 +843,29 @@ public class PcfStateHelper {
   }
 
   public void updateInfoVariables(ExecutionContext context, PcfRouteUpdateStateExecutionData stateExecutionData,
-      CfCommandExecutionResponse executionResponse) {
+      CfCommandExecutionResponse executionResponse, boolean rollback, boolean upSizeInActiveApp) {
     SweepingOutputInstance sweepingOutputInstance = sweepingOutputService.find(
         context.prepareSweepingOutputInquiryBuilder().name(InfoVariables.SWEEPING_OUTPUT_NAME).build());
 
     if (sweepingOutputInstance != null) {
       InfoVariables infoVariables = (InfoVariables) sweepingOutputInstance.getValue();
       sweepingOutputService.deleteById(context.getAppId(), sweepingOutputInstance.getUuid());
-      infoVariables.setNewAppRoutes(stateExecutionData.getPcfRouteUpdateRequestConfigData().getFinalRoutes());
+      infoVariables.setNewAppRoutes(getNewAppRoutes(stateExecutionData, rollback, upSizeInActiveApp));
       updateAppDetails(infoVariables, executionResponse);
       sweepingOutputService.ensure(context.prepareSweepingOutputBuilder(getSweepingOutputScope(context))
                                        .name(InfoVariables.SWEEPING_OUTPUT_NAME)
                                        .value(infoVariables)
                                        .build());
     }
+  }
+
+  private List<String> getNewAppRoutes(
+      PcfRouteUpdateStateExecutionData stateExecutionData, boolean rollback, boolean upSizeInActiveApp) {
+    if (rollback) {
+      return upSizeInActiveApp ? Collections.emptyList()
+                               : stateExecutionData.getPcfRouteUpdateRequestConfigData().getTempRoutes();
+    }
+    return stateExecutionData.getPcfRouteUpdateRequestConfigData().getFinalRoutes();
   }
 
   private void updateAppDetails(InfoVariables infoVariables, CfCommandExecutionResponse executionResponse) {
