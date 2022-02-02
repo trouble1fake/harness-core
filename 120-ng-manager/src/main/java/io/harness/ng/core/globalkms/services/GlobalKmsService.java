@@ -8,11 +8,8 @@
 package io.harness.ng.core.globalkms.services;
 
 import io.harness.connector.ConnectorDTO;
-import io.harness.connector.ConnectorResponseDTO;
 import io.harness.ng.core.dto.secrets.SecretDTOV2;
 import io.harness.ng.core.globalkms.dto.ConnectorSecretResponseDTO;
-
-import java.util.Optional;
 
 public interface GlobalKmsService {
   ConnectorSecretResponseDTO updateGlobalKms(ConnectorDTO connector, SecretDTOV2 secret);
