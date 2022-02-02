@@ -165,6 +165,8 @@ import io.harness.service.impl.DelegateSyncServiceImpl;
 import io.harness.service.stats.statscollector.InstanceStatsIteratorHandler;
 import io.harness.springdata.HMongoTemplate;
 import io.harness.telemetry.NGTelemetryRecordsJob;
+import io.harness.telemetry.TelemetryReporter;
+import io.harness.telemetry.filter.APIAuthTelemetryFilter;
 import io.harness.threading.ExecutorModule;
 import io.harness.threading.ThreadPool;
 import io.harness.token.remote.TokenClient;
@@ -385,6 +387,7 @@ public class NextGenApplication extends Application<NextGenConfiguration> {
     registerEtagFilter(environment, injector);
     registerScheduleJobs(injector);
     registerWaitEnginePublishers(injector);
+    registerAPIAuthTelemetryFilters(appConfig, environment, injector);
     registerAuthFilters(appConfig, environment, injector);
     registerScopeAccessCheckFilter(appConfig, environment, injector);
     registerRequestContextFilter(environment);
@@ -791,6 +794,13 @@ public class NextGenApplication extends Application<NextGenConfiguration> {
     }
   }
 
+  private void registerAPIAuthTelemetryFilters(
+      NextGenConfiguration configuration, Environment environment, Injector injector) {
+    if (configuration.getSegmentConfiguration() != null && configuration.getSegmentConfiguration().isEnabled()) {
+      registerAPIAuthTelemetryFilter(environment, injector);
+    }
+  }
+
   private void registerScopeAccessCheckFilter(
       NextGenConfiguration configuration, Environment environment, Injector injector) {
     if (configuration.isScopeAccessCheckEnabled()) {
@@ -814,6 +824,13 @@ public class NextGenApplication extends Application<NextGenConfiguration> {
     serviceToSecretMapping.put(DEFAULT.getServiceId(), configuration.getNextGenConfig().getNgManagerServiceSecret());
     environment.jersey().register(
         new NextGenAuthenticationFilter(predicate, null, serviceToSecretMapping, tokenClient));
+  }
+
+  private void registerAPIAuthTelemetryFilter(Environment environment, Injector injector) {
+    TelemetryReporter telemetryReporter = injector.getInstance(TelemetryReporter.class);
+    ScheduledExecutorService executorService =
+        injector.getInstance(Key.get(ScheduledExecutorService.class, Names.named("ngTelemetryPublisherExecutor")));
+    environment.jersey().register(new APIAuthTelemetryFilter(telemetryReporter, executorService));
   }
 
   private void registerInternalApiAuthFilter(NextGenConfiguration configuration, Environment environment) {
