@@ -241,8 +241,6 @@ fi
 
 rm -f -- *.bak
 
-export KUBECTL_VERSION=${kubectlVersion}
-
 export SCM_VERSION=${scmVersion}
 
 <#if delegateName??>

@@ -69,8 +69,14 @@ public class GitFullSyncEntityServiceImpl implements GitFullSyncEntityService {
   }
 
   @Override
-  public List<GitFullSyncEntityInfo> list(String accountIdentifier, String messageId) {
-    return gitFullSyncEntityRepository.findByAccountIdentifierAndMessageId(accountIdentifier, messageId);
+  public List<GitFullSyncEntityInfo> listEntitiesToBeSynced(String accountIdentifier, String messageId) {
+    Criteria criteria = Criteria.where(GitFullSyncEntityInfoKeys.accountIdentifier)
+                            .is(accountIdentifier)
+                            .and(GitFullSyncEntityInfoKeys.messageId)
+                            .is(messageId)
+                            .and(GitFullSyncEntityInfoKeys.syncStatus)
+                            .in(Arrays.asList(QUEUED, FAILED));
+    return gitFullSyncEntityRepository.findAll(criteria);
   }
 
   @Override

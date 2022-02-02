@@ -24,10 +24,14 @@ import io.harness.cvng.core.beans.params.PageParams;
 import io.harness.cvng.core.services.api.MetricPackService;
 import io.harness.cvng.core.services.api.monitoredService.MonitoredServiceService;
 import io.harness.cvng.servicelevelobjective.beans.ErrorBudgetRisk;
+import io.harness.cvng.servicelevelobjective.beans.SLOCalenderType;
 import io.harness.cvng.servicelevelobjective.beans.SLODashboardApiFilter;
 import io.harness.cvng.servicelevelobjective.beans.SLODashboardWidget;
 import io.harness.cvng.servicelevelobjective.beans.SLODashboardWidget.Point;
+import io.harness.cvng.servicelevelobjective.beans.SLOTarget;
+import io.harness.cvng.servicelevelobjective.beans.SLOTargetType;
 import io.harness.cvng.servicelevelobjective.beans.ServiceLevelObjectiveDTO;
+import io.harness.cvng.servicelevelobjective.beans.slotargetspec.CalenderSLOTargetSpec;
 import io.harness.cvng.servicelevelobjective.entities.SLIRecord;
 import io.harness.cvng.servicelevelobjective.entities.SLIRecord.SLIRecordParam;
 import io.harness.cvng.servicelevelobjective.entities.ServiceLevelIndicator;
@@ -131,6 +135,41 @@ public class SLODashboardServiceImplTest extends CvNextGenTestBase {
   }
 
   @Test
+  @Owner(developers = KAMAL)
+  @Category(UnitTests.class)
+  public void testGetSloDashboardWidgets_withSLOQuarter() {
+    String monitoredServiceIdentifier = "monitoredServiceIdentifier";
+    MonitoredServiceDTO monitoredServiceDTO =
+        builderFactory.monitoredServiceDTOBuilder().identifier(monitoredServiceIdentifier).build();
+    HealthSource healthSource = monitoredServiceDTO.getSources().getHealthSources().iterator().next();
+    monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceDTO);
+    ServiceLevelObjectiveDTO serviceLevelObjective = builderFactory.getServiceLevelObjectiveDTOBuilder()
+                                                         .monitoredServiceRef(monitoredServiceIdentifier)
+                                                         .healthSourceRef(healthSource.getIdentifier())
+                                                         .build();
+
+    SLOTarget calendarSloTarget = SLOTarget.builder()
+                                      .type(SLOTargetType.CALENDER)
+                                      .sloTargetPercentage(80.0)
+                                      .spec(CalenderSLOTargetSpec.builder()
+                                                .type(SLOCalenderType.QUARTERLY)
+                                                .spec(CalenderSLOTargetSpec.QuarterlyCalenderSpec.builder().build())
+                                                .build())
+                                      .build();
+    serviceLevelObjective.setTarget(calendarSloTarget);
+    serviceLevelObjectiveService.create(builderFactory.getProjectParams(), serviceLevelObjective);
+    PageResponse<SLODashboardWidget> pageResponse =
+        sloDashboardService.getSloDashboardWidgets(builderFactory.getProjectParams(),
+            SLODashboardApiFilter.builder().build(), PageParams.builder().page(0).size(4).build());
+    assertThat(pageResponse.getPageItemCount()).isEqualTo(1);
+    assertThat(pageResponse.getTotalItems()).isEqualTo(1);
+    List<SLODashboardWidget> sloDashboardWidgets = pageResponse.getContent();
+    assertThat(sloDashboardWidgets).hasSize(1);
+    SLODashboardWidget sloDashboardWidget = sloDashboardWidgets.get(0);
+    assertThat(sloDashboardWidget.getTimeRemainingDays()).isEqualTo(66);
+  }
+
+  @Test
   @Owner(developers = ABHIJITH)
   @Category(UnitTests.class)
   public void testGetSloDashboardWidgets_withSLOErrorBudgetReset() {
@@ -148,6 +187,12 @@ public class SLODashboardServiceImplTest extends CvNextGenTestBase {
     sloErrorBudgetResetService.resetErrorBudget(builderFactory.getProjectParams(),
         builderFactory.getSLOErrorBudgetResetDTOBuilder()
             .serviceLevelObjectiveIdentifier(serviceLevelObjective.getIdentifier())
+            .errorBudgetIncrementPercentage(100.0)
+            .build());
+    sloErrorBudgetResetService.resetErrorBudget(builderFactory.getProjectParams(),
+        builderFactory.getSLOErrorBudgetResetDTOBuilder()
+            .serviceLevelObjectiveIdentifier(serviceLevelObjective.getIdentifier())
+            .errorBudgetIncrementPercentage(50.0)
             .build());
     PageResponse<SLODashboardWidget> pageResponse =
         sloDashboardService.getSloDashboardWidgets(builderFactory.getProjectParams(),
@@ -159,7 +204,7 @@ public class SLODashboardServiceImplTest extends CvNextGenTestBase {
     SLODashboardWidget sloDashboardWidget = sloDashboardWidgets.get(0);
 
     assertThat(sloDashboardWidget.getErrorBudgetRemaining())
-        .isEqualTo(9504); // 30 days - 30*24*60 - 20% -> 8640 -> 8640*0.1 -> 9504
+        .isEqualTo(25920); // 30 days - 30*24*60 - 20% -> 8640 -> 8640 + 8640*1 -> 17280  -> 17280 + 17280*0.5-> 25920
     assertThat(sloDashboardWidget.getErrorBudgetRemainingPercentage()).isCloseTo(100, offset(0.0001));
   }
 

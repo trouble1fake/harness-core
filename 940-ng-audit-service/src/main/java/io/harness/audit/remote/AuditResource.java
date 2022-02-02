@@ -96,7 +96,8 @@ public class AuditResource {
       {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "default",
             description = "Returns True if an Audit Event is successfully created. Else, it returns false.")
-      })
+      },
+      hidden = true)
   @InternalApi
   public ResponseDTO<Boolean>
   create(@RequestBody(description = "This has the information to create an Audit event.",

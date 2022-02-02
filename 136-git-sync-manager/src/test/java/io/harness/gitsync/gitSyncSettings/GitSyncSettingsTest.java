@@ -59,7 +59,7 @@ public class GitSyncSettingsTest extends GitSyncTestBase {
     gitSyncSettingsRepository.save(gitSyncSettings);
     GitSyncSettingsDTO request = GitSyncSettingsDTO.builder()
                                      .accountIdentifier(accountIdentifier)
-                                     .organizationIdentifier(orgIdentifier)
+                                     .orgIdentifier(orgIdentifier)
                                      .projectIdentifier(projectIdentifier)
                                      .executeOnDelegate(false)
                                      .build();

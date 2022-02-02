@@ -33,7 +33,10 @@ import static io.harness.eventsframework.EventsFrameworkMetadataConstants.DELETE
 import static io.harness.exception.WingsException.USER;
 import static io.harness.k8s.KubernetesConvention.getAccountIdentifier;
 import static io.harness.logging.AutoLogContext.OverrideBehavior.OVERRIDE_NESTS;
+import static io.harness.metrics.impl.DelegateMetricsServiceImpl.DELEGATE_DESTROYED;
+import static io.harness.metrics.impl.DelegateMetricsServiceImpl.DELEGATE_DISCONNECTED;
 import static io.harness.metrics.impl.DelegateMetricsServiceImpl.DELEGATE_REGISTRATION_FAILED;
+import static io.harness.metrics.impl.DelegateMetricsServiceImpl.DELEGATE_RESTARTED;
 import static io.harness.mongo.MongoUtils.setUnset;
 import static io.harness.obfuscate.Obfuscator.obfuscate;
 import static io.harness.persistence.HQuery.excludeAuthority;
@@ -123,6 +126,7 @@ import io.harness.delegate.beans.executioncapability.ExecutionCapability;
 import io.harness.delegate.beans.executioncapability.SelectorCapability;
 import io.harness.delegate.events.DelegateGroupDeleteEvent;
 import io.harness.delegate.events.DelegateGroupUpsertEvent;
+import io.harness.delegate.service.intfc.DelegateNgTokenService;
 import io.harness.delegate.service.intfc.DelegateRingService;
 import io.harness.delegate.task.DelegateLogContext;
 import io.harness.delegate.utils.DelegateEntityOwnerHelper;
@@ -163,7 +167,6 @@ import io.harness.serializer.KryoSerializer;
 import io.harness.service.intfc.DelegateCache;
 import io.harness.service.intfc.DelegateCallbackRegistry;
 import io.harness.service.intfc.DelegateInsightsService;
-import io.harness.service.intfc.DelegateNgTokenService;
 import io.harness.service.intfc.DelegateProfileObserver;
 import io.harness.service.intfc.DelegateSetupService;
 import io.harness.service.intfc.DelegateSyncService;
@@ -610,25 +613,14 @@ public class DelegateServiceImpl implements DelegateService {
     if (isBlank(delegateSetupDetails.getTokenName())) {
       throw new InvalidRequestException("Token name must be specified.", USER);
     }
-    DelegateTokenDetails delegateTokenDetails = delegateNgTokenService.getDelegateToken(accountId,
-        DelegateEntityOwnerHelper.buildOwner(
-            delegateSetupDetails.getOrgIdentifier(), delegateSetupDetails.getProjectIdentifier()),
-        delegateSetupDetails.getTokenName());
+    DelegateTokenDetails delegateTokenDetails =
+        delegateNgTokenService.getDelegateToken(accountId, delegateSetupDetails.getTokenName());
     if (delegateTokenDetails == null) {
       throw new InvalidRequestException("Provided token does not exist.", USER);
     }
     if (!DelegateTokenStatus.ACTIVE.equals(delegateTokenDetails.getStatus())) {
       throw new InvalidRequestException("Provided token is not valid.", USER);
     }
-  }
-
-  @Override
-  public File generateKubernetesYaml(String accountId, DelegateSetupDetails delegateSetupDetails, String managerHost,
-      String verificationServiceUrl, MediaType fileFormat) throws IOException {
-    validateKubernetesSetupDetails(accountId, delegateSetupDetails);
-
-    return generateKubernetesYamlFile(
-        accountId, delegateSetupDetails, managerHost, verificationServiceUrl, fileFormat, false);
   }
 
   private String getCgK8SDelegateTemplate(final String accountId, final boolean isCeEnabled) {
@@ -675,6 +667,11 @@ public class DelegateServiceImpl implements DelegateService {
     if (delegateSetupDetails.getSize() == null) {
       throw new InvalidRequestException("Delegate Size must be provided.", USER);
     }
+
+    // TODO: ARPIT uncomment it when NG delegateToken goes in prod
+    //    if(delegateSetupDetails.getTokenName() == null) {
+    //      throw new InvalidRequestException("Delegate Token must be provided.", USER);
+    //    }
 
     K8sConfigDetails k8sConfigDetails = delegateSetupDetails.getK8sConfigDetails();
     if (k8sConfigDetails == null || k8sConfigDetails.getK8sPermissionType() == null) {
@@ -932,6 +929,7 @@ public class DelegateServiceImpl implements DelegateService {
     auditServiceHelper.reportForAuditingUsingAccountId(accountId, currentDelegate, updatedDelegate, actionEventType);
 
     if (DelegateInstanceStatus.DELETED == newDelegateStatus) {
+      delegateMetricsService.recordDelegateMetrics(currentDelegate, DELEGATE_DESTROYED);
       broadcasterFactory.lookup(STREAM_DELEGATE + accountId, true).broadcast(SELF_DESTRUCT + delegateId);
       log.warn("Sent self destruct command to rejected delegate {}.", delegateId);
     }
@@ -1167,12 +1165,7 @@ public class DelegateServiceImpl implements DelegateService {
   }
 
   private ImmutableMap<String, String> getJarAndScriptRunTimeParamMap(
-      final TemplateParameters inquiry, final boolean isNgDelegate) {
-    return getJarAndScriptRunTimeParamMap(inquiry, false, isNgDelegate);
-  }
-
-  private ImmutableMap<String, String> getJarAndScriptRunTimeParamMap(
-      final TemplateParameters templateParameters, final boolean useNgToken, final boolean isNgDelegate) {
+      final TemplateParameters templateParameters, final boolean isNgDelegate) {
     final CdnConfig cdnConfig = mainConfiguration.getCdnConfig();
 
     final boolean useCDN = mainConfiguration.useCdnForDelegateStorage() && cdnConfig != null;
@@ -1228,7 +1221,7 @@ public class DelegateServiceImpl implements DelegateService {
               .put("delegateDockerImage", getDelegateDockerImage(templateParameters.getAccountId()))
               .put("upgraderDockerImage", getUpgraderDockerImage(templateParameters.getAccountId()))
               .put("accountId", templateParameters.getAccountId())
-              .put("accountSecret", getAccountSecret(templateParameters, useNgToken))
+              .put("accountSecret", getAccountSecret(templateParameters, isNgDelegate))
               .put("hexkey", hexkey)
               .put(UPGRADE_VERSION, latestVersion)
               .put("managerHostAndPort", templateParameters.getManagerHost())
@@ -1240,7 +1233,6 @@ public class DelegateServiceImpl implements DelegateService {
               .put("delegateCheckLocation", delegateCheckLocation)
               .put("deployMode", mainConfiguration.getDeployMode().name())
               .put("ciEnabled", String.valueOf(isCiEnabled))
-              .put("kubectlVersion", mainConfiguration.getKubectlVersion())
               .put("scmVersion", mainConfiguration.getScmVersion())
               .put("delegateGrpcServicePort", String.valueOf(delegateGrpcConfig.getPort()))
               .put("kubernetesAccountLabel", getAccountIdentifier(templateParameters.getAccountId()));
@@ -1436,14 +1428,11 @@ public class DelegateServiceImpl implements DelegateService {
     return "harness/upgrader:latest";
   }
 
-  private String getAccountSecret(final TemplateParameters inquiry, final boolean useNgToken) {
+  private String getAccountSecret(final TemplateParameters inquiry, final boolean isNg) {
     final Account account = accountService.get(inquiry.getAccountId());
     if (isNotBlank(inquiry.getDelegateTokenName())) {
-      if (useNgToken) {
-        return delegateNgTokenService.getDelegateTokenValue(inquiry.getAccountId(),
-            DelegateEntityOwnerHelper.buildOwner(
-                inquiry.getDelegateOrgIdentifier(), inquiry.getDelegateProjectIdentifier()),
-            inquiry.getDelegateTokenName());
+      if (isNg) {
+        return delegateNgTokenService.getDelegateTokenValue(inquiry.getAccountId(), inquiry.getDelegateTokenName());
       } else {
         return delegateTokenService.getTokenValue(inquiry.getAccountId(), inquiry.getDelegateTokenName());
       }
@@ -2240,6 +2229,7 @@ public class DelegateServiceImpl implements DelegateService {
   @Override
   public DelegateRegisterResponse register(Delegate delegate) {
     if (licenseService.isAccountDeleted(delegate.getAccountId())) {
+      delegateMetricsService.recordDelegateMetrics(delegate, DELEGATE_DESTROYED);
       broadcasterFactory.lookup(STREAM_DELEGATE + delegate.getAccountId(), true).broadcast(SELF_DESTRUCT);
       log.warn("Sending self destruct command from register delegate because the account is deleted.");
       delegateMetricsService.recordDelegateMetrics(delegate, DELEGATE_REGISTRATION_FAILED);
@@ -2297,6 +2287,9 @@ public class DelegateServiceImpl implements DelegateService {
   @Override
   public DelegateRegisterResponse register(final DelegateParams delegateParams) {
     if (licenseService.isAccountDeleted(delegateParams.getAccountId())) {
+      delegateMetricsService.recordDelegateMetrics(
+          Delegate.builder().accountId(delegateParams.getAccountId()).version(delegateParams.getVersion()).build(),
+          DELEGATE_DESTROYED);
       broadcasterFactory.lookup(STREAM_DELEGATE + delegateParams.getAccountId(), true).broadcast(SELF_DESTRUCT);
       log.warn("Sending self destruct command from register delegate parameters because the account is deleted.");
       return DelegateRegisterResponse.builder().action(DelegateRegisterResponse.Action.SELF_DESTRUCT).build();
@@ -2854,6 +2847,8 @@ public class DelegateServiceImpl implements DelegateService {
     log.info("Delegate connection {} disconnected for delegate {}", delegateConnectionId, delegateId);
     delegateConnectionDao.delegateDisconnected(accountId, delegateConnectionId);
     subject.fireInform(DelegateObserver::onDisconnected, accountId, delegateId);
+    Delegate delegate = delegateCache.get(accountId, delegateId, false);
+    delegateMetricsService.recordDelegateMetrics(delegate, DELEGATE_DISCONNECTED);
     remoteObserverInformer.sendEvent(
         ReflectionUtils.getMethod(DelegateObserver.class, "onDisconnected", String.class, String.class),
         DelegateServiceImpl.class, accountId, delegateId);
@@ -3037,6 +3032,7 @@ public class DelegateServiceImpl implements DelegateService {
     DelegateConnection previousDelegateConnection = delegateConnectionDao.upsertCurrentConnection(
         accountId, delegateId, heartbeat.getDelegateConnectionId(), version, heartbeat.getLocation());
 
+    Delegate delegate = delegateCache.get(accountId, delegateId, false);
     if (previousDelegateConnection == null) {
       DelegateConnection existingConnection = delegateConnectionDao.findAndDeletePreviousConnections(
           accountId, delegateId, heartbeat.getDelegateConnectionId(), heartbeat.getVersion());
@@ -3044,7 +3040,6 @@ public class DelegateServiceImpl implements DelegateService {
         UUID currentUUID = convertFromBase64(heartbeat.getDelegateConnectionId());
         UUID existingUUID = convertFromBase64(existingConnection.getUuid());
         if (existingUUID.timestamp() > currentUUID.timestamp()) {
-          Delegate delegate = delegateCache.get(accountId, delegateId, false);
           boolean notSameLocationForShellScriptDelegate = DelegateType.SHELL_SCRIPT.equals(delegate.getDelegateType())
               && (isNotEmpty(heartbeat.getLocation()) && isNotEmpty(existingConnection.getLocation())
                   && !heartbeat.getLocation().equals(existingConnection.getLocation()));
@@ -3057,6 +3052,7 @@ public class DelegateServiceImpl implements DelegateService {
             log.error("Two delegates with the same identity");
           }
         } else {
+          delegateMetricsService.recordDelegateMetrics(delegate, DELEGATE_RESTARTED);
           log.error("Delegate restarted");
         }
       }
@@ -3519,6 +3515,8 @@ public class DelegateServiceImpl implements DelegateService {
 
   private void destroyTheCurrentDelegate(
       String accountId, String delegateId, String delegateConnectionId, ConnectionMode connectionMode) {
+    Delegate delegate = delegateCache.get(accountId, delegateId, false);
+    delegateMetricsService.recordDelegateMetrics(delegate, DELEGATE_DESTROYED);
     switch (connectionMode) {
       case POLLING:
         log.warn("Sent self destruct command to delegate {}, with connectionId {}.", delegateId, delegateConnectionId);
@@ -3767,15 +3765,6 @@ public class DelegateServiceImpl implements DelegateService {
     return null;
   }
 
-  @Override
-  public void validateDockerSetupDetailsNg(
-      String accountId, DelegateSetupDetails delegateSetupDetails, String delegateType) {
-    validateDelegateSetupDetails(accountId, delegateSetupDetails, delegateType);
-    if (hasToken(delegateSetupDetails)) {
-      validateDelegateToken(accountId, delegateSetupDetails);
-    }
-  }
-
   private boolean hasToken(DelegateSetupDetails delegateSetupDetails) {
     return delegateSetupDetails != null && isNotBlank(delegateSetupDetails.getTokenName());
   }
@@ -3794,12 +3783,17 @@ public class DelegateServiceImpl implements DelegateService {
       throw new InvalidRequestException("Delegate Name must be provided.");
     }
     checkUniquenessOfDelegateName(accountId, delegateSetupDetails.getName(), true);
+
+    // TODO: Arpit uncomment it when ng delegate token feature is rolled out
+    //    if(delegateSetupDetails.getTokenName() == null) {
+    //      throw new InvalidRequestException("Delegate Token must be provided.", USER);
+    //    }
   }
 
   @Override
   public File downloadNgDocker(String managerHost, String verificationServiceUrl, String accountId,
       DelegateSetupDetails delegateSetupDetails) throws IOException {
-    validateDockerSetupDetailsNg(accountId, delegateSetupDetails, DOCKER);
+    validateDelegateSetupDetails(accountId, delegateSetupDetails, DOCKER);
 
     File composeYaml = File.createTempFile(HARNESS_NG_DELEGATE + "-docker-compose", YAML);
 
@@ -3823,15 +3817,9 @@ public class DelegateServiceImpl implements DelegateService {
   }
 
   @Override
-  public File generateKubernetesYamlNg(String accountId, DelegateSetupDetails delegateSetupDetails, String managerHost,
+  public File generateKubernetesYaml(String accountId, DelegateSetupDetails delegateSetupDetails, String managerHost,
       String verificationServiceUrl, MediaType fileFormat) throws IOException {
-    validateKubernetesYamlNg(accountId, delegateSetupDetails);
-    return generateKubernetesYamlFile(
-        accountId, delegateSetupDetails, managerHost, verificationServiceUrl, fileFormat, true);
-  }
-
-  private File generateKubernetesYamlFile(String accountId, DelegateSetupDetails delegateSetupDetails,
-      String managerHost, String verificationServiceUrl, MediaType fileFormat, boolean useNgToken) throws IOException {
+    validateKubernetesSetupDetails(accountId, delegateSetupDetails);
     File kubernetesDelegateFile = File.createTempFile(KUBERNETES_DELEGATE, ".tar");
 
     try (TarArchiveOutputStream out = new TarArchiveOutputStream(new FileOutputStream(kubernetesDelegateFile))) {
@@ -3881,7 +3869,7 @@ public class DelegateServiceImpl implements DelegateService {
               .logStreamingServiceBaseUrl(mainConfiguration.getLogStreamingServiceConfig().getBaseUrl())
               .delegateTokenName(delegateSetupDetails.getTokenName())
               .build(),
-          useNgToken, true);
+          true);
 
       File yaml = File.createTempFile(HARNESS_DELEGATE, YAML);
       String templateName = obtainK8sTemplateNameFromConfig(delegateSetupDetails.getK8sConfigDetails(), accountId);
@@ -3944,9 +3932,10 @@ public class DelegateServiceImpl implements DelegateService {
             .delegateName(delegateName)
             .logStreamingServiceBaseUrl(mainConfiguration.getLogStreamingServiceConfig().getBaseUrl())
             .ceEnabled(false)
+            .delegateTokenName(delegateSetupDetails != null ? delegateSetupDetails.getTokenName() : null)
             .build();
 
-    ImmutableMap<String, String> paramMap = getJarAndScriptRunTimeParamMap(templateParameters, useNgToken, true);
+    ImmutableMap<String, String> paramMap = getJarAndScriptRunTimeParamMap(templateParameters, true);
 
     if (isEmpty(paramMap)) {
       throw new InvalidArgumentsException(Pair.of("scriptParams", "Failed to get jar and script runtime params."));

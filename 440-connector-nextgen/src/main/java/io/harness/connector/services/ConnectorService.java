@@ -38,7 +38,7 @@ public interface ConnectorService extends ConnectorCrudService, ConnectorValidat
 
   boolean markEntityInvalid(String accountIdentifier, EntityReference entityReference, String invalidYaml);
 
-  ConnectorDTO fullSyncEntity(EntityDetailProtoDTO entityDetailProtoDTO);
+  ConnectorDTO fullSyncEntity(EntityDetailProtoDTO entityDetailProtoDTO, boolean isFullSyncingToDefaultBranch);
 
   ConnectorResponseDTO updateGitFilePath(ConnectorDTO connectorDTO, String accountIdentifier, String newFilePath);
 }

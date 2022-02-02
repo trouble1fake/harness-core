@@ -233,9 +233,11 @@ public class CVDataCollectionTaskServiceImpl implements CVDataCollectionTaskServ
   @Override
   public CVNGPerpetualTaskDTO getCVNGPerpetualTaskDTO(String taskId) {
     PerpetualTaskRecord perpetualTaskRecord = perpetualTaskService.getTaskRecord(taskId);
-    CVNGPerpetualTaskDTOBuilder cvngPerpetualTaskDTOBuilder = CVNGPerpetualTaskDTO.builder()
-                                                                  .delegateId(perpetualTaskRecord.getDelegateId())
-                                                                  .accountId(perpetualTaskRecord.getAccountId());
+    CVNGPerpetualTaskDTOBuilder cvngPerpetualTaskDTOBuilder =
+        CVNGPerpetualTaskDTO.builder().accountId(perpetualTaskRecord.getAccountId());
+    if (perpetualTaskRecord.getDelegateId() != null) {
+      cvngPerpetualTaskDTOBuilder.delegateId(perpetualTaskRecord.getDelegateId());
+    }
     if (perpetualTaskRecord.getUnassignedReason() != null) {
       cvngPerpetualTaskDTOBuilder.cvngPerpetualTaskUnassignedReason(
           mapUnassignedReasonFromPerpetualTaskToCVNG(perpetualTaskRecord.getUnassignedReason()));
@@ -256,6 +258,8 @@ public class CVDataCollectionTaskServiceImpl implements CVDataCollectionTaskServ
         return CVNGPerpetualTaskUnassignedReason.NO_DELEGATE_INSTALLED;
       case NO_ELIGIBLE_DELEGATES:
         return CVNGPerpetualTaskUnassignedReason.NO_ELIGIBLE_DELEGATES;
+      case MULTIPLE_FAILED_PERPETUAL_TASK:
+        return CVNGPerpetualTaskUnassignedReason.MULTIPLE_FAILED_PERPETUAL_TASK;
       default:
         throw new UnknownEnumTypeException("Task Unassigned Reason", String.valueOf(perpetualTaskUnassignedReason));
     }

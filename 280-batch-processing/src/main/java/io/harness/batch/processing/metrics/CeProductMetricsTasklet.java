@@ -12,6 +12,7 @@ import io.harness.batch.processing.config.BatchMainConfig;
 import io.harness.ccm.license.CeLicenseInfo;
 import io.harness.event.handler.segment.SegmentConfig;
 import io.harness.telemetry.Destination;
+import io.harness.telemetry.TelemetryOption;
 import io.harness.telemetry.TelemetryReporter;
 
 import software.wings.beans.Account;
@@ -24,10 +25,9 @@ import com.segment.analytics.Analytics;
 import com.segment.analytics.messages.GroupMessage;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.Date;
-import java.util.EnumMap;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.JobParameters;
@@ -70,6 +70,8 @@ public class CeProductMetricsTasklet implements Tasklet {
   @VisibleForTesting
   void nextGenInstrumentation(String accountId) {
     HashMap<String, Object> properties = new HashMap<>();
+    properties.put("group_type", "Account");
+    properties.put("group_id", accountId);
 
     // Connector Telemetry
     properties.putAll(cengTelemetryService.getNextGenConnectorsCountByType(accountId));
@@ -86,10 +88,8 @@ public class CeProductMetricsTasklet implements Tasklet {
     // Budgets
     properties.putAll(cengTelemetryService.getBudgetMetrics(accountId));
 
-    Map<Destination, Boolean> destinations = new EnumMap(Destination.class) {
-      { put(Destination.AMPLITUDE, true); }
-    };
-    telemetryReporter.sendGroupEvent(accountId, properties, destinations);
+    telemetryReporter.sendGroupEvent(accountId, null, properties, Collections.singletonMap(Destination.AMPLITUDE, true),
+        TelemetryOption.builder().sendForCommunity(false).build());
   }
 
   public void sendStatsToSegment(String accountId, Instant start, Instant end) {

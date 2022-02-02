@@ -48,6 +48,7 @@ import com.google.protobuf.Message;
 import com.google.protobuf.Timestamp;
 import io.kubernetes.client.informer.EventType;
 import io.kubernetes.client.informer.SharedInformerFactory;
+import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.JSON;
 import io.kubernetes.client.openapi.models.V1ContainerBuilder;
 import io.kubernetes.client.openapi.models.V1ListMeta;
@@ -97,16 +98,20 @@ public class PodWatcherTest extends CategoryTest {
   ArgumentCaptor<Message> captor = ArgumentCaptor.forClass(Message.class);
   @Captor ArgumentCaptor<Map<String, String>> mapArgumentCaptor;
 
-  @Rule public WireMockRule wireMockRule = new WireMockRule(65222);
+  @Rule public WireMockRule wireMockRule = new WireMockRule(0);
 
   @Before
   public void setUp() throws Exception {
-    sharedInformerFactory = new SharedInformerFactory();
+    MockitoAnnotations.initMocks(this);
+
+    ApiClient apiClient =
+        new ClientBuilder().setBasePath("http://localhost:" + wireMockRule.port()).build().setReadTimeout(0);
+    sharedInformerFactory = new SharedInformerFactory(apiClient);
+
     eventPublisher = mock(EventPublisher.class);
     pvcFetcher = mock(PVCFetcher.class);
     namespaceFetcher = mock(NamespaceFetcher.class);
 
-    MockitoAnnotations.initMocks(this);
     K8sControllerFetcher controllerFetcher = mock(K8sControllerFetcher.class);
 
     when(controllerFetcher.getTopLevelOwner(any()))
@@ -135,7 +140,7 @@ public class PodWatcherTest extends CategoryTest {
                         .endMetadata()
                         .build());
 
-    podWatcher = new PodWatcher(new ClientBuilder().setBasePath("http://localhost:" + wireMockRule.port()).build(),
+    podWatcher = new PodWatcher(apiClient,
         ClusterDetails.builder()
             .clusterName("clusterName")
             .clusterId("clusterId")

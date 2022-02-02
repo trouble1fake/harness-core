@@ -67,6 +67,7 @@ public class OwnerRule implements TestRule {
   public static final String CDP = "CDP";
   public static final String CE = "CE";
   public static final String CI = "CI";
+  public static final String CIT = "CIT";
   public static final String CV = "CV";
   public static final String DEL = "DEL";
   public static final String DX = "DX";
@@ -127,6 +128,7 @@ public class OwnerRule implements TestRule {
   public static final String MOHIT = "mohit.kurani";
   public static final String NATHAN = "nathan.nguyen";
   public static final String NATARAJA = "nataraja";
+  public static final String NGONZALEZ = "nasser.gonzalez";
   public static final String NEMANJA = "nemanja.lukovic";
   public static final String NIKOLA = "nikola.obucina";
   public static final String NIKUNJ = "nikunj.badjatya";
@@ -146,6 +148,7 @@ public class OwnerRule implements TestRule {
   public static final String RAMA = "rama";
   public static final String RAUNAK = "raunak.agrawal";
   public static final String REETIKA = "mallavarapu.reetika";
+  public static final String ROGER = "roger.simms";
   public static final String ROHIT = "rohit.reddy";
   public static final String ROHIT_KUMAR = "rohit.kumar";
   public static final String ROHITKARELIA = "rohit.karelia";
@@ -228,6 +231,7 @@ public class OwnerRule implements TestRule {
   public static final String PAVIC = "slobodan.pavic";
   public static final String SHIVAM = "shivam.negi";
   public static final String VITALIE = "vitalie.safronovici";
+  public static final String SHUBHAM_MAHESHWARI = "shubham.maheshwari";
 
   @Deprecated public static final String UNKNOWN = "unknown";
 
@@ -401,6 +405,7 @@ public class OwnerRule implements TestRule {
           .put(CDP, TeamInfo.builder().team(CDP).leader(ANSHUL).build())
           .put(CE, TeamInfo.builder().team(CE).leader(PUNEET).leader(AVMOHAN).build())
           .put(CI, TeamInfo.builder().team(CI).leader(SHIVAKUMAR).build())
+          .put(CIT, TeamInfo.builder().team(CIT).leader(ROGER).build())
           .put(CV, TeamInfo.builder().team(CV).leader(RAGHU).build())
           .put(DEL, TeamInfo.builder().team(DEL).leader(GEORGE).leader(MARKO).build())
           .put(DX, TeamInfo.builder().team(DX).leader(RAMA).build())

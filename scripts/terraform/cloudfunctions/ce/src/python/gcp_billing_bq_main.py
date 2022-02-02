@@ -82,7 +82,7 @@ def main(event, context):
         get_unique_billingaccount_id(jsonData)
         jsonData["isFreshSync"] = isFreshSync(jsonData)
         if jsonData.get("isFreshSync"):
-            jsonData["interval"] = '45'
+            jsonData["interval"] = '180'
         else:
             jsonData["interval"] = '3'
         ingest_into_preaggregated(jsonData)
@@ -233,7 +233,7 @@ def syncDataset(jsonData):
     destination = "%s.%s.%s" % (PROJECTID, jsonData["datasetName"], jsonData["tableName"])
     if jsonData["isFreshSync"]:
         # Fresh sync. Sync only for 45 days.
-        query = """  SELECT * FROM `%s.%s.%s` WHERE DATE(_PARTITIONTIME) >= DATE_SUB(@run_date, INTERVAL 52 DAY) AND DATE(usage_start_time) >= DATE_SUB(@run_date , INTERVAL 45 DAY);
+        query = """  SELECT * FROM `%s.%s.%s` WHERE DATE(_PARTITIONTIME) >= DATE_SUB(@run_date, INTERVAL 187 DAY) AND DATE(usage_start_time) >= DATE_SUB(@run_date , INTERVAL 187 DAY);
         """ % (jsonData["sourceGcpProjectId"], jsonData["sourceDataSetId"], jsonData["sourceGcpTableName"])
         # Configure the query job.
         print_(" Destination :%s" % destination)
@@ -293,7 +293,7 @@ def syncDataset(jsonData):
     print_("  Loaded in %s" % jsonData["tableName"])
 
     if jsonData.get("isFreshSync"):
-        jsonData["interval"] = '45'
+        jsonData["interval"] = '180'
     else:
         jsonData["interval"] = '3'
     get_unique_billingaccount_id(jsonData)

@@ -27,7 +27,6 @@ import io.harness.pms.pipeline.observer.OrchestrationObserverUtils;
 import io.harness.pms.plan.execution.beans.PipelineExecutionSummaryEntity;
 import io.harness.pms.plan.execution.beans.PipelineExecutionSummaryEntity.PlanExecutionSummaryKeys;
 import io.harness.pms.serializer.recaster.RecastOrchestrationUtils;
-import io.harness.repositories.executions.AccountExecutionMetadataRepository;
 import io.harness.repositories.executions.PmsExecutionSummaryRespository;
 
 import com.google.inject.Inject;
@@ -43,16 +42,13 @@ import org.springframework.data.mongodb.core.query.Update;
 public class PipelineStatusUpdateEventHandler implements PlanStatusUpdateObserver, OrchestrationEndObserver {
   private final PlanExecutionService planExecutionService;
   private final PmsExecutionSummaryRespository pmsExecutionSummaryRepository;
-  private final AccountExecutionMetadataRepository accountExecutionMetadataRepository;
   private OrchestrationEventEmitter eventEmitter;
 
   @Inject
   public PipelineStatusUpdateEventHandler(PlanExecutionService planExecutionService,
-      PmsExecutionSummaryRespository pmsExecutionSummaryRepository,
-      AccountExecutionMetadataRepository accountExecutionMetadataRepository, OrchestrationEventEmitter eventEmitter) {
+      PmsExecutionSummaryRespository pmsExecutionSummaryRepository, OrchestrationEventEmitter eventEmitter) {
     this.planExecutionService = planExecutionService;
     this.pmsExecutionSummaryRepository = pmsExecutionSummaryRepository;
-    this.accountExecutionMetadataRepository = accountExecutionMetadataRepository;
     this.eventEmitter = eventEmitter;
   }
 
@@ -92,8 +88,6 @@ public class PipelineStatusUpdateEventHandler implements PlanStatusUpdateObserve
       Query query = new Query(criteria);
       PipelineExecutionSummaryEntity pipelineExecutionSummaryEntity1 =
           pmsExecutionSummaryRepository.update(query, update);
-      accountExecutionMetadataRepository.updateAccountExecutionMetadata(
-          AmbianceUtils.getAccountId(ambiance), executedModules, pipelineExecutionSummaryEntity1.getStartTs());
       for (String module : executedModules) {
         eventEmitter.emitEvent(buildEndEvent(ambiance, module,
             pipelineExecutionSummaryEntity1.getStatus().getEngineStatus(),

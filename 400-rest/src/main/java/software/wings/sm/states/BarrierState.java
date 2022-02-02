@@ -36,6 +36,7 @@ import com.google.inject.Inject;
 import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.mongodb.morphia.annotations.Transient;
 
 /*
@@ -71,6 +72,7 @@ import org.mongodb.morphia.annotations.Transient;
 
 @OwnedBy(CDC)
 @TargetModule(HarnessModule._870_CG_ORCHESTRATION)
+@Slf4j
 public class BarrierState extends State {
   private static String errorMsg =
       "The barrier endures since some of the tasks failed before all instances were reached.";
@@ -149,6 +151,8 @@ public class BarrierState extends State {
     if (barrierId == null) {
       return null;
     }
+
+    log.info("Barrier {} reached for workflow execution {}", getIdentifier(), context.getWorkflowExecutionId());
 
     return barrierService.update(context.getAppId(), barrierId);
   }
