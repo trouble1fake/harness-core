@@ -54,7 +54,7 @@ public class DatadogLogHealthSourceSpec extends HealthSourceSpec {
   public static class QueryDTO {
     @NotNull String name;
     @NotNull String query;
-    List<String> indexes;
+    @NotNull List<String> indexes;
     @NotNull String serviceInstanceIdentifier;
   }
 

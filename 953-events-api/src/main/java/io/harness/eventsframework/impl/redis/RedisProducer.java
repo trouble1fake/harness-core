@@ -99,8 +99,7 @@ public class RedisProducer extends AbstractProducer {
     populateOtherProducerSpecificData(redisData);
 
     StreamMessageId messageId = stream.addAll(redisData, maxTopicSize, false);
-    redisEventMetricPublisher.sendMetricWithEventContext(
-        RedisEventMetricDTOMapper.prepareRedisEventMetricDTO(message, getTopicName()), REDIS_PUSH_EVENT_METRIC);
+    addMonitoring(message);
     redisData.remove(REDIS_STREAM_INTERNAL_KEY);
     log.info("Events framework message inserted - messageId: {}, metaData: {}", messageId, redisData);
     return messageId.toString();
@@ -144,6 +143,15 @@ public class RedisProducer extends AbstractProducer {
     } catch (InterruptedException e) {
       log.error("Polling to redis was interrupted, shutting down producer", e);
       shutdown();
+    }
+  }
+
+  private void addMonitoring(Message message) {
+    try {
+      redisEventMetricPublisher.sendMetricWithEventContext(
+          RedisEventMetricDTOMapper.prepareRedisEventMetricDTO(message, getTopicName()), REDIS_PUSH_EVENT_METRIC);
+    } catch (Exception ex) {
+      log.warn("Error while sending metrics for redis producer events :", ex);
     }
   }
 }

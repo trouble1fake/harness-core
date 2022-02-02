@@ -80,6 +80,18 @@ public class PerpetualTaskRecordDao {
     persistence.update(query, updateOperations);
   }
 
+  public void setTaskUnassigned(String taskId) {
+    Query<PerpetualTaskRecord> query =
+        persistence.createQuery(PerpetualTaskRecord.class).filter(PerpetualTaskRecordKeys.uuid, taskId);
+
+    UpdateOperations<PerpetualTaskRecord> updateOperations =
+        persistence.createUpdateOperations(PerpetualTaskRecord.class)
+            .set(PerpetualTaskRecordKeys.state, TASK_UNASSIGNED)
+            .set(PerpetualTaskRecordKeys.delegateId, "");
+
+    persistence.update(query, updateOperations);
+  }
+
   public boolean resetDelegateIdForTask(
       String accountId, String taskId, PerpetualTaskExecutionBundle taskExecutionBundle) {
     Query<PerpetualTaskRecord> query = persistence.createQuery(PerpetualTaskRecord.class)
@@ -199,7 +211,7 @@ public class PerpetualTaskRecordDao {
     return Optional.ofNullable(perpetualTaskRecordQuery.get());
   }
 
-  public boolean saveHeartbeat(String taskId, long heartbeatMillis) {
+  public boolean saveHeartbeat(String taskId, long heartbeatMillis, long failedExecutionCount) {
     // TODO: make sure that the heartbeat is coming from the right assignment. There is a race
     //       that could register heartbeat comming from wrong assignment
     Query<PerpetualTaskRecord> query = persistence.createQuery(PerpetualTaskRecord.class)
@@ -208,7 +220,8 @@ public class PerpetualTaskRecordDao {
 
     UpdateOperations<PerpetualTaskRecord> taskUpdateOperations =
         persistence.createUpdateOperations(PerpetualTaskRecord.class)
-            .set(PerpetualTaskRecordKeys.lastHeartbeat, heartbeatMillis);
+            .set(PerpetualTaskRecordKeys.lastHeartbeat, heartbeatMillis)
+            .set(PerpetualTaskRecordKeys.failedExecutionCount, failedExecutionCount);
     UpdateResults update = persistence.update(query, taskUpdateOperations);
     return update.getUpdatedCount() > 0;
   }

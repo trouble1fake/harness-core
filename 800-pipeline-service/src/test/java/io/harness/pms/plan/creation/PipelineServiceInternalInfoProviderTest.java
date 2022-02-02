@@ -25,7 +25,7 @@ import io.harness.filters.ParallelFilterJsonCreator;
 import io.harness.filters.PipelineFilterJsonCreator;
 import io.harness.filters.StepGroupPmsFilterJsonCreator;
 import io.harness.plancreator.approval.ApprovalStageFilterJsonCreator;
-import io.harness.plancreator.approval.ApprovalStagePlanCreator;
+import io.harness.plancreator.approval.ApprovalStagePlanCreatorV2;
 import io.harness.plancreator.execution.ExecutionPmsPlanCreator;
 import io.harness.plancreator.pipeline.NGPipelinePlanCreator;
 import io.harness.plancreator.stages.StagesPlanCreator;
@@ -91,7 +91,7 @@ public class PipelineServiceInternalInfoProviderTest extends CategoryTest {
     assertThat(planCreatorClasses.contains(StagesPlanCreator.class)).isTrue();
     assertThat(planCreatorClasses.contains(ParallelPlanCreator.class)).isTrue();
     assertThat(planCreatorClasses.contains(PMSStepPlanCreator.class)).isTrue();
-    assertThat(planCreatorClasses.contains(ApprovalStagePlanCreator.class)).isTrue();
+    assertThat(planCreatorClasses.contains(ApprovalStagePlanCreatorV2.class)).isTrue();
     assertThat(planCreatorClasses.contains(ExecutionPmsPlanCreator.class)).isTrue();
     assertThat(planCreatorClasses.contains(StepGroupPMSPlanCreator.class)).isTrue();
     assertThat(planCreatorClasses.contains(ResourceConstraintStepPlanCreator.class)).isTrue();

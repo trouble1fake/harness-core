@@ -93,9 +93,10 @@ public class NodeExecution implements PersistentEntity, UuidAccess, PmsNodeExecu
   @Builder.Default @FdTtlIndex Date validUntil = Date.from(OffsetDateTime.now().plusMonths(TTL_MONTHS).toInstant());
 
   // Resolved StepParameters stored just before invoking step.
-  Map<String, Object> resolvedStepParameters;
-
+  @Deprecated Map<String, Object> resolvedStepParameters;
   @Deprecated PmsStepParameters resolvedInputs;
+
+  PmsStepParameters resolvedParams;
 
   // For Wait Notify
   String notifyId;
@@ -124,8 +125,8 @@ public class NodeExecution implements PersistentEntity, UuidAccess, PmsNodeExecu
   List<String> timeoutInstanceIds;
   TimeoutDetails timeoutDetails;
 
+  // Todo: Move unitProgress and progressData to another collection
   @Singular @Deprecated List<UnitProgress> unitProgresses;
-
   Map<String, Object> progressData;
 
   AdviserResponse adviserResponse;
@@ -308,6 +309,14 @@ public class NodeExecution implements PersistentEntity, UuidAccess, PmsNodeExecu
 
   public OrchestrationMap getPmsProgressData() {
     return OrchestrationMapBackwardCompatibilityUtils.extractToOrchestrationMap(progressData);
+  }
+
+  public PmsStepParameters getResolvedStepParameters() {
+    if (resolvedStepParameters != null) {
+      return PmsStepParameters.parse(
+          OrchestrationMapBackwardCompatibilityUtils.extractToOrchestrationMap(resolvedStepParameters));
+    }
+    return resolvedParams;
   }
 
   public <T extends Node> T getNode() {

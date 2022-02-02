@@ -12,6 +12,7 @@ import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.morphia.MorphiaRegistrar;
 import io.harness.morphia.MorphiaRegistrarHelperPut;
+import io.harness.pms.sdk.core.steps.io.PipelineViewObject;
 import io.harness.yaml.core.variables.NumberNGVariable;
 import io.harness.yaml.core.variables.SecretNGVariable;
 import io.harness.yaml.core.variables.StringNGVariable;
@@ -21,7 +22,9 @@ import java.util.Set;
 @OwnedBy(PIPELINE)
 public class YamlMorphiaRegistrar implements MorphiaRegistrar {
   @Override
-  public void registerClasses(Set<Class> set) {}
+  public void registerClasses(Set<Class> set) {
+    set.add(PipelineViewObject.class);
+  }
 
   @Override
   public void registerImplementationClasses(MorphiaRegistrarHelperPut h, MorphiaRegistrarHelperPut w) {

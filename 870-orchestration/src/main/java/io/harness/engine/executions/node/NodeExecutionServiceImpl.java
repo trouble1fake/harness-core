@@ -272,6 +272,8 @@ public class NodeExecutionServiceImpl implements NodeExecutionService {
           NodeExecutionStartObserver::onNodeStart, NodeStartInfo.builder().nodeExecution(nodeExecution).build());
       return nodeExecution1;
     } else {
+      nodeExecutionStartSubject.fireInform(
+          NodeExecutionStartObserver::onNodeStart, NodeStartInfo.builder().nodeExecution(nodeExecution).build());
       return mongoTemplate.save(nodeExecution);
     }
   }
@@ -601,6 +603,12 @@ public class NodeExecutionServiceImpl implements NodeExecutionService {
 
     query.with(by(NodeExecutionKeys.createdAt));
     return mongoTemplate.find(query, NodeExecution.class);
+  }
+
+  @Override
+  public boolean ifExists(String nodeExecutionId) {
+    Query query = query(where(NodeExecutionKeys.uuid).is(nodeExecutionId));
+    return mongoTemplate.exists(query, NodeExecution.class);
   }
 
   @Override

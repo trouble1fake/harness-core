@@ -29,7 +29,7 @@ import lombok.Singular;
 @Data
 @Builder
 public class PlanCreationResponse implements AsyncCreatorResponse {
-  @Singular Map<String, PlanNode> nodes;
+  @Singular @Deprecated Map<String, PlanNode> nodes;
   PlanNode planNode;
   Dependencies dependencies;
   YamlUpdates yamlUpdates;

@@ -27,6 +27,7 @@ import io.harness.ccm.commons.beans.recommendation.K8sServiceProvider;
 import io.harness.ccm.commons.beans.recommendation.NodePoolId;
 import io.harness.ccm.commons.beans.recommendation.RecommendationOverviewStats;
 import io.harness.ccm.commons.beans.recommendation.TotalResourceUsage;
+import io.harness.ccm.commons.beans.recommendation.models.ErrorResponse;
 import io.harness.ccm.commons.beans.recommendation.models.RecommendClusterRequest;
 import io.harness.ccm.commons.beans.recommendation.models.RecommendationResponse;
 import io.harness.ccm.commons.constants.CloudProvider;
@@ -43,6 +44,9 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import lombok.SneakyThrows;
+import okhttp3.MediaType;
+import okhttp3.Protocol;
+import okhttp3.ResponseBody;
 import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -270,6 +274,35 @@ public class K8sNodeRecommendationTaskletTest extends BaseTaskletTest {
     assertThat(stats.getTotalMonthlyCost()).isCloseTo(2D * 6 * 24 * 30, offset(DOUBLE_ERROR));
     // monthlyCost - $1.329993 per vm * 24 hrs * 30 days
     assertThat(stats.getTotalMonthlySaving()).isCloseTo((2D * 6 - 1.329993D) * 24 * 30, offset(DOUBLE_ERROR));
+  }
+
+  @Test
+  @Owner(developers = UTSAV)
+  @Category(UnitTests.class)
+  public void testJobSuccessOnBadResourceConstraint() throws Exception {
+    ErrorResponse errorResponse =
+        ErrorResponse.builder().status(400).detail("could not recommend cluster with the requested resources").build();
+    okhttp3.Response rawResponse = (new okhttp3.Response.Builder())
+                                       .code(400)
+                                       .protocol(Protocol.HTTP_1_1)
+                                       .message("Bad Request")
+                                       .request((new okhttp3.Request.Builder()).url("http://localhost/").build())
+                                       .build();
+    Response response = Response.error(
+        ResponseBody.create(MediaType.parse(javax.ws.rs.core.MediaType.APPLICATION_JSON), GSON.toJson(errorResponse)),
+        rawResponse);
+
+    when(banzaiRecommenderClient
+             .getRecommendation(eq(k8sServiceProvider.getCloudProvider().getCloudProviderName()),
+                 eq(k8sServiceProvider.getCloudProvider().getK8sService()), eq(k8sServiceProvider.getRegion()), any())
+             .execute())
+        .thenReturn(response);
+
+    assertThat(tasklet.execute(null, chunkContext)).isNull();
+
+    // shouldn't upsert recommendation
+    verify(k8sRecommendationDAO, times(0)).insertNodeRecommendationResponse(any(), any(), any(), any(), any());
+    verify(recommendationCrudService, times(0)).upsertNodeRecommendation(any(), any(), any(), any(), any());
   }
 
   @Test

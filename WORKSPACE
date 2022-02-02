@@ -118,7 +118,7 @@ go_repository(
 
 go_rules_dependencies()
 
-go_register_toolchains(version = "1.17.1")
+go_register_toolchains(version = "1.17.5")
 
 gazelle_dependencies()
 
@@ -4549,7 +4549,7 @@ plain_artifacts = [
     "com.zaxxer:HikariCP-java7:2.4.13",
     "commons-beanutils:commons-beanutils:1.9.4",
     "commons-cli:commons-cli:1.2",
-    "commons-codec:commons-codec:1.10",
+    "commons-codec:commons-codec:1.15",
     "commons-collections:commons-collections:3.2.2",
     "commons-dbcp:commons-dbcp:1.4",
     "commons-digester:commons-digester:2.1",
@@ -4584,10 +4584,9 @@ plain_artifacts = [
     "io.confluent:kafka-schema-registry-client:5.5.1",
     "io.confluent:kafka-schema-serializer:5.5.1",
     "io.confluent:kafka-schema-serializer:5.5.1",
-    "io.debezium:debezium-api:1.5.4.Final",
-    "io.debezium:debezium-connector-mongodb:1.5.4.Final",
-    "io.debezium:debezium-core:1.5.4.Final",
-    "io.debezium:debezium-embedded:1.5.4.Final",
+    "io.debezium:debezium-api:1.7.2.Final",
+    "io.debezium:debezium-connector-mongodb:1.7.2.Final",
+    "io.debezium:debezium-core:1.7.2.Final",
     "io.dropwizard-bundles:dropwizard-configurable-assets-bundle:1.3.5",
     "io.dropwizard.metrics:metrics-annotation:4.0.5",
     "io.dropwizard.metrics:metrics-core:4.0.5",
@@ -4744,7 +4743,7 @@ plain_artifacts = [
     "org.apache.avro:avro:1.9.2",
     "org.apache.avro:avro:1.9.2",
     "org.apache.commons:commons-collections4:4.1",
-    "org.apache.commons:commons-compress:1.10",
+    "org.apache.commons:commons-compress:1.21",
     "org.apache.commons:commons-csv:1.5",
     "org.apache.commons:commons-email:1.5",
     "org.apache.commons:commons-exec:1.3",
@@ -4773,9 +4772,8 @@ plain_artifacts = [
     "org.apache.httpcomponents:httpcore:4.4.14",
     "org.apache.httpcomponents:httpmime:4.5.13",
     "org.mybatis:mybatis:jar:3.5.7",
-    "org.apache.kafka:connect-api:2.6.1",
-    "org.apache.kafka:connect-runtime:2.6.1",
-    "org.apache.kafka:kafka-clients:2.6.1",
+    "org.apache.kafka:connect-api:2.8.1",
+    "org.apache.kafka:kafka-clients:2.8.1",
     "org.apache.logging.log4j:log4j-api:2.16.0",
     "org.apache.logging.log4j:log4j-to-slf4j:2.16.0",
     "org.apache.lucene:lucene-analyzers-common:8.5.1",
@@ -5130,6 +5128,24 @@ maven_install(
             version = "0.1.143",
             exclusions = [
                 "org.clojure:clojure",
+            ],
+        ),
+        maven.artifact(
+            group = "io.debezium",
+            artifact = "debezium-embedded",
+            version = "1.7.2.Final",
+            exclusions = [
+                "log4j:log4j",
+                "org.slf4j:slf4j-log4j12",
+            ],
+        ),
+        maven.artifact(
+            group = "org.apache.kafka",
+            artifact = "connect-runtime",
+            version = "2.8.1",
+            exclusions = [
+                "log4j:log4j",
+                "org.slf4j:slf4j-log4j12",
             ],
         ),
         maven_test_artifact("com.github.tomakehurst:wiremock-jre8-standalone:2.27.2"),

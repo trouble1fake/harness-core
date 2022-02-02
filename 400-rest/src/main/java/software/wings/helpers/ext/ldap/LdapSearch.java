@@ -58,6 +58,7 @@ public class LdapSearch implements LdapValidator {
   @NotBlank String bindCredential;
 
   private static final int pageSize = 1000;
+  private static final String SAM_ACCOUNT_NAME = "samAccountName";
 
   /**
    * This is required in case of Oracle Directory services
@@ -134,6 +135,14 @@ public class LdapSearch implements LdapValidator {
             ldapAttributeList.add(new LdapAttribute("cn", (String) entry.getAttributes().get("cn").get()));
             ldapAttributeList.add(new LdapAttribute("mail", (String) entry.getAttributes().get("mail").get()));
             ldapAttributeList.add(new LdapAttribute("uid", (String) entry.getAttributes().get("uid").get()));
+
+            if (entry.getAttributes().get(SAM_ACCOUNT_NAME) != null
+                && entry.getAttributes().get(SAM_ACCOUNT_NAME).get() != null) {
+              log.info("samAccountName for mail {} is {}", entry.getAttributes().get("mail").get(),
+                  entry.getAttributes().get(SAM_ACCOUNT_NAME).get());
+              ldapAttributeList.add(
+                  new LdapAttribute(SAM_ACCOUNT_NAME, (String) entry.getAttributes().get(SAM_ACCOUNT_NAME).get()));
+            }
 
             String dn = "dn=uid" + entry.getAttributes().get("uid").get() + baseDN;
             LdapEntry ldapEntry = new LdapEntry(dn, ldapAttributeList);
