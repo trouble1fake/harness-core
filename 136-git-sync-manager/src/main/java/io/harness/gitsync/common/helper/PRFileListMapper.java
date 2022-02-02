@@ -11,6 +11,7 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.git.model.ChangeType;
 import io.harness.gitsync.common.dtos.GitDiffResultFileDTO;
+import io.harness.gitsync.common.dtos.GitDiffResultFileDTO.GitDiffResultFileDTOBuilder;
 import io.harness.gitsync.common.dtos.GitDiffResultFileListDTO;
 import io.harness.product.ci.scm.proto.PRFile;
 
@@ -23,6 +24,7 @@ import lombok.experimental.UtilityClass;
 public class PRFileListMapper {
   public GitDiffResultFileListDTO toGitDiffResultFileListDTO(List<PRFile> prFileList) {
     List<GitDiffResultFileDTO> gitDiffResultFileDTOList = new ArrayList<>();
+    GitDiffResultFileDTOBuilder gitDiffResultFileDTOBuilder = GitDiffResultFileDTO.builder();
     if (prFileList != null) {
       prFileList.forEach(prFile -> {
         ChangeType changeType = ChangeType.MODIFY;
@@ -32,9 +34,9 @@ public class PRFileListMapper {
           changeType = ChangeType.DELETE;
         } else if (prFile.getRenamed()) {
           changeType = ChangeType.RENAME;
+          gitDiffResultFileDTOBuilder.prevFilePath(prFile.getPrevFilePath());
         }
-        gitDiffResultFileDTOList.add(
-            GitDiffResultFileDTO.builder().changeType(changeType).path(prFile.getPath()).build());
+        gitDiffResultFileDTOList.add(gitDiffResultFileDTOBuilder.changeType(changeType).path(prFile.getPath()).build());
       });
     }
     return GitDiffResultFileListDTO.builder().prFileList(gitDiffResultFileDTOList).build();

@@ -21,7 +21,6 @@ import io.harness.annotations.dev.BreakDependencyOn;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.ExecutionStatus;
-import io.harness.beans.FeatureName;
 import io.harness.context.ContextElementType;
 import io.harness.data.validator.Trimmed;
 import io.harness.delegate.task.k8s.K8sTaskType;
@@ -140,8 +139,7 @@ public class K8sDelete extends AbstractK8sState {
               .resources(context.renderExpression(this.resources))
               .deleteNamespacesForRelease(deleteNamespacesForRelease)
               .timeoutIntervalInMin(10)
-              .useVarSupportForKustomize(
-                  featureFlagService.isEnabled(FeatureName.VARIABLE_SUPPORT_FOR_KUSTOMIZE, context.getAccountId()))
+              .useVarSupportForKustomize(isUseVarSupportForKustomize(context.getAccountId()))
               .useNewKubectlVersion(featureFlagService.isEnabled(NEW_KUBECTL_VERSION, infraMapping.getAccountId()))
               .build();
 
@@ -217,8 +215,7 @@ public class K8sDelete extends AbstractK8sState {
                             .k8sDelegateManifestConfig(
                                 createDelegateManifestConfig(context, appManifestMap.get(K8sValuesLocation.Service)))
                             .valuesYamlList(fetchRenderedValuesFiles(appManifestMap, context))
-                            .useVarSupportForKustomize(featureFlagService.isEnabled(
-                                FeatureName.VARIABLE_SUPPORT_FOR_KUSTOMIZE, context.getAccountId()))
+                            .useVarSupportForKustomize(isUseVarSupportForKustomize(context.getAccountId()))
                             .build();
     return queueK8sDelegateTask(context, k8sTaskParameters, appManifestMap);
   }

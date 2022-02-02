@@ -11,6 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.CDC;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.exception.WingsException.USER;
+import static io.harness.security.encryption.EncryptionType.LOCAL;
 
 import static software.wings.beans.ServiceVariable.Type.ENCRYPTED_TEXT;
 import static software.wings.expression.SecretManagerFunctorInterface.obtainConfigFileExpression;
@@ -29,6 +30,7 @@ import io.harness.exception.FunctorException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.expression.ExpressionFunctor;
 import io.harness.ff.FeatureFlagService;
+import io.harness.security.SimpleEncryption;
 import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.security.encryption.EncryptedRecordData;
 import io.harness.security.encryption.EncryptionConfig;
@@ -43,19 +45,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import javax.cache.Cache;
 import lombok.Builder;
 import lombok.Builder.Default;
 import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 
-@OwnedBy(CDC)
 @Value
 @Builder
+@Slf4j
+@OwnedBy(CDC)
 @TargetModule(HarnessModule._940_SECRET_MANAGER_CLIENT)
 public class SecretManagerFunctor implements ExpressionFunctor, SecretManagerFunctorInterface {
   private SecretManagerMode mode;
   private FeatureFlagService featureFlagService;
   private ManagerDecryptionService managerDecryptionService;
   private SecretManager secretManager;
+  private final Cache<String, EncryptedRecordData> secretsCache;
   private String accountId;
   private String appId;
   private String envId;
@@ -162,10 +168,30 @@ public class SecretManagerFunctor implements ExpressionFunctor, SecretManagerFun
             .collect(Collectors.toList());
 
     if (isNotEmpty(localEncryptedDetails)) {
-      managerDecryptionService.decrypt(serviceVariable, localEncryptedDetails);
-      String value = new String(serviceVariable.getValue());
-      evaluatedSecrets.put(secretName, value);
-      return returnSecretValue(secretName, value);
+      EncryptedRecordData locallyEncryptedData = secretsCache.get(encryptedData.getUuid());
+      String secretValue;
+      if (locallyEncryptedData == null) {
+        log.debug("Cache miss for secret with name: {}", serviceVariable.getSecretTextName());
+        managerDecryptionService.decrypt(serviceVariable, localEncryptedDetails);
+        secretValue = new String(serviceVariable.getValue());
+        String localEncryptionKey = generateUuid();
+        char[] reEncryptedValue = new SimpleEncryption(localEncryptionKey).encryptChars(serviceVariable.getValue());
+        locallyEncryptedData = EncryptedRecordData.builder()
+                                   .uuid(encryptedData.getUuid())
+                                   .name(encryptedData.getName())
+                                   .encryptionType(LOCAL)
+                                   .encryptionKey(localEncryptionKey)
+                                   .encryptedValue(reEncryptedValue)
+                                   .base64Encoded(encryptedData.isBase64Encoded())
+                                   .build();
+        secretsCache.put(encryptedData.getUuid(), locallyEncryptedData);
+      } else {
+        // Cache hit. Decrypt the value locally with previously saved encryption key.
+        secretValue = new String(new SimpleEncryption(locallyEncryptedData.getEncryptionKey())
+                                     .decryptChars(locallyEncryptedData.getEncryptedValue()));
+      }
+      evaluatedSecrets.put(secretName, secretValue);
+      return returnSecretValue(secretName, secretValue);
     }
 
     List<EncryptedDataDetail> nonLocalEncryptedDetails =

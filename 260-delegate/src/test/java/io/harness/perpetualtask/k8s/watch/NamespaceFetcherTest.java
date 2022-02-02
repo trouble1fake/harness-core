@@ -26,6 +26,7 @@ import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import io.kubernetes.client.informer.SharedInformerFactory;
+import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.models.V1Namespace;
 import io.kubernetes.client.openapi.models.V1NamespaceBuilder;
@@ -45,13 +46,15 @@ public class NamespaceFetcherTest extends CategoryTest {
   private static final String NAME = "harness-delegate";
   private static final Map<String, String> LABELS = ImmutableMap.of("k1", "v1", "k2", "v2");
 
-  @Rule public WireMockRule wireMockRule = new WireMockRule(65226);
+  @Rule public WireMockRule wireMockRule = new WireMockRule(0);
   private static final String URL_REGEX_SUFFIX = "(\\?(.*))?";
   private static final String GET_NAMESPACES_URL = "^/api/v1/namespaces/" + NAME + URL_REGEX_SUFFIX;
 
   @Before
   public void setUp() throws Exception {
-    sharedInformerFactory = new SharedInformerFactory();
+    ApiClient apiClient =
+        new ClientBuilder().setBasePath("http://localhost:" + wireMockRule.port()).build().setReadTimeout(0);
+    sharedInformerFactory = new SharedInformerFactory(apiClient);
 
     namespaceFetcher = new NamespaceFetcher(
         new ClientBuilder().setBasePath("http://localhost:" + wireMockRule.port()).build(), sharedInformerFactory);
