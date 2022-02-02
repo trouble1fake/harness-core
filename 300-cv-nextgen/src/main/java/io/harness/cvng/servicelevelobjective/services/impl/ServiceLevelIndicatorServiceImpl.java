@@ -8,6 +8,7 @@
 package io.harness.cvng.servicelevelobjective.services.impl;
 
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+import static io.harness.persistence.HQuery.excludeAuthority;
 
 import io.harness.cvng.beans.DataCollectionInfo;
 import io.harness.cvng.beans.DataCollectionRequest;
@@ -40,6 +41,7 @@ import io.harness.cvng.servicelevelobjective.entities.ServiceLevelIndicator.Serv
 import io.harness.cvng.servicelevelobjective.entities.ServiceLevelIndicator.ServiceLevelIndicatorUpdatableEntity;
 import io.harness.cvng.servicelevelobjective.entities.ServiceLevelObjective.TimePeriod;
 import io.harness.cvng.servicelevelobjective.services.api.SLIDataProcessorService;
+import io.harness.cvng.servicelevelobjective.services.api.SLIRecordService;
 import io.harness.cvng.servicelevelobjective.services.api.ServiceLevelIndicatorService;
 import io.harness.cvng.servicelevelobjective.transformer.servicelevelindicator.ServiceLevelIndicatorEntityAndDTOTransformer;
 import io.harness.cvng.servicelevelobjective.transformer.servicelevelindicator.ServiceLevelIndicatorTransformer;
@@ -88,6 +90,7 @@ public class ServiceLevelIndicatorServiceImpl implements ServiceLevelIndicatorSe
   @Inject private SLIDataProcessorService sliDataProcessorService;
   @Inject private Clock clock;
   @Inject private OrchestrationService orchestrationService;
+  @Inject private SLIRecordService sliRecordService;
 
   @Override
   public SLIOnboardingGraphs getOnboardingGraphs(ProjectParams projectParams, String monitoredServiceIdentifier,
@@ -262,12 +265,17 @@ public class ServiceLevelIndicatorServiceImpl implements ServiceLevelIndicatorSe
   @Override
   public void deleteByIdentifier(ProjectParams projectParams, List<String> serviceLevelIndicatorIdentifier) {
     if (isNotEmpty(serviceLevelIndicatorIdentifier)) {
-      hPersistence.delete(hPersistence.createQuery(ServiceLevelIndicator.class)
-                              .filter(ServiceLevelIndicatorKeys.accountId, projectParams.getAccountIdentifier())
-                              .filter(ServiceLevelIndicatorKeys.orgIdentifier, projectParams.getOrgIdentifier())
-                              .filter(ServiceLevelIndicatorKeys.projectIdentifier, projectParams.getProjectIdentifier())
-                              .field(ServiceLevelIndicatorKeys.identifier)
-                              .in(serviceLevelIndicatorIdentifier));
+      Query<ServiceLevelIndicator> serviceLevelIndicatorQuery =
+          hPersistence.createQuery(ServiceLevelIndicator.class, excludeAuthority)
+              .filter(ServiceLevelIndicatorKeys.accountId, projectParams.getAccountIdentifier())
+              .filter(ServiceLevelIndicatorKeys.orgIdentifier, projectParams.getOrgIdentifier())
+              .filter(ServiceLevelIndicatorKeys.projectIdentifier, projectParams.getProjectIdentifier())
+              .field(ServiceLevelIndicatorKeys.identifier)
+              .in(serviceLevelIndicatorIdentifier);
+      List<ServiceLevelIndicator> serviceLevelIndicatorList = serviceLevelIndicatorQuery.asList();
+      hPersistence.delete(serviceLevelIndicatorQuery);
+      sliRecordService.delete(
+          serviceLevelIndicatorList.stream().map(ServiceLevelIndicator::getUuid).collect(Collectors.toList()));
     }
   }
 

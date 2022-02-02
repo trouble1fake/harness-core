@@ -233,9 +233,11 @@ public class CVDataCollectionTaskServiceImpl implements CVDataCollectionTaskServ
   @Override
   public CVNGPerpetualTaskDTO getCVNGPerpetualTaskDTO(String taskId) {
     PerpetualTaskRecord perpetualTaskRecord = perpetualTaskService.getTaskRecord(taskId);
-    CVNGPerpetualTaskDTOBuilder cvngPerpetualTaskDTOBuilder = CVNGPerpetualTaskDTO.builder()
-                                                                  .delegateId(perpetualTaskRecord.getDelegateId())
-                                                                  .accountId(perpetualTaskRecord.getAccountId());
+    CVNGPerpetualTaskDTOBuilder cvngPerpetualTaskDTOBuilder =
+        CVNGPerpetualTaskDTO.builder().accountId(perpetualTaskRecord.getAccountId());
+    if (perpetualTaskRecord.getDelegateId() != null) {
+      cvngPerpetualTaskDTOBuilder.delegateId(perpetualTaskRecord.getDelegateId());
+    }
     if (perpetualTaskRecord.getUnassignedReason() != null) {
       cvngPerpetualTaskDTOBuilder.cvngPerpetualTaskUnassignedReason(
           mapUnassignedReasonFromPerpetualTaskToCVNG(perpetualTaskRecord.getUnassignedReason()));

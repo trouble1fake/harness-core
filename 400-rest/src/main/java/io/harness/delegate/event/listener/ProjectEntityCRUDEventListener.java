@@ -17,12 +17,12 @@ import static io.harness.eventsframework.EventsFrameworkMetadataConstants.RESTOR
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.delegate.beans.DelegateEntityOwner;
+import io.harness.delegate.service.intfc.DelegateNgTokenService;
 import io.harness.delegate.utils.DelegateEntityOwnerHelper;
 import io.harness.eventsframework.consumer.Message;
 import io.harness.eventsframework.entity_crud.project.ProjectEntityChangeDTO;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ng.core.event.MessageListener;
-import io.harness.service.intfc.DelegateNgTokenService;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -97,13 +97,12 @@ public class ProjectEntityCRUDEventListener implements MessageListener {
     try {
       final DelegateEntityOwner owner = DelegateEntityOwnerHelper.buildOwner(
           projectEntityChangeDTO.getOrgIdentifier(), projectEntityChangeDTO.getIdentifier());
-      delegateNgTokenService.revokeDelegateToken(
-          projectEntityChangeDTO.getAccountIdentifier(), owner, DelegateNgTokenService.DEFAULT_TOKEN_NAME);
-      log.info("Project {}/{} restored and new default Delegate Token generated.",
+      delegateNgTokenService.deleteAllTokensOwnedByOrgAndProject(projectEntityChangeDTO.getAccountIdentifier(), owner);
+      log.info("Project {}/{} deleted and all Delegate Tokens owned by project has been deleted.",
           projectEntityChangeDTO.getAccountIdentifier(), owner.getIdentifier());
       return true;
     } catch (final Exception e) {
-      log.error("Failed to revoke default Delegate Token for project {}/{}/{}, caused by: {}",
+      log.error("Failed to delete Delegate Tokens for project {}/{}/{}, caused by: {}",
           projectEntityChangeDTO.getAccountIdentifier(), projectEntityChangeDTO.getOrgIdentifier(),
           projectEntityChangeDTO.getIdentifier(), e);
       return false;
@@ -120,8 +119,9 @@ public class ProjectEntityCRUDEventListener implements MessageListener {
           projectEntityChangeDTO.getAccountIdentifier(), projectEntityChangeDTO.getIdentifier());
       return true;
     } catch (final Exception e) {
-      log.error("Failed to create default Delegate Token for project {}/{}/{}, caused by: {}",
-          projectEntityChangeDTO.getAccountIdentifier(), projectEntityChangeDTO.getIdentifier(), e);
+      log.error("Failed to restore default Delegate Token for project {}/{}/{}, caused by: {}",
+          projectEntityChangeDTO.getAccountIdentifier(), projectEntityChangeDTO.getOrgIdentifier(),
+          projectEntityChangeDTO.getIdentifier(), e);
       return false;
     }
   }

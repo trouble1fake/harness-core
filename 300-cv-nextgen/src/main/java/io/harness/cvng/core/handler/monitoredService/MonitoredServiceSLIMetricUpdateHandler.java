@@ -59,6 +59,27 @@ public class MonitoredServiceSLIMetricUpdateHandler extends BaseMonitoredService
             + "Please delete the SLIs before deleting metrics. SLIs : " + String.join(", ", deletingMetricsSLIs));
   }
 
+  @Override
+  public void beforeDelete(ProjectParams projectParams, MonitoredServiceDTO deletingObject) {
+    if (deletingObject.getSources() == null) {
+      return;
+    }
+    List<String> deletingMetricsSLIs =
+        deletingObject.getSources()
+            .getHealthSources()
+            .stream()
+            .flatMap(healthSource
+                -> serviceLevelIndicatorService
+                       .getSLIsWithMetrics(projectParams, deletingObject.getIdentifier(), healthSource.getIdentifier(),
+                           getMetricIdentifiers(healthSource))
+                       .stream())
+            .collect(Collectors.toList());
+
+    Preconditions.checkArgument(CollectionUtils.isEmpty(deletingMetricsSLIs),
+        "Deleting metrics are used in SLIs, "
+            + "Please delete the SLIs before deleting metrics. SLIs : " + String.join(", ", deletingMetricsSLIs));
+  }
+
   private Map<String, HealthSource> getHealthSourceMap(MonitoredServiceDTO monitoredServiceDTO) {
     if (monitoredServiceDTO.getSources() == null
         || CollectionUtils.isEmpty(monitoredServiceDTO.getSources().getHealthSources())) {

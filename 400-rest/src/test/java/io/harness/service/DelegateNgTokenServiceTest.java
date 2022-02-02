@@ -12,7 +12,6 @@ import static io.harness.rule.OwnerRule.VLAD;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-import io.harness.DelegateServiceTestBase;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
@@ -23,16 +22,20 @@ import io.harness.outbox.api.OutboxService;
 import io.harness.persistence.HPersistence;
 import io.harness.rule.Owner;
 import io.harness.service.impl.DelegateNgTokenServiceImpl;
-import io.harness.service.intfc.DelegateNgTokenService;
+
+import software.wings.WingsBaseTest;
 
 import com.google.inject.Inject;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
+import org.mockito.runners.MockitoJUnitRunner;
 
 @OwnedBy(HarnessTeam.DEL)
-public class DelegateNgTokenServiceTest extends DelegateServiceTestBase {
+@RunWith(MockitoJUnitRunner.class)
+public class DelegateNgTokenServiceTest extends WingsBaseTest {
   private static final String TEST_ACCOUNT_ID = "testAccountId";
 
   @Inject private HPersistence persistence;
@@ -67,7 +70,7 @@ public class DelegateNgTokenServiceTest extends DelegateServiceTestBase {
   @Category(UnitTests.class)
   public void shouldRevokeToken() {
     String tokenName = "token1";
-    DelegateTokenDetails token = delegateNgTokenService.createToken(TEST_ACCOUNT_ID, null, tokenName);
+    delegateNgTokenService.createToken(TEST_ACCOUNT_ID, null, tokenName);
     assertThat(delegateNgTokenService.getDelegateTokens(TEST_ACCOUNT_ID, null, DelegateTokenStatus.ACTIVE)).hasSize(1);
     DelegateTokenDetails revokedToken = delegateNgTokenService.revokeDelegateToken(TEST_ACCOUNT_ID, null, tokenName);
     assertThat(revokedToken.getStatus()).isEqualTo(DelegateTokenStatus.REVOKED);
@@ -124,7 +127,7 @@ public class DelegateNgTokenServiceTest extends DelegateServiceTestBase {
     delegateNgTokenService.createToken(TEST_ACCOUNT_ID, null, tokenName1);
     delegateNgTokenService.createToken(TEST_ACCOUNT_ID, null, tokenName2);
     assertThat(delegateNgTokenService.getDelegateTokens(TEST_ACCOUNT_ID, null, DelegateTokenStatus.ACTIVE)).hasSize(2);
-    DelegateTokenDetails result = delegateNgTokenService.getDelegateToken(TEST_ACCOUNT_ID, null, tokenName1);
+    DelegateTokenDetails result = delegateNgTokenService.getDelegateToken(TEST_ACCOUNT_ID, tokenName1);
     assertThat(result.getName()).isEqualTo(tokenName1);
   }
 
@@ -136,7 +139,7 @@ public class DelegateNgTokenServiceTest extends DelegateServiceTestBase {
     String tokenName2 = "token12";
     DelegateTokenDetails delegateTokenDetails = delegateNgTokenService.createToken(TEST_ACCOUNT_ID, null, tokenName1);
     delegateNgTokenService.createToken(TEST_ACCOUNT_ID, null, tokenName2);
-    String result = delegateNgTokenService.getDelegateTokenValue(TEST_ACCOUNT_ID, null, tokenName1);
+    String result = delegateNgTokenService.getDelegateTokenValue(TEST_ACCOUNT_ID, tokenName1);
     assertThat(result).isEqualTo(delegateTokenDetails.getValue());
   }
 
@@ -144,7 +147,7 @@ public class DelegateNgTokenServiceTest extends DelegateServiceTestBase {
   @Owner(developers = VLAD)
   @Category(UnitTests.class)
   public void shouldUpsertDefaultToken() {
-    String tokenName1 = DelegateNgTokenService.DEFAULT_TOKEN_NAME;
+    String tokenName1 = delegateNgTokenService.getDefaultTokenName(null);
     DelegateTokenDetails delegateTokenDetails = delegateNgTokenService.createToken(TEST_ACCOUNT_ID, null, tokenName1);
     DelegateTokenDetails result = delegateNgTokenService.upsertDefaultToken(TEST_ACCOUNT_ID, null, false);
     assertThat(result.getValue()).isNotEqualTo(delegateTokenDetails.getValue());
@@ -154,7 +157,7 @@ public class DelegateNgTokenServiceTest extends DelegateServiceTestBase {
   @Owner(developers = VLAD)
   @Category(UnitTests.class)
   public void shouldUpsertDefaultTokenSkipIfExists() {
-    String tokenName1 = DelegateNgTokenService.DEFAULT_TOKEN_NAME;
+    String tokenName1 = delegateNgTokenService.getDefaultTokenName(null);
     DelegateTokenDetails delegateTokenDetails = delegateNgTokenService.createToken(TEST_ACCOUNT_ID, null, tokenName1);
     DelegateTokenDetails result = delegateNgTokenService.upsertDefaultToken(TEST_ACCOUNT_ID, null, true);
     assertThat(result.getValue()).isEqualTo(delegateTokenDetails.getValue());

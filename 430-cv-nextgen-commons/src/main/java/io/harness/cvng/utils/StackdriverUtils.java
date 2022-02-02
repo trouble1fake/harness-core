@@ -41,6 +41,9 @@ public class StackdriverUtils {
 
   private static GoogleCredential getGoogleCredential(GcpConnectorDTO gcpConnectorDTO) {
     try {
+      if (gcpConnectorDTO == null || gcpConnectorDTO.getCredential() == null) {
+        return null;
+      }
       if (gcpConnectorDTO.getCredential().getGcpCredentialType() == GcpCredentialType.MANUAL_CREDENTIALS) {
         GcpManualDetailsDTO gcpManualDetailsDTO = (GcpManualDetailsDTO) gcpConnectorDTO.getCredential().getConfig();
         return GcpCredentialsHelperService.getGoogleCredentialFromFile(
@@ -56,6 +59,13 @@ public class StackdriverUtils {
 
   public static Map<String, Object> getCommonEnvVariables(GcpConnectorDTO gcpConnectorDTO, Scope scope) {
     GoogleCredential credential = getGoogleCredential(gcpConnectorDTO);
+    return getCommonEnvVariables(credential, scope);
+  }
+
+  public static Map<String, Object> getCommonEnvVariables(GoogleCredential credential, Scope scope) {
+    if (credential == null) {
+      return new HashMap<>();
+    }
     Map<String, Object> envVariables = new HashMap<>();
     credential = credential.createScoped(Lists.newArrayList(scope.getValue()));
     try {

@@ -126,6 +126,7 @@ import io.harness.beans.event.cg.entities.InfraDefinitionEntity;
 import io.harness.beans.event.cg.entities.ServiceEntity;
 import io.harness.beans.event.cg.pipeline.ExecutionArgsEventData;
 import io.harness.beans.event.cg.pipeline.PipelineEventData;
+import io.harness.beans.event.cg.pipeline.PipelineExecData;
 import io.harness.cache.MongoStore;
 import io.harness.context.ContextElementType;
 import io.harness.data.structure.CollectionUtils;
@@ -1613,27 +1614,30 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
 
     // Doing this check here so that workflow is already fetched from databae.
     preDeploymentChecks.checkIfWorkflowUsingRestrictedFeatures(workflow);
-    PreDeploymentChecker deploymentFreezeChecker = new DeploymentFreezeChecker(governanceConfigService,
-        new DeploymentCtx(
-            appId, isNotEmpty(envId) ? Collections.singletonList(envId) : Collections.emptyList(), resolvedServiceIds),
-        environmentService, featureFlagService);
 
-    // Check deployment freeze conditions for both direct workflow or pipeline executions
-    // Freeze can be override only for manual deployments, trigger based deployments are rejected when freeze active
-    boolean canOverrideFreeze = false;
-    if (featureFlagService.isEnabled(NEW_DEPLOYMENT_FREEZE, accountId)) {
-      if (isNotEmpty(pipelineExecutionId)) {
-        WorkflowExecution pipelineExecution = wingsPersistence.createQuery(WorkflowExecution.class)
-                                                  .project(WorkflowExecutionKeys.canOverrideFreeze, true)
-                                                  .filter(WorkflowExecutionKeys.uuid, pipelineExecutionId)
-                                                  .get();
-        canOverrideFreeze = pipelineExecution.isCanOverrideFreeze();
-      } else {
-        canOverrideFreeze = user != null && checkIfOverrideFreeze();
+    if (!executionArgs.isContinueRunningPipelinesDuringMigration()) {
+      PreDeploymentChecker deploymentFreezeChecker = new DeploymentFreezeChecker(governanceConfigService,
+          new DeploymentCtx(appId, isNotEmpty(envId) ? Collections.singletonList(envId) : Collections.emptyList(),
+              resolvedServiceIds),
+          environmentService, featureFlagService);
+
+      // Check deployment freeze conditions for both direct workflow or pipeline executions
+      // Freeze can be override only for manual deployments, trigger based deployments are rejected when freeze active
+      boolean canOverrideFreeze = false;
+      if (featureFlagService.isEnabled(NEW_DEPLOYMENT_FREEZE, accountId)) {
+        if (isNotEmpty(pipelineExecutionId)) {
+          WorkflowExecution pipelineExecution = wingsPersistence.createQuery(WorkflowExecution.class)
+                                                    .project(WorkflowExecutionKeys.canOverrideFreeze, true)
+                                                    .filter(WorkflowExecutionKeys.uuid, pipelineExecutionId)
+                                                    .get();
+          canOverrideFreeze = pipelineExecution.isCanOverrideFreeze();
+        } else {
+          canOverrideFreeze = user != null && checkIfOverrideFreeze();
+        }
       }
-    }
-    if (!canOverrideFreeze) {
-      deploymentFreezeChecker.check(accountId);
+      if (!canOverrideFreeze) {
+        deploymentFreezeChecker.check(accountId);
+      }
     }
 
     checkPreDeploymentConditions(accountId, appId);
@@ -1802,6 +1806,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
                 .data(CgPipelineStartPayload.builder()
                           .application(ApplicationEventData.builder().id(app.getAppId()).name(app.getName()).build())
                           .executionId(execution.getUuid())
+                          .pipelineExecution(PipelineExecData.builder().id(execution.getUuid()).build())
                           .services(isEmpty(execution.getServiceIds())
                                   ? Collections.emptyList()
                                   : execution.getServiceIds()
@@ -3080,13 +3085,15 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
     // Doing this check here so that workflow is already fetched from database.
     preDeploymentChecks.checkIfWorkflowUsingRestrictedFeatures(workflow);
 
-    PreDeploymentChecker deploymentFreezeChecker = new DeploymentFreezeChecker(governanceConfigService,
-        new DeploymentCtx(appId, Collections.singletonList(envId), getWorkflowServiceIds(workflow)), environmentService,
-        featureFlagService);
-    User user = UserThreadLocal.get();
-    boolean canOverrideFreeze = user != null && checkIfOverrideFreeze();
-    if (!canOverrideFreeze) {
-      deploymentFreezeChecker.check(accountId);
+    if (!featureFlagService.isEnabled(FeatureName.FREEZE_DURING_MIGRATION, accountId)) {
+      PreDeploymentChecker deploymentFreezeChecker = new DeploymentFreezeChecker(governanceConfigService,
+          new DeploymentCtx(appId, Collections.singletonList(envId), getWorkflowServiceIds(workflow)),
+          environmentService, featureFlagService);
+      User user = UserThreadLocal.get();
+      boolean canOverrideFreeze = user != null && checkIfOverrideFreeze();
+      if (!canOverrideFreeze) {
+        deploymentFreezeChecker.check(accountId);
+      }
     }
 
     // Not including instance limit and deployment limit check as it is a emergency rollback

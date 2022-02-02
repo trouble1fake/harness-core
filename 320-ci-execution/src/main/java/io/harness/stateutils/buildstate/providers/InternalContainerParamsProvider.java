@@ -18,6 +18,7 @@ import static io.harness.common.CIExecutionConstants.HARNESS_ORG_ID_VARIABLE;
 import static io.harness.common.CIExecutionConstants.HARNESS_PIPELINE_ID_VARIABLE;
 import static io.harness.common.CIExecutionConstants.HARNESS_PROJECT_ID_VARIABLE;
 import static io.harness.common.CIExecutionConstants.HARNESS_STAGE_ID_VARIABLE;
+import static io.harness.common.CIExecutionConstants.HARNESS_STEP_ID_VARIABLE;
 import static io.harness.common.CIExecutionConstants.HARNESS_WORKSPACE;
 import static io.harness.common.CIExecutionConstants.LITE_ENGINE_CONTAINER_CPU;
 import static io.harness.common.CIExecutionConstants.LITE_ENGINE_CONTAINER_MEM;
@@ -115,6 +116,7 @@ public class InternalContainerParamsProvider {
       K8PodDetails k8PodDetails, String workDirPath, String logPrefix, Ambiance ambiance) {
     Map<String, String> envVars = new HashMap<>();
     final String accountID = AmbianceUtils.getAccountId(ambiance);
+    final String stepIdentifier = AmbianceUtils.obtainStepIdentifier(ambiance);
     final String orgID = AmbianceUtils.getOrgIdentifier(ambiance);
     final String projectID = AmbianceUtils.getProjectIdentifier(ambiance);
     final String pipelineID = ambiance.getMetadata().getPipelineIdentifier();
@@ -136,6 +138,7 @@ public class InternalContainerParamsProvider {
     envVars.put(HARNESS_PIPELINE_ID_VARIABLE, pipelineID);
     envVars.put(HARNESS_BUILD_ID_VARIABLE, String.valueOf(buildNumber));
     envVars.put(HARNESS_STAGE_ID_VARIABLE, stageID);
+    envVars.put(HARNESS_STEP_ID_VARIABLE, stepIdentifier);
     envVars.put(HARNESS_LOG_PREFIX_VARIABLE, logPrefix);
     return envVars;
   }

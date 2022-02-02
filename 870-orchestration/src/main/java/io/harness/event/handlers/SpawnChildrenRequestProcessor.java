@@ -72,8 +72,8 @@ public class SpawnChildrenRequestProcessor implements SdkResponseProcessor {
         Ambiance clonedAmbiance = AmbianceUtils.cloneForChild(ambiance, PmsLevelUtils.buildLevelFromNode(uuid, node));
         boolean skipUnresolvedExpressionsCheck = node.isSkipUnresolvedExpressionsCheck();
         log.info("Starting to Resolve step parameters and Inputs");
-        Object resolvedStepParameters = pmsEngineExpressionService.resolve(
-            clonedAmbiance, node.getStepParameters(), skipUnresolvedExpressionsCheck);
+        Object resolvedStepParameters =
+            pmsEngineExpressionService.resolve(ambiance, node.getStepParameters(), skipUnresolvedExpressionsCheck);
         NodeExecution childNodeExecution =
             NodeExecution.builder()
                 .uuid(uuid)

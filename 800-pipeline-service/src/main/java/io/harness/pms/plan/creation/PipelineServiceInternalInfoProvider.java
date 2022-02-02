@@ -17,7 +17,7 @@ import io.harness.filters.ParallelFilterJsonCreator;
 import io.harness.filters.PipelineFilterJsonCreator;
 import io.harness.filters.StepGroupPmsFilterJsonCreator;
 import io.harness.plancreator.approval.ApprovalStageFilterJsonCreator;
-import io.harness.plancreator.approval.ApprovalStagePlanCreator;
+import io.harness.plancreator.approval.ApprovalStagePlanCreatorV2;
 import io.harness.plancreator.execution.ExecutionPmsPlanCreator;
 import io.harness.plancreator.pipeline.NGPipelinePlanCreator;
 import io.harness.plancreator.stages.StagesPlanCreator;
@@ -75,7 +75,7 @@ public class PipelineServiceInternalInfoProvider implements PipelineServiceInfoP
     planCreators.add(new JiraCreateStepPlanCreator());
     planCreators.add(new JiraUpdateStepPlanCreator());
     planCreators.add(new ShellScriptStepPlanCreator());
-    planCreators.add(new ApprovalStagePlanCreator());
+    planCreators.add(new ApprovalStagePlanCreatorV2());
     planCreators.add(new ExecutionPmsPlanCreator());
     planCreators.add(new StepGroupPMSPlanCreator());
     planCreators.add(new ResourceConstraintStepPlanCreator());
