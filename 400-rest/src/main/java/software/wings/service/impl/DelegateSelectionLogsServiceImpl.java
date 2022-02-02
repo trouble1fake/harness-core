@@ -204,6 +204,26 @@ public class DelegateSelectionLogsServiceImpl implements DelegateSelectionLogsSe
   }
 
   @Override
+  public Map<String, List<DelegateSelectionLogParams>> fetchTaskSelectionLogsGroupByAssessment(
+      String accountId, String taskId) {
+    List<DelegateSelectionLog> delegateSelectionLogsList = persistence.createQuery(DelegateSelectionLog.class)
+                                                               .filter(DelegateSelectionLogKeys.accountId, accountId)
+                                                               .filter(DelegateSelectionLogKeys.taskId, taskId)
+                                                               .asList();
+    Map<String, List<DelegateSelectionLog>> logs =
+        delegateSelectionLogsList.stream().collect(Collectors.groupingBy(DelegateSelectionLog::getConclusion));
+    Map<String, List<DelegateSelectionLogParams>> delegateSelectionLogs = new HashMap<>();
+    for (String assessment : selectionLogOrder) {
+      if (logs.containsKey(assessment)) {
+        List<DelegateSelectionLogParams> delegateSelectionLogParams =
+            logs.get(assessment).stream().map(this::buildSelectionLogParams).collect(Collectors.toList());
+        delegateSelectionLogs.put(assessment, delegateSelectionLogParams);
+      }
+    }
+    return delegateSelectionLogs;
+  }
+
+  @Override
   public DelegateSelectionLogResponse fetchTaskSelectionLogsData(String accountId, String taskId) {
     List<DelegateSelectionLogParams> delegateSelectionLogParams = fetchTaskSelectionLogs(accountId, taskId);
     DelegateSelectionLogTaskMetadata taskMetadata = persistence.createQuery(DelegateSelectionLogTaskMetadata.class)

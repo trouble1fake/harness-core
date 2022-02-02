@@ -289,7 +289,7 @@ public class DelegateQueueTask implements Runnable {
           continue;
         }
         delegateTask.setBroadcastToDelegateIds(broadcastToDelegates);
-        if (isNotEmpty(broadcastToDelegates)) {
+        if (isNotEmpty(broadcastToDelegates) && delegateTask.isSelectionLogsTrackingEnabled()) {
           delegateSelectionLogsService.logBroadcastToDelegate(
               Sets.newHashSet(broadcastToDelegates), delegateTask.getAccountId(), delegateTask.getUuid());
         }

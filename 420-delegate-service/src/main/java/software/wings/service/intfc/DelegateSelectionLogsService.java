@@ -37,6 +37,8 @@ public interface DelegateSelectionLogsService {
 
   List<DelegateSelectionLogParams> fetchTaskSelectionLogs(String accountId, String taskId);
 
+  Map<String,List<DelegateSelectionLogParams>> fetchTaskSelectionLogsGroupByAssessment(String accountId, String taskId);
+
   DelegateSelectionLogResponse fetchTaskSelectionLogsData(String accountId, String taskId);
 
   Optional<DelegateSelectionLogParams> fetchSelectedDelegateForTask(String accountId, String taskId);

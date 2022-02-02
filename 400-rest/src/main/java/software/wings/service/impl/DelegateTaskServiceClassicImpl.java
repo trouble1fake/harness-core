@@ -35,10 +35,9 @@ import static io.harness.metrics.impl.DelegateMetricsServiceImpl.DELEGATE_TASK_N
 import static io.harness.mongo.MongoUtils.setUnset;
 import static io.harness.persistence.HQuery.excludeAuthority;
 
+import static software.wings.app.ManagerCacheRegistrar.SECRET_TOKEN_CACHE;
 import static software.wings.service.impl.DelegateSelectionLogsServiceImpl.NO_ELIGIBLE_DELEGATES;
 import static software.wings.service.impl.DelegateSelectionLogsServiceImpl.TASK_VALIDATION_FAILED;
-
-import static software.wings.app.ManagerCacheRegistrar.SECRET_TOKEN_CACHE;
 
 import static java.lang.String.format;
 import static java.lang.String.join;
@@ -197,6 +196,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import javax.cache.Cache;
 import javax.validation.executable.ValidateOnExecution;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -220,6 +220,8 @@ public class DelegateTaskServiceClassicImpl implements DelegateTaskServiceClassi
   private static final String STREAM_DELEGATE = "/stream/delegate/";
   public static final String TASK_SELECTORS = "Task Selectors";
   public static final String TASK_CATEGORY_MAP = "Task Category Map";
+  private static final int SECRET_CACHE_TTL_MINUTES = 3;
+  private static final int SECRET_CACHE_MAXIMUM_SIZE = 1000;
   private static final long CAPABILITIES_CHECK_TASK_TIMEOUT_IN_MINUTES = 1L;
 
   private static final long VALIDATION_TIMEOUT = TimeUnit.MINUTES.toMillis(2);
@@ -266,10 +268,11 @@ public class DelegateTaskServiceClassicImpl implements DelegateTaskServiceClassi
   @Inject private DelegateSetupService delegateSetupService;
   @Inject private AuditHelper auditHelper;
   @Inject private DelegateMetricsService delegateMetricsService;
-
+  @Inject @Named(SECRET_TOKEN_CACHE) Cache<String, EncryptedRecordData> secretsCache;
   @Inject @Getter private Subject<DelegateObserver> subject = new Subject<>();
 
   private static final SecureRandom random = new SecureRandom();
+  private HarnessCacheManager harnessCacheManager;
 
   private Supplier<Long> taskCountCache = Suppliers.memoizeWithExpiration(this::fetchTaskCount, 1, TimeUnit.MINUTES);
   @Inject @Getter private Subject<DelegateTaskStatusObserver> delegateTaskStatusObserverSubject;
@@ -447,7 +450,9 @@ public class DelegateTaskServiceClassicImpl implements DelegateTaskServiceClassi
 
         if (eligibleListOfDelegates.isEmpty()) {
           addToTaskActivityLog(task, NO_ELIGIBLE_DELEGATES);
-          delegateSelectionLogsService.logNoEligibleDelegatesToExecuteTask(task.getAccountId(), task.getUuid());
+          if (task.isSelectionLogsTrackingEnabled()) {
+            delegateSelectionLogsService.logNoEligibleDelegatesToExecuteTask(task.getAccountId(), task.getUuid());
+          }
           delegateMetricsService.recordDelegateTaskMetrics(task, DELEGATE_TASK_NO_ELIGIBLE_DELEGATES);
           throw new NoEligibleDelegatesInAccountException();
         }
@@ -456,8 +461,10 @@ public class DelegateTaskServiceClassicImpl implements DelegateTaskServiceClassi
         task.setBroadcastToDelegateIds(
             Lists.newArrayList(getDelegateIdForFirstBroadcast(task, eligibleListOfDelegates)));
 
-        delegateSelectionLogsService.logEligibleDelegatesToExecuteTask(
-            Sets.newHashSet(eligibleListOfDelegates), task.getAccountId(), task.getUuid());
+        if (task.isSelectionLogsTrackingEnabled()) {
+          delegateSelectionLogsService.logEligibleDelegatesToExecuteTask(
+              Sets.newHashSet(eligibleListOfDelegates), task.getAccountId(), task.getUuid());
+        }
         // save eligible delegate ids as part of task (will be used for rebroadcasting)
         task.setEligibleToExecuteDelegateIds(new LinkedList<>(eligibleListOfDelegates));
         log.info("Assignable/eligible delegates to execute task {} are {}.", task.getUuid(),
@@ -469,7 +476,6 @@ public class DelegateTaskServiceClassicImpl implements DelegateTaskServiceClassi
 
         if (!task.getData().isAsync() && connectedEligibleDelegates.isEmpty()) {
           addToTaskActivityLog(task, "No Connected eligible delegates to execute sync task");
-          delegateSelectionLogsService.save(batch);
           if (assignDelegateService.noInstalledDelegates(task.getAccountId())) {
             throw new NoInstalledDelegatesException();
           } else {
@@ -493,8 +499,10 @@ public class DelegateTaskServiceClassicImpl implements DelegateTaskServiceClassi
           task.setNextBroadcast(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(5));
         }
         persistence.save(task);
-        delegateSelectionLogsService.logBroadcastToDelegate(
-            Sets.newHashSet(task.getBroadcastToDelegateIds()), task.getAccountId(), task.getUuid());
+        if (task.isSelectionLogsTrackingEnabled()) {
+          delegateSelectionLogsService.logBroadcastToDelegate(
+              Sets.newHashSet(task.getBroadcastToDelegateIds()), task.getAccountId(), task.getUuid());
+        }
         delegateMetricsService.recordDelegateTaskMetrics(task, DELEGATE_TASK_CREATION);
         log.info("Task {} marked as {} with first attempt broadcast to {}", task.getUuid(), taskStatus,
             task.getBroadcastToDelegateIds());
@@ -872,8 +880,10 @@ public class DelegateTaskServiceClassicImpl implements DelegateTaskServiceClassi
         return;
       }
       String capabilitiesFailErrorMessage = TASK_VALIDATION_FAILED + generateCapabilitiesMessage(delegateTask);
-      delegateSelectionLogsService.logTaskValidationFailed(
-          delegateTask.getAccountId(), delegateTask.getUuid(), capabilitiesFailErrorMessage);
+      if (delegateTask.isSelectionLogsTrackingEnabled()) {
+        delegateSelectionLogsService.logTaskValidationFailed(
+            delegateTask.getAccountId(), delegateTask.getUuid(), capabilitiesFailErrorMessage);
+      }
 
       String errorMessage = generateValidationError(delegateTask, areClientToolsInstalled);
       log.info(errorMessage);
@@ -1034,7 +1044,8 @@ public class DelegateTaskServiceClassicImpl implements DelegateTaskServiceClassi
           new ManagerPreExecutionExpressionEvaluator(mode, serviceTemplateService, configService,
               artifactCollectionUtils, featureFlagService, managerDecryptionService, secretManager,
               delegateTask.getAccountId(), delegateTask.getWorkflowExecutionId(),
-              delegateTask.getData().getExpressionFunctorToken(), ngSecretService, delegateTask.getSetupAbstractions());
+              delegateTask.getData().getExpressionFunctorToken(), ngSecretService, delegateTask.getSetupAbstractions(),
+              secretsCache);
 
       List<ExecutionCapability> executionCapabilityList = emptyList();
       if (isNotEmpty(delegateTask.getExecutionCapabilities())) {
@@ -1226,7 +1237,9 @@ public class DelegateTaskServiceClassicImpl implements DelegateTaskServiceClassi
       }
       task.getData().setParameters(delegateTask.getData().getParameters());
 
-      delegateSelectionLogsService.logTaskAssigned(task.getAccountId(), delegateId, taskId);
+      if (task.isSelectionLogsTrackingEnabled()) {
+        delegateSelectionLogsService.logTaskAssigned(task.getAccountId(), delegateId, taskId);
+      }
 
       delegateTaskStatusObserverSubject.fireInform(DelegateTaskStatusObserver::onTaskAssigned,
           delegateTask.getAccountId(), taskId, delegateId, task.getData().getTimeout());

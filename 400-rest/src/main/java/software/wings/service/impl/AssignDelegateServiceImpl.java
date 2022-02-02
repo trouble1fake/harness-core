@@ -850,7 +850,10 @@ public class AssignDelegateServiceImpl implements AssignDelegateService, Delegat
                                         && canAssignTask(delegate.getUuid(), task, nonAssignableDelegates))
                                 .map(Delegate::getUuid)
                                 .collect(Collectors.toList());
-      delegateSelectionLogsService.logNonSelectedDelegates(task.getAccountId(), task.getUuid(), nonAssignableDelegates);
+      if (task.isSelectionLogsTrackingEnabled()) {
+        delegateSelectionLogsService.logNonSelectedDelegates(
+            task.getAccountId(), task.getUuid(), nonAssignableDelegates);
+      }
 
       List<String> nonAssignables =
           nonAssignableDelegates.keySet()
