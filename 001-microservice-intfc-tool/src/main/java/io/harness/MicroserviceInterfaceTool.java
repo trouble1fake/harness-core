@@ -103,7 +103,7 @@ class MicroserviceInterfaceTool {
     Set<Class<? extends KryoRegistrar>> registrars = getAllImplementingClasses();
     for (Class<? extends KryoRegistrar> registrar : registrars) {
       if (EmptyPredicate.isEmpty(kryoDependencies)
-          || kryoDependencies.stream().anyMatch(dependency -> registrar.getSimpleName().equals(dependency))) {
+        || kryoDependencies.stream().anyMatch(dependency -> registrar.getCanonicalName().endsWith(dependency))) {
         log(registrar.getSimpleName());
         registrar.newInstance().register(kryo);
       }
