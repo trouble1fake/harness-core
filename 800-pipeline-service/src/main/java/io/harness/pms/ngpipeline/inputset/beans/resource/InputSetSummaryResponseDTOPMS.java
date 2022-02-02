@@ -12,6 +12,7 @@ import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.gitsync.sdk.EntityGitDetails;
 import io.harness.gitsync.sdk.EntityValidityDetails;
+import io.harness.gitsync.sdk.WithEntityGitDetails;
 import io.harness.pms.inputset.InputSetErrorWrapperDTOPMS;
 import io.harness.pms.ngpipeline.inputset.beans.entity.InputSetEntityType;
 
@@ -32,7 +33,7 @@ import lombok.Value;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @ApiModel("InputSetSummaryResponse")
 @Schema(name = "InputSetSummaryResponse", description = "This is the view of the Input Set Summary.")
-public class InputSetSummaryResponseDTOPMS {
+public class InputSetSummaryResponseDTOPMS implements WithEntityGitDetails {
   String identifier;
   String name;
   String pipelineIdentifier;

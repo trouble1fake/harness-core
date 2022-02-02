@@ -31,6 +31,8 @@ import io.harness.gitsync.interceptor.GitEntityCreateInfoDTO;
 import io.harness.gitsync.interceptor.GitEntityDeleteInfoDTO;
 import io.harness.gitsync.interceptor.GitEntityFindInfoDTO;
 import io.harness.gitsync.interceptor.GitEntityUpdateInfoDTO;
+import io.harness.gitsync.sdk.GitDetailsMetadataHelper;
+import io.harness.gitsync.sdk.WithEntityGitDetails;
 import io.harness.ng.beans.PageResponse;
 import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
@@ -68,10 +70,12 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.BeanParam;
@@ -90,6 +94,7 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -125,6 +130,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 public class InputSetResourcePMS {
   private final PMSInputSetService pmsInputSetService;
   private final ValidateAndMergeHelper validateAndMergeHelper;
+  private final GitDetailsMetadataHelper gitDetailsMetadataHelper;
 
   @GET
   @Path("{inputSetIdentifier}")
@@ -507,6 +513,13 @@ public class InputSetResourcePMS {
               return PMSInputSetElementMapper.toInputSetSummaryResponseDTOPMS(
                   inputSetEntity, inputSetErrorWrapperDTOPMS, overlaySetErrorDetails);
             });
+    List<WithEntityGitDetails> inputSetSummaryResponseDTOPMS = new ArrayList<>(inputSetList.toList());
+    gitDetailsMetadataHelper.addRepoNameToListOfGitDetails(
+        inputSetSummaryResponseDTOPMS, accountId, orgIdentifier, projectIdentifier);
+    Page<InputSetSummaryResponseDTOPMS> inputSetSummaryResponseDTOPMS1 =
+        new PageImpl<>(inputSetSummaryResponseDTOPMS.stream()
+                           .map(e -> (InputSetSummaryResponseDTOPMS) e)
+                           .collect(Collectors.toList()));
     return ResponseDTO.newResponse(getNGPageResponse(inputSetList));
   }
 
