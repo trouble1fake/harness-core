@@ -131,7 +131,6 @@ public class K8sPodInfoTasklet implements Tasklet {
       return false;
     }
     clusterRecordCG = cloudToHarnessMappingService.getClusterRecord(clusterId);
-    log.info("clusterRecordCG: {}, clusterId: {}", clusterRecordCG, clusterId);
     return clusterRecordCG != null;
   }
 
@@ -141,7 +140,6 @@ public class K8sPodInfoTasklet implements Tasklet {
       return false;
     }
     clusterRecordNG = clusterRecordServiceNG.get(clusterId);
-    log.info("clusterRecordNG: {}, clusterId: {}", clusterRecordNG, clusterId);
     return clusterRecordNG != null;
   }
 
@@ -152,7 +150,6 @@ public class K8sPodInfoTasklet implements Tasklet {
     String clusterId = podInfo.getClusterId();
     HarnessServiceInfo harnessServiceInfo = null;
     HarnessServiceInfoNG harnessServiceInfoNG = null;
-    log.info("podinfo: {}, clusterId: {}", podInfo, clusterId);
     if (!clusterDataGenerationValidator.shouldGenerateClusterData(accountId, clusterId)) {
       return InstanceInfo.builder().metaData(Collections.emptyMap()).build();
     }
@@ -219,7 +216,6 @@ public class K8sPodInfoTasklet implements Tasklet {
     }
 
     Map<String, String> labelsMap = podInfo.getLabelsMap();
-    log.info("labelsMap: {}", labelsMap);
     // Check in events db clusterrecords table vs harness db clusterrecords table and then decide which one to call.
     if (isCurrentGenCluster(clusterId)) {
       harnessServiceInfo = harnessServiceInfoFetcher
@@ -229,13 +225,10 @@ public class K8sPodInfoTasklet implements Tasklet {
     } else {
       // NG Cluster
       Optional<HarnessServiceInfoNG> harnessServiceInfoNG1;
-      log.info("accountId: {}, podInfo.getPodName(): {}, podInfo.getNamespace(): {}", accountId, podInfo.getPodName(),
-          podInfo.getNamespace());
       harnessServiceInfoNG1 = harnessServiceInfoFetcherNG.fetchHarnessServiceInfoNG(
           accountId, podInfo.getNamespace(), podInfo.getPodName(), labelsMap);
       if (harnessServiceInfoNG1.isPresent()) {
         harnessServiceInfoNG = harnessServiceInfoNG1.get();
-        log.info("harnessServiceInfoNG: {}", harnessServiceInfoNG);
       }
     }
 
