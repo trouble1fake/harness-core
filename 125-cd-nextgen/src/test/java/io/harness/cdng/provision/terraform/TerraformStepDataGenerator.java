@@ -7,6 +7,8 @@
 
 package io.harness.cdng.provision.terraform;
 
+import io.harness.cdng.manifest.yaml.ArtifactFile;
+import io.harness.cdng.manifest.yaml.ArtifactoryFromYaml;
 import io.harness.cdng.manifest.yaml.BitbucketStore;
 import io.harness.cdng.manifest.yaml.GitLabStore;
 import io.harness.cdng.manifest.yaml.GitStore;
@@ -18,6 +20,7 @@ import io.harness.delegate.beans.storeconfig.FetchType;
 import io.harness.pms.yaml.ParameterField;
 
 import com.google.common.collect.ImmutableMap;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import lombok.Builder;
@@ -38,9 +41,19 @@ public class TerraformStepDataGenerator {
   @Builder
   public static class ArtifactoryStoreConfig {
     private String repositoryPath;
-    private String artifactoryName;
-    private String version;
     private String connectorRef;
+    private List<ArtifactoryFromYaml> artifacts;
+  }
+
+  public static List<ArtifactoryFromYaml> generateArtifacts() {
+    ArtifactFile artifact = new ArtifactFile();
+    artifact.setName(ParameterField.createValueField("artifact.tf"));
+    artifact.setPath(ParameterField.createValueField("/"));
+    ArtifactoryFromYaml artifactFromYaml = new ArtifactoryFromYaml();
+    artifactFromYaml.setArtifactFile(artifact);
+    List<ArtifactoryFromYaml> artifactoryFromYamlList = new ArrayList<>();
+    artifactoryFromYamlList.add(artifactFromYaml);
+    return artifactoryFromYamlList;
   }
 
   public static TerraformPlanStepParameters generateStepPlan(StoreConfigType storeTypeForConfig,
@@ -105,8 +118,6 @@ public class TerraformStepDataGenerator {
         storeConfigFiles =
             io.harness.cdng.manifest.yaml.ArtifactoryStoreConfig.builder()
                 .repositoryPath(ParameterField.createValueField(artifactoryStoreConfigFiles.repositoryPath))
-                .artifactName(ParameterField.createValueField(artifactoryStoreConfigFiles.artifactoryName))
-                .version(ParameterField.createValueField(artifactoryStoreConfigFiles.version))
                 .connectorRef(ParameterField.createValueField(artifactoryStoreConfigFiles.connectorRef))
                 .build();
         configFilesWrapper.setStore(StoreConfigWrapper.builder().spec(storeConfigFiles).type(storeType).build());
@@ -114,9 +125,8 @@ public class TerraformStepDataGenerator {
         ArtifactoryStoreConfig artifactoryStoreVarFiles = (ArtifactoryStoreConfig) varStoreConfigFilesParam;
         storeVarFiles = io.harness.cdng.manifest.yaml.ArtifactoryStoreConfig.builder()
                             .repositoryPath(ParameterField.createValueField(artifactoryStoreVarFiles.repositoryPath))
-                            .artifactName(ParameterField.createValueField(artifactoryStoreVarFiles.artifactoryName))
-                            .version(ParameterField.createValueField(artifactoryStoreVarFiles.version))
                             .connectorRef(ParameterField.createValueField(artifactoryStoreVarFiles.connectorRef))
+                            .artifacts(artifactoryStoreVarFiles.artifacts)
                             .build();
         remoteTerraformVarFileSpec.setStore(StoreConfigWrapper.builder().spec(storeVarFiles).type(storeType).build());
         break;
@@ -218,9 +228,8 @@ public class TerraformStepDataGenerator {
         ArtifactoryStoreConfig artifactoryStoreVarFiles = (ArtifactoryStoreConfig) varStoreConfigFilesParam;
         storeVarFiles = io.harness.cdng.manifest.yaml.ArtifactoryStoreConfig.builder()
                             .repositoryPath(ParameterField.createValueField(artifactoryStoreVarFiles.repositoryPath))
-                            .artifactName(ParameterField.createValueField(artifactoryStoreVarFiles.artifactoryName))
-                            .version(ParameterField.createValueField(artifactoryStoreVarFiles.version))
                             .connectorRef(ParameterField.createValueField(artifactoryStoreVarFiles.connectorRef))
+                            .artifacts(artifactoryStoreVarFiles.artifacts)
                             .build();
         remoteTerraformVarFileSpec.setStore(StoreConfigWrapper.builder().spec(storeVarFiles).type(storeType).build());
         break;
@@ -276,9 +285,8 @@ public class TerraformStepDataGenerator {
         storeConfigFiles =
             io.harness.cdng.manifest.yaml.ArtifactoryStoreConfig.builder()
                 .repositoryPath(ParameterField.createValueField(artifactoryStoreConfigFiles.repositoryPath))
-                .artifactName(ParameterField.createValueField(artifactoryStoreConfigFiles.artifactoryName))
-                .version(ParameterField.createValueField(artifactoryStoreConfigFiles.version))
                 .connectorRef(ParameterField.createValueField(artifactoryStoreConfigFiles.connectorRef))
+                .artifacts(artifactoryStoreConfigFiles.artifacts)
                 .build();
         configFilesWrapper.setStore(StoreConfigWrapper.builder().spec(storeConfigFiles).type(storeType).build());
         break;

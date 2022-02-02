@@ -40,6 +40,7 @@ import io.harness.connector.ConnectorInfoDTO;
 import io.harness.connector.validator.scmValidators.GitConfigAuthenticationInfoHelper;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.beans.FileBucket;
+import io.harness.delegate.beans.artifactory.ArtifactoryFile;
 import io.harness.delegate.beans.connector.scm.GitConnectionType;
 import io.harness.delegate.beans.connector.scm.ScmConnector;
 import io.harness.delegate.beans.connector.scm.adapter.ScmConnectorMapper;
@@ -90,6 +91,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.mongodb.morphia.query.Query;
@@ -238,14 +240,20 @@ public class TerraformStepHelper {
         secretManagerClientService.getEncryptionDetails(basicNGAccessObject, connectorDTO.getConnectorConfig());
 
     return ArtifactoryStoreDelegateConfig.builder()
-        .artifactName(artifactoryStoreConfig.getArtifactName().getValue())
         .repositoryPath(artifactoryStoreConfig.getRepositoryPath().getValue())
-        .version(artifactoryStoreConfig.getVersion().getValue())
         .identifier(identifier)
         .manifestStoreType(store.getKind())
         .connectorDTO(connectorDTO)
         .encryptedDataDetails(encryptedDataDetails)
         .succeedIfFileNotFound(false)
+        .artifacts(artifactoryStoreConfig.getArtifacts()
+                       .stream()
+                       .map(a
+                           -> ArtifactoryFile.builder()
+                                  .name(a.getArtifactFile().getName().getValue())
+                                  .path(a.getArtifactFile().getPath().getValue())
+                                  .build())
+                       .collect(Collectors.toList()))
         .build();
   }
 

@@ -10,8 +10,10 @@ package io.harness.delegate.beans.storeconfig;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.delegate.beans.artifactory.ArtifactoryFile;
 import io.harness.delegate.task.filestore.FileStoreFetchFilesConfig;
 
+import java.util.List;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import lombok.experimental.SuperBuilder;
@@ -21,9 +23,8 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @OwnedBy(CDP)
 public class ArtifactoryStoreDelegateConfig extends FileStoreFetchFilesConfig {
-  String artifactName;
   String repositoryPath;
-  String version;
+  List<ArtifactoryFile> artifacts;
 
   @Override
   public StoreDelegateConfigType getType() {

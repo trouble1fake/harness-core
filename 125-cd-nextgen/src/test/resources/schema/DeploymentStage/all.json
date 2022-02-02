@@ -312,6 +312,22 @@
       "discriminator": "type",
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
+    "ArtifactFile": {
+      "type": "object",
+      "required": [
+        "name",
+        "path"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
     "ArtifactListConfig": {
       "type": "object",
       "properties": {
@@ -351,6 +367,18 @@
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
+    "ArtifactoryFromYaml": {
+      "type": "object",
+      "required": [
+        "artifactFile"
+      ],
+      "properties": {
+        "artifactFile": {
+          "$ref": "#/definitions/ArtifactFile"
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
     "ArtifactoryStoreConfig": {
       "allOf": [
         {
@@ -359,14 +387,16 @@
         {
           "type": "object",
           "required": [
-            "artifactName",
+            "artifacts",
             "connectorRef",
-            "repositoryPath",
-            "version"
+            "repositoryPath"
           ],
           "properties": {
-            "artifactName": {
-              "type": "string"
+            "artifacts": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ArtifactoryFromYaml"
+              }
             },
             "connectorRef": {
               "type": "string"
@@ -375,9 +405,6 @@
               "type": "string"
             },
             "repositoryPath": {
-              "type": "string"
-            },
-            "version": {
               "type": "string"
             }
           }

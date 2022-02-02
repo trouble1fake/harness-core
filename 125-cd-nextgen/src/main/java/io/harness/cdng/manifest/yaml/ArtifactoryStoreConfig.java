@@ -21,9 +21,11 @@ import io.harness.pms.yaml.YAMLFieldNameConstants;
 import io.harness.walktree.visitor.SimpleVisitorHelper;
 import io.harness.walktree.visitor.Visitable;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import io.swagger.annotations.ApiModelProperty;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.validation.constraints.NotNull;
 import lombok.Builder;
@@ -49,14 +51,7 @@ public class ArtifactoryStoreConfig implements StoreConfig, Visitable, WithConne
   @Wither
   @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
   private ParameterField<String> repositoryPath;
-  @NotNull
-  @Wither
-  @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
-  private ParameterField<String> artifactName;
-  @NotNull
-  @Wither
-  @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
-  private ParameterField<String> version;
+  @NotNull @Wither @JsonProperty("artifacts") List<ArtifactoryFromYaml> artifacts;
 
   @Override
   public String getKind() {
@@ -67,9 +62,8 @@ public class ArtifactoryStoreConfig implements StoreConfig, Visitable, WithConne
   public StoreConfig cloneInternal() {
     return ArtifactoryStoreConfig.builder()
         .connectorRef(connectorRef)
-        .artifactName(artifactName)
         .repositoryPath(repositoryPath)
-        .version(version)
+        .artifacts(artifacts)
         .build();
   }
 
@@ -92,14 +86,11 @@ public class ArtifactoryStoreConfig implements StoreConfig, Visitable, WithConne
     if (!ParameterField.isNull(ArtifactoryStore.getConnectorRef())) {
       resultantArtifactoryStore = resultantArtifactoryStore.withConnectorRef(ArtifactoryStore.getConnectorRef());
     }
-    if (!ParameterField.isNull(ArtifactoryStore.getArtifactName())) {
-      resultantArtifactoryStore = resultantArtifactoryStore.withArtifactName(ArtifactoryStore.getArtifactName());
-    }
     if (!ParameterField.isNull(ArtifactoryStore.getRepositoryPath())) {
       resultantArtifactoryStore = resultantArtifactoryStore.withRepositoryPath(ArtifactoryStore.getRepositoryPath());
     }
-    if (!ParameterField.isNull(ArtifactoryStore.getVersion())) {
-      resultantArtifactoryStore = resultantArtifactoryStore.withVersion(ArtifactoryStore.getVersion());
+    if (ArtifactoryStore.getArtifacts() != null) {
+      resultantArtifactoryStore = resultantArtifactoryStore.withArtifacts(ArtifactoryStore.getArtifacts());
     }
     return resultantArtifactoryStore;
   }

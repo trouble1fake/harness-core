@@ -286,10 +286,9 @@ public class TerraformStepHelperTest extends CategoryTest {
     Ambiance ambiance = getAmbiance();
     TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreVarFiles =
         TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
-            .artifactoryName("ArtifactoryName")
             .repositoryPath("RepositoryPath")
-            .version("Version")
             .connectorRef("ConnectorRef")
+            .artifacts(TerraformStepDataGenerator.generateArtifacts())
             .build();
 
     RemoteTerraformVarFileSpec remoteVarFiles =
@@ -329,8 +328,6 @@ public class TerraformStepHelperTest extends CategoryTest {
     RemoteTerraformVarFileInfo remoteTerraformVarFileInfo = (RemoteTerraformVarFileInfo) terraformVarFileInfo;
     ArtifactoryStoreDelegateConfig artifactoryStoreDelegateConfig =
         (ArtifactoryStoreDelegateConfig) remoteTerraformVarFileInfo.getFilestoreFetchFilesConfig();
-    assertThat(artifactoryStoreDelegateConfig.getArtifactName()).isEqualTo("ArtifactoryName");
-    assertThat(artifactoryStoreDelegateConfig.getVersion()).isEqualTo("Version");
     assertThat(artifactoryStoreDelegateConfig.getRepositoryPath()).isEqualTo("RepositoryPath");
     assertThat(artifactoryStoreDelegateConfig.getConnectorDTO().getName()).isEqualTo("connectorName");
     assertThat(artifactoryStoreDelegateConfig.getConnectorDTO().getConnectorConfig() instanceof ArtifactoryConnectorDTO)
@@ -346,17 +343,15 @@ public class TerraformStepHelperTest extends CategoryTest {
     // Create 3 var files with different stores at the same time
     TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreVarFilesA =
         TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
-            .artifactoryName("ArtifactoryName")
             .repositoryPath("RepositoryPath")
-            .version("Version")
             .connectorRef("ConnectorRef")
+            .artifacts(TerraformStepDataGenerator.generateArtifacts())
             .build();
     TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreVarFilesB =
         TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
-            .artifactoryName("ArtifactoryName2")
             .repositoryPath("RepositoryPath2")
-            .version("Version2")
             .connectorRef("ConnectorRef")
+            .artifacts(TerraformStepDataGenerator.generateArtifacts())
             .build();
     TerraformStepDataGenerator.GitStoreConfig gitStoreVarFiles =
         TerraformStepDataGenerator.GitStoreConfig.builder()
@@ -423,8 +418,6 @@ public class TerraformStepHelperTest extends CategoryTest {
     RemoteTerraformVarFileInfo remoteTerraformVarFileInfo = (RemoteTerraformVarFileInfo) terraformVarFileInfo;
     ArtifactoryStoreDelegateConfig artifactoryStoreDelegateConfig =
         (ArtifactoryStoreDelegateConfig) remoteTerraformVarFileInfo.getFilestoreFetchFilesConfig();
-    assertThat(artifactoryStoreDelegateConfig.getArtifactName()).isEqualTo("ArtifactoryName");
-    assertThat(artifactoryStoreDelegateConfig.getVersion()).isEqualTo("Version");
     assertThat(artifactoryStoreDelegateConfig.getRepositoryPath()).isEqualTo("RepositoryPath");
     assertThat(artifactoryStoreDelegateConfig.getConnectorDTO().getName()).isEqualTo("connectorName");
     assertThat(artifactoryStoreDelegateConfig.getConnectorDTO().getConnectorConfig() instanceof ArtifactoryConnectorDTO)
@@ -434,8 +427,6 @@ public class TerraformStepHelperTest extends CategoryTest {
     RemoteTerraformVarFileInfo remoteTerraformVarFileInfoB = (RemoteTerraformVarFileInfo) terraformVarFileInfo;
     ArtifactoryStoreDelegateConfig artifactoryStoreDelegateConfigB =
         (ArtifactoryStoreDelegateConfig) remoteTerraformVarFileInfoB.getFilestoreFetchFilesConfig();
-    assertThat(artifactoryStoreDelegateConfigB.getArtifactName()).isEqualTo("ArtifactoryName2");
-    assertThat(artifactoryStoreDelegateConfigB.getVersion()).isEqualTo("Version2");
     assertThat(artifactoryStoreDelegateConfigB.getRepositoryPath()).isEqualTo("RepositoryPath2");
     assertThat(artifactoryStoreDelegateConfigB.getConnectorDTO().getName()).isEqualTo("connectorName");
     assertThat(
@@ -549,10 +540,9 @@ public class TerraformStepHelperTest extends CategoryTest {
     Ambiance ambiance = getAmbiance();
     TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreVarFiles =
         TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
-            .artifactoryName("ArtifactoryName")
             .repositoryPath("RepositoryPath")
-            .version("Version")
             .connectorRef("ConnectorRef")
+            .artifacts(TerraformStepDataGenerator.generateArtifacts())
             .build();
 
     RemoteTerraformVarFileSpec remoteVarFiles =
@@ -593,8 +583,6 @@ public class TerraformStepHelperTest extends CategoryTest {
             .isEqualTo("TF_VAR_FILES_1");
         ArtifactoryStoreDelegateConfig artifactoryStoreDelegateConfig =
             (ArtifactoryStoreDelegateConfig) remoteTerraformVarFileInfo.getFilestoreFetchFilesConfig();
-        assertThat(artifactoryStoreDelegateConfig.getArtifactName()).isEqualTo("ArtifactoryName");
-        assertThat(artifactoryStoreDelegateConfig.getVersion()).isEqualTo("Version");
         assertThat(artifactoryStoreDelegateConfig.getRepositoryPath()).isEqualTo("RepositoryPath");
         assertThat(artifactoryStoreDelegateConfig.getConnectorDTO().getName()).isEqualTo("connectorName");
       }

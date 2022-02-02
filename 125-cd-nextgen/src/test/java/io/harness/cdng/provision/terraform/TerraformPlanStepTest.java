@@ -145,17 +145,13 @@ public class TerraformPlanStepTest extends CategoryTest {
     Ambiance ambiance = getAmbiance();
     TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreConfigFiles =
         TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
-            .artifactoryName("artifactoryConfigFiles")
             .connectorRef("connectorRef")
             .repositoryPath("repositoryPath")
-            .version("1.0.0")
             .build();
     TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreVarFiles =
         TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
-            .artifactoryName("artifactoryVarFiles")
             .connectorRef("connectorRef2")
             .repositoryPath("repositoryPathtoVars")
-            .version("1.0.2")
             .build();
     TerraformPlanStepParameters planStepParameters = TerraformStepDataGenerator.generateStepPlan(
         StoreConfigType.ARTIFACTORY, artifactoryStoreConfigFiles, artifactoryStoreVarFiles);
@@ -246,17 +242,13 @@ public class TerraformPlanStepTest extends CategoryTest {
     Ambiance ambiance = getAmbiance();
     TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreConfigFiles =
         TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
-            .artifactoryName("artifactoryConfigFiles")
             .connectorRef("connectorRef")
             .repositoryPath("repositoryPath")
-            .version("1.0.0")
             .build();
     TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreVarFiles =
         TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
-            .artifactoryName("artifactoryVarFiles")
             .connectorRef("connectorRef2")
             .repositoryPath("repositoryPathtoVars")
-            .version("1.0.2")
             .build();
     TerraformPlanStepParameters planStepParameters = TerraformStepDataGenerator.generateStepPlan(
         StoreConfigType.ARTIFACTORY, artifactoryStoreConfigFiles, artifactoryStoreVarFiles);
@@ -286,9 +278,7 @@ public class TerraformPlanStepTest extends CategoryTest {
                                             .build();
 
     ArtifactoryStoreDelegateConfig artifactoryStoreDelegateConfig = ArtifactoryStoreDelegateConfig.builder()
-                                                                        .artifactName("artifactName")
                                                                         .repositoryPath("repositoryPath")
-                                                                        .version("1.0.0")
                                                                         .connectorDTO(connectorInfoDTO)
                                                                         .succeedIfFileNotFound(false)
                                                                         .build();
