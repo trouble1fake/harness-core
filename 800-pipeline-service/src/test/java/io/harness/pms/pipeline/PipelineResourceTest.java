@@ -76,6 +76,7 @@ public class PipelineResourceTest extends CategoryTest {
   private final String ORG_IDENTIFIER = "orgId";
   private final String PROJ_IDENTIFIER = "projId";
   private final String PIPELINE_IDENTIFIER = "basichttpFail";
+
   private final String PLAN_EXECUTION_ID = "planId";
   private final String STAGE_NODE_ID = "stageNodeId";
   private String yaml;
