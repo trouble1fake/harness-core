@@ -96,9 +96,11 @@ public class InstanceBillingDataTasklet implements Tasklet {
 
   @Override
   public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) {
+    log.info("Instance Billing Job Started");
     parameters = chunkContext.getStepContext().getStepExecution().getJobParameters();
     batchSize = config.getBatchQueryConfig().getInstanceDataBatchSize();
     String accountId = parameters.getString(CCMJobConstants.ACCOUNT_ID);
+    log.info("Account ID: {}", accountId);
     Instant startTime = getFieldValueFromJobParams(CCMJobConstants.JOB_START_DATE);
     Instant endTime = getFieldValueFromJobParams(CCMJobConstants.JOB_END_DATE);
     batchJobType = CCMJobConstants.getBatchJobTypeFromJobParams(parameters, CCMJobConstants.BATCH_JOB_TYPE);
@@ -126,6 +128,7 @@ public class InstanceBillingDataTasklet implements Tasklet {
         throw ex;
       }
     } while (instanceDataLists.size() == batchSize);
+    log.info("Instance Billing Job Finished");
     return null;
   }
 

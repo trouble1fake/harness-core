@@ -65,9 +65,11 @@ public class InstancePricingDataTasklet implements Tasklet {
 
   @Override
   public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
+    log.info("Instance Pricing Job Started");
     parameters = chunkContext.getStepContext().getStepExecution().getJobParameters();
     batchSize = config.getBatchQueryConfig().getInstanceDataBatchSize();
     String accountId = parameters.getString(CCMJobConstants.ACCOUNT_ID);
+    log.info("Account ID: {}", accountId);
     Instant startTime = getFieldValueFromJobParams(CCMJobConstants.JOB_START_DATE);
     Instant endTime = getFieldValueFromJobParams(CCMJobConstants.JOB_END_DATE);
     batchJobType = CCMJobConstants.getBatchJobTypeFromJobParams(parameters, CCMJobConstants.BATCH_JOB_TYPE);
@@ -77,6 +79,7 @@ public class InstancePricingDataTasklet implements Tasklet {
     do {
       instanceDataLists =
           instanceDataDao.getInstanceDataListForPricingUpdate(accountId, batchSize, activeInstanceIterator, endTime);
+      log.info("Processing {} instances", instanceDataLists.size());
       if (!instanceDataLists.isEmpty()) {
         activeInstanceIterator = instanceDataLists.get(instanceDataLists.size() - 1).getActiveInstanceIterator();
         if (instanceDataLists.get(0).getActiveInstanceIterator().equals(activeInstanceIterator)) {
@@ -93,6 +96,7 @@ public class InstancePricingDataTasklet implements Tasklet {
       String awsDataSetId = customBillingMetaDataService.getAwsDataSetId(accountId);
       Map<String, Pricing> pricingDataByResourceId = bigQueryHelperService.getAwsPricingDataByResourceIds(
           new ArrayList<>(leftOverInstances), startTime, endTime, awsDataSetId);
+      log.info("Got response from BQ, map: {}, size: {}", pricingDataByResourceId, pricingDataByResourceId.size());
       // update awsInstances
       leftOverInstances.removeAll(pricingDataByResourceId.keySet());
       Set<InstanceFamilyAndRegion> instanceFamilyAndRegions = new HashSet<>();
@@ -166,6 +170,7 @@ public class InstancePricingDataTasklet implements Tasklet {
           ).collect(Collectors.groupingBy(InstanceData::getCloudProviderInstanceId));
 
     } while (instanceDataLists.size() == batchSize);
+    log.info("Instance Pricing Job Finished");
     return null;
   }
 
