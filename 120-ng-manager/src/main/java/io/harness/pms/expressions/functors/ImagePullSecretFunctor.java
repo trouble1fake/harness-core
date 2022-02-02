@@ -9,7 +9,7 @@ package io.harness.pms.expressions.functors;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.ngpipeline.artifact.bean.ArtifactsOutcome;
+import io.harness.cdng.artifact.outcome.ArtifactsOutcome;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.expressions.utils.ImagePullSecretUtils;
 import io.harness.pms.sdk.core.execution.expression.SdkFunctor;

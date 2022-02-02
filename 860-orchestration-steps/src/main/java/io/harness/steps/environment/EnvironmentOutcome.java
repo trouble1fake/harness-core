@@ -10,7 +10,9 @@ package io.harness.steps.environment;
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 
 import io.harness.annotation.RecasterAlias;
+import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.annotations.dev.TargetModule;
 import io.harness.ng.core.environment.beans.EnvironmentType;
 import io.harness.pms.sdk.core.data.ExecutionSweepingOutput;
 import io.harness.pms.sdk.core.data.Outcome;
@@ -25,6 +27,7 @@ import lombok.Value;
 @JsonTypeName("environmentOutcome")
 @RecasterAlias("io.harness.steps.environment.EnvironmentOutcome")
 @OwnedBy(CDC)
+@TargetModule(HarnessModule._878_PIPELINE_SERVICE_UTILITIES)
 public class EnvironmentOutcome implements Outcome, ExecutionSweepingOutput {
   String name;
   String identifier;

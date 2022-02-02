@@ -163,6 +163,8 @@ public class PMSYamlSchemaServiceImpl implements PMSYamlSchemaService {
     // Merging the schema for all steps that are moved to new schema.
     ObjectNode finalMergedDefinitions = yamlSchemaProvider.mergeAllV2StepsDefinitions(projectIdentifier, orgIdentifier,
         scope, mergedDefinitions, pmsYamlSchemaHelper.getNodeEntityTypesByYamlGroup(StepCategory.STEP.name()));
+    yamlSchemaProvider.mergeAllV2StepsDefinitions(projectIdentifier, orgIdentifier, scope, mergedDefinitions,
+        pmsYamlSchemaHelper.getNodeEntityTypesByYamlGroup(StepCategory.STAGE.name()));
     YamlSchemaTransientHelper.removeV2StepEnumsFromStepElementConfig(finalMergedDefinitions.get(STEP_ELEMENT_CONFIG));
     ObjectNode stageElementConfig = (ObjectNode) pipelineDefinitions.get(STAGE_ELEMENT_CONFIG);
     YamlSchemaTransientHelper.deleteSpecNodeInStageElementConfig(stageElementConfig);

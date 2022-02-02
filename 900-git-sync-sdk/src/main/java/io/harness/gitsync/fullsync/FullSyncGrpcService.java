@@ -88,8 +88,11 @@ public class FullSyncGrpcService extends FullSyncServiceImplBase {
               FullSyncFileResponse.newBuilder().setSuccess(true).setFilePath(fileChangeSet.getFilePath()).build());
         } catch (Exception e) {
           log.error("Error while doing full sync", e);
-          fullSyncFileResponses.add(
-              FullSyncFileResponse.newBuilder().setSuccess(false).setErrorMsg(ExceptionUtils.getMessage(e)).build());
+          fullSyncFileResponses.add(FullSyncFileResponse.newBuilder()
+                                        .setSuccess(false)
+                                        .setErrorMsg(ExceptionUtils.getMessage(e))
+                                        .setFilePath(fileChangeSet.getFilePath())
+                                        .build());
         }
       }
       responseObserver.onNext(FullSyncResponse.newBuilder().addAllFileResponse(fullSyncFileResponses).build());

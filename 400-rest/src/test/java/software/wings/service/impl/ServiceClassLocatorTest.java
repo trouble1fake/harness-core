@@ -14,6 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
+import io.harness.delegate.service.intfc.DelegateNgTokenService;
 import io.harness.limits.configuration.LimitConfigurationServiceMongo;
 import io.harness.rule.Owner;
 
@@ -81,6 +82,7 @@ public class ServiceClassLocatorTest extends WingsBaseTest {
   @Inject private UserService userService;
   @Inject private WhitelistService whitelistService;
   @Inject private DelegateTaskServiceClassicImpl delegateTaskServiceClassic;
+  @Inject private DelegateNgTokenService delegateNgTokenService;
 
   @Test
   @Owner(developers = GEORGE)
@@ -99,7 +101,7 @@ public class ServiceClassLocatorTest extends WingsBaseTest {
       List<OwnedByAccount> ownedByAccounts = serviceClassLocator.descendingServicesForInterface(OwnedByAccount.class);
       assertThat(ownedByAccounts)
           .containsExactlyInAnyOrder(alertService, apiKeyService, appContainerService, appService,
-              cvConfigurationService, delegateService, governanceConfigService, instanceService,
+              cvConfigurationService, delegateNgTokenService, delegateService, governanceConfigService, instanceService,
               limitConfigurationServiceMongo, loginSettingsService, notificationRuleService, notificationSetupService,
               profileService, resourceConstraintService, roleService, secretManager, encryptedSettingAttributes,
               settingsService, ssoSettingService, templateGalleryService, templateService, userGroupService,

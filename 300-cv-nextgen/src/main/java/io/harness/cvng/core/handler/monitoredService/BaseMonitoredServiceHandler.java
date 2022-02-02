@@ -13,4 +13,6 @@ import io.harness.cvng.core.beans.params.ProjectParams;
 public abstract class BaseMonitoredServiceHandler {
   public void beforeUpdate(
       ProjectParams projectParams, MonitoredServiceDTO existingObject, MonitoredServiceDTO updatingObject) {}
+
+  public void beforeDelete(ProjectParams projectParams, MonitoredServiceDTO deletingObject) {}
 }

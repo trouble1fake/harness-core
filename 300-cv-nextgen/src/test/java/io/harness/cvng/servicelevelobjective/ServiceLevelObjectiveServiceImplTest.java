@@ -43,6 +43,7 @@ import io.harness.cvng.servicelevelobjective.beans.slotargetspec.CalenderSLOTarg
 import io.harness.cvng.servicelevelobjective.beans.slotargetspec.RollingSLOTargetSpec;
 import io.harness.cvng.servicelevelobjective.entities.SLOHealthIndicator;
 import io.harness.cvng.servicelevelobjective.entities.SLOHealthIndicator.SLOHealthIndicatorKeys;
+import io.harness.cvng.servicelevelobjective.services.api.SLOErrorBudgetResetService;
 import io.harness.cvng.servicelevelobjective.services.api.SLOHealthIndicatorService;
 import io.harness.cvng.servicelevelobjective.services.api.ServiceLevelIndicatorService;
 import io.harness.cvng.servicelevelobjective.services.api.ServiceLevelObjectiveService;
@@ -72,6 +73,8 @@ public class ServiceLevelObjectiveServiceImplTest extends CvNextGenTestBase {
   @Inject VerificationTaskService verificationTaskService;
   @Inject ServiceLevelIndicatorService serviceLevelIndicatorService;
   @Inject SLOHealthIndicatorService sloHealthIndicatorService;
+  @Inject SLOErrorBudgetResetService sloErrorBudgetResetService;
+
   @Inject HPersistence hPersistence;
   String accountId;
   String orgIdentifier;
@@ -232,6 +235,20 @@ public class ServiceLevelObjectiveServiceImplTest extends CvNextGenTestBase {
   @Test
   @Owner(developers = DEEPAK_CHHIKARA)
   @Category(UnitTests.class)
+  public void testDelete_deleteSLOHealthIndicator() {
+    ServiceLevelObjectiveDTO sloDTO = createSLOBuilder();
+    createMonitoredService();
+    serviceLevelObjectiveService.create(projectParams, sloDTO);
+    boolean isDeleted = serviceLevelObjectiveService.delete(projectParams, sloDTO.getIdentifier());
+    assertThat(isDeleted).isEqualTo(true);
+    SLOHealthIndicator sloHealthIndicator =
+        sloHealthIndicatorService.getBySLOIdentifier(projectParams, sloDTO.getIdentifier());
+    assertThat(sloHealthIndicator).isNull();
+  }
+
+  @Test
+  @Owner(developers = DEEPAK_CHHIKARA)
+  @Category(UnitTests.class)
   public void testUpdate_Success() {
     ServiceLevelObjectiveDTO sloDTO = createSLOBuilder();
     createMonitoredService();
@@ -242,6 +259,27 @@ public class ServiceLevelObjectiveServiceImplTest extends CvNextGenTestBase {
     ServiceLevelObjectiveResponse updateServiceLevelObjectiveResponse =
         serviceLevelObjectiveService.update(projectParams, sloDTO.getIdentifier(), sloDTO);
     assertThat(updateServiceLevelObjectiveResponse.getServiceLevelObjectiveDTO()).isEqualTo(sloDTO);
+  }
+
+  @Test
+  @Owner(developers = ABHIJITH)
+  @Category(UnitTests.class)
+  public void testUpdate_SuccessClearErrorBudgetReset() {
+    ServiceLevelObjectiveDTO sloDTO = createSLOBuilder();
+    createMonitoredService();
+    ServiceLevelObjectiveResponse serviceLevelObjectiveResponse =
+        serviceLevelObjectiveService.create(projectParams, sloDTO);
+    assertThat(serviceLevelObjectiveResponse.getServiceLevelObjectiveDTO()).isEqualTo(sloDTO);
+    sloDTO.setDescription("newDescription");
+    sloErrorBudgetResetService.resetErrorBudget(projectParams,
+        builderFactory.getSLOErrorBudgetResetDTOBuilder()
+            .serviceLevelObjectiveIdentifier(sloDTO.getIdentifier())
+            .build());
+    ServiceLevelObjectiveResponse updateServiceLevelObjectiveResponse =
+        serviceLevelObjectiveService.update(projectParams, sloDTO.getIdentifier(), sloDTO);
+    assertThat(
+        sloErrorBudgetResetService.getErrorBudgetResets(builderFactory.getProjectParams(), sloDTO.getIdentifier()))
+        .isNullOrEmpty();
   }
 
   @Test

@@ -7,10 +7,10 @@
 
 package io.harness.ng.core.user.service.impl;
 
+import static io.harness.NGConstants.ALL_RESOURCES_INCLUDING_CHILD_SCOPES_RESOURCE_GROUP_IDENTIFIER;
 import static io.harness.NGConstants.DEFAULT_ACCOUNT_LEVEL_RESOURCE_GROUP_IDENTIFIER;
 import static io.harness.NGConstants.DEFAULT_ORGANIZATION_LEVEL_RESOURCE_GROUP_IDENTIFIER;
 import static io.harness.NGConstants.DEFAULT_PROJECT_LEVEL_RESOURCE_GROUP_IDENTIFIER;
-import static io.harness.NGConstants.DEFAULT_RESOURCE_GROUP_IDENTIFIER;
 import static io.harness.accesscontrol.principals.PrincipalType.SERVICE_ACCOUNT;
 import static io.harness.accesscontrol.principals.PrincipalType.USER;
 import static io.harness.accesscontrol.principals.PrincipalType.USER_GROUP;
@@ -113,7 +113,6 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.domain.Page;
@@ -135,9 +134,9 @@ public class NgUserServiceImpl implements NgUserService {
   private static final String ORG_ADMIN = "_organization_admin";
   private static final String PROJECT_ADMIN = "_project_admin";
   private static final String PROJECT_VIEWER = "_project_viewer";
-  private static final List<String> MANAGED_RESOURCE_GROUP_IDENTIFIERS =
-      ImmutableList.of(DEFAULT_RESOURCE_GROUP_IDENTIFIER, DEFAULT_ACCOUNT_LEVEL_RESOURCE_GROUP_IDENTIFIER,
-          DEFAULT_ORGANIZATION_LEVEL_RESOURCE_GROUP_IDENTIFIER, DEFAULT_PROJECT_LEVEL_RESOURCE_GROUP_IDENTIFIER);
+  private static final List<String> MANAGED_RESOURCE_GROUP_IDENTIFIERS = ImmutableList.of(
+      ALL_RESOURCES_INCLUDING_CHILD_SCOPES_RESOURCE_GROUP_IDENTIFIER, DEFAULT_ACCOUNT_LEVEL_RESOURCE_GROUP_IDENTIFIER,
+      DEFAULT_ORGANIZATION_LEVEL_RESOURCE_GROUP_IDENTIFIER, DEFAULT_PROJECT_LEVEL_RESOURCE_GROUP_IDENTIFIER);
   private static final List<String> MANAGED_ROLE_IDENTIFIERS =
       ImmutableList.of(ACCOUNT_VIEWER, ORGANIZATION_VIEWER, PROJECT_VIEWER);
   public static final int DEFAULT_PAGE_SIZE = 10000;
@@ -491,15 +490,17 @@ public class NgUserServiceImpl implements NgUserService {
 
   @Override
   public void addServiceAccountToScope(
-      String serviceAccountId, Scope scope, String roleIdentifier, UserMembershipUpdateSource source) {
+      String serviceAccountId, Scope scope, RoleBinding roleBinding, UserMembershipUpdateSource source) {
     List<RoleAssignmentDTO> roleAssignmentDTOs = new ArrayList<>(1);
-    if (!StringUtils.isBlank(roleIdentifier)) {
+    if (roleBinding != null) {
       RoleAssignmentDTO roleAssignmentDTO =
           RoleAssignmentDTO.builder()
-              .roleIdentifier(roleIdentifier)
+              .roleIdentifier(roleBinding.getRoleIdentifier())
               .disabled(false)
               .principal(PrincipalDTO.builder().type(SERVICE_ACCOUNT).identifier(serviceAccountId).build())
-              .resourceGroupIdentifier(getDefaultResourceGroupIdentifier(scope))
+              .resourceGroupIdentifier(isNotEmpty(roleBinding.getResourceGroupIdentifier())
+                      ? roleBinding.getResourceGroupIdentifier()
+                      : getDefaultResourceGroupIdentifier(scope))
               .build();
       roleAssignmentDTOs.add(roleAssignmentDTO);
     }

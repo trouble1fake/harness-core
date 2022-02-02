@@ -696,8 +696,8 @@ public class ConnectorServiceImpl implements ConnectorService {
   }
 
   @Override
-  public ConnectorDTO fullSyncEntity(EntityDetailProtoDTO entityDetailProtoDTO) {
-    return defaultConnectorService.fullSyncEntity(entityDetailProtoDTO);
+  public ConnectorDTO fullSyncEntity(EntityDetailProtoDTO entityDetailProtoDTO, boolean isFullSyncingToDefaultBranch) {
+    return defaultConnectorService.fullSyncEntity(entityDetailProtoDTO, isFullSyncingToDefaultBranch);
   }
 
   @Override

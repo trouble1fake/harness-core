@@ -200,7 +200,6 @@ deployMode: KUBERNETES
 deployVariant: SAAS
 envPath: ""
 
-kubectlVersion: v1.13.2
 scmVersion: 0e23b6f1
 
 portal:

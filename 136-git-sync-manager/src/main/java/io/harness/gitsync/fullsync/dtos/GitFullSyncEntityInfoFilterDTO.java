@@ -8,27 +8,37 @@
 package io.harness.gitsync.fullsync.dtos;
 
 import static io.harness.annotations.dev.HarnessTeam.PL;
+import static io.harness.filter.FilterConstants.CONNECTOR_FILTER;
 
 import io.harness.EntityType;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.gitsync.core.beans.GitFullSyncEntityInfo;
 import io.harness.gitsync.sdk.GitSyncApiConstants;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonTypeName;
+import io.swagger.annotations.ApiModel;
 import io.swagger.v3.oas.annotations.media.Schema;
-import javax.ws.rs.QueryParam;
+import java.util.List;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.FieldDefaults;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonTypeName(CONNECTOR_FILTER)
 @Data
 @Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
+@ApiModel("GitFullSyncEntityInfoFilterKeys")
+@NoArgsConstructor
+@AllArgsConstructor
 @Schema(name = "GitFullSyncEntityInfoFilter", description = "This contains filters for Git Full Sync")
 @OwnedBy(PL)
 public class GitFullSyncEntityInfoFilterDTO {
-  @Schema(description = GitSyncApiConstants.ENTITY_TYPE_PARAM_MESSAGE)
-  @QueryParam(GitSyncApiConstants.ENTITY_TYPE)
-  EntityType entityType;
+  @Schema(description = GitSyncApiConstants.ENTITY_TYPE_PARAM_MESSAGE) List<EntityType> entityTypes;
 
-  @Schema(description = GitSyncApiConstants.SYNC_STATUS_PARAM_MESSAGE)
-  @QueryParam(GitSyncApiConstants.SYNC_STATUS)
-  GitFullSyncEntityInfo.SyncStatus syncStatus;
+  @Schema(description = GitSyncApiConstants.SYNC_STATUS_PARAM_MESSAGE) GitFullSyncEntityInfo.SyncStatus syncStatus;
 }

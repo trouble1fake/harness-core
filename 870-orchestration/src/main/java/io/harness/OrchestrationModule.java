@@ -54,6 +54,8 @@ import io.harness.engine.progress.publisher.ProgressEventPublisher;
 import io.harness.engine.progress.publisher.RedisProgressEventPublisher;
 import io.harness.exception.exceptionmanager.ExceptionModule;
 import io.harness.govern.ServersModule;
+import io.harness.graph.stepDetail.PmsGraphStepDetailsServiceImpl;
+import io.harness.graph.stepDetail.service.PmsGraphStepDetailsService;
 import io.harness.pms.NoopFeatureFlagServiceImpl;
 import io.harness.pms.PmsFeatureFlagService;
 import io.harness.pms.contracts.execution.tasks.TaskCategory;
@@ -127,6 +129,7 @@ public class OrchestrationModule extends AbstractModule implements ServersModule
     bind(NodeExecutionService.class).to(NodeExecutionServiceImpl.class).in(Singleton.class);
     bind(PlanExecutionService.class).to(PlanExecutionServiceImpl.class).in(Singleton.class);
     bind(PlanExecutionMonitorService.class).to(PlanExecutionMonitorServiceImpl.class).in(Singleton.class);
+    bind(PmsGraphStepDetailsService.class).to(PmsGraphStepDetailsServiceImpl.class);
 
     bind(PlanService.class).to(PlanServiceImpl.class).in(Singleton.class);
     bind(InterruptService.class).to(InterruptServiceImpl.class).in(Singleton.class);

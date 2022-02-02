@@ -89,6 +89,15 @@ public class ServiceLevelObjective
     return ZoneOffset.UTC; // hardcoding it to UTC for now. We need to ask it from user.
   }
 
+  public int getActiveErrorBudgetMinutes(
+      List<Double> orderedErrorBudgetIncrementPercentages, LocalDateTime currentDateTime) {
+    int activeErrorBudget = getTotalErrorBudgetMinutes(currentDateTime);
+    for (Double incrementPercentage : orderedErrorBudgetIncrementPercentages) {
+      activeErrorBudget = activeErrorBudget + (int) Math.floor((activeErrorBudget * incrementPercentage) / 100);
+    }
+    return activeErrorBudget;
+  }
+
   public int getTotalErrorBudgetMinutes(LocalDateTime currentDateTime) {
     int currentWindowMinutes = getCurrentTimeRange(currentDateTime).totalMinutes();
     Double errorBudgetPercentage = getSloTargetPercentage();

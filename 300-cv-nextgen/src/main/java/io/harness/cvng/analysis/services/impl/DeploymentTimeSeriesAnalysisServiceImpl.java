@@ -213,6 +213,11 @@ public class DeploymentTimeSeriesAnalysisServiceImpl implements DeploymentTimeSe
     return new ArrayList<>(nodeNameSet);
   }
 
+  @Override
+  public List<TransactionMetricInfo> getTransactionMetricInfos(String accountId, String verificationJobInstanceId) {
+    return getMetrics(accountId, verificationJobInstanceId, DeploymentTimeSeriesAnalysisFilter.builder().build());
+  }
+
   private List<TransactionMetricInfo> getMetrics(String accountId, String verificationJobInstanceId,
       DeploymentTimeSeriesAnalysisFilter deploymentTimeSeriesAnalysisFilter) {
     List<DeploymentTimeSeriesAnalysis> latestDeploymentTimeSeriesAnalysis =
@@ -270,23 +275,23 @@ public class DeploymentTimeSeriesAnalysisServiceImpl implements DeploymentTimeSe
     }
 
     List<TransactionMetricInfo> transactionMetricInfoList = new ArrayList<>(transactionMetricInfoSet);
-    transactionMetricInfoList.sort(
-        (d1, d2) -> Double.compare(d2.getTransactionMetric().getScore(), d1.getTransactionMetric().getScore()));
+    Collections.sort(transactionMetricInfoList);
     return transactionMetricInfoList;
   }
 
   private NodeRiskCountDTO getNodeRiskCountDTO(Map<Risk, Integer> nodeCountByRiskStatusMap) {
     Integer totalNodeCount = 0;
-    List<NodeRiskCountDTO.RiskCount> riskCounts = new ArrayList<>();
+    List<NodeRiskCountDTO.NodeRiskCount> nodeRiskCounts = new ArrayList<>();
     for (Risk risk : nodeCountByRiskStatusMap.keySet()) {
       totalNodeCount += nodeCountByRiskStatusMap.get(risk);
-      riskCounts.add(NodeRiskCountDTO.RiskCount.builder().risk(risk).count(nodeCountByRiskStatusMap.get(risk)).build());
+      nodeRiskCounts.add(
+          NodeRiskCountDTO.NodeRiskCount.builder().risk(risk).count(nodeCountByRiskStatusMap.get(risk)).build());
     }
-    riskCounts.sort((r1, r2) -> Integer.compare(r2.getRisk().getValue(), r1.getRisk().getValue()));
+    nodeRiskCounts.sort((r1, r2) -> Integer.compare(r2.getRisk().getValue(), r1.getRisk().getValue()));
     return NodeRiskCountDTO.builder()
         .totalNodeCount(totalNodeCount)
         .anomalousNodeCount(totalNodeCount - nodeCountByRiskStatusMap.getOrDefault(Risk.HEALTHY, 0))
-        .riskCounts(riskCounts)
+        .nodeRiskCounts(nodeRiskCounts)
         .build();
   }
 

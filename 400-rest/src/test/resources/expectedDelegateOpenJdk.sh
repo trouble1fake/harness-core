@@ -308,8 +308,6 @@ fi
 
 rm -f -- *.bak
 
-export KUBECTL_VERSION=v1.12.2
-
 export SCM_VERSION=542f4642
 
 export DELEGATE_NAME=harness-delegate

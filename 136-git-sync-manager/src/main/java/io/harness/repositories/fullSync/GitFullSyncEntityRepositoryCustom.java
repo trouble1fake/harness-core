@@ -13,6 +13,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.gitsync.core.beans.GitFullSyncEntityInfo;
 
 import com.mongodb.client.result.UpdateResult;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -25,4 +26,6 @@ public interface GitFullSyncEntityRepositoryCustom {
   Page<GitFullSyncEntityInfo> findAll(Criteria criteria, Pageable pageable);
 
   long count(Criteria criteria);
+
+  List<GitFullSyncEntityInfo> findAll(Criteria criteria);
 }

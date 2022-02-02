@@ -40,6 +40,9 @@ public interface PMSInputSetRepositoryCustom {
 
   InputSetEntity update(Criteria criteria, Update update);
 
+  InputSetEntity update(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, Criteria criteria, Update update);
+
   InputSetEntity delete(InputSetEntity entityToDelete, InputSetYamlDTO yamlDTO);
 
   UpdateResult deleteAllInputSetsWhenPipelineDeleted(Query query, Update update);

@@ -784,7 +784,7 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
                    .getContent()
                    .get(0)
                    .getNodeRiskCountDTO()
-                   .getRiskCounts()
+                   .getNodeRiskCounts()
                    .get(1)
                    .getCount())
         .isEqualTo(1);
@@ -792,7 +792,7 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
                    .getContent()
                    .get(0)
                    .getNodeRiskCountDTO()
-                   .getRiskCounts()
+                   .getNodeRiskCounts()
                    .get(0)
                    .getCount())
         .isEqualTo(2);
@@ -800,7 +800,7 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
                    .getContent()
                    .get(0)
                    .getNodeRiskCountDTO()
-                   .getRiskCounts()
+                   .getNodeRiskCounts()
                    .get(1)
                    .getDisplayName())
         .isEqualTo("Healthy");
@@ -808,7 +808,7 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
                    .getContent()
                    .get(1)
                    .getNodeRiskCountDTO()
-                   .getRiskCounts()
+                   .getNodeRiskCounts()
                    .get(0)
                    .getCount())
         .isEqualTo(1);
@@ -816,7 +816,7 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
                    .getContent()
                    .get(1)
                    .getNodeRiskCountDTO()
-                   .getRiskCounts()
+                   .getNodeRiskCounts()
                    .get(1)
                    .getCount())
         .isEqualTo(1);
@@ -824,7 +824,7 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
                    .getContent()
                    .get(1)
                    .getNodeRiskCountDTO()
-                   .getRiskCounts()
+                   .getNodeRiskCounts()
                    .get(0)
                    .getDisplayName())
         .isEqualTo("Unhealthy");
