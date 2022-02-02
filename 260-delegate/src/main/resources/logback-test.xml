@@ -38,11 +38,15 @@
         </encoder>
     </appender>
 
-    <appender name="REST2" class="io.harness.delegate.logging.DelegateStackdriverLogAppender">
-        <threshold>TRACE</threshold>
-        <managerHost>${MANAGER_HOST_AND_PORT}</managerHost>
-        <accountId>${ACCOUNT_ID}</accountId>
-    </appender>
+    <if condition='property("STACK_DRIVER_LOGGING_ENABLED").equalsIgnoreCase("true")'>
+        <then>
+            <appender name="REST2" class="io.harness.delegate.logging.DelegateStackdriverLogAppender">
+                <threshold>TRACE</threshold>
+                <managerHost>${MANAGER_HOST_AND_PORT}</managerHost>
+                <accountId>${ACCOUNT_ID}</accountId>
+            </appender>
+        </then>
+    </if>
 
     <logger name="software.wings" level="INFO"/>
     <logger name="org.zeroturnaround" level="WARN"/>
