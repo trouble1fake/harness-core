@@ -4347,9 +4347,9 @@ plain_artifacts = [
     "com.esotericsoftware:kryo:4.0.0",
     "com.esotericsoftware:minlog:1.3.0",
     "com.esotericsoftware:reflectasm:1.11.3",
-    "com.fasterxml.jackson.core:jackson-annotations:2.7.9",
-    "com.fasterxml.jackson.core:jackson-core:2.7.9",
-    "com.fasterxml.jackson.core:jackson-databind:2.7.9.7",
+    "com.fasterxml.jackson.core:jackson-annotations:2.13.1",
+    "com.fasterxml.jackson.core:jackson-core:2.13.1",
+    "com.fasterxml.jackson.core:jackson-databind:2.13.1",
     "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.9.10",
     "com.fasterxml.jackson.dataformat:jackson-dataformat-smile:2.9.10",
     "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.9.10",
@@ -5205,18 +5205,6 @@ maven_install(
     version_conflict_policy = "pinned",
 )
 
-maven_install(
-    name = "batch",
-    artifacts = [
-        "com.fasterxml.jackson.core:jackson-databind:2.11.3",
-        "com.squareup.okhttp3:okhttp:4.9.0",
-    ],
-    repositories = [
-        "http://jfrogdev.dev.harness.io:80/artifactory/portal-maven",
-        "https://harness.jfrog.io/harness/thirdparty-annonymous",
-    ],
-    version_conflict_policy = "pinned",
-)
 
 maven_install(
     name = "maven_checkstyle",
