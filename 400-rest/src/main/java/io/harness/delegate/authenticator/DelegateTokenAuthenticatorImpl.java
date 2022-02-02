@@ -21,8 +21,6 @@ import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.context.GlobalContext;
-import io.harness.delegate.beans.Delegate;
-import io.harness.delegate.beans.DelegateEntityOwner;
 import io.harness.delegate.beans.DelegateToken;
 import io.harness.delegate.beans.DelegateToken.DelegateTokenKeys;
 import io.harness.delegate.beans.DelegateTokenStatus;
@@ -37,7 +35,6 @@ import io.harness.persistence.HPersistence;
 import io.harness.security.DelegateTokenAuthenticator;
 
 import software.wings.beans.Account;
-import software.wings.service.intfc.DelegateService;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
@@ -63,7 +60,6 @@ import org.mongodb.morphia.query.Query;
 @OwnedBy(DEL)
 @TargetModule(HarnessModule._420_DELEGATE_SERVICE)
 public class DelegateTokenAuthenticatorImpl implements DelegateTokenAuthenticator {
-  @Inject private DelegateService delegateService;
   @Inject private HPersistence persistence;
 
   private final LoadingCache<String, String> keyCache =
@@ -142,7 +138,7 @@ public class DelegateTokenAuthenticatorImpl implements DelegateTokenAuthenticato
     return result;
   }
 
-  // TODO: ARPIT check delegate is at correct level and filter the modify the query to filter correct scope tokens.
+  // TODO: ARPIT check delegate is at correct level and modify the query to filter correct scope tokens.
   private boolean decryptDelegateTokenByQuery(
       Query query, String accountId, DelegateTokenStatus status, EncryptedJWT encryptedJWT, boolean isNg) {
     try (HIterator<DelegateToken> iterator = new HIterator<>(query.fetch())) {
