@@ -732,14 +732,14 @@ public class PcfCommandTaskBaseHelper {
     String activeAppName = constructActiveAppName(releaseNamePrefix, maxVersion, nonVersioning);
     if (null != activeApplication && !activeApplication.getName().equals(activeAppName)) {
       renameApp(activeApplication, cfRequestConfig, executionLogCallback, activeAppName);
+      updateValues.setOldAppGuid(activeApplication.getId());
+      updateValues.setOldAppName(activeAppName);
       if (null != renames) {
         renames.add(CfAppRenameInfo.builder()
                         .guid(activeApplication.getId())
                         .name(activeApplication.getName())
                         .newName(activeAppName)
                         .build());
-        updateValues.setOldAppGuid(activeApplication.getId());
-        updateValues.setOldAppName(activeAppName);
       }
     }
 
