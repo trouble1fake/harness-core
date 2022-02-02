@@ -5,29 +5,29 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.ng.core.account;
+package io.harness.ng.core.accountsetting.dto;
 
 import static io.harness.annotations.dev.HarnessTeam.DX;
 
 import io.harness.annotations.dev.OwnedBy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
 import io.swagger.v3.oas.annotations.media.Schema;
-import javax.validation.Valid;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Builder
-@ApiModel("AccountSettings")
+@NoArgsConstructor
+@AllArgsConstructor
+@ApiModel("AccountSettingResponse")
 @OwnedBy(DX)
-@Schema(name = "AccountSettings", description = "This is the view of Account Settings in Harness.")
-public class AccountSettingsDTO {
-  @JsonProperty("accountSettings") @Valid AccountSettingsInfoDTO accountSettingsInfoDTO;
+@Schema(name = "AccountSettingResponse", description = "This has the Account Setting details along with its metadata.")
+public class AccountSettingResponseDTO {
+  AccountSettingsDTO accountSettings;
+  @Schema(description = "This is the time at which account setting was created.") Long createdAt;
+  @Schema(description = "This is the time at which account setting was last modified.") Long lastModifiedAt;
 }

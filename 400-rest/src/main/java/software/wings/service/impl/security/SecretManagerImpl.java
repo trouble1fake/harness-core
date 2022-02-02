@@ -848,9 +848,9 @@ public class SecretManagerImpl implements SecretManager, EncryptedSettingAttribu
   public PageResponse<EncryptedData> listSecrets(String accountId, PageRequest<EncryptedData> pageRequest,
       String appIdFromRequest, String envIdFromRequest, boolean details, boolean listHidden)
       throws IllegalAccessException {
-    //    if (!listHidden) {
-    //      addFilterHideFromListing(pageRequest);
-    //    }
+    if (!listHidden) {
+      addFilterHideFromListing(pageRequest);
+    }
 
     return listSecrets(accountId, pageRequest, appIdFromRequest, envIdFromRequest, details);
   }

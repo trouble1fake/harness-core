@@ -5,12 +5,18 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.ng.core.account;
+package io.harness.ng.core.accountsetting.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AccessLevel;
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.FieldDefaults;
 
-public class ConnectorSettings extends AccountSettings {
+@Data
+@JsonIgnoreProperties(ignoreUnknown = true)
+@FieldDefaults(level = AccessLevel.PRIVATE)
+public class ConnectorSettings extends AccountSettingConfig {
   @Getter(value = AccessLevel.PRIVATE) @Setter private Boolean builtInSMDisabled = Boolean.FALSE;
 }
