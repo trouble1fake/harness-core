@@ -5207,6 +5207,7 @@ maven_install(
     name = "batch",
     artifacts = [
         "com.fasterxml.jackson.core:jackson-databind:2.13.1",
+        "com.squareup.okhttp3:okhttp:3.14.9",
     ],
     repositories = [
         "http://jfrogdev.dev.harness.io:80/artifactory/portal-maven",
