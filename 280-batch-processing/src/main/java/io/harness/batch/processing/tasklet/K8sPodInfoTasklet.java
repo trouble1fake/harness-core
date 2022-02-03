@@ -229,7 +229,9 @@ public class K8sPodInfoTasklet implements Tasklet {
 
     if (featureFlagService.isNotEnabled(FeatureName.CE_HARNESS_ENTITY_MAPPING, accountId)) {
       Boolean currentGenCluster = clusterInfoCache.get(clusterId);
+      log.info("CG cluster {} {}", clusterId, currentGenCluster);
       if (null != currentGenCluster && currentGenCluster) {
+        log.info("curremt gen cluster");
         harnessServiceInfo = harnessServiceInfoFetcher
                                  .fetchHarnessServiceInfo(accountId, podInfo.getCloudProviderId(),
                                      podInfo.getNamespace(), podInfo.getPodName(), labelsMap)
