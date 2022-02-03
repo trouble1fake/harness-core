@@ -33,7 +33,7 @@ public class VaultEntityToDTO implements ConnectorEntityToDTOMapper<VaultConnect
         .useVaultAgent(connector.isUseVaultAgent())
         .useAwsIam(connector.getUseAwsIam())
         .awsRegion(connector.getAwsRegion())
-        .vaultAwsIamRole(SecretRefHelper.createSecretRef(connector.getVaultAwsIamRoleRef()))
+        .vaultAwsIamRole(connector.getVaultAwsIamRoleRef())
         .xVaultAwsIamServerId(SecretRefHelper.createSecretRef(connector.getXVaultAwsIamServerIdRef()))
         .secretEngineManuallyConfigured(connector.isSecretEngineManuallyConfigured())
         .appRoleId(connector.getAppRoleId())

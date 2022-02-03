@@ -47,12 +47,8 @@ public class VaultConfigDTOMapper {
             .tags(connector.getTags())
             .description(connector.getDescription())
             .useAwsIam(vaultConnectorDTO.isUseAwsIam())
-            .awsRegion(vaultConnectorDTO.getAwsRegion());
-
-    if (null != vaultConnectorDTO.getVaultAwsIamRole()
-        && null != vaultConnectorDTO.getVaultAwsIamRole().getDecryptedValue()) {
-      builder.vaultAwsIamRole(String.valueOf(vaultConnectorDTO.getVaultAwsIamRole().getDecryptedValue()));
-    }
+            .awsRegion(vaultConnectorDTO.getAwsRegion())
+            .vaultAwsIamRole(vaultConnectorDTO.getVaultAwsIamRole());
 
     if (null != vaultConnectorDTO.getXVaultAwsIamServerId()
         && null != vaultConnectorDTO.getXVaultAwsIamServerId().getDecryptedValue()) {
@@ -96,12 +92,8 @@ public class VaultConfigDTOMapper {
                                               .identifier(connector.getIdentifier())
                                               .description(connector.getDescription())
                                               .useAwsIam(vaultConnectorDTO.isUseAwsIam())
-                                              .awsRegion(vaultConnectorDTO.getAwsRegion());
-
-    if (null != vaultConnectorDTO.getVaultAwsIamRole()
-        && null != vaultConnectorDTO.getVaultAwsIamRole().getDecryptedValue()) {
-      builder.vaultAwsIamRole(String.valueOf(vaultConnectorDTO.getVaultAwsIamRole().getDecryptedValue()));
-    }
+                                              .awsRegion(vaultConnectorDTO.getAwsRegion())
+                                              .vaultAwsIamRole(vaultConnectorDTO.getVaultAwsIamRole());
 
     if (null != vaultConnectorDTO.getXVaultAwsIamServerId()
         && null != vaultConnectorDTO.getXVaultAwsIamServerId().getDecryptedValue()) {

@@ -406,9 +406,7 @@ public class NGVaultServiceImpl implements NGVaultService {
     Optional<String> vaultAwsIamRole =
         Optional.ofNullable(specDTO)
             .filter(x -> x.getAccessType() == AccessType.AWS_IAM)
-            .map(x
-                -> String.valueOf(
-                    ((VaultAwsIamRoleCredentialDTO) (x.getSpec())).getVaultAwsIamRole().getDecryptedValue()))
+            .map(x -> ((VaultAwsIamRoleCredentialDTO) (x.getSpec())).getVaultAwsIamRole())
             .filter(x -> !x.isEmpty());
     vaultAwsIamRole.ifPresent(x -> {
       vaultConfig.setAuthToken(null);
@@ -572,8 +570,6 @@ public class NGVaultServiceImpl implements NGVaultService {
         secretRefData = ((VaultAppRoleCredentialDTO) spec.getSpec()).getSecretId();
         secretRefDataList.add(secretRefData);
       } else if (AWS_IAM == spec.getAccessType()) {
-        secretRefData = ((VaultAwsIamRoleCredentialDTO) spec.getSpec()).getVaultAwsIamRole();
-        secretRefDataList.add(secretRefData);
         secretRefData = ((VaultAwsIamRoleCredentialDTO) spec.getSpec()).getXVaultAwsIamServerId();
         secretRefDataList.add(secretRefData);
       } else {

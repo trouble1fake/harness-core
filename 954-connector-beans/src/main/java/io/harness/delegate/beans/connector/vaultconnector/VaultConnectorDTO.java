@@ -80,10 +80,7 @@ public class VaultConnectorDTO extends ConnectorConfigDTO implements DelegateSel
   @Schema(description = SecretManagerDescriptionConstants.USE_VAULT_AGENT) private boolean useVaultAgent;
   @Schema(description = USE_AWS_IAM) private boolean useAwsIam;
   @Schema(description = AWS_REGION) private String awsRegion;
-  @SecretReference
-  @ApiModelProperty(dataType = "string")
-  @Schema(description = VAULT_AWS_IAM_ROLE)
-  private SecretRefData vaultAwsIamRole;
+  @Schema(description = VAULT_AWS_IAM_ROLE) private String vaultAwsIamRole;
   @SecretReference
   @ApiModelProperty(dataType = "string")
   @Schema(description = VAULT_AWS_IAM_HEADER)

@@ -25,6 +25,6 @@ import lombok.EqualsAndHashCode;
 @JsonTypeName("AWS_IAM")
 public class VaultAwsIamRoleCredentialDTO extends VaultCredentialDTO {
   private String awsRegion;
-  @ApiModelProperty(dataType = "string") private SecretRefData vaultAwsIamRole;
+  private String vaultAwsIamRole;
   @ApiModelProperty(dataType = "string") private SecretRefData xVaultAwsIamServerId;
 }

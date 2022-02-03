@@ -4050,13 +4050,17 @@
               "enum": [
                 "APP_ROLE",
                 "TOKEN",
-                "VAULT_AGENT"
+                "VAULT_AGENT",
+                "AWS_IAM"
               ]
             },
             "appRoleId": {
               "type": "string"
             },
             "authToken": {
+              "type": "string"
+            },
+            "awsRegion": {
               "type": "string"
             },
             "basePath": {
@@ -4098,11 +4102,20 @@
             "sinkPath": {
               "type": "string"
             },
+            "useAwsIam": {
+              "type": "boolean"
+            },
             "useVaultAgent": {
               "type": "boolean"
             },
+            "vaultAwsIamRole": {
+              "type": "string"
+            },
             "vaultUrl": {
               "type": "string"
+            },
+            "xvaultAwsIamServerId": {
+              "$ref": "#/definitions/SecretRefData"
             }
           }
         }
