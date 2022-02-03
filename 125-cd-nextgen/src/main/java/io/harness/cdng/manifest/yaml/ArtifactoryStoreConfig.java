@@ -81,16 +81,17 @@ public class ArtifactoryStoreConfig implements StoreConfig, Visitable, WithConne
 
   @Override
   public StoreConfig applyOverrides(StoreConfig overrideConfig) {
-    ArtifactoryStoreConfig ArtifactoryStore = (ArtifactoryStoreConfig) overrideConfig;
+    ArtifactoryStoreConfig artifactoryStoreConfig = (ArtifactoryStoreConfig) overrideConfig;
     ArtifactoryStoreConfig resultantArtifactoryStore = this;
-    if (!ParameterField.isNull(ArtifactoryStore.getConnectorRef())) {
-      resultantArtifactoryStore = resultantArtifactoryStore.withConnectorRef(ArtifactoryStore.getConnectorRef());
+    if (!ParameterField.isNull(artifactoryStoreConfig.getConnectorRef())) {
+      resultantArtifactoryStore = resultantArtifactoryStore.withConnectorRef(artifactoryStoreConfig.getConnectorRef());
     }
-    if (!ParameterField.isNull(ArtifactoryStore.getRepositoryPath())) {
-      resultantArtifactoryStore = resultantArtifactoryStore.withRepositoryPath(ArtifactoryStore.getRepositoryPath());
+    if (!ParameterField.isNull(artifactoryStoreConfig.getRepositoryPath())) {
+      resultantArtifactoryStore =
+          resultantArtifactoryStore.withRepositoryPath(artifactoryStoreConfig.getRepositoryPath());
     }
-    if (ArtifactoryStore.getArtifacts() != null) {
-      resultantArtifactoryStore = resultantArtifactoryStore.withArtifacts(ArtifactoryStore.getArtifacts());
+    if (artifactoryStoreConfig.getArtifacts() != null) {
+      resultantArtifactoryStore = resultantArtifactoryStore.withArtifacts(artifactoryStoreConfig.getArtifacts());
     }
     return resultantArtifactoryStore;
   }

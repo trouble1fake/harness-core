@@ -24,4 +24,7 @@ import lombok.NoArgsConstructor;
 public class ArtifactFile {
   @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) @NotNull ParameterField<String> name;
   @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) @NotNull ParameterField<String> path;
+  @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
+  @NotNull
+  ParameterField<String> artifactPathExpression;
 }
