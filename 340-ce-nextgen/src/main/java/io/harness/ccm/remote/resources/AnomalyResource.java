@@ -17,6 +17,7 @@ import io.harness.ccm.commons.entities.anomaly.AnomalyData;
 import io.harness.ccm.commons.entities.anomaly.AnomalyFeedbackDTO;
 import io.harness.ccm.commons.entities.anomaly.AnomalyQueryDTO;
 import io.harness.ccm.commons.entities.anomaly.AnomalySummary;
+import io.harness.ccm.commons.entities.anomaly.AnomalyWidgetData;
 import io.harness.ccm.commons.entities.anomaly.PerspectiveAnomalyData;
 import io.harness.ccm.graphql.dto.perspectives.PerspectiveQueryDTO;
 import io.harness.ccm.service.intf.AnomalyService;
@@ -31,6 +32,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -148,5 +150,26 @@ public class AnomalyResource {
                           NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier @NotNull @Valid String accountId,
       @RequestBody(description = "Anomaly Query") AnomalyQueryDTO anomalyQuery) {
     return ResponseDTO.newResponse(anomalyService.getAnomalySummary(accountId, anomalyQuery));
+  }
+
+  @POST
+  @Hidden
+  @Path("widgets")
+  @Timed
+  @LogAccountIdentifier
+  @ExceptionMetered
+  @ApiOperation(value = "Get Anomaly Widgets", nickname = "getAnomalyWidgetsData")
+  @Operation(operationId = "getAnomalyWidgetsData", description = "Fetch the data corresponding to anomaly list page widgets",
+      summary = "Get Anomaly Widgets",
+      responses =
+      {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "default",
+            description = "Anomaly Query result", content = { @Content(mediaType = MediaType.APPLICATION_JSON) })
+      })
+  public ResponseDTO<List<AnomalyWidgetData>>
+  getAnomalyWidgetsData(@Parameter(required = true, description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
+                            NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier @NotNull @Valid String accountId,
+      @RequestBody(description = "Anomaly Query") AnomalyQueryDTO anomalyQuery) {
+    return ResponseDTO.newResponse(anomalyService.getAnomalyWidgetData(accountId, anomalyQuery));
   }
 }
