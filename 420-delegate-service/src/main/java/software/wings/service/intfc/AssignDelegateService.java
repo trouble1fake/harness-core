@@ -33,6 +33,7 @@ public interface AssignDelegateService {
   boolean isWhitelisted(DelegateTask task, String delegateId);
 
   boolean shouldValidate(DelegateTask task, String delegateId);
+
   List<String> connectedWhitelistedDelegates(DelegateTask task);
 
   List<String> extractSelectors(DelegateTask task);

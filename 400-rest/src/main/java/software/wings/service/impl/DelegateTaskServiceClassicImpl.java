@@ -23,7 +23,6 @@ import static io.harness.delegate.beans.DelegateTaskEvent.DelegateTaskEventBuild
 import static io.harness.delegate.beans.NgSetupFields.NG;
 import static io.harness.delegate.beans.executioncapability.ExecutionCapability.EvaluationMode;
 import static io.harness.delegate.task.TaskFailureReason.EXPIRED;
-import static io.harness.exception.WingsException.USER;
 import static io.harness.govern.Switch.noop;
 import static io.harness.logging.AutoLogContext.OverrideBehavior.OVERRIDE_ERROR;
 import static io.harness.logging.AutoLogContext.OverrideBehavior.OVERRIDE_NESTS;
@@ -79,7 +78,6 @@ import io.harness.delegate.beans.DelegateTaskResponse.ResponseCode;
 import io.harness.delegate.beans.ErrorNotifyResponseData;
 import io.harness.delegate.beans.NoAvailableDelegatesException;
 import io.harness.delegate.beans.NoInstalledDelegatesException;
-import io.harness.delegate.beans.RemoteMethodReturnValueData;
 import io.harness.delegate.beans.SecretDetail;
 import io.harness.delegate.beans.TaskGroup;
 import io.harness.delegate.beans.TaskSelectorMap;
@@ -99,7 +97,6 @@ import io.harness.event.handler.impl.EventPublishHelper;
 import io.harness.exception.CriticalExpressionEvaluationException;
 import io.harness.exception.DelegateNotAvailableException;
 import io.harness.exception.ExceptionUtils;
-import io.harness.exception.FailureType;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.expression.ExpressionEvaluator;
@@ -185,7 +182,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -850,50 +846,7 @@ public class DelegateTaskServiceClassicImpl implements DelegateTaskServiceClassi
     }
   }
 
-  @Override
-  public void failIfAllDelegatesFailed(
-      final String accountId, final String delegateId, final String taskId, final boolean areClientToolsInstalled) {
-    DelegateTask delegateTask = getUnassignedDelegateTask(accountId, taskId, delegateId);
-    if (delegateTask == null) {
-      log.info("Task {} not found or was already assigned", taskId);
-      return;
-    }
-
-    if (delegateTask.isForceExecute()) {
-      log.debug("Task is set for force execution");
-      return;
-    }
-
-    try (AutoLogContext ignore = new TaskLogContext(taskId, delegateTask.getData().getTaskType(),
-             TaskType.valueOf(delegateTask.getData().getTaskType()).getTaskGroup().name(), OVERRIDE_ERROR)) {
-      if (!isValidationComplete(delegateTask)) {
-        log.info(
-            "Task {} is still being validated with delegate ids {} ", taskId, delegateTask.getValidatingDelegateIds());
-        return;
-      }
-      // Check whether a whitelisted delegate is connected
-      List<String> whitelistedDelegates = assignDelegateService.connectedWhitelistedDelegates(delegateTask);
-      if (isNotEmpty(whitelistedDelegates)) {
-        log.info("Waiting for task {} to be acquired by a whitelisted delegate: {}", taskId, whitelistedDelegates);
-        return;
-      }
-
-      String errorMessage = generateValidationError(delegateTask, areClientToolsInstalled);
-      log.info(errorMessage);
-      DelegateResponseData response;
-      if (delegateTask.getData().isAsync()) {
-        response = ErrorNotifyResponseData.builder()
-                       .failureTypes(EnumSet.of(FailureType.DELEGATE_PROVISIONING))
-                       .errorMessage(errorMessage)
-                       .build();
-      } else {
-        response =
-            RemoteMethodReturnValueData.builder().exception(new InvalidRequestException(errorMessage, USER)).build();
-      }
-      delegateTaskService.processDelegateResponse(accountId, null, taskId,
-          DelegateTaskResponse.builder().accountId(accountId).response(response).responseCode(ResponseCode.OK).build());
-    }
-  }
+  private void failIfAllDelegatesFailed(DelegateTask delegateTask) {}
 
   private String generateValidationError(final DelegateTask delegateTask, final boolean areClientToolsInstalled) {
     final String capabilities = generateCapabilitiesMessage(delegateTask);

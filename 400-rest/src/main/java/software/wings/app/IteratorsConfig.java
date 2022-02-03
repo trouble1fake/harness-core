@@ -30,4 +30,5 @@ public class IteratorsConfig {
   IteratorConfig delegateTaskExpiryCheckIteratorConfig;
   IteratorConfig perpetualTaskRebalanceIteratorConfig;
   IteratorConfig perpetualTaskAssignmentIteratorConfig;
+  IteratorConfig delegateTaskValidationFailIteratorConfig;
 }

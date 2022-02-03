@@ -17,7 +17,9 @@ import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.beans.TaskData.TaskDataKeys;
 import io.harness.delegate.beans.executioncapability.ExecutionCapability;
 import io.harness.delegate.task.HDelegateTask;
+import io.harness.iterator.PersistentIterable;
 import io.harness.mongo.index.CompoundMongoIndex;
+import io.harness.mongo.index.FdIndex;
 import io.harness.mongo.index.FdTtlIndex;
 import io.harness.mongo.index.MongoIndex;
 import io.harness.persistence.AccountAccess;
@@ -56,8 +58,8 @@ import org.mongodb.morphia.annotations.Transient;
 @HarnessEntity(exportable = false)
 @FieldNameConstants(innerTypeName = "DelegateTaskKeys")
 @TargetModule(HarnessModule._920_DELEGATE_SERVICE_BEANS)
-public class DelegateTask
-    implements PersistentEntity, UuidAware, CreatedAtAware, UpdatedAtAware, AccountAccess, HDelegateTask {
+public class DelegateTask implements PersistentEntity, UuidAware, CreatedAtAware, UpdatedAtAware, AccountAccess,
+                                     HDelegateTask, PersistentIterable {
   public static List<MongoIndex> mongoIndexes() {
     return ImmutableList.<MongoIndex>builder()
         .add(CompoundMongoIndex.builder()
@@ -174,6 +176,8 @@ public class DelegateTask
 
   @FdTtlIndex @Default private Date validUntil = Date.from(OffsetDateTime.now().plusDays(2).toInstant());
 
+  @FdIndex private Long taskValidationFailureCheckIteration;
+
   public Long fetchExtraTimeoutForForceExecution() {
     if (forceExecute) {
       return DEFAULT_FORCE_EXECUTE_TIMEOUT;
@@ -188,6 +192,19 @@ public class DelegateTask
       return data.getTaskType();
     }
     return description;
+  }
+
+  @Override
+  public Long obtainNextIteration(String fieldName) {
+    if (DelegateTaskKeys.taskValidationFailureCheckIteration.equals(fieldName)) {
+      return this.taskValidationFailureCheckIteration;
+    }
+    throw new IllegalArgumentException("Invalid fieldName " + fieldName);
+  }
+
+  @Override
+  public String logKeyForId() {
+    return UuidAware.super.logKeyForId();
   }
 
   public enum Status {

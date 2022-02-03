@@ -350,22 +350,6 @@ public class DelegateAgentResource {
 
   @DelegateAuth
   @GET
-  @Produces("application/x-kryo")
-  @Path("{delegateId}/tasks/{taskId}/fail")
-  @Timed
-  @ExceptionMetered
-  public void failIfAllDelegatesFailed(@PathParam("delegateId") final String delegateId,
-      @PathParam("taskId") final String taskId, @QueryParam("accountId") @NotEmpty final String accountId,
-      @QueryParam("areClientToolsInstalled") final boolean areClientToolsInstalled) {
-    try (AutoLogContext ignore1 = new TaskLogContext(taskId, OVERRIDE_ERROR);
-         AutoLogContext ignore2 = new AccountLogContext(accountId, OVERRIDE_ERROR);
-         AutoLogContext ignore3 = new DelegateLogContext(delegateId, OVERRIDE_ERROR)) {
-      delegateTaskServiceClassic.failIfAllDelegatesFailed(accountId, delegateId, taskId, areClientToolsInstalled);
-    }
-  }
-
-  @DelegateAuth
-  @GET
   @Path("{delegateId}/upgrade")
   @Timed
   @ExceptionMetered

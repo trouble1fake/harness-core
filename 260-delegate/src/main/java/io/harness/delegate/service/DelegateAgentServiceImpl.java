@@ -2008,17 +2008,6 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
             log.info("Did not get the go-ahead to proceed for task");
             if (validated) {
               log.info("Task validated but was not assigned");
-            } else {
-              int delay = POLL_INTERVAL_SECONDS + 3;
-              log.info("Waiting {} seconds to give other delegates a chance to validate task", delay);
-              sleep(ofSeconds(delay));
-              try {
-                log.info("Manager check whether to fail task");
-                execute(delegateAgentManagerClient.failIfAllDelegatesFailed(
-                    delegateId, delegateTaskEvent.getDelegateTaskId(), accountId, areAllClientToolsInstalled));
-              } catch (IOException e) {
-                log.error("Unable to tell manager to check whether to fail for task", e);
-              }
             }
           }
         } catch (IOException e) {
