@@ -1795,7 +1795,11 @@ public class ContainerInstanceHandlerTest extends WingsBaseTest {
     infrastructureMapping = DirectKubernetesInfrastructureMapping.builder().build();
     doReturn(instances).when(instanceService).getInstancesForAppAndInframapping(anyString(), anyString());
 
-    containerInstanceHandler.processInstanceSyncResponseFromPerpetualTask(infrastructureMapping, responseData);
+    try {
+      containerInstanceHandler.processInstanceSyncResponseFromPerpetualTask(infrastructureMapping, responseData);
+    } catch (NoInstancesException ignore) {
+      // expected
+    }
 
     verify(instanceService, times(1)).delete(Sets.newHashSet(INSTANCE_1_ID));
     verify(instanceService, times(1)).delete(Sets.newHashSet(INSTANCE_2_ID));
@@ -1839,7 +1843,11 @@ public class ContainerInstanceHandlerTest extends WingsBaseTest {
     infrastructureMapping = DirectKubernetesInfrastructureMapping.builder().build();
     doReturn(instances).when(instanceService).getInstancesForAppAndInframapping(anyString(), anyString());
 
-    containerInstanceHandler.processInstanceSyncResponseFromPerpetualTask(infrastructureMapping, responseData);
+    try {
+      containerInstanceHandler.processInstanceSyncResponseFromPerpetualTask(infrastructureMapping, responseData);
+    } catch (NoInstancesException ignore) {
+      // expected
+    }
 
     verify(instanceService, times(1)).delete(Sets.newHashSet(INSTANCE_1_ID));
     verify(instanceService, never()).delete(Sets.newHashSet(INSTANCE_2_ID));
@@ -1852,7 +1860,11 @@ public class ContainerInstanceHandlerTest extends WingsBaseTest {
     infrastructureMapping = DirectKubernetesInfrastructureMapping.builder().build();
     doReturn(instances).when(instanceService).getInstancesForAppAndInframapping(anyString(), anyString());
 
-    containerInstanceHandler.processInstanceSyncResponseFromPerpetualTask(infrastructureMapping, responseData);
+    try {
+      containerInstanceHandler.processInstanceSyncResponseFromPerpetualTask(infrastructureMapping, responseData);
+    } catch (NoInstancesException ignore) {
+      // expected
+    }
 
     verify(instanceService, times(1)).delete(Sets.newHashSet(INSTANCE_2_ID));
   }
@@ -2240,6 +2252,43 @@ public class ContainerInstanceHandlerTest extends WingsBaseTest {
     assertThatThrownBy(
         () -> assertSavedAndDeletedInstances(emptyList(), instanceSyncResponse, emptyList(), emptyList()))
         .isInstanceOf(NoInstancesException.class);
+  }
+
+  @Test
+  @Owner(developers = ABOSII)
+  @Category(UnitTests.class)
+  public void shouldThrowNoInstancesExceptionForKubernetesContainerDeployment() {
+    List<Instance> instancesInDb = Arrays.asList(createKubernetesContainerInstance("instance1", "release", "default"),
+        createKubernetesContainerInstance("instance2", "release", "default"));
+
+    ContainerSyncResponse syncResponse = ContainerSyncResponse.builder()
+                                             .containerInfoList(emptyList())
+                                             .isEcs(false)
+                                             .commandExecutionStatus(CommandExecutionStatus.SUCCESS)
+                                             .build();
+
+    assertThatThrownBy(() -> assertSavedAndDeletedInstances(instancesInDb, syncResponse, emptyList(), emptyList()))
+        .isInstanceOf(NoInstancesException.class);
+  }
+
+  @Test
+  @Owner(developers = ABOSII)
+  @Category(UnitTests.class)
+  public void shouldThrowNoInstancesExceptionForKubernetesContainerDeploymentNoInstancesInDb() {
+    ContainerSyncResponse syncResponse = createContainerSyncResponseWith("release-name", "default");
+
+    assertThatThrownBy(() -> assertSavedAndDeletedInstances(emptyList(), syncResponse, emptyList(), emptyList()))
+        .isInstanceOf(NoInstancesException.class);
+  }
+
+  @Test
+  @Owner(developers = ABOSII)
+  @Category(UnitTests.class)
+  public void shouldAddInstancesFromContainerSyncEvenNoInstancesInDb() {
+    ContainerSyncResponse syncResponse =
+        createContainerSyncResponseWith("release-name", "default", "instance-1", "instance-2");
+
+    assertSavedAndDeletedInstances(emptyList(), syncResponse, asList("instance-1", "instance-2"), emptyList());
   }
 
   private void assertSavedAndDeletedInstances(List<Instance> instancesInDb, K8sInstanceSyncResponse syncResponse,

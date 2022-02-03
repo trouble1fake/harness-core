@@ -168,38 +168,59 @@ public class ContainerInstanceHandler extends InstanceHandler implements Instanc
         getDeploymentSummaryMap(newDeploymentSummaries, containerMetadataInstanceMap, containerInfraMapping);
 
     loadContainerSvcNameInstanceMap(containerInfraMapping, containerMetadataInstanceMap);
-    // log.info("Found {} containerSvcNames for app {} and infraMapping",
-    // containerMetadataInstanceMap != null ? containerMetadataInstanceMap.size() : 0, appId);
 
     if (containerMetadataInstanceMap == null) {
       return;
     }
 
-    if (instanceSyncFlow == PERPETUAL_TASK && responseData instanceof K8sTaskExecutionResponse) {
-      K8sTaskExecutionResponse k8sTaskExecutionResponse = (K8sTaskExecutionResponse) responseData;
-      K8sInstanceSyncResponse syncResponse = (K8sInstanceSyncResponse) k8sTaskExecutionResponse.getK8sTaskResponse();
-      ContainerMetadata perpetualTaskMetadata = getContainerMetadataFromK8sInstanceSyncResponse(syncResponse);
+    if (instanceSyncFlow == PERPETUAL_TASK && responseData != null) {
+      ContainerMetadata perpetualTaskMetadata = getContainerMetadataFromInstanceSyncResponse(responseData);
 
-      // In case if there is no any entry in containerMetadataInstanceMap (meaning that there is no any instance in db
+      // In case if there is no entry in containerMetadataInstanceMap (meaning that there is no instances in db
       // for given release name and namespace) we will add all instances from perpetual task response
       if (perpetualTaskMetadata != null && !containerMetadataInstanceMap.containsKey(perpetualTaskMetadata)) {
-        // Current logic is to catch any exception and if there is no successful sync status during 7 days then delete
-        // all infra perpetual tasks. We're exploiting this to handle the case when replica is scaled down to 0 and
-        // after n time is scaled back, so we will delete perpetual task only if after 7 days there are no pods
-        if (isEmpty(syncResponse.getK8sPodInfoList())) {
-          // In this case there is nothing to be processed since there is no instances in db that need to be removed
-          log.info("Still there is no pods found for [app: {}, namespace: {}, release name: {}]", appId,
-              syncResponse.getNamespace(), syncResponse.getReleaseName());
-          throw new NoInstancesException(format("No pods found for namespace: %s and release name: %s",
-              syncResponse.getNamespace(), syncResponse.getReleaseName()));
-        }
+        if (responseData instanceof K8sTaskExecutionResponse) {
+          K8sTaskExecutionResponse k8sTaskExecutionResponse = (K8sTaskExecutionResponse) responseData;
+          K8sInstanceSyncResponse syncResponse =
+              (K8sInstanceSyncResponse) k8sTaskExecutionResponse.getK8sTaskResponse();
 
-        processK8sPodsInstances(containerInfraMapping, perpetualTaskMetadata, emptyList(), deploymentSummaryMap,
-            syncResponse.getK8sPodInfoList());
-        return;
+          // Current logic is to catch any exception and if there is no successful sync status during 7 days then delete
+          // all infra perpetual tasks. We're exploiting this to handle the case when replica is scaled down to 0 and
+          // after n time is scaled back, so we will delete perpetual task only if after 7 days there are no pods
+          if (isEmpty(syncResponse.getK8sPodInfoList())) {
+            // In this case there is nothing to be processed since there is no instances in db that need to be removed
+            log.info("Still there is no pods found for [app: {}, namespace: {}, release name: {}]", appId,
+                syncResponse.getNamespace(), syncResponse.getReleaseName());
+            throw new NoInstancesException(format("No pods found for namespace: %s and release name: %s",
+                syncResponse.getNamespace(), syncResponse.getReleaseName()));
+          }
+
+          processK8sPodsInstances(containerInfraMapping, perpetualTaskMetadata, emptyList(), deploymentSummaryMap,
+              syncResponse.getK8sPodInfoList());
+          return;
+        } else if (responseData instanceof ContainerSyncResponse) {
+          ContainerSyncResponse syncResponse = (ContainerSyncResponse) responseData;
+
+          // Current logic is to catch any exception and if there is no successful sync status during 7 days then delete
+          // all infra perpetual tasks. We're exploiting this to handle the case when replica is scaled down to 0 and
+          // after n time is scaled back, so we will delete perpetual task only if after 7 days there are no pods
+          if (isEmpty(syncResponse.getContainerInfoList())) {
+            // In this case there is nothing to be processed since there is no instances in db that need to be removed
+            log.info("Still there is no containers found for [app: {}, namespace: {}, release name: {}]", appId,
+                syncResponse.getNamespace(), syncResponse.getReleaseName());
+            throw new NoInstancesException(format("No containers found for namespace: %s and release name: %s",
+                syncResponse.getNamespace(), syncResponse.getReleaseName()));
+          }
+
+          processContainerServiceInstances(rollback, containerInfraMapping, deploymentSummaryMap, perpetualTaskMetadata,
+              emptyList(), syncResponse.getContainerInfoList());
+
+          return;
+        }
       }
     }
 
+    NoInstancesException noInstancesException = null;
     // This is to handle the case of the instances stored in the new schema.
     if (containerMetadataInstanceMap.size() > 0) {
       for (ContainerMetadata containerMetadata : containerMetadataInstanceMap.keySet()) {
@@ -233,8 +254,9 @@ public class ContainerInstanceHandler extends InstanceHandler implements Instanc
               if (isEmpty(syncResponse.getK8sPodInfoList())) {
                 log.info("No pods found for [app: {}, namespace: {}, release name: {}]", appId,
                     syncResponse.getNamespace(), syncResponse.getReleaseName());
-                throw new NoInstancesException(format("No pods found for namespace: %s and release name: %s",
-                    syncResponse.getNamespace(), syncResponse.getReleaseName()));
+                noInstancesException =
+                    new NoInstancesException(format("No pods found for namespace: %s and release name: %s",
+                        syncResponse.getNamespace(), syncResponse.getReleaseName()));
               }
             }
           } else {
@@ -243,23 +265,41 @@ public class ContainerInstanceHandler extends InstanceHandler implements Instanc
           }
 
         } else {
+          ContainerSyncResponse syncResponse = null;
           if (responseData != null && instanceSyncFlow == PERPETUAL_TASK) {
-            ContainerSyncResponse syncResponse = (ContainerSyncResponse) responseData;
+            syncResponse = (ContainerSyncResponse) responseData;
             if (!responseBelongsToCurrentSetOfContainers(containerMetadata, syncResponse)) {
               continue;
             }
             // don't update ecs instances if delegate response is failure
-            if (syncResponse != null && syncResponse.getCommandExecutionStatus() == FAILURE) {
+            if (syncResponse.getCommandExecutionStatus() == FAILURE) {
               continue;
             }
           }
-          // log.info("Found {} instances in DB for app {} and containerServiceName {}", instancesInDB.size(), appId,
-          //    containerMetadata.getContainerServiceName());
 
           handleContainerServiceInstances(rollback, responseData, instanceSyncFlow, containerInfraMapping,
               deploymentSummaryMap, containerMetadata, instancesInDB);
+
+          if (syncResponse != null && !syncResponse.isEcs()) {
+            // Current logic is to catch any exception and if there is no successful sync status during 7 days then
+            // delete all infra perpetual tasks. We're exploiting this to handle the case when replica is scaled down to
+            // 0 and after n time is scaled back, so we will delete perpetual task only if after 7 days there are no
+            // containers
+            if (isEmpty(syncResponse.getContainerInfoList())) {
+              log.info("No containers found for [app: {}, namespace: {}, release name: {}]", appId,
+                  syncResponse.getNamespace(), syncResponse.getReleaseName());
+
+              noInstancesException =
+                  new NoInstancesException(format("No containers found for namespace: %s and release name: %s",
+                      syncResponse.getNamespace(), syncResponse.getReleaseName()));
+            }
+          }
         }
       }
+    }
+
+    if (noInstancesException != null) {
+      throw noInstancesException;
     }
   }
 
@@ -397,6 +437,14 @@ public class ContainerInstanceHandler extends InstanceHandler implements Instanc
       } else {
         deploymentSummary =
             getDeploymentSummaryForInstanceCreation(deploymentSummaryMap.get(containerMetadata), rollback);
+      }
+
+      if (deploymentSummary == null) {
+        deploymentSummary = DeploymentSummary.builder()
+                                .deployedByName(AUTO_SCALE)
+                                .deployedById(AUTO_SCALE)
+                                .deployedAt(System.currentTimeMillis())
+                                .build();
       }
 
       for (String containerId : instancesToBeAdded) {
@@ -562,10 +610,16 @@ public class ContainerInstanceHandler extends InstanceHandler implements Instanc
 
     DeploymentSummary deploymentSummary = deploymentSummaryMap.get(containerMetadata);
     for (String podName : instancesToBeAdded) {
-      if (deploymentSummary == null && !instancesInDB.isEmpty()) {
+      if (deploymentSummary == null) {
         deploymentSummary =
             DeploymentSummary.builder().deploymentInfo(ContainerDeploymentInfoWithNames.builder().build()).build();
-        generateDeploymentSummaryFromInstance(instancesInDB.stream().findFirst().get(), deploymentSummary);
+        if (!instancesInDB.isEmpty()) {
+          generateDeploymentSummaryFromInstance(instancesInDB.stream().findFirst().get(), deploymentSummary);
+        } else {
+          deploymentSummary.setDeployedByName(AUTO_SCALE);
+          deploymentSummary.setDeployedById(AUTO_SCALE);
+          deploymentSummary.setDeployedAt(System.currentTimeMillis());
+        }
       }
       HelmChartInfo helmChartInfo =
           getK8sPodHelmChartInfo(deploymentSummary, currentPodsMap.get(podName), instancesInDB);
@@ -801,15 +855,31 @@ public class ContainerInstanceHandler extends InstanceHandler implements Instanc
     }
   }
 
-  private ContainerMetadata getContainerMetadataFromK8sInstanceSyncResponse(K8sInstanceSyncResponse syncResponse) {
-    String syncNamespace = syncResponse.getNamespace();
-    String syncReleaseName = syncResponse.getReleaseName();
+  private ContainerMetadata getContainerMetadataFromInstanceSyncResponse(DelegateResponseData responseData) {
+    String syncNamespace;
+    String syncReleaseName;
+    ContainerMetadataType syncType = null;
+    if (responseData instanceof K8sTaskExecutionResponse) {
+      K8sTaskExecutionResponse k8sTaskExecutionResponse = (K8sTaskExecutionResponse) responseData;
+      K8sInstanceSyncResponse syncResponse = (K8sInstanceSyncResponse) k8sTaskExecutionResponse.getK8sTaskResponse();
+
+      syncNamespace = syncResponse.getNamespace();
+      syncReleaseName = syncResponse.getReleaseName();
+      syncType = ContainerMetadataType.K8S;
+    } else if (responseData instanceof ContainerSyncResponse) {
+      ContainerSyncResponse containerSyncResponse = (ContainerSyncResponse) responseData;
+      if (containerSyncResponse.isEcs()) {
+        return null;
+      }
+
+      syncNamespace = containerSyncResponse.getNamespace();
+      syncReleaseName = containerSyncResponse.getReleaseName();
+    } else {
+      return null;
+    }
+
     if (isNotEmpty(syncNamespace) && isNotEmpty(syncReleaseName)) {
-      return ContainerMetadata.builder()
-          .type(ContainerMetadataType.K8S)
-          .namespace(syncNamespace)
-          .releaseName(syncReleaseName)
-          .build();
+      return ContainerMetadata.builder().type(syncType).namespace(syncNamespace).releaseName(syncReleaseName).build();
     }
 
     return null;
@@ -1392,10 +1462,9 @@ public class ContainerInstanceHandler extends InstanceHandler implements Instanc
   private Status getK8sPerpetualTaskStatus(K8sTaskExecutionResponse response) {
     boolean success = response.getCommandExecutionStatus() == SUCCESS;
     K8sInstanceSyncResponse k8sInstanceSyncResponse = (K8sInstanceSyncResponse) response.getK8sTaskResponse();
-    boolean deleteTask = success && isEmpty(k8sInstanceSyncResponse.getK8sPodInfoList());
     String errorMessage = success ? null : response.getErrorMessage();
 
-    return Status.builder().retryable(!deleteTask).errorMessage(errorMessage).success(success).build();
+    return Status.builder().retryable(true).errorMessage(errorMessage).success(success).build();
   }
 
   private Status getContainerSyncPerpetualTaskStatus(ContainerSyncResponse response) {
@@ -1406,7 +1475,7 @@ public class ContainerInstanceHandler extends InstanceHandler implements Instanc
       deleteTask = success && !response.isEcsServiceExists();
     } else {
       // K8s v1
-      deleteTask = success && isEmpty(response.getContainerInfoList());
+      deleteTask = false;
     }
 
     String errorMessage = success ? null : response.getErrorMessage();
