@@ -7,13 +7,7 @@
 
 package io.harness.ccm.commons.entities.anomaly;
 
-import io.harness.ccm.commons.entities.CCMAggregation;
-import io.harness.ccm.commons.entities.CCMFilter;
-import io.harness.ccm.commons.entities.CCMGroupBy;
-import io.harness.ccm.commons.entities.CCMSort;
-
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Value;
@@ -22,12 +16,12 @@ import lombok.experimental.FieldDefaults;
 @Value
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Schema(name = "AnomalyQueryDTO", description = "The query object for cost anomalies")
-public class AnomalyQueryDTO {
-  CCMFilter filter;
-  List<CCMSort> orderBy;
-  List<CCMGroupBy> groupBy;
-  List<CCMAggregation> aggregations;
-  Integer offset;
-  Integer limit;
+@Schema(name = "AnomalySummary", description = "This object details summary of an anomaly query result")
+public class AnomalySummary {
+  String name;
+  String description;
+  Double count;
+  Double actualCost;
+  Double expectedCost;
+  Double costImpact;
 }

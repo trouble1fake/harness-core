@@ -7,24 +7,4 @@
 
 package io.harness.ccm.commons.entities;
 
-public enum CCMField {
-  PERSPECTIVE_ID,
-  WORKLOAD,
-  WORKLOAD_TYPE,
-  CLUSTER_ID,
-  CLUSTER_NAME,
-  NAMESPACE,
-  GCP_PRODUCT,
-  GCP_PROJECT,
-  GCP_SKU_ID,
-  GCP_SKU_DESCRIPTION,
-  AWS_ACCOUNT,
-  AWS_SERVICE,
-  CLOUD_PROVIDER,
-  STATUS,
-  ANOMALY_DATE,
-  ACTUAL_COST,
-  EXPECTED_COST,
-  COST_IMPACT,
-  ALL
-}
+public enum CCMAggregationOperation { SUM, MAX, MIN, AVG, COUNT }
