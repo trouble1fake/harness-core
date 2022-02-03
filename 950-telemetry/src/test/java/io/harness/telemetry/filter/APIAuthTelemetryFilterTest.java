@@ -10,7 +10,13 @@ package io.harness.telemetry.filter;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.rule.OwnerRule.ASHISHSANODIA;
 import static io.harness.telemetry.Destination.AMPLITUDE;
-import static io.harness.telemetry.filter.APIAuthTelemetryFilter.*;
+import static io.harness.telemetry.filter.APIAuthTelemetryFilter.ACCOUNT_ID;
+import static io.harness.telemetry.filter.APIAuthTelemetryFilter.API_ENDPOINT;
+import static io.harness.telemetry.filter.APIAuthTelemetryFilter.API_ENDPOINTS_AUTH_SCHEMES;
+import static io.harness.telemetry.filter.APIAuthTelemetryFilter.AUTH_TYPE;
+import static io.harness.telemetry.filter.APIAuthTelemetryFilter.BEARER;
+import static io.harness.telemetry.filter.APIAuthTelemetryFilter.UNKNOWN;
+import static io.harness.telemetry.filter.APIAuthTelemetryFilter.X_API_KEY;
 
 import static org.mockito.Mockito.when;
 
