@@ -155,6 +155,7 @@ public class VmInitializeStepUtils {
         case RESTORE_CACHE_S3:
         case RESTORE_CACHE_GCS:
         case SAVE_CACHE_GCS:
+        case SECURITY:
         case UPLOAD_ARTIFACTORY:
         case UPLOAD_S3:
         case UPLOAD_GCS:

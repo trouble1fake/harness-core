@@ -404,6 +404,7 @@ public abstract class AbstractStepExecutable implements AsyncExecutableWithRbac<
       case SAVE_CACHE_GCS:
       case RESTORE_CACHE_GCS:
       case SAVE_CACHE_S3:
+      case SECURITY:
       case RESTORE_CACHE_S3:
         return pluginCompatibleStepSerializer.serializeStepWithStepParameters((PluginCompatibleStep) ciStepInfo, port,
             taskId, logKey, stepIdentifier, ParameterField.createValueField(Timeout.fromString(timeout)), accountId,

@@ -49,6 +49,8 @@ public class CIStepInfoUtils {
       case SAVE_CACHE_GCS:
       case RESTORE_CACHE_GCS:
         return ciExecutionServiceConfig.getStepConfig().getCacheGCSConfig();
+      case SECURITY:
+        return ciExecutionServiceConfig.getStepConfig().getSecurityConfig();
       case UPLOAD_ARTIFACTORY:
         return ciExecutionServiceConfig.getStepConfig().getArtifactoryUploadConfig();
       default:
@@ -75,6 +77,8 @@ public class CIStepInfoUtils {
       case SAVE_CACHE_GCS:
       case RESTORE_CACHE_GCS:
         return ciExecutionServiceConfig.getStepConfig().getVmImageConfig().getCacheGCS();
+      case SECURITY:
+        return ciExecutionServiceConfig.getStepConfig().getVmImageConfig().getSecurity();
       case UPLOAD_ARTIFACTORY:
         return ciExecutionServiceConfig.getStepConfig().getVmImageConfig().getArtifactoryUpload();
       default:

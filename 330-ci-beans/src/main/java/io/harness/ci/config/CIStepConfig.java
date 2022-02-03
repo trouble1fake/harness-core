@@ -20,6 +20,7 @@ public class CIStepConfig {
   StepImageConfig gcsUploadConfig;
   StepImageConfig s3UploadConfig;
   StepImageConfig artifactoryUploadConfig;
+  StepImageConfig securityConfig;
   StepImageConfig cacheGCSConfig;
   StepImageConfig cacheS3Config;
   VmImageConfig vmImageConfig;

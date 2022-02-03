@@ -19,6 +19,7 @@ public class VmImageConfig {
   String buildAndPushGCR;
   String gcsUpload;
   String s3Upload;
+  String security;
   String artifactoryUpload;
   String cacheGCS;
   String cacheS3;

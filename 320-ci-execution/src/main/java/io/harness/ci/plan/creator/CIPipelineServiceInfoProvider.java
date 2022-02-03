@@ -9,6 +9,7 @@ package io.harness.ci.plan.creator;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.FeatureName;
 import io.harness.beans.steps.StepSpecTypeConstants;
 import io.harness.ci.creator.variables.CIStageVariableCreator;
 import io.harness.ci.creator.variables.CIStepVariableCreator;
@@ -111,6 +112,14 @@ public class CIPipelineServiceInfoProvider implements PipelineServiceInfoProvide
                                   .setStepMetaData(StepMetaData.newBuilder().addFolderPaths("Build").build())
                                   .build();
 
+    StepInfo securityStepInfo = StepInfo.newBuilder()
+                                    .setName("Security")
+                                    .setType(StepSpecTypeConstants.SECURITY)
+                                    .setFeatureFlag(FeatureName.SECURITY.name())
+                                    .setFeatureRestrictionName(FeatureRestrictionName.SECURITY.name())
+                                    .setStepMetaData(StepMetaData.newBuilder().addFolderPaths("Security").build())
+                                    .build();
+
     StepInfo ecrPushBuilds =
         StepInfo.newBuilder()
             .setName("Build and Push to ECR")
@@ -161,6 +170,7 @@ public class CIPipelineServiceInfoProvider implements PipelineServiceInfoProvide
     stepInfos.add(restoreCacheFromGCS);
     stepInfos.add(runTestsStepInfo);
     stepInfos.add(pluginStepInfo);
+    stepInfos.add(securityStepInfo);
     stepInfos.add(restoreCacheFromS3);
     stepInfos.add(dockerPushBuild);
     stepInfos.add(uploadArtifactsToJfrogBuild);

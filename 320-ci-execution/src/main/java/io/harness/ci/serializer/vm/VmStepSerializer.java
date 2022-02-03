@@ -58,6 +58,7 @@ public class VmStepSerializer {
       case SAVE_CACHE_GCS:
       case RESTORE_CACHE_GCS:
       case SAVE_CACHE_S3:
+      case SECURITY:
       case RESTORE_CACHE_S3:
         return vmPluginCompatibleStepSerializer.serialize(
             ambiance, (PluginCompatibleStep) stepInfo, identifier, parameterFieldTimeout, stepName);

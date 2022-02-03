@@ -1054,6 +1054,9 @@
             "dockerfile": {
               "type": "string"
             },
+            "imagePullPolicy": {
+              "$ref": "#/definitions/ParameterFieldImagePullPolicy"
+            },
             "labels": {
               "oneOf": [
                 {
@@ -1076,6 +1079,15 @@
                   "type": "string"
                 }
               ]
+            },
+            "outputVariables": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/OutputNGVariable"
+              }
+            },
+            "privileged": {
+              "$ref": "#/definitions/ParameterFieldBoolean"
             },
             "remoteCacheRepo": {
               "type": "string"
@@ -1161,6 +1173,9 @@
             "imageName": {
               "type": "string"
             },
+            "imagePullPolicy": {
+              "$ref": "#/definitions/ParameterFieldImagePullPolicy"
+            },
             "labels": {
               "oneOf": [
                 {
@@ -1183,6 +1198,15 @@
                   "type": "string"
                 }
               ]
+            },
+            "outputVariables": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/OutputNGVariable"
+              }
+            },
+            "privileged": {
+              "$ref": "#/definitions/ParameterFieldBoolean"
             },
             "region": {
               "type": "string"
@@ -1409,6 +1433,9 @@
             "imageName": {
               "type": "string"
             },
+            "imagePullPolicy": {
+              "$ref": "#/definitions/ParameterFieldImagePullPolicy"
+            },
             "labels": {
               "oneOf": [
                 {
@@ -1431,6 +1458,15 @@
                   "type": "string"
                 }
               ]
+            },
+            "outputVariables": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/OutputNGVariable"
+              }
+            },
+            "privileged": {
+              "$ref": "#/definitions/ParameterFieldBoolean"
             },
             "projectID": {
               "type": "string"
@@ -2726,6 +2762,65 @@
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
+    "ParameterFieldBoolean": {
+      "type": "object",
+      "properties": {
+        "expression": {
+          "type": "boolean"
+        },
+        "expressionValue": {
+          "type": "string"
+        },
+        "inputSetValidator": {
+          "$ref": "#/definitions/InputSetValidator"
+        },
+        "jsonResponseField": {
+          "type": "boolean"
+        },
+        "responseField": {
+          "type": "string"
+        },
+        "typeString": {
+          "type": "boolean"
+        },
+        "value": {
+          "type": "boolean"
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "ParameterFieldImagePullPolicy": {
+      "type": "object",
+      "properties": {
+        "expression": {
+          "type": "boolean"
+        },
+        "expressionValue": {
+          "type": "string"
+        },
+        "inputSetValidator": {
+          "$ref": "#/definitions/InputSetValidator"
+        },
+        "jsonResponseField": {
+          "type": "boolean"
+        },
+        "responseField": {
+          "type": "string"
+        },
+        "typeString": {
+          "type": "boolean"
+        },
+        "value": {
+          "type": "string",
+          "enum": [
+            "Always",
+            "Never",
+            "IfNotPresent"
+          ]
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
     "ParameterFieldInteger": {
       "type": "object",
       "properties": {
@@ -3155,8 +3250,20 @@
                 }
               ]
             },
+            "imagePullPolicy": {
+              "$ref": "#/definitions/ParameterFieldImagePullPolicy"
+            },
             "key": {
               "type": "string"
+            },
+            "outputVariables": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/OutputNGVariable"
+              }
+            },
+            "privileged": {
+              "$ref": "#/definitions/ParameterFieldBoolean"
             },
             "resources": {
               "$ref": "#/definitions/ContainerResource"
@@ -3216,8 +3323,17 @@
                 }
               ]
             },
+            "imagePullPolicy": {
+              "$ref": "#/definitions/ParameterFieldImagePullPolicy"
+            },
             "key": {
               "type": "string"
+            },
+            "outputVariables": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/OutputNGVariable"
+              }
             },
             "pathStyle": {
               "oneOf": [
@@ -3228,6 +3344,9 @@
                   "type": "string"
                 }
               ]
+            },
+            "privileged": {
+              "$ref": "#/definitions/ParameterFieldBoolean"
             },
             "region": {
               "type": "string"
@@ -3548,8 +3667,17 @@
             "connectorRef": {
               "type": "string"
             },
+            "imagePullPolicy": {
+              "$ref": "#/definitions/ParameterFieldImagePullPolicy"
+            },
             "key": {
               "type": "string"
+            },
+            "outputVariables": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/OutputNGVariable"
+              }
             },
             "override": {
               "oneOf": [
@@ -3560,6 +3688,9 @@
                   "type": "string"
                 }
               ]
+            },
+            "privileged": {
+              "$ref": "#/definitions/ParameterFieldBoolean"
             },
             "resources": {
               "$ref": "#/definitions/ContainerResource"
@@ -3623,8 +3754,17 @@
             "endpoint": {
               "type": "string"
             },
+            "imagePullPolicy": {
+              "$ref": "#/definitions/ParameterFieldImagePullPolicy"
+            },
             "key": {
               "type": "string"
+            },
+            "outputVariables": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/OutputNGVariable"
+              }
             },
             "override": {
               "oneOf": [
@@ -3645,6 +3785,9 @@
                   "type": "string"
                 }
               ]
+            },
+            "privileged": {
+              "$ref": "#/definitions/ParameterFieldBoolean"
             },
             "region": {
               "type": "string"
@@ -3707,6 +3850,73 @@
             },
             "value": {
               "type": "string"
+            }
+          }
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "SecurityStepInfo": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/StepSpecType"
+        },
+        {
+          "type": "object",
+          "required": [
+            "connectorRef"
+          ],
+          "properties": {
+            "connectorRef": {
+              "type": "string"
+            },
+            "imagePullPolicy": {
+              "type": "string",
+              "enum": [
+                "Always",
+                "Never",
+                "IfNotPresent"
+              ]
+            },
+            "outputVariables": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/OutputNGVariable"
+              }
+            },
+            "privileged": {
+              "oneOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "resources": {
+              "$ref": "#/definitions/ContainerResource"
+            },
+            "runAsUser": {
+              "oneOf": [
+                {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "settings": {
+              "oneOf": [
+                {
+                  "$ref": "#/definitions/ParameterFieldMapStringJsonNode"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             }
           }
         }
@@ -4498,6 +4708,22 @@
           "if": {
             "properties": {
               "type": {
+                "const": "Security"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/SecurityStepInfo"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
                 "const": "ServiceNowApproval"
               }
             }
@@ -4781,6 +5007,18 @@
             "connectorRef": {
               "type": "string"
             },
+            "imagePullPolicy": {
+              "$ref": "#/definitions/ParameterFieldImagePullPolicy"
+            },
+            "outputVariables": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/OutputNGVariable"
+              }
+            },
+            "privileged": {
+              "$ref": "#/definitions/ParameterFieldBoolean"
+            },
             "resources": {
               "$ref": "#/definitions/ContainerResource"
             },
@@ -4824,6 +5062,18 @@
             },
             "connectorRef": {
               "type": "string"
+            },
+            "imagePullPolicy": {
+              "$ref": "#/definitions/ParameterFieldImagePullPolicy"
+            },
+            "outputVariables": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/OutputNGVariable"
+              }
+            },
+            "privileged": {
+              "$ref": "#/definitions/ParameterFieldBoolean"
             },
             "resources": {
               "$ref": "#/definitions/ContainerResource"
@@ -4871,6 +5121,18 @@
             },
             "endpoint": {
               "type": "string"
+            },
+            "imagePullPolicy": {
+              "$ref": "#/definitions/ParameterFieldImagePullPolicy"
+            },
+            "outputVariables": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/OutputNGVariable"
+              }
+            },
+            "privileged": {
+              "$ref": "#/definitions/ParameterFieldBoolean"
             },
             "region": {
               "type": "string"
