@@ -13,7 +13,6 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.delegate.beans.DelegateSelectionLogParams;
 import io.harness.delegate.beans.DelegateSelectionLogResponse;
 import io.harness.selection.log.DelegateSelectionLog;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.List;
 import java.util.Map;
@@ -37,8 +36,6 @@ public interface DelegateSelectionLogsService {
   void logTaskValidationFailed(String accountId, String taskId, String failureMessage);
 
   List<DelegateSelectionLogParams> fetchTaskSelectionLogs(String accountId, String taskId);
-
-  List<Pair<String,List<DelegateSelectionLogParams>>> fetchTaskSelectionLogsGroupByAssessment(String accountId, String taskId);
 
   DelegateSelectionLogResponse fetchTaskSelectionLogsData(String accountId, String taskId);
 
