@@ -115,7 +115,7 @@ func (t *pluginTask) Run(ctx context.Context) (map[string]string, *pb.Artifact, 
 				// If there's an error in collecting reports, we won't retry but
 				// the step will be marked as an error
 				t.log.Errorw("unable to collect test reports", zap.Error(err))
-				return nil, nil, t.numRetries, err
+				return so, nil, t.numRetries, err
 			}
 			if len(t.reports) > 0 {
 				t.log.Infow(fmt.Sprintf("collected test reports in %s time", time.Since(st)))
@@ -130,9 +130,9 @@ func (t *pluginTask) Run(ctx context.Context) (map[string]string, *pb.Artifact, 
 		if errc != nil {
 			t.log.Errorw("error while collecting test reports", zap.Error(errc))
 		}
-		return nil, nil, t.numRetries, err
+		return so, nil, t.numRetries, err
 	}
-	return nil, nil, t.numRetries, err
+	return so, nil, t.numRetries, err
 }
 
 // resolveExprInEnv resolves JEXL expressions & env var present in plugin settings environment variables
