@@ -17,6 +17,7 @@ import static io.harness.eraro.ErrorCode.VAULT_OPERATION_ERROR;
 import static io.harness.exception.WingsException.USER;
 import static io.harness.remote.client.RestClientUtils.getResponse;
 import static io.harness.security.encryption.AccessType.APP_ROLE;
+import static io.harness.security.encryption.AccessType.AWS_IAM;
 import static io.harness.security.encryption.AccessType.TOKEN;
 import static io.harness.security.encryption.EncryptionType.AZURE_VAULT;
 import static io.harness.security.encryption.EncryptionType.VAULT;
@@ -256,12 +257,14 @@ public class NGVaultServiceImpl implements NGVaultService {
   @Override
   public SecretManagerMetadataDTO getListOfEngines(
       String accountIdentifier, SecretManagerMetadataRequestDTO requestDTO) {
-    SecretRefData secretRefData = getSecretRefData(requestDTO);
+    List<SecretRefData> secretRefDataList = getSecretRefData(requestDTO);
 
-    if (secretRefData != null) {
+    if (isNotEmpty(secretRefDataList)) {
       // get Decrypted SecretRefData
-      decryptSecretRefData(
-          accountIdentifier, requestDTO.getOrgIdentifier(), requestDTO.getProjectIdentifier(), secretRefData);
+      for (SecretRefData secretRefData : secretRefDataList) {
+        decryptSecretRefData(
+            accountIdentifier, requestDTO.getOrgIdentifier(), requestDTO.getProjectIdentifier(), secretRefData);
+      }
     }
     EncryptionConfig existingVaultEncryptionConfig = getDecryptedEncryptionConfig(accountIdentifier,
         requestDTO.getOrgIdentifier(), requestDTO.getProjectIdentifier(), requestDTO.getIdentifier());
@@ -557,22 +560,31 @@ public class NGVaultServiceImpl implements NGVaultService {
     }
   }
 
-  private SecretRefData getSecretRefData(SecretManagerMetadataRequestDTO requestDTO) {
+  private List<SecretRefData> getSecretRefData(SecretManagerMetadataRequestDTO requestDTO) {
+    List<SecretRefData> secretRefDataList = new ArrayList<>();
     SecretRefData secretRefData;
     if (VAULT == requestDTO.getEncryptionType()) {
       VaultMetadataRequestSpecDTO spec = (VaultMetadataRequestSpecDTO) requestDTO.getSpec();
       if (TOKEN == spec.getAccessType()) {
         secretRefData = ((VaultAuthTokenCredentialDTO) spec.getSpec()).getAuthToken();
+        secretRefDataList.add(secretRefData);
       } else if (APP_ROLE == spec.getAccessType()) {
         secretRefData = ((VaultAppRoleCredentialDTO) spec.getSpec()).getSecretId();
+        secretRefDataList.add(secretRefData);
+      } else if (AWS_IAM == spec.getAccessType()) {
+        secretRefData = ((VaultAwsIamRoleCredentialDTO) spec.getSpec()).getVaultAwsIamRole();
+        secretRefDataList.add(secretRefData);
+        secretRefData = ((VaultAwsIamRoleCredentialDTO) spec.getSpec()).getXVaultAwsIamServerId();
+        secretRefDataList.add(secretRefData);
       } else {
         // n case of VAULT_AGENT we don't have any secretref
         return null;
       }
     } else { // Azure Key Vault
       secretRefData = ((AzureKeyVaultMetadataRequestSpecDTO) requestDTO.getSpec()).getSecretKey();
+      secretRefDataList.add(secretRefData);
     }
-    return secretRefData;
+    return secretRefDataList;
   }
 
   @Nullable
