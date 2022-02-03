@@ -23,7 +23,7 @@ import org.junit.experimental.categories.Category;
 
 @OwnedBy(HarnessTeam.PIPELINE)
 public class IdentityNodeExecutionMetadataTest extends CategoryTest {
-  IdentityNodeExecutionMetadata identityNodeExecutionMetadata = new IdentityNodeExecutionMetadata();
+  IdentityNodeExecutionMetadata identityNodeExecutionMetadata = IdentityNodeExecutionMetadata.builder().build();
 
   @Test
   @Owner(developers = PRASHANTSHARMA)

@@ -22,12 +22,17 @@ import io.harness.engine.observers.OrchestrationStartObserver;
 import io.harness.engine.observers.beans.OrchestrationStartInfo;
 import io.harness.engine.pms.execution.strategy.NodeExecutionStrategy;
 import io.harness.exception.InvalidRequestException;
+import io.harness.execution.IdentityNodeExecutionMetadata;
+import io.harness.execution.NodeExecutionMetadata;
+import io.harness.execution.NodeSpawnType;
 import io.harness.execution.PlanExecution;
 import io.harness.execution.PlanExecution.PlanExecutionKeys;
 import io.harness.execution.PlanExecutionMetadata;
+import io.harness.execution.PmsNodeExecutionMetadata;
 import io.harness.observer.Subject;
 import io.harness.opaclient.model.OpaConstants;
 import io.harness.plan.Node;
+import io.harness.plan.NodeType;
 import io.harness.plan.Plan;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.Status;
@@ -91,7 +96,13 @@ public class PlanExecutionStrategy implements NodeExecutionStrategy<Plan, PlanEx
       return planExecutionService.updateStatus(
           ambiance.getPlanExecutionId(), ERRORED, ops -> ops.set(PlanExecutionKeys.endTs, System.currentTimeMillis()));
     } else {
-      executorService.submit(() -> orchestrationEngine.triggerNode(ambiance, planNode, null));
+      PmsNodeExecutionMetadata pmsNodeExecutionMetadata;
+      if (planNode.getNodeType() == NodeType.IDENTITY_PLAN_NODE) {
+        pmsNodeExecutionMetadata = IdentityNodeExecutionMetadata.builder().nodeSpawnType(NodeSpawnType.DEFAULT).build();
+      } else {
+        pmsNodeExecutionMetadata = NodeExecutionMetadata.builder().nodeSpawnType(NodeSpawnType.DEFAULT).build();
+      }
+      executorService.submit(() -> orchestrationEngine.triggerNode(ambiance, planNode, pmsNodeExecutionMetadata));
       return planExecution;
     }
   }

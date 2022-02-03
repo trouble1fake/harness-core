@@ -22,6 +22,8 @@ import io.harness.category.element.UnitTests;
 import io.harness.engine.pms.execution.strategy.NodeExecutionStrategyFactory;
 import io.harness.engine.pms.execution.strategy.plan.PlanExecutionStrategy;
 import io.harness.engine.pms.execution.strategy.plannode.PlanNodeExecutionStrategy;
+import io.harness.execution.NodeExecutionMetadata;
+import io.harness.execution.NodeSpawnType;
 import io.harness.execution.PlanExecution;
 import io.harness.plan.NodeType;
 import io.harness.plan.Plan;
@@ -58,7 +60,8 @@ public class OrchestrationEngineTest extends OrchestrationTestBase {
     Ambiance ambiance = Ambiance.newBuilder().build();
     Plan plan = Plan.builder().build();
     when(planExecutionStrategy.triggerNode(ambiance, plan, null)).thenReturn(PlanExecution.builder().build());
-    orchestrationEngine.triggerNode(ambiance, plan, null);
+    orchestrationEngine.triggerNode(
+        ambiance, plan, NodeExecutionMetadata.builder().nodeSpawnType(NodeSpawnType.DEFAULT).build());
     verify(planExecutionStrategy).triggerNode(ambiance, plan, null);
   }
 

@@ -14,6 +14,7 @@ import static io.harness.pms.contracts.execution.Status.RUNNING;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.data.structure.EmptyPredicate;
 import io.harness.engine.ExecutionCheck;
 import io.harness.engine.OrchestrationEngine;
 import io.harness.engine.executions.node.NodeExecutionService;
@@ -31,12 +32,15 @@ import io.harness.engine.pms.execution.strategy.EndNodeExecutionHelper;
 import io.harness.engine.pms.execution.strategy.NodeExecutionStrategy;
 import io.harness.engine.pms.resume.NodeResumeHelper;
 import io.harness.engine.pms.start.NodeStartHelper;
+import io.harness.engine.utils.OrchestrationUtils;
 import io.harness.engine.utils.PmsLevelUtils;
 import io.harness.eraro.ResponseMessage;
 import io.harness.exception.exceptionmanager.ExceptionManager;
 import io.harness.execution.NodeExecution;
+import io.harness.execution.NodeExecution.NodeExecutionBuilder;
 import io.harness.execution.NodeExecution.NodeExecutionKeys;
 import io.harness.execution.NodeExecutionMetadata;
+import io.harness.execution.NodeSpawnType;
 import io.harness.graph.stepDetail.service.PmsGraphStepDetailsService;
 import io.harness.logging.AutoLogContext;
 import io.harness.plan.PlanNode;
@@ -56,6 +60,7 @@ import io.harness.pms.execution.utils.StatusUtils;
 import io.harness.pms.expression.PmsEngineExpressionService;
 import io.harness.pms.sdk.core.steps.io.StepResponseNotifyData;
 import io.harness.pms.utils.OrchestrationMapBackwardCompatibilityUtils;
+import io.harness.springdata.TransactionHelper;
 import io.harness.waiter.WaitNotifyEngine;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -97,45 +102,67 @@ public class PlanNodeExecutionStrategy
   @Inject private PmsOutcomeService outcomeService;
   @Inject @Named("EngineExecutorService") private ExecutorService executorService;
   @Inject PmsGraphStepDetailsService pmsGraphStepDetailsService;
+  @Inject TransactionHelper transactionHelper;
 
   @Override
   public NodeExecution triggerNode(Ambiance ambiance, PlanNode node, NodeExecutionMetadata metadata) {
-    String uuid = generateUuid();
-    NodeExecution previousNodeExecution = null;
-    if (AmbianceUtils.obtainCurrentRuntimeId(ambiance) != null) {
-      previousNodeExecution = nodeExecutionService.update(AmbianceUtils.obtainCurrentRuntimeId(ambiance),
-          ops -> ops.set(NodeExecutionKeys.nextId, uuid).set(NodeExecutionKeys.endTs, System.currentTimeMillis()));
+    NodeExecutionMetadata finalMetadata;
+    if (metadata == null) {
+      log.error("NodeExecutionMetadata found as null, ignoring to default");
+      finalMetadata = NodeExecutionMetadata.builder().nodeSpawnType(NodeSpawnType.DEFAULT).build();
+    } else {
+      finalMetadata = metadata;
     }
-    Ambiance cloned = AmbianceUtils.cloneForFinish(ambiance, PmsLevelUtils.buildLevelFromNode(uuid, node));
+    String uuid = EmptyPredicate.isEmpty(finalMetadata.getChildNodeId()) ? generateUuid() : metadata.getChildNodeId();
+    Ambiance cloned = finalMetadata.getNodeSpawnType() == NodeSpawnType.DEFAULT
+        ? AmbianceUtils.cloneForFinish(ambiance, PmsLevelUtils.buildLevelFromNode(uuid, node))
+        : AmbianceUtils.cloneForChild(ambiance, PmsLevelUtils.buildLevelFromNode(uuid, node));
     boolean skipUnresolvedExpressionsCheck = node.isSkipUnresolvedExpressionsCheck();
-    log.info("Starting to Resolve step parameters and Inputs");
+    log.info("Starting to Resolve step parameters");
     Object resolvedStepParameters =
         pmsEngineExpressionService.resolve(ambiance, node.getStepParameters(), skipUnresolvedExpressionsCheck);
-    NodeExecution nodeExecution =
-        NodeExecution.builder()
-            .uuid(uuid)
-            .planNode(node)
-            .ambiance(cloned)
-            .levelCount(cloned.getLevelsCount())
-            .status(Status.QUEUED)
+    return transactionHelper.performTransaction(() -> {
+      NodeExecution previousNodeExecution = null;
+
+      NodeExecutionBuilder nodeExecutionBuilder =
+          NodeExecution.builder()
+              .planNode(node)
+              .ambiance(cloned)
+              .levelCount(cloned.getLevelsCount())
+              .status(Status.QUEUED)
+              .name(node.getName())
+              .skipGraphType(node.getSkipGraphType())
+              .identifier(node.getIdentifier())
+              .stepType(node.getStepType())
+              .nodeId(node.getUuid())
+              .module(node.getServiceName())
+              .startTs(AmbianceUtils.getCurrentLevelStartTs(cloned))
+              .resolvedParams(PmsStepParameters.parse(
+                  OrchestrationMapBackwardCompatibilityUtils.extractToOrchestrationMap(resolvedStepParameters)));
+
+      if (finalMetadata.getNodeSpawnType() == NodeSpawnType.DEFAULT) {
+        if (AmbianceUtils.obtainCurrentRuntimeId(ambiance) != null) {
+          previousNodeExecution = nodeExecutionService.update(AmbianceUtils.obtainCurrentRuntimeId(ambiance),
+              ops -> ops.set(NodeExecutionKeys.nextId, uuid).set(NodeExecutionKeys.endTs, System.currentTimeMillis()));
+        }
+        nodeExecutionBuilder.uuid(uuid)
             .notifyId(previousNodeExecution == null ? null : previousNodeExecution.getNotifyId())
             .parentId(previousNodeExecution == null ? null : previousNodeExecution.getParentId())
             .previousId(previousNodeExecution == null ? null : previousNodeExecution.getUuid())
             .unitProgresses(new ArrayList<>())
-            .startTs(AmbianceUtils.getCurrentLevelStartTs(cloned))
-            .module(node.getServiceName())
-            .resolvedParams(PmsStepParameters.parse(
-                OrchestrationMapBackwardCompatibilityUtils.extractToOrchestrationMap(resolvedStepParameters)))
-            .name(node.getName())
-            .skipGraphType(node.getSkipGraphType())
-            .identifier(node.getIdentifier())
-            .stepType(node.getStepType())
-            .nodeId(node.getUuid())
             .build();
-    NodeExecution save = nodeExecutionService.save(nodeExecution);
-    // TODO: Should add to an execution queue rather than submitting straight to thread pool
-    executorService.submit(() -> startExecution(cloned));
-    return save;
+      } else {
+        nodeExecutionBuilder.uuid(uuid)
+            .notifyId(uuid)
+            .parentId(AmbianceUtils.obtainCurrentRuntimeId(ambiance))
+            .originalNodeExecutionId(OrchestrationUtils.getOriginalNodeExecutionId(node))
+            .build();
+      }
+      NodeExecution save = nodeExecutionService.save(nodeExecutionBuilder.build());
+      // TODO: Should add to an execution queue rather than submitting straight to thread pool
+      executorService.submit(() -> startExecution(cloned));
+      return save;
+    });
   }
 
   @Override

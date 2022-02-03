@@ -9,7 +9,14 @@ package io.harness.execution;
 
 import io.harness.plan.NodeType;
 
+import lombok.Builder;
+import lombok.Data;
+
+@Data
+@Builder
 public class NodeExecutionMetadata implements PmsNodeExecutionMetadata {
+  NodeSpawnType nodeSpawnType;
+  String childNodeId;
   @Override
   public NodeType forNodeType() {
     return NodeType.PLAN_NODE;

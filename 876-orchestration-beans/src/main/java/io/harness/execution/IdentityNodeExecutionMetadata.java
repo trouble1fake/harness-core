@@ -11,8 +11,16 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.plan.NodeType;
 
+import lombok.Builder;
+import lombok.Data;
+
 @OwnedBy(HarnessTeam.PIPELINE)
+@Data
+@Builder
 public class IdentityNodeExecutionMetadata implements PmsNodeExecutionMetadata {
+  NodeSpawnType nodeSpawnType;
+  String childNodeId;
+
   @Override
   public NodeType forNodeType() {
     return NodeType.IDENTITY_PLAN_NODE;

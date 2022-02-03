@@ -12,29 +12,27 @@ import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import io.harness.OrchestrationPublisherName;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.engine.ExecutionEngineDispatcher;
 import io.harness.engine.OrchestrationEngine;
 import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.executions.plan.PlanService;
 import io.harness.engine.pms.resume.EngineResumeCallback;
-import io.harness.engine.utils.OrchestrationUtils;
-import io.harness.engine.utils.PmsLevelUtils;
+import io.harness.execution.IdentityNodeExecutionMetadata;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.NodeExecution.NodeExecutionKeys;
+import io.harness.execution.NodeExecutionMetadata;
+import io.harness.execution.NodeSpawnType;
+import io.harness.execution.PmsNodeExecutionMetadata;
 import io.harness.logging.AutoLogContext;
 import io.harness.plan.Node;
+import io.harness.plan.NodeType;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.ChildrenExecutableResponse.Child;
 import io.harness.pms.contracts.execution.ExecutableResponse;
-import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.execution.events.SdkResponseEventProto;
 import io.harness.pms.contracts.execution.events.SpawnChildrenRequest;
-import io.harness.pms.data.stepparameters.PmsStepParameters;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.execution.utils.NodeProjectionUtils;
 import io.harness.pms.execution.utils.SdkResponseEventUtils;
-import io.harness.pms.expression.PmsEngineExpressionService;
-import io.harness.pms.utils.OrchestrationMapBackwardCompatibilityUtils;
 import io.harness.waiter.WaitNotifyEngine;
 
 import com.google.inject.Inject;
@@ -42,7 +40,6 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 import lombok.extern.slf4j.Slf4j;
 
 @Singleton
@@ -52,10 +49,8 @@ public class SpawnChildrenRequestProcessor implements SdkResponseProcessor {
   @Inject private PlanService planService;
   @Inject private NodeExecutionService nodeExecutionService;
   @Inject private OrchestrationEngine engine;
-  @Inject @Named("EngineExecutorService") private ExecutorService executorService;
   @Inject private WaitNotifyEngine waitNotifyEngine;
   @Inject @Named(OrchestrationPublisherName.PUBLISHER_NAME) private String publisherName;
-  @Inject private PmsEngineExpressionService pmsEngineExpressionService;
 
   @Override
   public void handleEvent(SdkResponseEventProto event) {
@@ -69,35 +64,15 @@ public class SpawnChildrenRequestProcessor implements SdkResponseProcessor {
         String uuid = generateUuid();
         callbackIds.add(uuid);
         Node node = planService.fetchNode(ambiance.getPlanId(), child.getChildNodeId());
-        Ambiance clonedAmbiance = AmbianceUtils.cloneForChild(ambiance, PmsLevelUtils.buildLevelFromNode(uuid, node));
-        boolean skipUnresolvedExpressionsCheck = node.isSkipUnresolvedExpressionsCheck();
-        log.info("Starting to Resolve step parameters and Inputs");
-        Object resolvedStepParameters =
-            pmsEngineExpressionService.resolve(ambiance, node.getStepParameters(), skipUnresolvedExpressionsCheck);
-        NodeExecution childNodeExecution =
-            NodeExecution.builder()
-                .uuid(uuid)
-                .planNode(node)
-                .ambiance(clonedAmbiance)
-                .levelCount(clonedAmbiance.getLevelsCount())
-                .status(Status.QUEUED)
-                .notifyId(uuid)
-                .parentId(nodeExecution.getUuid())
-                .startTs(AmbianceUtils.getCurrentLevelStartTs(clonedAmbiance))
-                .originalNodeExecutionId(OrchestrationUtils.getOriginalNodeExecutionId(node))
-                .module(node.getServiceName())
-                .resolvedParams(PmsStepParameters.parse(
-                    OrchestrationMapBackwardCompatibilityUtils.extractToOrchestrationMap(resolvedStepParameters)))
-                .name(node.getName())
-                .skipGraphType(node.getSkipGraphType())
-                .identifier(node.getIdentifier())
-                .stepType(node.getStepType())
-                .nodeId(node.getUuid())
-                .build();
-        nodeExecutionService.save(childNodeExecution);
+        PmsNodeExecutionMetadata metadata;
+        if (node.getNodeType() == NodeType.IDENTITY_PLAN_NODE) {
+          metadata =
+              IdentityNodeExecutionMetadata.builder().nodeSpawnType(NodeSpawnType.CHILDREN).childNodeId(uuid).build();
+        } else {
+          metadata = NodeExecutionMetadata.builder().nodeSpawnType(NodeSpawnType.CHILDREN).childNodeId(uuid).build();
+        }
         log.info("For Children Executable starting Child NodeExecution with id: {}", uuid);
-        executorService.submit(
-            ExecutionEngineDispatcher.builder().ambiance(clonedAmbiance).orchestrationEngine(engine).build());
+        engine.triggerNode(ambiance, node, metadata);
       }
 
       // Attach a Callback to the parent for the child

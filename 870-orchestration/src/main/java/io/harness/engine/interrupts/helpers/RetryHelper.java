@@ -18,6 +18,7 @@ import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.utils.PmsLevelUtils;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.NodeExecution.NodeExecutionKeys;
+import io.harness.graph.stepDetail.service.PmsGraphStepDetailsService;
 import io.harness.interrupts.InterruptEffect;
 import io.harness.plan.PlanNode;
 import io.harness.pms.contracts.advisers.InterventionWaitAdvise;
@@ -29,6 +30,7 @@ import io.harness.pms.contracts.interrupts.InterruptType;
 import io.harness.pms.contracts.interrupts.RetryInterruptConfig;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.sdk.core.steps.io.StepParameters;
+import io.harness.springdata.TransactionHelper;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -46,6 +48,8 @@ import lombok.extern.slf4j.Slf4j;
 public class RetryHelper {
   @Inject private NodeExecutionService nodeExecutionService;
   @Inject private OrchestrationEngine engine;
+  @Inject private TransactionHelper transactionHelper;
+  @Inject private PmsGraphStepDetailsService pmsGraphStepDetailsService;
   @Inject @Named("EngineExecutorService") private ExecutorService executorService;
 
   // Just ignoring step parameters for now as this is not supported will revisit this when we need to support it
@@ -127,7 +131,7 @@ public class RetryHelper {
         .endTs(null)
         .initialWaitDuration(null)
         .resolvedStepParameters(null)
-        .resolvedParams(null)
+        .resolvedParams(nodeExecution.getResolvedParams())
         .notifyId(nodeExecution.getNotifyId())
         .parentId(nodeExecution.getParentId())
         .nextId(nodeExecution.getNextId())

@@ -41,6 +41,8 @@ import io.harness.engine.utils.PmsLevelUtils;
 import io.harness.exception.InvalidRequestException;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.NodeExecution.NodeExecutionBuilder;
+import io.harness.execution.NodeExecutionMetadata;
+import io.harness.execution.NodeSpawnType;
 import io.harness.plan.PlanNode;
 import io.harness.pms.contracts.advisers.AdviserObtainment;
 import io.harness.pms.contracts.advisers.AdviserType;
@@ -56,9 +58,11 @@ import io.harness.pms.contracts.plan.TriggeredBy;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.contracts.steps.io.StepResponseProto;
+import io.harness.pms.data.stepparameters.PmsStepParameters;
 import io.harness.pms.execution.OrchestrationFacilitatorType;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.execution.utils.NodeProjectionUtils;
+import io.harness.pms.expression.PmsEngineExpressionService;
 import io.harness.rule.Owner;
 
 import com.google.common.collect.ImmutableMap;
@@ -66,6 +70,7 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.google.protobuf.ByteString;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import org.junit.Before;
@@ -88,6 +93,7 @@ public class PlanNodeExecutionStrategyTest extends OrchestrationTestBase {
   @Mock private NodeAdviseHelper adviseHelper;
   @Mock private InterruptService interruptService;
   @Mock private PlanService planService;
+  @Mock private PmsEngineExpressionService pmsEngineExpressionService;
 
   @Inject @InjectMocks @Spy PlanNodeExecutionStrategy executionStrategy;
 
@@ -107,7 +113,7 @@ public class PlanNodeExecutionStrategyTest extends OrchestrationTestBase {
   @Test
   @Owner(developers = PRASHANT)
   @Category(UnitTests.class)
-  public void shouldTestTriggerNode() {
+  public void shouldTestTriggerNodeWithDefaultMode() {
     String planExecutionId = generateUuid();
     Ambiance ambiance = Ambiance.newBuilder()
                             .setPlanExecutionId(planExecutionId)
@@ -125,8 +131,45 @@ public class PlanNodeExecutionStrategyTest extends OrchestrationTestBase {
                     .setType(FacilitatorType.newBuilder().setType(OrchestrationFacilitatorType.SYNC).build())
                     .build())
             .build();
-    executionStrategy.triggerNode(ambiance, planNode, null);
+    executionStrategy.triggerNode(
+        ambiance, planNode, NodeExecutionMetadata.builder().nodeSpawnType(NodeSpawnType.DEFAULT).build());
     verify(executorService).submit(any(ExecutionEngineDispatcher.class));
+    verify(nodeExecutionService).save(any());
+  }
+
+  @Test
+  @Owner(developers = SAHIL)
+  @Category(UnitTests.class)
+  public void shouldTestTriggerNodeWithChildMode() {
+    String prevRuntimeId = generateUuid();
+    String planExecutionId = generateUuid();
+    Ambiance ambiance = Ambiance.newBuilder()
+                            .setPlanExecutionId(planExecutionId)
+                            .putAllSetupAbstractions(prepareInputArgs())
+                            .addLevels(Level.newBuilder().setRuntimeId(prevRuntimeId).build())
+                            .build();
+    PmsStepParameters pmsStepParameters = PmsStepParameters.parse(new HashMap<>());
+    when(nodeExecutionService.update(eq(prevRuntimeId), any()))
+        .thenReturn(NodeExecution.builder().uuid(generateUuid()).build());
+    PlanNode planNode =
+        PlanNode.builder()
+            .name("Test Node")
+            .uuid(generateUuid())
+            .stepParameters(pmsStepParameters)
+            .skipUnresolvedExpressionsCheck(true)
+            .identifier("test")
+            .stepType(TEST_STEP_TYPE)
+            .facilitatorObtainment(
+                FacilitatorObtainment.newBuilder()
+                    .setType(FacilitatorType.newBuilder().setType(OrchestrationFacilitatorType.SYNC).build())
+                    .build())
+            .build();
+    String childNodeId = generateUuid();
+    executionStrategy.triggerNode(ambiance, planNode,
+        NodeExecutionMetadata.builder().nodeSpawnType(NodeSpawnType.CHILD).childNodeId(childNodeId).build());
+    verify(executorService).submit(any(ExecutionEngineDispatcher.class));
+    verify(nodeExecutionService).save(any());
+    verify(pmsEngineExpressionService).resolve(ambiance, pmsStepParameters, true);
   }
 
   @Test

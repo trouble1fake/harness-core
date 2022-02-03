@@ -7,8 +7,11 @@
 
 package io.harness.execution;
 
+import io.harness.annotations.dev.HarnessTeam;
+import io.harness.annotations.dev.OwnedBy;
 import io.harness.plan.NodeType;
 
+@OwnedBy(HarnessTeam.PIPELINE)
 public interface PmsNodeExecutionMetadata {
   NodeType forNodeType();
 }

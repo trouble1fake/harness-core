@@ -15,8 +15,13 @@ import io.harness.engine.OrchestrationEngine;
 import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.executions.plan.PlanService;
 import io.harness.engine.pms.advise.AdviserResponseHandler;
+import io.harness.execution.IdentityNodeExecutionMetadata;
 import io.harness.execution.NodeExecution;
+import io.harness.execution.NodeExecutionMetadata;
+import io.harness.execution.NodeSpawnType;
+import io.harness.execution.PmsNodeExecutionMetadata;
 import io.harness.plan.Node;
+import io.harness.plan.NodeType;
 import io.harness.pms.contracts.advisers.AdviserResponse;
 import io.harness.pms.contracts.advisers.NextStepAdvise;
 import io.harness.pms.contracts.execution.Status;
@@ -41,7 +46,13 @@ public class NextStepHandler implements AdviserResponseHandler {
     if (EmptyPredicate.isNotEmpty(advise.getNextNodeId())) {
       Node nextNode = Preconditions.checkNotNull(
           planService.fetchNode(nodeExecution.getAmbiance().getPlanId(), advise.getNextNodeId()));
-      engine.triggerNode(nodeExecution.getAmbiance(), nextNode, null);
+      PmsNodeExecutionMetadata metadata;
+      if (nextNode.getNodeType() == NodeType.IDENTITY_PLAN_NODE) {
+        metadata = IdentityNodeExecutionMetadata.builder().nodeSpawnType(NodeSpawnType.DEFAULT).build();
+      } else {
+        metadata = NodeExecutionMetadata.builder().nodeSpawnType(NodeSpawnType.DEFAULT).build();
+      }
+      engine.triggerNode(nodeExecution.getAmbiance(), nextNode, metadata);
     } else {
       engine.endNodeExecution(nodeExecution.getAmbiance());
     }
