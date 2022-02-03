@@ -51,14 +51,14 @@ public class ExecutionPmsPlanCreator extends ChildrenPlanCreator<ExecutionElemen
     // Add Steps Node
     if (EmptyPredicate.isNotEmpty(stepYamlFields)) {
       YamlField stepsField =
-              Preconditions.checkNotNull(ctx.getCurrentField().getNode().getField(YAMLFieldNameConstants.STEPS));
+          Preconditions.checkNotNull(ctx.getCurrentField().getNode().getField(YAMLFieldNameConstants.STEPS));
       String stepsNodeId = stepsField.getNode().getUuid();
       Map<String, YamlField> stepsYamlFieldMap = new HashMap<>();
       stepsYamlFieldMap.put(stepsNodeId, stepsField);
       responseMap.put(stepsNodeId,
-              PlanCreationResponse.builder()
-                      .dependencies(DependenciesUtils.toDependenciesProto(stepsYamlFieldMap))
-                      .build());
+          PlanCreationResponse.builder()
+              .dependencies(DependenciesUtils.toDependenciesProto(stepsYamlFieldMap))
+              .build());
     }
     return responseMap;
   }

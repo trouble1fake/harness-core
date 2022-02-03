@@ -30,16 +30,16 @@ public class PipelineStepsPlanCreator extends GenericStepsNodePlanCreator {
       PlanCreationContext ctx, StepsExecutionConfig config, List<String> childrenNodeIds) {
     StepParameters stepParameters = NGSectionStepParameters.builder().childNodeId(childrenNodeIds.get(0)).build();
     return PlanNode.builder()
-            .uuid(ctx.getCurrentField().getNode().getUuid())
-            .identifier(YAMLFieldNameConstants.STEPS)
-            .stepType(NGSectionStepWithRollbackInfo.STEP_TYPE)
-            .name(YAMLFieldNameConstants.STEPS)
-            .stepParameters(stepParameters)
-            .facilitatorObtainment(
-                    FacilitatorObtainment.newBuilder()
-                            .setType(FacilitatorType.newBuilder().setType(OrchestrationFacilitatorType.CHILD).build())
-                            .build())
-            .skipGraphType(SkipType.SKIP_NODE)
-            .build();
+        .uuid(ctx.getCurrentField().getNode().getUuid())
+        .identifier(YAMLFieldNameConstants.STEPS)
+        .stepType(NGSectionStepWithRollbackInfo.STEP_TYPE)
+        .name(YAMLFieldNameConstants.STEPS)
+        .stepParameters(stepParameters)
+        .facilitatorObtainment(
+            FacilitatorObtainment.newBuilder()
+                .setType(FacilitatorType.newBuilder().setType(OrchestrationFacilitatorType.CHILD).build())
+                .build())
+        .skipGraphType(SkipType.SKIP_NODE)
+        .build();
   }
 }

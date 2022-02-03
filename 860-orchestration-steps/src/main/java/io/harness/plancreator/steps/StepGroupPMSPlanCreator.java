@@ -74,9 +74,9 @@ public class StepGroupPMSPlanCreator extends ChildrenPlanCreator<StepGroupElemen
       Map<String, YamlField> stepsYamlFieldMap = new HashMap<>();
       stepsYamlFieldMap.put(stepsNodeId, stepsField);
       responseMap.put(stepsNodeId,
-              PlanCreationResponse.builder()
-                      .dependencies(DependenciesUtils.toDependenciesProto(stepsYamlFieldMap))
-                      .build());
+          PlanCreationResponse.builder()
+              .dependencies(DependenciesUtils.toDependenciesProto(stepsYamlFieldMap))
+              .build());
     }
 
     return responseMap;

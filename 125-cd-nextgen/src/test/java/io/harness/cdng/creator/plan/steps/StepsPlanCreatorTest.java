@@ -43,8 +43,7 @@ import org.mockito.InjectMocks;
 
 @OwnedBy(HarnessTeam.CDC)
 public class StepsPlanCreatorTest extends CDNGTestBase {
-  @Inject @InjectMocks
-  CDStepsPlanCreator stepsPlanCreator;
+  @Inject @InjectMocks CDStepsPlanCreator stepsPlanCreator;
 
   private YamlField getYamlFieldFromGivenFileName(String file) throws IOException {
     ClassLoader classLoader = this.getClass().getClassLoader();
