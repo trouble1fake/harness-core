@@ -26,7 +26,6 @@ import io.harness.pms.sdk.core.steps.io.StepParameters;
 import io.harness.pms.yaml.DependenciesUtils;
 import io.harness.pms.yaml.YAMLFieldNameConstants;
 import io.harness.pms.yaml.YamlField;
-import io.harness.pms.yaml.YamlNode;
 import io.harness.steps.common.NGExecutionStep;
 import io.harness.steps.common.NGSectionStepParameters;
 
@@ -34,10 +33,8 @@ import com.google.common.base.Preconditions;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 @OwnedBy(PIPELINE)
@@ -95,30 +92,5 @@ public class ExecutionPmsPlanCreator extends ChildrenPlanCreator<ExecutionElemen
   @Override
   public Map<String, Set<String>> getSupportedTypes() {
     return Collections.singletonMap(YAMLFieldNameConstants.EXECUTION, Collections.singleton(PlanCreatorUtils.ANY_TYPE));
-  }
-
-  private List<YamlField> getStepYamlFields(PlanCreationContext planCreationContext) {
-    List<YamlNode> yamlNodes = Optional
-                                   .of(Preconditions
-                                           .checkNotNull(planCreationContext.getCurrentField().getNode().getField(
-                                               YAMLFieldNameConstants.STEPS))
-                                           .getNode()
-                                           .asArray())
-                                   .orElse(Collections.emptyList());
-    List<YamlField> stepFields = new LinkedList<>();
-
-    yamlNodes.forEach(yamlNode -> {
-      YamlField stepField = yamlNode.getField(YAMLFieldNameConstants.STEP);
-      YamlField stepGroupField = yamlNode.getField(YAMLFieldNameConstants.STEP_GROUP);
-      YamlField parallelStepField = yamlNode.getField(YAMLFieldNameConstants.PARALLEL);
-      if (stepField != null) {
-        stepFields.add(stepField);
-      } else if (stepGroupField != null) {
-        stepFields.add(stepGroupField);
-      } else if (parallelStepField != null) {
-        stepFields.add(parallelStepField);
-      }
-    });
-    return stepFields;
   }
 }
