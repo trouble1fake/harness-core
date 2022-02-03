@@ -239,7 +239,6 @@ public class TerraformStepHelper {
     NGAccess basicNGAccessObject = AmbianceUtils.getNgAccess(ambiance);
     List<EncryptedDataDetail> encryptedDataDetails = secretManagerClientService.getEncryptionDetails(
         basicNGAccessObject, ((ArtifactoryConnectorDTO) connectorDTO.getConnectorConfig()).getAuth().getCredentials());
-
     return ArtifactoryStoreDelegateConfig.builder()
         .repositoryPath(artifactoryStoreConfig.getRepositoryPath().getValue())
         .identifier(identifier)

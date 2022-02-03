@@ -16,11 +16,20 @@ import io.harness.cdng.manifest.yaml.GithubStore;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfig;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfigType;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfigWrapper;
+import io.harness.connector.ConnectorInfoDTO;
+import io.harness.delegate.beans.connector.ConnectorType;
+import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryAuthType;
+import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryAuthenticationDTO;
+import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryConnectorDTO;
+import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryUsernamePasswordAuthDTO;
+import io.harness.delegate.beans.storeconfig.ArtifactoryStoreDelegateConfig;
 import io.harness.delegate.beans.storeconfig.FetchType;
+import io.harness.encryption.SecretRefData;
 import io.harness.pms.yaml.ParameterField;
 
 import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import lombok.Builder;
@@ -54,6 +63,117 @@ public class TerraformStepDataGenerator {
     List<ArtifactoryFromYaml> artifactoryFromYamlList = new ArrayList<>();
     artifactoryFromYamlList.add(artifactFromYaml);
     return artifactoryFromYamlList;
+  }
+
+  public static TerraformApplyStepParameters generateApplyStepPlan(
+      StoreConfigType storeType, Object storeConfigFilesParam, Object varStoreConfigFilesParam) {
+    StoreConfig storeConfigFiles;
+    StoreConfig storeVarFiles;
+    TerraformConfigFilesWrapper configFilesWrapper = new TerraformConfigFilesWrapper();
+    RemoteTerraformVarFileSpec remoteTerraformVarFileSpec = new RemoteTerraformVarFileSpec();
+    switch (storeType) {
+      case GIT:
+      case GITHUB:
+      case GITLAB:
+      case BITBUCKET:
+        // Create the store file for the terraform files
+        TerraformStepDataGenerator.GitStoreConfig gitStoreConfigFiles =
+            (TerraformStepDataGenerator.GitStoreConfig) storeConfigFilesParam;
+        storeConfigFiles =
+            GithubStore.builder()
+                .branch(ParameterField.createValueField(gitStoreConfigFiles.branch))
+                .gitFetchType(gitStoreConfigFiles.fetchType)
+                .folderPath(ParameterField.createValueField(gitStoreConfigFiles.folderPath.getValue()))
+                .connectorRef(ParameterField.createValueField(gitStoreConfigFiles.connectoref.getValue()))
+                .build();
+        configFilesWrapper.setStore(StoreConfigWrapper.builder().spec(storeConfigFiles).type(storeType).build());
+        // Create the store file for the terraform variables
+        TerraformStepDataGenerator.GitStoreConfig gitStoreVarFiles =
+            (TerraformStepDataGenerator.GitStoreConfig) varStoreConfigFilesParam;
+        storeVarFiles = GithubStore.builder()
+                            .branch(ParameterField.createValueField(gitStoreVarFiles.branch))
+                            .gitFetchType(gitStoreVarFiles.fetchType)
+                            .folderPath(ParameterField.createValueField(gitStoreVarFiles.folderPath.getValue()))
+                            .connectorRef(ParameterField.createValueField(gitStoreVarFiles.connectoref.getValue()))
+                            .build();
+        remoteTerraformVarFileSpec.setStore(StoreConfigWrapper.builder().spec(storeVarFiles).type(storeType).build());
+        break;
+      case ARTIFACTORY:
+        // Create the store file for the terraform files
+        ArtifactoryStoreConfig artifactoryStoreConfigFiles = (ArtifactoryStoreConfig) storeConfigFilesParam;
+        storeConfigFiles =
+            io.harness.cdng.manifest.yaml.ArtifactoryStoreConfig.builder()
+                .repositoryPath(ParameterField.createValueField(artifactoryStoreConfigFiles.repositoryPath))
+                .connectorRef(ParameterField.createValueField(artifactoryStoreConfigFiles.connectorRef))
+                .artifacts(artifactoryStoreConfigFiles.artifacts)
+                .build();
+        configFilesWrapper.setStore(StoreConfigWrapper.builder().spec(storeConfigFiles).type(storeType).build());
+        // Create the store file for the terraform variables
+        TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreVarFiles =
+            (TerraformStepDataGenerator.ArtifactoryStoreConfig) varStoreConfigFilesParam;
+        storeVarFiles = io.harness.cdng.manifest.yaml.ArtifactoryStoreConfig.builder()
+                            .repositoryPath(ParameterField.createValueField(artifactoryStoreVarFiles.repositoryPath))
+                            .artifacts(artifactoryStoreConfigFiles.artifacts)
+                            .connectorRef(ParameterField.createValueField(artifactoryStoreVarFiles.connectorRef))
+                            .build();
+        remoteTerraformVarFileSpec.setStore(StoreConfigWrapper.builder().spec(storeVarFiles).type(storeType).build());
+        break;
+      default:
+        break;
+    }
+    InlineTerraformVarFileSpec inlineTerraformVarFileSpec = new InlineTerraformVarFileSpec();
+    inlineTerraformVarFileSpec.setContent(ParameterField.createValueField("var-content"));
+    InlineTerraformBackendConfigSpec inlineTerraformBackendConfigSpec = new InlineTerraformBackendConfigSpec();
+    inlineTerraformBackendConfigSpec.setContent(ParameterField.createValueField("back-content"));
+    TerraformBackendConfig terraformBackendConfig = new TerraformBackendConfig();
+    terraformBackendConfig.setTerraformBackendConfigSpec(inlineTerraformBackendConfigSpec);
+    LinkedHashMap<String, TerraformVarFile> varFilesMap = new LinkedHashMap<>();
+    varFilesMap.put("var-file-01",
+        TerraformVarFile.builder().identifier("var-file-01").type("Inline").spec(inlineTerraformVarFileSpec).build());
+    varFilesMap.put("var-file-02",
+        TerraformVarFile.builder().identifier("var-file-02").type("Remote").spec(remoteTerraformVarFileSpec).build());
+    return TerraformApplyStepParameters.infoBuilder()
+        .provisionerIdentifier(ParameterField.createValueField("provId_$"))
+        .configuration(TerraformStepConfigurationParameters.builder()
+                           .type(TerraformStepConfigurationType.INLINE)
+                           .spec(TerraformExecutionDataParameters.builder()
+                                     .configFiles(configFilesWrapper)
+                                     .varFiles(varFilesMap)
+                                     .build())
+                           .build())
+        .build();
+  }
+
+  public static ArtifactoryStoreDelegateConfig createStoreDelegateConfig() {
+    // Create auth with user and password
+    char[] password = {'r', 's', 't', 'u', 'v'};
+    ArtifactoryAuthenticationDTO artifactoryAuthenticationDTO =
+        ArtifactoryAuthenticationDTO.builder()
+            .authType(ArtifactoryAuthType.USER_PASSWORD)
+            .credentials(ArtifactoryUsernamePasswordAuthDTO.builder()
+                             .username("username")
+                             .passwordRef(SecretRefData.builder().decryptedValue(password).build())
+                             .build())
+            .build();
+
+    // Create DTO connector
+    ArtifactoryConnectorDTO artifactoryConnectorDTO = ArtifactoryConnectorDTO.builder()
+                                                          .artifactoryServerUrl("http://artifactory.com")
+                                                          .auth(artifactoryAuthenticationDTO)
+                                                          .delegateSelectors(Collections.singleton("delegateSelector"))
+                                                          .build();
+    ConnectorInfoDTO connectorInfoDTO = ConnectorInfoDTO.builder()
+                                            .connectorType(ConnectorType.ARTIFACTORY)
+                                            .identifier("connectorRef")
+                                            .name("connectorName")
+                                            .connectorConfig(artifactoryConnectorDTO)
+                                            .build();
+
+    return ArtifactoryStoreDelegateConfig.builder()
+        .repositoryPath("repositoryPath")
+        .connectorDTO(connectorInfoDTO)
+        .succeedIfFileNotFound(false)
+        .build();
   }
 
   public static TerraformPlanStepParameters generateStepPlan(StoreConfigType storeTypeForConfig,
