@@ -417,6 +417,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
 
   private final boolean multiVersion = DeployMode.KUBERNETES.name().equals(System.getenv().get(DeployMode.DEPLOY_MODE))
       || TRUE.toString().equals(System.getenv().get("MULTI_VERSION"));
+  private boolean isServer;
 
   public static Optional<String> getDelegateId() {
     return Optional.ofNullable(delegateId);
@@ -451,6 +452,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   @Override
   @SuppressWarnings("unchecked")
   public void run(final boolean watched, final boolean isServer) {
+    this.isServer = isServer;
     try {
       accountId = delegateConfiguration.getAccountId();
       if (perpetualTaskWorker != null) {
@@ -723,7 +725,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         }
       }
 
-      if (!isServer) {
+      if (!this.isServer) {
         synchronized (waiter) {
           while (waiter.get()) {
             waiter.wait();
@@ -831,11 +833,17 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     String cfCli6Path = delegateConfiguration.getCfCli6Path();
     if (isNoneBlank(cfCli6Path)) {
       log.info(format("Found custom CF CLI6 binary path: %s", cfCli6Path));
+      if (Files.notExists(Paths.get(cfCli6Path).normalize().toAbsolutePath())) {
+        log.warn(format("Not exists CF CLI6 binary file: %s", cfCli6Path));
+      }
     }
 
     String cfCli7Path = delegateConfiguration.getCfCli7Path();
     if (isNoneBlank(cfCli7Path)) {
       log.info(format("Found custom CF CLI7 binary path: %s", cfCli7Path));
+      if (Files.notExists(Paths.get(cfCli7Path).normalize().toAbsolutePath())) {
+        log.warn(format("Not exists CF CLI7 binary file: %s", cfCli7Path));
+      }
     }
 
     validateCfCliExists();
@@ -1878,12 +1886,16 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       return;
     }
 
-    Future taskFuture = taskExecutor.submit(() -> dispatchDelegateTask(delegateTaskEvent));
-    log.info("TaskId: {} submitted for execution", delegateTaskId);
+    DelegateTaskExecutionData taskExecutionData = DelegateTaskExecutionData.builder().build();
+    if (currentlyExecutingFutures.putIfAbsent(delegateTaskId, taskExecutionData) == null) {
+      Future taskFuture = taskExecutor.submit(() -> dispatchDelegateTask(delegateTaskEvent));
+      log.info("TaskId: {} submitted for execution", delegateTaskId);
+      taskExecutionData.setTaskFuture(taskFuture);
+      updateCounterIfLessThanCurrent(maxExecutingFuturesCount, currentlyExecutingFutures.size());
+      return;
+    }
 
-    DelegateTaskExecutionData taskExecutionData = DelegateTaskExecutionData.builder().taskFuture(taskFuture).build();
-    currentlyExecutingFutures.put(delegateTaskId, taskExecutionData);
-    updateCounterIfLessThanCurrent(maxExecutingFuturesCount, currentlyExecutingFutures.size());
+    log.info("Task [DelegateTaskEvent: {}] already queued, dropping this request ", delegateTaskEvent);
   }
 
   private void dispatchDelegateTask(DelegateTaskEvent delegateTaskEvent) {
@@ -1934,7 +1946,8 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       DelegateTaskPackage delegateTaskPackage = executeRestCall(
           delegateAgentManagerClient.acquireTask(delegateId, delegateTaskId, accountId, delegateInstanceId));
       if (delegateTaskPackage == null || delegateTaskPackage.getData() == null) {
-        log.warn("Delegate task data not available - accountId: {}", delegateTaskEvent.getAccountId());
+        log.warn("Delegate task data not available for task: {} - accountId: {}", delegateTaskId,
+            delegateTaskEvent.getAccountId());
         return;
       }
 
@@ -2062,8 +2075,12 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     timeoutEnforcement.submit(() -> enforceDelegateTaskTimeout(delegateTaskPackage.getDelegateTaskId(), taskData));
 
     // Start task execution in same thread and measure duration.
-    metricRegistry.recordGaugeDuration(
-        TASK_EXECUTION_TIME, new String[] {DELEGATE_NAME, taskData.getTaskType()}, delegateRunnableTask);
+    if (isServer) {
+      metricRegistry.recordGaugeDuration(
+          TASK_EXECUTION_TIME, new String[] {DELEGATE_NAME, taskData.getTaskType()}, delegateRunnableTask);
+    } else {
+      delegateRunnableTask.run();
+    }
   }
 
   private ILogStreamingTaskClient getLogStreamingTaskClient(

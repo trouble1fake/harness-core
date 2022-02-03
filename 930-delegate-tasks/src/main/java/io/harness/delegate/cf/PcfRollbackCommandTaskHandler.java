@@ -35,6 +35,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.beans.logstreaming.ILogStreamingTaskClient;
 import io.harness.delegate.beans.pcf.CfAppSetupTimeDetails;
+import io.harness.delegate.beans.pcf.CfInBuiltVariablesUpdateValues;
 import io.harness.delegate.beans.pcf.CfInternalConfig;
 import io.harness.delegate.beans.pcf.CfInternalInstanceElement;
 import io.harness.delegate.beans.pcf.CfServiceData;
@@ -80,6 +81,7 @@ public class PcfRollbackCommandTaskHandler extends PcfCommandTaskHandler {
     if (!(cfCommandRequest instanceof CfCommandRollbackRequest)) {
       throw new InvalidArgumentsException(Pair.of("CfCommandRequest", "Must be instance of CfCommandRollbackRequest"));
     }
+    CfInBuiltVariablesUpdateValues updateValues = CfInBuiltVariablesUpdateValues.builder().build();
     LogCallback executionLogCallback = logStreamingTaskClient.obtainLogCallback(Upsize);
     executionLogCallback.saveExecutionLog(color("--------- Starting Rollback deployment", White, Bold));
     List<CfServiceData> cfServiceDataUpdated = new ArrayList<>();
@@ -153,10 +155,10 @@ public class PcfRollbackCommandTaskHandler extends PcfCommandTaskHandler {
         // for basic & canary
         if (isRollbackCompleted(commandRollbackRequest, cfRequestConfig)) {
           deleteNewApp(cfRequestConfig, commandRollbackRequest, executionLogCallback);
-          renameApps(cfRequestConfig, commandRollbackRequest, executionLogCallback);
+          updateValues = renameApps(cfRequestConfig, commandRollbackRequest, executionLogCallback);
         }
       }
-
+      cfDeployCommandResponse.setUpdatedValues(updateValues);
       executionLogCallback.saveExecutionLog("\n\n--------- PCF Rollback completed successfully", INFO, SUCCESS);
 
     } catch (Exception e) {
@@ -273,8 +275,10 @@ public class PcfRollbackCommandTaskHandler extends PcfCommandTaskHandler {
     return null != application && application.getInstances().equals(expectedInstanceCount);
   }
 
-  private void renameApps(CfRequestConfig cfRequestConfig, CfCommandRollbackRequest commandRollbackRequest,
-      LogCallback logCallback) throws PivotalClientApiException {
+  private CfInBuiltVariablesUpdateValues renameApps(CfRequestConfig cfRequestConfig,
+      CfCommandRollbackRequest commandRollbackRequest, LogCallback logCallback) throws PivotalClientApiException {
+    CfInBuiltVariablesUpdateValues updateValues = CfInBuiltVariablesUpdateValues.builder().build();
+
     if (commandRollbackRequest.isNonVersioning()) {
       logCallback.saveExecutionLog("\n# Reverting app names");
       // app upsized - to be renamed
@@ -284,10 +288,12 @@ public class PcfRollbackCommandTaskHandler extends PcfCommandTaskHandler {
 
       if (!EmptyPredicate.isEmpty(prevActiveApps)) {
         CfAppSetupTimeDetails prevActiveApp = prevActiveApps.get(0);
-        pcfDeploymentManager.renameApplication(
-            new CfRenameRequest(cfRequestConfig, prevActiveApp.getApplicationGuid(), prevActiveApp.getApplicationName(),
-                constructActiveAppName(commandRollbackRequest.getCfAppNamePrefix(), -1, true)),
+        String newName = constructActiveAppName(commandRollbackRequest.getCfAppNamePrefix(), -1, true);
+        pcfDeploymentManager.renameApplication(new CfRenameRequest(cfRequestConfig, prevActiveApp.getApplicationGuid(),
+                                                   prevActiveApp.getApplicationName(), newName),
             logCallback);
+        updateValues.setOldAppGuid(prevActiveApp.getApplicationGuid());
+        updateValues.setOldAppName(newName);
       }
 
       if (null != prevInactive && isNotEmpty(prevInactive.getApplicationName())) {
@@ -311,10 +317,11 @@ public class PcfRollbackCommandTaskHandler extends PcfCommandTaskHandler {
           commandRollbackRequest.isStandardBlueGreenWorkflow(), activeApplication, releases, cfRequestConfig);
       pcfCommandTaskBaseHelper.resetState(releases, activeApplication, inactiveApplication,
           commandRollbackRequest.getCfAppNamePrefix(), cfRequestConfig, !commandRollbackRequest.isNonVersioning(), null,
-          commandRollbackRequest.getActiveAppRevision(), logCallback);
+          commandRollbackRequest.getActiveAppRevision(), logCallback, updateValues);
 
       logCallback.saveExecutionLog(getVersionChangeMessage(!commandRollbackRequest.isNonVersioning()) + " completed");
     }
+    return updateValues;
   }
 
   private void logExceptionMessage(

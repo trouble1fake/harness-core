@@ -11,7 +11,9 @@ import static io.harness.annotations.dev.HarnessTeam.CE;
 import static io.harness.ccm.commons.utils.TimeUtils.offsetDateTimeNow;
 import static io.harness.ccm.views.entities.ViewFieldIdentifier.CLUSTER;
 import static io.harness.ccm.views.graphql.ViewsQueryHelper.getPerspectiveIdFromMetadataFilter;
+import static io.harness.ccm.views.service.impl.ViewsBillingServiceImpl.convertIdFilterToViewCondition;
 import static io.harness.ccm.views.service.impl.ViewsBillingServiceImpl.convertQLCEViewRuleToViewRule;
+import static io.harness.ccm.views.service.impl.ViewsBillingServiceImpl.getIdFilters;
 import static io.harness.ccm.views.service.impl.ViewsBillingServiceImpl.getRuleFilters;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.timescaledb.Tables.CE_RECOMMENDATIONS;
@@ -32,6 +34,7 @@ import io.harness.ccm.views.entities.CEView;
 import io.harness.ccm.views.entities.ViewCondition;
 import io.harness.ccm.views.entities.ViewIdCondition;
 import io.harness.ccm.views.entities.ViewRule;
+import io.harness.ccm.views.graphql.QLCEViewFilter;
 import io.harness.ccm.views.graphql.QLCEViewFilterWrapper;
 import io.harness.ccm.views.graphql.QLCEViewRule;
 import io.harness.ccm.views.service.CEViewService;
@@ -157,17 +160,26 @@ public class RecommendationsOverviewQueryV2 {
 
     final Condition perspectiveCondition =
         getPerspectiveCondition(firstNonNull(filter.getPerspectiveFilters(), emptyList()));
+
     return condition.and(perspectiveCondition);
   }
 
   @NotNull
   private Condition getPerspectiveCondition(@NotNull List<QLCEViewFilterWrapper> perspectiveFilters) {
     final List<QLCEViewRule> qlCeViewRules = getRuleFilters(perspectiveFilters);
-    final List<ViewRule> combinedViewRuleList = convertQLCEViewRuleToViewRule(qlCeViewRules);
 
+    final List<ViewRule> combinedViewRuleList = convertQLCEViewRuleToViewRule(qlCeViewRules);
     combinedViewRuleList.addAll(getPerspectiveRuleList(perspectiveFilters));
 
-    return constructViewRuleFilterCondition(combinedViewRuleList);
+    Condition ORConditions = constructViewRuleFilterCondition(combinedViewRuleList);
+
+    final List<QLCEViewFilter> qlceViewFilters = getIdFilters(perspectiveFilters);
+
+    final List<ViewCondition> viewIdConditions = convertIdFilterToViewCondition(qlceViewFilters);
+
+    Condition ANDConditions = constructViewFilterCondition(viewIdConditions);
+
+    return ORConditions.and(ANDConditions);
   }
 
   @NotNull

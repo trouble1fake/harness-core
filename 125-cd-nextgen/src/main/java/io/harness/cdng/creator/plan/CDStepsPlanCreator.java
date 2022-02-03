@@ -27,7 +27,7 @@ import io.harness.steps.common.NGSectionStepWithRollbackInfo;
 import java.util.List;
 
 @OwnedBy(HarnessTeam.PIPELINE)
-public class CDStepsPlanCreator extends GenericStepsNodePlanCreator {
+public class StepsPlanCreator extends GenericStepsNodePlanCreator {
   @Override
   public PlanNode createPlanForParentNode(
       PlanCreationContext ctx, StepsExecutionConfig config, List<String> childrenNodeIds) {

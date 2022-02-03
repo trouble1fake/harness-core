@@ -54,7 +54,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.ws.rs.core.HttpHeaders;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Singleton
 @OwnedBy(PIPELINE)
 public class WebhookHelper {
@@ -146,6 +148,8 @@ public class WebhookHelper {
       sourceRepoType = BITBUCKET;
     } else if (containsHeaderKey(headers, X_AMZ_SNS_MESSAGE_TYPE)) {
       sourceRepoType = AWS_CODECOMMIT;
+    } else {
+      log.info("Got unrecognized source repo type for the webhook {}", event.getUuid());
     }
 
     return sourceRepoType;

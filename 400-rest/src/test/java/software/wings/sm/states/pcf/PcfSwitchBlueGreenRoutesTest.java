@@ -104,11 +104,11 @@ public class PcfSwitchBlueGreenRoutesTest extends WingsBaseTest {
         PcfRouteUpdateStateExecutionData.builder()
             .pcfRouteUpdateRequestConfigData(CfRouteUpdateRequestConfigData.builder().build())
             .build();
-    response.put("1",
-        CfCommandExecutionResponse.builder()
-            .commandExecutionStatus(CommandExecutionStatus.SUCCESS)
-            .errorMessage("ERROR_MESSAGE")
-            .build());
+    CfCommandExecutionResponse commandExecutionResponse = CfCommandExecutionResponse.builder()
+                                                              .commandExecutionStatus(CommandExecutionStatus.SUCCESS)
+                                                              .errorMessage("ERROR_MESSAGE")
+                                                              .build();
+    response.put("1", commandExecutionResponse);
     doReturn(stateExecutionData).when(context).getStateExecutionData();
     doReturn("TEST_NAME").when(pcfStateHelper).obtainSwapRouteSweepingOutputName(context, false);
     doReturn(SweepingOutputInstance.builder()).when(context).prepareSweepingOutputBuilder(any());
@@ -118,6 +118,7 @@ public class PcfSwitchBlueGreenRoutesTest extends WingsBaseTest {
     assertThat(executionResponse.getExecutionStatus()).isEqualTo(ExecutionStatus.SUCCESS);
     assertThat(executionResponse.getErrorMessage()).isEqualTo("ERROR_MESSAGE");
     assertThat(executionResponse.getStateExecutionData()).isEqualTo(stateExecutionData);
-    verify(pcfStateHelper, times(1)).updateInfoVariables(context, stateExecutionData);
+    verify(pcfStateHelper, times(1))
+        .updateInfoVariables(context, stateExecutionData, commandExecutionResponse, false, false);
   }
 }
