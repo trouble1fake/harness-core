@@ -54,7 +54,7 @@ import lombok.AllArgsConstructor;
 @Produces({"application/json", "application/yaml"})
 @Consumes({"application/json", "application/yaml"})
 @AllArgsConstructor(onConstructor = @__({ @Inject }))
-@Tag(name = "SecretManagers", description = "This contains APIs related to SecretManagers as defined in Harness")
+@Tag(name = "Secret Managers", description = "This contains APIs related to SecretManagers as defined in Harness")
 @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request",
     content =
     {

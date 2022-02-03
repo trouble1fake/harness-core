@@ -72,7 +72,7 @@ import org.hibernate.validator.constraints.NotBlank;
       @ApiResponse(code = 400, response = FailureDTO.class, message = "Bad Request")
       , @ApiResponse(code = 500, response = ErrorDTO.class, message = "Internal server error")
     })
-@Tag(name = "Scm", description = "Contains APIs related to Scm")
+@Tag(name = "SCM", description = "Contains APIs related to Scm")
 @io.swagger.v3.oas.annotations.responses.
 ApiResponse(responseCode = BAD_REQUEST_CODE, description = BAD_REQUEST_PARAM_MESSAGE,
     content =

@@ -60,7 +60,7 @@ import lombok.extern.slf4j.Slf4j;
       @ApiResponse(code = 400, response = FailureDTO.class, message = "Bad Request")
       , @ApiResponse(code = 500, response = ErrorDTO.class, message = "Internal server error")
     })
-@Tag(name = "SmtpConfig", description = "This contains APIs related to SmtpConfig as defined in Harness")
+@Tag(name = "SMTP", description = "This contains APIs related to SmtpConfig as defined in Harness")
 @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request",
     content =
     {

@@ -73,7 +73,7 @@ import retrofit2.http.Multipart;
 @Path("/authentication-settings")
 @Produces(MediaType.APPLICATION_JSON)
 @AllArgsConstructor(onConstructor = @__({ @Inject }))
-@Tag(name = "AuthenticationSettings",
+@Tag(name = "Authentication Settings",
     description = "This contains APIs related to Authentication settings as defined in Harness")
 @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request",
     content =
