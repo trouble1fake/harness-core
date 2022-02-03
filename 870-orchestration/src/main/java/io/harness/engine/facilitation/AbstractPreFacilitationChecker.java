@@ -10,7 +10,8 @@ package io.harness.engine.facilitation;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.engine.ExecutionCheck;
-import io.harness.execution.NodeExecution;
+import io.harness.plan.Node;
+import io.harness.pms.contracts.ambiance.Ambiance;
 
 @OwnedBy(HarnessTeam.PIPELINE)
 public abstract class AbstractPreFacilitationChecker {
@@ -20,16 +21,16 @@ public abstract class AbstractPreFacilitationChecker {
     this.nextChecker = nextChecker;
   }
 
-  public ExecutionCheck check(NodeExecution nodeExecution) {
-    ExecutionCheck preCheck = this.performCheck(nodeExecution);
+  public ExecutionCheck check(Ambiance ambiance, Node node) {
+    ExecutionCheck preCheck = this.performCheck(ambiance, node);
     if (!preCheck.isProceed()) {
       return preCheck;
     }
     if (nextChecker != null) {
-      return nextChecker.check(nodeExecution);
+      return nextChecker.check(ambiance, node);
     }
     return ExecutionCheck.builder().proceed(true).reason(null).build();
   }
 
-  protected abstract ExecutionCheck performCheck(NodeExecution nodeExecution);
+  protected abstract ExecutionCheck performCheck(Ambiance ambiance, Node planNode);
 }

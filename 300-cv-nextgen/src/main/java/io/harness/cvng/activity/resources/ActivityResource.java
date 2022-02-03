@@ -36,7 +36,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import javax.validation.constraints.NotNull;
-import javax.ws.rs.DefaultValue;
+import javax.ws.rs.BeanParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -87,20 +87,8 @@ public class ActivityResource {
   @ApiOperation(value = "get metrics for given activity", nickname = "getDeploymentMetrics")
   public RestResponse<TransactionMetricInfoSummaryPageDTO> getMetrics(
       @NotEmpty @NotNull @PathParam("activityId") String activityId, @NotNull @QueryParam("accountId") String accountId,
-      @DefaultValue("false") @QueryParam("anomalousMetricsOnly") boolean anomalousMetricsOnly,
-      @QueryParam("hostName") String hostName, @QueryParam("filter") String filter,
-      @QueryParam("healthSources") List<String> healthSourceIdentifiers,
-      @QueryParam("pageNumber") @DefaultValue("0") int pageNumber,
-      @QueryParam("pageSize") @DefaultValue("10") int pageSize) {
-    PageParams pageParams = PageParams.builder().page(pageNumber).size(pageSize).build();
-    DeploymentTimeSeriesAnalysisFilter deploymentTimeSeriesAnalysisFilter =
-        DeploymentTimeSeriesAnalysisFilter.builder()
-            .healthSourceIdentifiers(healthSourceIdentifiers)
-            .filter(filter)
-            .anomalous(anomalousMetricsOnly)
-            .hostName(hostName)
-            .build();
-
+      @BeanParam DeploymentTimeSeriesAnalysisFilter deploymentTimeSeriesAnalysisFilter,
+      @BeanParam PageParams pageParams) {
     return new RestResponse(activityService.getDeploymentActivityTimeSeriesData(
         accountId, activityId, deploymentTimeSeriesAnalysisFilter, pageParams));
   }

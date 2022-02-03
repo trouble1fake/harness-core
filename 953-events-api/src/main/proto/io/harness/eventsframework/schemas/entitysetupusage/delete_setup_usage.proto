@@ -11,6 +11,7 @@ option java_multiple_files = true;
 option go_package = "953_events_api";
 
 message DeleteSetupUsageDTO {
+  option deprecated = true;  // Use the flush create option in the events framework
   string accountIdentifier = 1;
   string referredEntityFQN = 2;
   string referredByEntityFQN = 3;

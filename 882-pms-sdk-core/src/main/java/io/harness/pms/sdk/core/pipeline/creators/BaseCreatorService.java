@@ -17,6 +17,7 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.pms.contracts.plan.Dependencies;
 import io.harness.pms.contracts.plan.YamlFieldBlob;
 import io.harness.pms.yaml.YamlField;
+import io.harness.pms.yaml.YamlUtils;
 
 import com.google.inject.Singleton;
 import java.io.IOException;
@@ -75,10 +76,18 @@ public abstract class BaseCreatorService<R extends CreatorResponse, M> {
     String currentYaml = dependencies.getYaml();
     dependencies.clearDependencies();
 
+    YamlField fullYamlField;
+    try {
+      fullYamlField = YamlUtils.readTree(currentYaml);
+    } catch (IOException ex) {
+      String message = "Invalid yaml during plan creation";
+      log.error(message, ex);
+      throw new InvalidRequestException(message);
+    }
     for (String yamlPath : yamlPathList) {
       YamlField yamlField = null;
       try {
-        yamlField = YamlField.fromYamlPath(currentYaml, yamlPath);
+        yamlField = fullYamlField.fromYamlPath(yamlPath);
       } catch (IOException e) {
         log.error("Invalid yaml field", e);
       }

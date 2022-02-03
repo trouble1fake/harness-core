@@ -16,6 +16,7 @@ import static java.lang.System.getProperty;
 
 import io.harness.AccessControlClientConfiguration;
 import io.harness.AccessControlClientModule;
+import io.harness.ResourceGroupResourceClasses;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.audit.client.remote.AuditClientModule;
 import io.harness.eventsframework.EventsFrameworkConstants;
@@ -31,6 +32,7 @@ import io.harness.metrics.modules.MetricsModule;
 import io.harness.mongo.MongoConfig;
 import io.harness.mongo.MongoPersistence;
 import io.harness.morphia.MorphiaRegistrar;
+import io.harness.oas.OASModule;
 import io.harness.outbox.TransactionOutboxModule;
 import io.harness.persistence.HPersistence;
 import io.harness.redis.RedisConfig;
@@ -39,6 +41,7 @@ import io.harness.rule.InjectorRuleMixin;
 import io.harness.serializer.KryoModule;
 import io.harness.serializer.KryoRegistrar;
 import io.harness.serializer.PersistenceRegistrars;
+import io.harness.serializer.morphia.ResourceGroupSerializer;
 import io.harness.springdata.HTransactionTemplate;
 import io.harness.testlib.module.MongoRuleMixin;
 import io.harness.testlib.module.TestMongoModule;
@@ -59,6 +62,7 @@ import com.google.inject.name.Names;
 import java.io.Closeable;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
@@ -154,7 +158,9 @@ public class ResourceGroupTestRule implements MethodRule, InjectorRuleMixin, Mon
       @Provides
       @Singleton
       Set<Class<? extends KryoRegistrar>> kryoRegistrars() {
-        return ImmutableSet.<Class<? extends KryoRegistrar>>builder().build();
+        return ImmutableSet.<Class<? extends KryoRegistrar>>builder()
+            .addAll(ResourceGroupSerializer.kryoRegistrars)
+            .build();
       }
 
       @Provides
@@ -174,7 +180,15 @@ public class ResourceGroupTestRule implements MethodRule, InjectorRuleMixin, Mon
       @Provides
       @Singleton
       Set<Class<? extends MorphiaRegistrar>> morphiaRegistrars() {
-        return ImmutableSet.<Class<? extends MorphiaRegistrar>>builder().build();
+        return ImmutableSet.<Class<? extends MorphiaRegistrar>>builder()
+            .addAll(ResourceGroupSerializer.morphiaRegistrars)
+            .build();
+      }
+    });
+    modules.add(new OASModule() {
+      @Override
+      public Collection<Class<?>> getResourceClasses() {
+        return ResourceGroupResourceClasses.getResourceClasses();
       }
     });
     return modules;
@@ -205,6 +219,7 @@ public class ResourceGroupTestRule implements MethodRule, InjectorRuleMixin, Mon
                                                       .manager(serviceConfig)
                                                       .ngManager(serviceConfig)
                                                       .templateService(serviceConfig)
+                                                      .gitopsService(serviceConfig)
                                                       .build();
     configuration.setResourceClientConfigs(resourceClientConfigs);
     return configuration;

@@ -148,6 +148,11 @@ public class Plan implements PersistentEntity, Node {
   }
 
   @Override
+  public boolean isSkipUnresolvedExpressionsCheck() {
+    return true;
+  }
+
+  @Override
   public String getServiceName() {
     return ModuleType.PMS.name();
   }

@@ -22,7 +22,7 @@ public abstract class ProtoWriteConverter<T extends Message> implements Converte
   @SneakyThrows
   @Override
   public Document convert(T entity) {
-    String entityJson = JsonFormat.printer().includingDefaultValueFields().print(entity);
+    String entityJson = JsonFormat.printer().print(entity);
     return Document.parse(entityJson);
   }
 }

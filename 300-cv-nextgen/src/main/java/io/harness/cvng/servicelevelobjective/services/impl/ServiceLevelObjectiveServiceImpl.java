@@ -18,6 +18,7 @@ import io.harness.cvng.servicelevelobjective.SLORiskCountResponse.RiskCount;
 import io.harness.cvng.servicelevelobjective.beans.ErrorBudgetRisk;
 import io.harness.cvng.servicelevelobjective.beans.SLODashboardApiFilter;
 import io.harness.cvng.servicelevelobjective.beans.SLODashboardWidget.SLOGraphData;
+import io.harness.cvng.servicelevelobjective.beans.SLOErrorBudgetResetDTO;
 import io.harness.cvng.servicelevelobjective.beans.SLOTarget;
 import io.harness.cvng.servicelevelobjective.beans.SLOTarget.SLOTargetKeys;
 import io.harness.cvng.servicelevelobjective.beans.SLOTargetType;
@@ -33,10 +34,12 @@ import io.harness.cvng.servicelevelobjective.entities.ServiceLevelObjective;
 import io.harness.cvng.servicelevelobjective.entities.ServiceLevelObjective.ServiceLevelObjectiveKeys;
 import io.harness.cvng.servicelevelobjective.entities.ServiceLevelObjective.TimePeriod;
 import io.harness.cvng.servicelevelobjective.services.api.SLIRecordService;
+import io.harness.cvng.servicelevelobjective.services.api.SLOErrorBudgetResetService;
 import io.harness.cvng.servicelevelobjective.services.api.SLOHealthIndicatorService;
 import io.harness.cvng.servicelevelobjective.services.api.ServiceLevelIndicatorService;
 import io.harness.cvng.servicelevelobjective.services.api.ServiceLevelObjectiveService;
 import io.harness.cvng.servicelevelobjective.transformer.servicelevelindicator.SLOTargetTransformer;
+import io.harness.data.structure.CollectionUtils;
 import io.harness.exception.DuplicateFieldException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ng.beans.PageResponse;
@@ -74,6 +77,8 @@ public class ServiceLevelObjectiveServiceImpl implements ServiceLevelObjectiveSe
   @Inject private SLOHealthIndicatorService sloHealthIndicatorService;
   @Inject private Map<SLOTargetType, SLOTargetTransformer> sloTargetTypeSLOTargetTransformerMap;
   @Inject private SLIRecordService sliRecordService;
+  @Inject private SLOErrorBudgetResetService sloErrorBudgetResetService;
+
   @Override
   public ServiceLevelObjectiveResponse create(
       ProjectParams projectParams, ServiceLevelObjectiveDTO serviceLevelObjectiveDTO) {
@@ -100,6 +105,7 @@ public class ServiceLevelObjectiveServiceImpl implements ServiceLevelObjectiveSe
     validate(serviceLevelObjectiveDTO, projectParams);
     serviceLevelObjective = updateSLOEntity(projectParams, serviceLevelObjective, serviceLevelObjectiveDTO);
     sloHealthIndicatorService.upsert(serviceLevelObjective);
+    sloErrorBudgetResetService.clearErrorBudgetResets(projectParams, identifier);
     return getSLOResponse(serviceLevelObjectiveDTO.getIdentifier(), projectParams);
   }
 
@@ -113,6 +119,8 @@ public class ServiceLevelObjectiveServiceImpl implements ServiceLevelObjectiveSe
           projectParams.getProjectIdentifier()));
     }
     serviceLevelIndicatorService.deleteByIdentifier(projectParams, serviceLevelObjective.getServiceLevelIndicators());
+    sloErrorBudgetResetService.clearErrorBudgetResets(projectParams, identifier);
+    sloHealthIndicatorService.delete(projectParams, serviceLevelObjective.getIdentifier());
     return hPersistence.delete(serviceLevelObjective);
   }
 
@@ -285,7 +293,14 @@ public class ServiceLevelObjectiveServiceImpl implements ServiceLevelObjectiveSe
           projectParams, serviceLevelObjective.getServiceLevelIndicators().get(0));
 
       LocalDateTime currentLocalDate = LocalDateTime.ofInstant(clock.instant(), serviceLevelObjective.getZoneOffset());
-      int totalErrorBudgetMinutes = serviceLevelObjective.getTotalErrorBudgetMinutes(currentLocalDate);
+      int totalErrorBudgetMinutes = serviceLevelObjective.getActiveErrorBudgetMinutes(
+          CollectionUtils
+              .emptyIfNull(
+                  sloErrorBudgetResetService.getErrorBudgetResets(projectParams, serviceLevelObjective.getIdentifier()))
+              .stream()
+              .map(SLOErrorBudgetResetDTO::getErrorBudgetIncrementPercentage)
+              .collect(Collectors.toList()),
+          currentLocalDate);
       ServiceLevelObjective.TimePeriod timePeriod = serviceLevelObjective.getCurrentTimeRange(currentLocalDate);
       Instant currentTimeMinute = DateTimeUtils.roundDownTo1MinBoundary(clock.instant());
 
@@ -295,6 +310,16 @@ public class ServiceLevelObjectiveServiceImpl implements ServiceLevelObjectiveSe
       serviceLevelObjectiveSLOGraphDataMap.put(serviceLevelObjective, sloGraphData);
     }
     return serviceLevelObjectiveSLOGraphDataMap;
+  }
+
+  @Override
+  public List<SLOErrorBudgetResetDTO> getErrorBudgetResetHistory(ProjectParams projectParams, String sloIdentifier) {
+    return sloErrorBudgetResetService.getErrorBudgetResets(projectParams, sloIdentifier);
+  }
+
+  @Override
+  public SLOErrorBudgetResetDTO resetErrorBudget(ProjectParams projectParams, SLOErrorBudgetResetDTO resetDTO) {
+    return sloErrorBudgetResetService.resetErrorBudget(projectParams, resetDTO);
   }
 
   private ServiceLevelObjective updateSLOEntity(ProjectParams projectParams,

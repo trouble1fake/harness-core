@@ -14,6 +14,7 @@ import io.harness.EntityType;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.exception.DuplicateFieldException;
+import io.harness.exception.InvalidRequestException;
 import io.harness.ng.core.EntityDetail;
 import io.harness.ng.core.entitysetupusage.EntitySetupUsageQueryFilterHelper;
 import io.harness.ng.core.entitysetupusage.dto.EntityReferencesDTO;
@@ -35,6 +36,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -123,7 +125,7 @@ public class EntitySetupUsageServiceImpl implements EntitySetupUsageService {
   }
 
   private Boolean deleteAllReferredByEntity(String accountIdentifier, String referredByEntityFQN,
-      EntityType referredByEntityType, EntityType referredEntityType) {
+      EntityType referredByEntityType, @Nullable EntityType referredEntityType) {
     long numberOfRecordsDeleted = 0;
     Criteria criteria = entitySetupUsageFilterHelper.createCriteriaForDeletingAllReferredByEntries(
         accountIdentifier, referredByEntityFQN, referredByEntityType, referredEntityType);
@@ -138,11 +140,16 @@ public class EntitySetupUsageServiceImpl implements EntitySetupUsageService {
 
   // todo(abhinav): make delete and create a transactional operation
   @Override
-  public Boolean flushSave(List<EntitySetupUsage> entitySetupUsage, EntityType entityTypeFromChannel,
+  public Boolean flushSave(List<EntitySetupUsage> entitySetupUsage, @Nullable EntityType entityTypeFromChannel,
       boolean deleteOldReferredByRecords, String accountId) {
     if (isEmpty(entitySetupUsage)) {
       return true;
     }
+
+    if (!isEventForDeletion(entitySetupUsage) && entityTypeFromChannel == null) {
+      throw new InvalidRequestException("The entity type is a required field when you are creating setup usage");
+    }
+
     if (deleteOldReferredByRecords) {
       deleteAllReferredByEntity(accountId,
           entitySetupUsage.get(0).getReferredByEntity().getEntityRef().getFullyQualifiedName(),
@@ -151,6 +158,14 @@ public class EntitySetupUsageServiceImpl implements EntitySetupUsageService {
     final List<EntitySetupUsage> entitySetupUsageFiltered =
         filterSetupUsageByEntityTypes(entitySetupUsage, entityTypeFromChannel);
     return saveMultiple(entitySetupUsageFiltered);
+  }
+
+  private boolean isEventForDeletion(List<EntitySetupUsage> entitySetupUsages) {
+    if (entitySetupUsages.size() != 1) {
+      return false;
+    }
+    EntitySetupUsage entitySetupUsage = entitySetupUsages.get(0);
+    return isEmpty(entitySetupUsage.getReferredEntityFQN());
   }
 
   @Override

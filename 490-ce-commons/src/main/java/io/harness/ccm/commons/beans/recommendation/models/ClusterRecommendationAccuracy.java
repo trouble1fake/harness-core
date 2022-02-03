@@ -26,6 +26,9 @@ public class ClusterRecommendationAccuracy {
 
   @SerializedName("regularNodes") private Long regularNodes;
 
+  /**
+   * regularPrice means total ON_DEMAND price
+   */
   @SerializedName("regularPrice") private Double regularPrice;
 
   @SerializedName("spotNodes") private Long spotNodes;

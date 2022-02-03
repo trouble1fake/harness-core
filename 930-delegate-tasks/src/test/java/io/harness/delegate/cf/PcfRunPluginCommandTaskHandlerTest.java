@@ -188,13 +188,13 @@ public class PcfRunPluginCommandTaskHandlerTest extends CategoryTest {
   @Owner(developers = IVAN)
   @Category(UnitTests.class)
   public void testPrepareFinalScriptWithRepoRoot() {
-    String script = "${service.cli} create-service-push --service-manifest\n"
+    String script = "/path-to-binary/v6/cf create-service-push --service-manifest\n"
         + "${service.manifest.repoRoot}/manifests";
     String workingDirPath = "working-dir-path";
     String finalScript =
         pcfRunPluginCommandTaskHandler.prepareFinalScript(script, workingDirPath, StringUtils.EMPTY, CF_PATH);
     assertThat(finalScript)
-        .isEqualTo("cf-path/cf create-service-push --service-manifest\n"
+        .isEqualTo("/path-to-binary/v6/cf create-service-push --service-manifest\n"
             + "working-dir-path/manifests");
   }
 
@@ -202,13 +202,13 @@ public class PcfRunPluginCommandTaskHandlerTest extends CategoryTest {
   @Owner(developers = IVAN)
   @Category(UnitTests.class)
   public void testPrepareFinalScriptWithDeployYaml() {
-    String script = "${service.cli} create-service-push --service-manifest\n"
+    String script = "cf create-service-push --service-manifest\n"
         + "${service.manifest}/manifests/deploy.yml --no-push";
     String repoRoot = "root-path/rd";
     String finalScript =
         pcfRunPluginCommandTaskHandler.prepareFinalScript(script, StringUtils.EMPTY, repoRoot, CF_PATH);
     assertThat(finalScript)
-        .isEqualTo("cf-path/cf create-service-push --service-manifest\n"
+        .isEqualTo("cf create-service-push --service-manifest\n"
             + "root-path/rd/manifests/deploy.yml --no-push");
   }
 
@@ -216,14 +216,14 @@ public class PcfRunPluginCommandTaskHandlerTest extends CategoryTest {
   @Owner(developers = IVAN)
   @Category(UnitTests.class)
   public void testPrepareFinalScript() {
-    String script = "${service.cli} create-service-push --service-manifest\n"
+    String script = "/path-to-binary/v7/cf create-service-push --service-manifest\n"
         + "${service.manifest.repoRoot}/manifests\n"
         + "${service.manifest}/manifests/deploy.yml --no-push";
     String workingDirPath = "working-dir-path/";
     String repoRoot = "root-path/rd";
     String finalScript = pcfRunPluginCommandTaskHandler.prepareFinalScript(script, workingDirPath, repoRoot, CF_PATH);
     assertThat(finalScript)
-        .isEqualTo("cf-path/cf create-service-push --service-manifest\n"
+        .isEqualTo("/path-to-binary/v7/cf create-service-push --service-manifest\n"
             + "working-dir-path//manifests\n"
             + "working-dir-path/root-path/rd/manifests/deploy.yml --no-push");
   }

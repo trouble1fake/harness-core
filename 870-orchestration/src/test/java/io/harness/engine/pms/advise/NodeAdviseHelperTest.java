@@ -19,6 +19,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.engine.pms.advise.publisher.NodeAdviseEventPublisher;
 import io.harness.execution.NodeExecution;
+import io.harness.plan.PlanNode;
 import io.harness.pms.contracts.execution.Status;
 import io.harness.rule.Owner;
 
@@ -40,10 +41,11 @@ public class NodeAdviseHelperTest extends OrchestrationTestBase {
   public void shouldQueueAdvisingEvent() {
     String nodeExecutionId = generateUuid();
     NodeExecution nodeExecution = NodeExecution.builder().uuid(nodeExecutionId).build();
-    when(nodeAdviseEventPublisher.publishEvent(nodeExecutionId, Status.SUCCEEDED)).thenReturn(null);
+    PlanNode planNode = PlanNode.builder().build();
+    when(nodeAdviseEventPublisher.publishEvent(nodeExecution, planNode, Status.SUCCEEDED)).thenReturn(null);
 
-    helper.queueAdvisingEvent(nodeExecution, Status.SUCCEEDED);
+    helper.queueAdvisingEvent(nodeExecution, planNode, Status.SUCCEEDED);
 
-    verify(nodeAdviseEventPublisher).publishEvent(nodeExecutionId, Status.SUCCEEDED);
+    verify(nodeAdviseEventPublisher).publishEvent(nodeExecution, planNode, Status.SUCCEEDED);
   }
 }

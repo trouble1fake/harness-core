@@ -157,7 +157,6 @@ public class PcfRunPluginCommandTaskHandler extends PcfCommandTaskHandler {
         renderedScriptString.replaceAll(PcfConstants.FILE_START_REPO_ROOT_REGEX, workingDirCanonicalPathStr);
     final String dirPathWithRepoRoot = workingDirCanonicalPathStr + ("/".equals(repoRoot) ? "" : repoRoot);
     finalScript = finalScript.replaceAll(PcfConstants.FILE_START_SERVICE_MANIFEST_REGEX, dirPathWithRepoRoot);
-    finalScript = finalScript.replaceAll(PcfConstants.SERVICE_CLI_REGEX, cfCliPath);
 
     return finalScript;
   }

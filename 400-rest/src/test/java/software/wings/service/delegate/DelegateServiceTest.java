@@ -141,21 +141,16 @@ import io.harness.exception.WingsException;
 import io.harness.logstreaming.LogStreamingServiceConfig;
 import io.harness.network.LocalhostUtils;
 import io.harness.observer.Subject;
-import io.harness.outbox.api.OutboxService;
 import io.harness.persistence.HPersistence;
 import io.harness.rule.Owner;
 import io.harness.security.encryption.EncryptedDataDetail;
-import io.harness.serializer.KryoSerializer;
 import io.harness.service.intfc.DelegateCache;
-import io.harness.service.intfc.DelegateInsightsService;
 import io.harness.service.intfc.DelegateProfileObserver;
-import io.harness.service.intfc.DelegateSyncService;
 import io.harness.service.intfc.DelegateTaskRetryObserver;
 import io.harness.service.intfc.DelegateTaskService;
 import io.harness.service.intfc.DelegateTokenService;
 import io.harness.version.VersionInfo;
 import io.harness.version.VersionInfoManager;
-import io.harness.waiter.WaitNotifyEngine;
 
 import software.wings.FeatureTestHelper;
 import software.wings.WingsBaseTest;
@@ -181,17 +176,14 @@ import software.wings.service.impl.AuditServiceHelper;
 import software.wings.service.impl.DelegateConnectionDao;
 import software.wings.service.impl.DelegateObserver;
 import software.wings.service.impl.DelegateServiceImpl;
-import software.wings.service.impl.DelegateTaskBroadcastHelper;
 import software.wings.service.impl.DelegateTaskServiceClassicImpl;
 import software.wings.service.impl.DelegateTaskStatusObserver;
 import software.wings.service.impl.EventEmitter;
 import software.wings.service.impl.EventEmitter.Channel;
 import software.wings.service.impl.infra.InfraDownloadService;
 import software.wings.service.intfc.AccountService;
-import software.wings.service.intfc.AlertService;
 import software.wings.service.intfc.AssignDelegateService;
 import software.wings.service.intfc.DelegateProfileService;
-import software.wings.service.intfc.DelegateSelectionLogsService;
 import software.wings.service.intfc.FileService;
 import software.wings.service.intfc.security.ManagerDecryptionService;
 import software.wings.service.intfc.security.SecretManager;
@@ -268,7 +260,6 @@ public class DelegateServiceTest extends WingsBaseTest {
   private static final String UNIQUE_DELEGATE_NAME_ERROR_MESSAGE =
       "Delegate with same name exists. Delegate name must be unique across account.";
 
-  @Mock private WaitNotifyEngine waitNotifyEngine;
   @Mock private AccountService accountService;
   @Mock private LicenseService licenseService;
   @Mock private EventEmitter eventEmitter;
@@ -281,7 +272,6 @@ public class DelegateServiceTest extends WingsBaseTest {
   @Mock private SecretManager secretManager;
   @Mock private ManagerDecryptionService managerDecryptionService;
   @Mock private FileService fileService;
-  @Mock private AlertService alertService;
   @Mock private VersionInfoManager versionInfoManager;
   @Mock private SubdomainUrlHelperIntfc subdomainUrlHelper;
   @Mock private ConfigurationController configurationController;
@@ -289,23 +279,17 @@ public class DelegateServiceTest extends WingsBaseTest {
   @Mock private DelegateGrpcConfig delegateGrpcConfig;
   @Mock private CapabilityService capabilityService;
   @Mock private DelegateRingService delegateRingService;
-  @Mock private DelegateSyncService delegateSyncService;
-  @Mock private DelegateSelectionLogsService delegateSelectionLogsService;
-  @Mock private DelegateInsightsService delegateInsightsService;
   @Mock private DelegateTokenService delegateTokenService;
   @Mock private Producer eventProducer;
-  @Mock private OutboxService outboxService;
 
   @Inject private FeatureTestHelper featureTestHelper;
   @Inject private DelegateConnectionDao delegateConnectionDao;
-  @Inject private KryoSerializer kryoSerializer;
 
   private final int port = LocalhostUtils.findFreePort();
   @Rule public WireMockRule wireMockRule = new WireMockRule(port);
   @Rule public ExpectedException thrown = ExpectedException.none();
 
   @InjectMocks @Inject private DelegateCache delegateCache;
-  @InjectMocks @Inject private DelegateTaskBroadcastHelper delegateTaskBroadcastHelper;
   @InjectMocks @Inject private DelegateServiceImpl delegateService;
   @InjectMocks @Inject private DelegateTaskServiceClassicImpl delegateTaskServiceClassic;
   @InjectMocks @Inject private DelegateTaskService delegateTaskService;
@@ -333,7 +317,6 @@ public class DelegateServiceTest extends WingsBaseTest {
     when(subdomainUrlHelper.getDelegateMetadataUrl(any(), any(), any()))
         .thenReturn("http://localhost:" + port + "/delegateci.txt");
     when(mainConfiguration.getDeployMode()).thenReturn(DeployMode.KUBERNETES);
-    when(mainConfiguration.getKubectlVersion()).thenReturn("v1.12.2");
     when(mainConfiguration.getScmVersion()).thenReturn("542f4642");
     when(mainConfiguration.getOcVersion()).thenReturn("v4.2.16");
     when(mainConfiguration.getCdnConfig()).thenReturn(cdnConfig);
@@ -379,7 +362,6 @@ public class DelegateServiceTest extends WingsBaseTest {
 
     when(broadcasterFactory.lookup(anyString(), anyBoolean())).thenReturn(broadcaster);
     when(versionInfoManager.getVersionInfo()).thenReturn(VersionInfo.builder().version(VERSION).build());
-    //    when(delegatesFeature.getMaxUsageAllowedForAccount(ACCOUNT_ID)).thenReturn(Integer.MAX_VALUE);
 
     FieldUtils.writeField(delegateService, "delegateProfileSubject", delegateProfileSubject, true);
     FieldUtils.writeField(delegateService, "subject", subject, true);
@@ -3853,8 +3835,8 @@ public class DelegateServiceTest extends WingsBaseTest {
                                             .k8sConfigDetails(k8sConfigDetails)
                                             .build();
     assertThatThrownBy(()
-                           -> delegateService.generateKubernetesYamlNg(ACCOUNT_ID, setupDetails,
-                               "https://localhost:9090", "https://localhost:7070", MediaType.MULTIPART_FORM_DATA_TYPE))
+                           -> delegateService.generateKubernetesYaml(ACCOUNT_ID, setupDetails, "https://localhost:9090",
+                               "https://localhost:7070", MediaType.MULTIPART_FORM_DATA_TYPE))
         .isInstanceOf(InvalidRequestException.class)
         .hasMessage(UNIQUE_DELEGATE_NAME_ERROR_MESSAGE);
   }

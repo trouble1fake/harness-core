@@ -36,6 +36,6 @@ public class ScmFacilitatorServiceImpl implements ScmFacilitatorService {
     return scmOrchestratorService.processScmRequestUsingConnectorSettings(scmClientFacilitatorService
         -> scmClientFacilitatorService.listBranchesForRepoByConnector(accountIdentifier, orgIdentifier,
             projectIdentifier, connectorIdentifierRef, repoURL, pageRequest, searchTerm),
-        projectIdentifier, orgIdentifier, accountIdentifier, connectorIdentifierRef);
+        projectIdentifier, orgIdentifier, accountIdentifier, connectorIdentifierRef, null, null);
   }
 }

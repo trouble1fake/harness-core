@@ -9,6 +9,7 @@ package io.harness.cvng.core.beans.params.filterParams;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import java.util.List;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.QueryParam;
 import lombok.AccessLevel;
 import lombok.Data;
@@ -21,15 +22,9 @@ import lombok.experimental.SuperBuilder;
 @Data
 @NoArgsConstructor
 public class DeploymentTimeSeriesAnalysisFilter extends TimeSeriesAnalysisFilter {
-  // currently not removing hostName for backward compatibility
-  // TODO: remove String hostName and only use List<String> hostNameList
-  @QueryParam("hostName") @Deprecated String hostName;
   @QueryParam("hostNames") List<String> hostNames;
   @QueryParam("transactionNames") List<String> transactionNames;
-
-  public boolean filterByHostName() {
-    return isNotEmpty(hostName);
-  }
+  @DefaultValue("false") @QueryParam("anomalousNodesOnly") boolean anomalousNodesOnly;
 
   public boolean filterByHostNames() {
     return isNotEmpty(hostNames);

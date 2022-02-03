@@ -202,21 +202,16 @@ public class HelmChartServiceImpl implements HelmChartService {
 
   @Override
   public HelmChart fetchByChartVersion(
-      String accountId, String appId, String serviceId, String appManifestName, String chartVersion) {
-    ApplicationManifest applicationManifest =
-        applicationManifestService.getAppManifestByName(appId, null, serviceId, appManifestName);
-    notNullCheck("App manifest with name " + appManifestName + " doesn't belong to the given app and service",
-        applicationManifest);
-
+      String accountId, String appId, String serviceId, String appManifestId, String chartVersion) {
     HelmCollectChartResponse helmCollectChartResponse = getHelmCollectChartResponse(
-        accountId, appId, chartVersion, applicationManifest.getUuid(), HelmChartCollectionType.SPECIFIC_VERSION);
+        accountId, appId, chartVersion, appManifestId, HelmChartCollectionType.SPECIFIC_VERSION);
 
     HelmChart helmChart = helmCollectChartResponse == null || isEmpty(helmCollectChartResponse.getHelmCharts())
         ? null
         : helmCollectChartResponse.getHelmCharts().get(0);
 
     if (helmChart != null) {
-      addCollectedHelmCharts(accountId, applicationManifest.getUuid(), Collections.singletonList(helmChart));
+      addCollectedHelmCharts(accountId, appManifestId, Collections.singletonList(helmChart));
     }
     return helmChart;
   }
@@ -230,6 +225,20 @@ public class HelmChartServiceImpl implements HelmChartService {
       return Collections.emptyList();
     }
     return helmCollectChartResponse.getHelmCharts();
+  }
+
+  @Override
+  public HelmChart createHelmChartWithVersionForAppManifest(ApplicationManifest appManifest, String versionNumber) {
+    HelmChart helmChart = HelmChart.builder()
+                              .appId(appManifest.getAppId())
+                              .accountId(appManifest.getAccountId())
+                              .applicationManifestId(appManifest.getUuid())
+                              .serviceId(appManifest.getServiceId())
+                              .name(appManifest.getHelmChartConfig().getChartName())
+                              .version(versionNumber)
+                              .displayName(appManifest.getHelmChartConfig().getChartName() + "-" + versionNumber)
+                              .build();
+    return create(helmChart);
   }
 
   private HelmCollectChartResponse getHelmCollectChartResponse(String accountId, String appId, String chartVersion,

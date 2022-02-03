@@ -815,28 +815,31 @@ public class ViewsBillingServiceImpl implements ViewsBillingService {
   }
 
   private static ViewRule convertQLCEViewRuleToViewRule(QLCEViewRule rule) {
-    List<ViewCondition> conditionsList = new ArrayList<>();
-    for (QLCEViewFilter filter : rule.getConditions()) {
-      conditionsList.add(ViewIdCondition.builder()
-                             .values(Arrays.asList(filter.getValues()))
-                             .viewField(getViewField(filter.getField()))
-                             .viewOperator(mapQLCEViewFilterOperatorToViewIdOperator(filter.getOperator()))
-                             .build());
-    }
+    List<ViewCondition> conditionsList = convertIdFilterToViewCondition(rule.getConditions());
     return ViewRule.builder().viewConditions(conditionsList).build();
   }
 
+  public static List<ViewCondition> convertIdFilterToViewCondition(@NotNull List<QLCEViewFilter> qlceViewFilters) {
+    return qlceViewFilters.stream()
+        .map(ViewsBillingServiceImpl::constructViewIdConditionFromQLCEViewFilter)
+        .collect(Collectors.toList());
+  }
+
+  private static ViewIdCondition constructViewIdConditionFromQLCEViewFilter(QLCEViewFilter filter) {
+    return ViewIdCondition.builder()
+        .values(Arrays.asList(filter.getValues()))
+        .viewField(getViewField(filter.getField()))
+        .viewOperator(mapQLCEViewFilterOperatorToViewIdOperator(filter.getOperator()))
+        .build();
+  }
+
   private static ViewIdOperator mapQLCEViewFilterOperatorToViewIdOperator(QLCEViewFilterOperator operator) {
-    if (operator.equals(QLCEViewFilterOperator.IN)) {
-      return ViewIdOperator.IN;
-    } else if (operator.equals(QLCEViewFilterOperator.NOT_IN)) {
-      return ViewIdOperator.NOT_IN;
-    } else if (operator.equals(QLCEViewFilterOperator.NOT_NULL)) {
-      return ViewIdOperator.NOT_NULL;
-    } else if (operator.equals(QLCEViewFilterOperator.NULL)) {
-      return ViewIdOperator.NULL;
+    try {
+      return ViewIdOperator.valueOf(operator.name());
+    } catch (IllegalArgumentException ex) {
+      log.warn("ViewIdOperator equivalent of QLCEViewFilterOperator=[{}] is not present.", operator.name(), ex);
+      return null;
     }
-    return null;
   }
 
   public static ViewField getViewField(QLCEViewFieldInput field) {
@@ -859,7 +862,7 @@ public class ViewsBillingServiceImpl implements ViewsBillingService {
         .collect(Collectors.toList());
   }
 
-  private static List<QLCEViewFilter> getIdFilters(List<QLCEViewFilterWrapper> filters) {
+  public static List<QLCEViewFilter> getIdFilters(List<QLCEViewFilterWrapper> filters) {
     return filters.stream()
         .map(QLCEViewFilterWrapper::getIdFilter)
         .filter(Objects::nonNull)

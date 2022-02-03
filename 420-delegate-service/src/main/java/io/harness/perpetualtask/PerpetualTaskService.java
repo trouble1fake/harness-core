@@ -43,6 +43,8 @@ public interface PerpetualTaskService {
 
   void updateTaskUnassignedReason(String taskId, PerpetualTaskUnassignedReason reason, int assignTryCount);
 
+  void setTaskUnassigned(String taskId);
+
   String createPerpetualTaskInternal(String perpetualTaskType, String accountId,
       PerpetualTaskClientContext clientContext, PerpetualTaskSchedule schedule, boolean allowDuplicate,
       String taskDescription);

@@ -12,6 +12,7 @@ import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
 import io.swagger.jaxrs.config.BeanConfig;
 import io.swagger.jaxrs.config.SwaggerContextService;
 import io.swagger.models.Contact;
+import io.swagger.models.Info;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -92,8 +93,17 @@ public class SwaggerBundleConfigurationFactory {
                 .initScanner();
           }
         };
+        Info info = new Info();
+        Contact contact = new Contact();
+        contact.email(getContactEmail());
+        info.title(getTitle());
+        info.version(getVersion());
+        info.description(getDescription());
+        info.termsOfService(getTermsOfServiceUrl());
+        info.contact(contact);
         config.setTitle(getTitle());
         config.setVersion(getVersion());
+        config.setInfo(info);
         config.setDescription(getDescription());
         config.setContact(getContact());
         config.setLicense(getLicense());

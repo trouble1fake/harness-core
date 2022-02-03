@@ -19,6 +19,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.dto.OrchestrationGraphDTO;
 import io.harness.engine.OrchestrationService;
+import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.interrupts.InterruptPackage;
 import io.harness.exception.InvalidRequestException;
 import io.harness.execution.StagesExecutionMetadata;
@@ -85,6 +86,7 @@ public class PMSExecutionServiceImpl implements PMSExecutionService {
   @Inject private YamlExpressionResolveHelper yamlExpressionResolveHelper;
   @Inject private ValidateAndMergeHelper validateAndMergeHelper;
   @Inject private PmsGitSyncHelper pmsGitSyncHelper;
+  @Inject private NodeExecutionService nodeExecutionService;
 
   @Override
   public Criteria formCriteria(String accountId, String orgId, String projectId, String pipelineIdentifier,
@@ -287,6 +289,9 @@ public class PMSExecutionServiceImpl implements PMSExecutionService {
   @Override
   public InterruptDTO registerInterrupt(
       PlanExecutionInterruptType executionInterruptType, String planExecutionId, String nodeExecutionId) {
+    if (!nodeExecutionService.ifExists(nodeExecutionId)) {
+      throw new InvalidRequestException(String.format("Invalid node execution id %s ", nodeExecutionId));
+    }
     final Principal principal = SecurityContextBuilder.getPrincipal();
     InterruptConfig interruptConfig =
         InterruptConfig.newBuilder()

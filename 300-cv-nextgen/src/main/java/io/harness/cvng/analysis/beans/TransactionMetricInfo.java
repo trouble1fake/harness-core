@@ -14,10 +14,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
+import org.jetbrains.annotations.NotNull;
 
 @Data
 @Builder
-public class TransactionMetricInfo {
+public class TransactionMetricInfo implements Comparable<TransactionMetricInfo> {
   private TransactionMetric transactionMetric;
   private String connectorName;
   private DataSourceType dataSourceType;
@@ -32,5 +33,19 @@ public class TransactionMetricInfo {
     String metricName;
     private Double score; // is this score is needed in the UI?
     private Risk risk;
+  }
+
+  @Override
+  public int compareTo(@NotNull TransactionMetricInfo o) {
+    int result = Integer.compare(
+        o.getTransactionMetric().getRisk().getValue(), this.getTransactionMetric().getRisk().getValue());
+    if (result == 0) {
+      result =
+          this.getTransactionMetric().getTransactionName().compareTo(o.getTransactionMetric().getTransactionName());
+    }
+    if (result == 0) {
+      result = this.getTransactionMetric().getMetricName().compareTo(o.getTransactionMetric().getMetricName());
+    }
+    return result;
   }
 }
