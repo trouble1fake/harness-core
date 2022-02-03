@@ -10,9 +10,12 @@ package io.harness.ccm.service.impl;
 import io.harness.ccm.budget.utils.BudgetUtils;
 import io.harness.ccm.commons.constants.AnomalyFieldConstants;
 import io.harness.ccm.commons.dao.anomaly.AnomalyDao;
+import io.harness.ccm.commons.entities.CCMField;
+import io.harness.ccm.commons.entities.CCMGroupBy;
 import io.harness.ccm.commons.entities.anomaly.AnomalyData;
 import io.harness.ccm.commons.entities.anomaly.AnomalyFeedbackDTO;
 import io.harness.ccm.commons.entities.anomaly.AnomalyQueryDTO;
+import io.harness.ccm.commons.entities.anomaly.AnomalySummary;
 import io.harness.ccm.commons.entities.anomaly.PerspectiveAnomalyData;
 import io.harness.ccm.commons.utils.AnomalyQueryBuilder;
 import io.harness.ccm.commons.utils.TimeUtils;
@@ -74,6 +77,21 @@ public class AnomalyServiceImpl implements AnomalyService {
     return true;
   }
 
+  @Override
+  public List<AnomalySummary> getAnomalySummary(@NonNull String accountIdentifier, AnomalyQueryDTO anomalyQuery) {
+    if (anomalyQuery == null) {
+      return null;
+    }
+    Condition condition = anomalyQuery.getFilter() != null
+        ? anomalyQueryBuilder.applyAllFilters(anomalyQuery.getFilter())
+        : DSL.noCondition();
+
+    if(anomalyQuery.getGroupBy().size() == 0){
+      return buildDummyAnomalySummaryData(CCMGroupBy.builder().groupByField(CCMField.AWS_ACCOUNT).build());
+    }
+    return buildDummyAnomalySummaryData(anomalyQuery.getGroupBy().get(0));
+  }
+
   private AnomalyData buildAnomalyData(Anomalies anomaly) {
     long anomalyTime = anomaly.getAnomalytime().toEpochSecond() * 1000;
     return AnomalyData.builder()
@@ -89,18 +107,6 @@ public class AnomalyServiceImpl implements AnomalyService {
         .status("Open")
         .statusRelativeTime(getRelativeTime(anomalyTime, STATUS_RELATIVE_TIME_TEMPLATE))
         .cloudProvider(getCloudProvider(anomaly))
-        .build();
-  }
-
-  private PerspectiveAnomalyData buildDummyPerspectiveAnomalyData() {
-    long anomalyTime = BudgetUtils.getStartOfCurrentDay() - 3 * BudgetUtils.ONE_DAY_MILLIS;
-    return PerspectiveAnomalyData.builder()
-        .timestamp(anomalyTime)
-        .anomalyCount(1)
-        .actualCost(137.22)
-        .differenceFromExpectedCost(120.21)
-        .associatedResources(Collections.singletonList("sample-ce-dev"))
-        .resourceType("cluster")
         .build();
   }
 
@@ -177,5 +183,46 @@ public class AnomalyServiceImpl implements AnomalyService {
         .limit(DEFAULT_LIMIT)
         .offset(DEFAULT_OFFSET)
         .build();
+  }
+
+  // Todo: remove these dummy response methods
+  private PerspectiveAnomalyData buildDummyPerspectiveAnomalyData() {
+    long anomalyTime = BudgetUtils.getStartOfCurrentDay() - 3 * BudgetUtils.ONE_DAY_MILLIS;
+    return PerspectiveAnomalyData.builder()
+        .timestamp(anomalyTime)
+        .anomalyCount(1)
+        .actualCost(137.22)
+        .differenceFromExpectedCost(120.21)
+        .associatedResources(Collections.singletonList("sample-ce-dev"))
+        .resourceType("cluster")
+        .build();
+  }
+
+  private List<AnomalySummary> buildDummyAnomalySummaryData(CCMGroupBy groupBy) {
+    List<AnomalySummary> dummySummary = new ArrayList<>();
+    switch (groupBy.getGroupByField()) {
+      case CLOUD_PROVIDER:
+        dummySummary.add(buildDummyAnomalySummary("AWS", 10.0, 356.0));
+        dummySummary.add(buildDummyAnomalySummary("GCP", 3.0, 154.23));
+        dummySummary.add(buildDummyAnomalySummary("KUBERNETES", 1.0, 100.64));
+        break;
+      case STATUS:
+        dummySummary.add(buildDummyAnomalySummary("Open", 9.0, 356.0));
+        dummySummary.add(buildDummyAnomalySummary("Resolved", 5.0, 154.23));
+        break;
+      case ALL:
+        dummySummary.add(buildDummyAnomalySummary("e4gt00appkub001-Cost-access/ecom-test01-live", 2.0, 256.0));
+        dummySummary.add(buildDummyAnomalySummary("e4gt00appkub002-Cost-access/ecom-test02-live", 3.0, 254.23));
+        dummySummary.add(buildDummyAnomalySummary("e4gt00appkub003-Cost-access/ecom-test03-live", 1.0, 130.64));
+        break;
+      default:
+        dummySummary.add(buildDummyAnomalySummary("Total", 15.0, 1356.03));
+        break;
+    }
+    return dummySummary;
+  }
+
+  private AnomalySummary buildDummyAnomalySummary(String name, Double count, Double actualCost) {
+    return AnomalySummary.builder().name(name).count(count).actualCost(actualCost).build();
   }
 }

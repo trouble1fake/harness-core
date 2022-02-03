@@ -16,6 +16,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.ccm.commons.entities.anomaly.AnomalyData;
 import io.harness.ccm.commons.entities.anomaly.AnomalyFeedbackDTO;
 import io.harness.ccm.commons.entities.anomaly.AnomalyQueryDTO;
+import io.harness.ccm.commons.entities.anomaly.AnomalySummary;
 import io.harness.ccm.commons.entities.anomaly.PerspectiveAnomalyData;
 import io.harness.ccm.graphql.dto.perspectives.PerspectiveQueryDTO;
 import io.harness.ccm.service.intf.AnomalyService;
@@ -127,5 +128,25 @@ public class AnomalyResource {
       @Parameter(required = true, description = "Unique identifier for perspective") @QueryParam("anomalyId")
       String anomalyId, @RequestBody(required = true, description = "Feedback") AnomalyFeedbackDTO feedback) {
     return ResponseDTO.newResponse(anomalyService.updateAnomalyFeedback(accountId, anomalyId, feedback));
+  }
+
+  @POST
+  @Path("summary")
+  @Timed
+  @LogAccountIdentifier
+  @ExceptionMetered
+  @ApiOperation(value = "Get Anomalies Summary", nickname = "getAnomaliesSummary")
+  @Operation(operationId = "getAnomaliesSummary", description = "Fetch the result of anomaly query",
+      summary = "List Anomalies",
+      responses =
+      {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "default",
+            description = "Anomaly Query result", content = { @Content(mediaType = MediaType.APPLICATION_JSON) })
+      })
+  public ResponseDTO<List<AnomalySummary>>
+  getAnomaliesSummary(@Parameter(required = true, description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
+                          NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier @NotNull @Valid String accountId,
+      @RequestBody(description = "Anomaly Query") AnomalyQueryDTO anomalyQuery) {
+    return ResponseDTO.newResponse(anomalyService.getAnomalySummary(accountId, anomalyQuery));
   }
 }

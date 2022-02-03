@@ -10,6 +10,7 @@ package io.harness.ccm.service.intf;
 import io.harness.ccm.commons.entities.anomaly.AnomalyData;
 import io.harness.ccm.commons.entities.anomaly.AnomalyFeedbackDTO;
 import io.harness.ccm.commons.entities.anomaly.AnomalyQueryDTO;
+import io.harness.ccm.commons.entities.anomaly.AnomalySummary;
 import io.harness.ccm.commons.entities.anomaly.PerspectiveAnomalyData;
 import io.harness.ccm.graphql.dto.perspectives.PerspectiveQueryDTO;
 
@@ -21,4 +22,5 @@ public interface AnomalyService {
   List<PerspectiveAnomalyData> listPerspectiveAnomalies(
       @NonNull String accountIdentifier, PerspectiveQueryDTO perspectiveQuery);
   Boolean updateAnomalyFeedback(@NonNull String accountIdentifier, String anomalyId, AnomalyFeedbackDTO feedback);
+  List<AnomalySummary> getAnomalySummary(@NonNull String accountIdentifier, AnomalyQueryDTO anomalyQuery);
 }
