@@ -179,7 +179,7 @@ public class NGVaultTaskHelper {
 
     final LinkedHashMultimap<String, String> signedHeaders = LinkedHashMultimap.create();
     final Map<String, String> defaultRequestHeaders = defaultRequest.getHeaders();
-    defaultRequestHeaders.entrySet().forEach(entry -> signedHeaders.put(entry.getKey(), entry.getValue()));
+    defaultRequestHeaders.forEach((k, v) -> signedHeaders.put(k, v));
 
     final JsonObject jsonObject = new JsonObject();
     signedHeaders.asMap().forEach((k, v) -> {
