@@ -366,7 +366,7 @@ public class NGEncryptedDataServiceImpl implements NGEncryptedDataService {
     }
     char[] existingFileId = existingEncryptedData.getEncryptedValue();
     byte[] inputBytes = getInputBytes(inputStream);
-    String fileContent = getFileContent(inputBytes);
+    String fileContent = (inputBytes == null) ? null : getFileContent(inputBytes);
 
     encrypt(encryptedData, fileContent, existingEncryptedData, SecretManagerConfigMapper.fromDTO(secretManager));
     if (isNotEmpty(fileContent) && Optional.ofNullable(existingFileId).isPresent()
@@ -397,6 +397,8 @@ public class NGEncryptedDataServiceImpl implements NGEncryptedDataService {
         inputBytes = ByteStreams.toByteArray(inputStream);
       } catch (IOException exception) {
         throw new SecretManagementException(SECRET_MANAGEMENT_ERROR, "Unable to convert input stream to bytes", SRE);
+      } catch (NullPointerException exception) {
+        return null;
       }
     }
     return inputBytes;
