@@ -42,6 +42,10 @@ public class VaultConfigMapper {
                                   .delegateSelectors(vaultConfigDTO.getDelegateSelectors())
                                   .namespace(vaultConfigDTO.getNamespace())
                                   .useVaultAgent(vaultConfigDTO.isUseVaultAgent())
+                                  .useAwsIam(vaultConfigDTO.isUseAwsIam())
+                                  .awsRegion(vaultConfigDTO.getAwsRegion())
+                                  .vaultAwsIamRole(vaultConfigDTO.getVaultAwsIamRole())
+                                  .xVaultAwsIamServerId(vaultConfigDTO.getXVaultAwsIamServerId())
                                   .sinkPath(vaultConfigDTO.getSinkPath())
                                   .build();
     vaultConfig.setNgMetadata(ngMetaDataFromDto(vaultConfigDTO));

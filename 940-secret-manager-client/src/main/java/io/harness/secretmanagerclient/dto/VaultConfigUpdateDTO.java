@@ -19,7 +19,7 @@ import lombok.experimental.SuperBuilder;
 @Setter
 @SuperBuilder
 @NoArgsConstructor
-@ToString(exclude = {"authToken", "secretId", "sinkPath"})
+@ToString(exclude = {"authToken", "secretId", "sinkPath", "vaultAwsIamRole", "xVaultAwsIamServerId"})
 @EqualsAndHashCode(callSuper = true)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class VaultConfigUpdateDTO extends SecretManagerConfigUpdateDTO {
@@ -35,4 +35,8 @@ public class VaultConfigUpdateDTO extends SecretManagerConfigUpdateDTO {
   private int secretEngineVersion;
   private String appRoleId;
   private String secretId;
+  private boolean useAwsIam;
+  private String awsRegion;
+  private String vaultAwsIamRole;
+  private String xVaultAwsIamServerId;
 }

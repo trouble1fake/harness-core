@@ -66,6 +66,12 @@ public abstract class BaseVaultConfig extends SecretManagerConfig {
   @Attributes(title = "delegateSelectors") private Set<String> delegateSelectors;
   @Attributes(title = "sinkPath") private String sinkPath;
 
+  // added for Aws Iam Auth Method
+  @Attributes(title = "useVaultAgent") private boolean useAwsIam;
+  @Attributes(title = "AwsIAM Auth Role") public String vaultAwsIamRole;
+  @Attributes(title = "AWS region") private String awsRegion;
+  @Attributes(title = "X_VAULT_AWS_IAM_SERVER_ID") private String xVaultAwsIamServerId;
+
   public boolean isCertValidationRequired() {
     return isCertValidationRequired;
   }

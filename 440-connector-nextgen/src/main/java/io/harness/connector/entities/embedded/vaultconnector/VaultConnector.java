@@ -60,6 +60,11 @@ public class VaultConnector extends Connector implements PersistentRegularIterab
   @Builder.Default Boolean useVaultAgent = Boolean.FALSE;
   @Setter @NonFinal Long renewedAt;
 
+  @Builder.Default Boolean useAwsIam = Boolean.FALSE;
+  String awsRegion;
+  String vaultAwsIamRoleRef;
+  String xVaultAwsIamServerIdRef;
+
   public long getRenewedAt() {
     if (renewedAt == null) {
       return 0;
@@ -101,5 +106,9 @@ public class VaultConnector extends Connector implements PersistentRegularIterab
 
   public Boolean isUseVaultAgent() {
     return useVaultAgent == null ? Boolean.FALSE : useVaultAgent;
+  }
+
+  public Boolean getUseAwsIam() {
+    return useAwsIam == null ? Boolean.FALSE : useAwsIam;
   }
 }

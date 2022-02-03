@@ -79,8 +79,9 @@ public class NGVaultSecretManagerRenewalHandler implements Handler<VaultConnecto
   @Override
   public void handle(VaultConnector vaultConnector) {
     log.info("renewing client tokens for {}", vaultConnector.getUuid());
-    if (vaultConnector.isUseVaultAgent()) {
-      log.info("Vault {} configured with Vault-Agent and does not need renewal", vaultConnector.getUuid());
+    if (vaultConnector.isUseVaultAgent() || vaultConnector.getUseAwsIam()) {
+      log.info(
+          "Vault {} configured with Vault-Agent or Aws Iam Auth. It does not need renewal", vaultConnector.getUuid());
       return;
     } else {
       vaultConnector = mongoTemplate.findById(vaultConnector.getId(), VaultConnector.class);

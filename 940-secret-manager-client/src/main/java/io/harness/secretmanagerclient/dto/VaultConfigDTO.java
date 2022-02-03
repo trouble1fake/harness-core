@@ -7,6 +7,10 @@
 
 package io.harness.secretmanagerclient.dto;
 
+import static io.harness.SecretManagerDescriptionConstants.AWS_REGION;
+import static io.harness.SecretManagerDescriptionConstants.USE_AWS_IAM;
+import static io.harness.SecretManagerDescriptionConstants.VAULT_AWS_IAM_HEADER;
+import static io.harness.SecretManagerDescriptionConstants.VAULT_AWS_IAM_ROLE;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 
 import io.harness.SecretManagerDescriptionConstants;
@@ -28,7 +32,7 @@ import lombok.experimental.SuperBuilder;
 @Setter
 @SuperBuilder
 @NoArgsConstructor
-@ToString(exclude = {"authToken", "secretId", "sinkPath"})
+@ToString(exclude = {"authToken", "secretId", "sinkPath", "vaultAwsIamRole", "xVaultAwsIamServerId"})
 @EqualsAndHashCode(callSuper = true)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(name = "VaultConfig", description = "This contains the information for the Vault Secret Manager.")
@@ -50,4 +54,9 @@ public class VaultConfigDTO extends SecretManagerConfigDTO {
   @Schema(description = SecretManagerDescriptionConstants.ENGINE_ENTERED_MANUALLY)
   private boolean engineManuallyEntered;
   @Schema(description = SecretManagerDescriptionConstants.DELEGATE_SELECTORS) private Set<String> delegateSelectors;
+
+  @Schema(description = USE_AWS_IAM) private boolean useAwsIam;
+  @Schema(description = AWS_REGION) private String awsRegion;
+  @Schema(description = VAULT_AWS_IAM_ROLE) private String vaultAwsIamRole;
+  @Schema(description = VAULT_AWS_IAM_HEADER) private String xVaultAwsIamServerId;
 }

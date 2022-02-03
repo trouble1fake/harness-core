@@ -7,6 +7,11 @@
 
 package io.harness.delegate.beans.connector.vaultconnector;
 
+import static io.harness.SecretManagerDescriptionConstants.AWS_REGION;
+import static io.harness.SecretManagerDescriptionConstants.SINK_PATH;
+import static io.harness.SecretManagerDescriptionConstants.USE_AWS_IAM;
+import static io.harness.SecretManagerDescriptionConstants.VAULT_AWS_IAM_HEADER;
+import static io.harness.SecretManagerDescriptionConstants.VAULT_AWS_IAM_ROLE;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
@@ -45,7 +50,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @Builder
-@ToString(exclude = {"authToken", "secretId", "sinkPath"})
+@ToString(exclude = {"authToken", "secretId", "sinkPath", "vaultAwsIamRole", "xVaultAwsIamServerId"})
 @EqualsAndHashCode(callSuper = true)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(Include.NON_NULL)
@@ -71,12 +76,24 @@ public class VaultConnectorDTO extends ConnectorConfigDTO implements DelegateSel
   @Schema(description = SecretManagerDescriptionConstants.SECRET_ENGINE_VERSION) private int secretEngineVersion;
   @Schema(description = SecretManagerDescriptionConstants.DELEGATE_SELECTORS) private Set<String> delegateSelectors;
   @Schema(description = SecretManagerDescriptionConstants.NAMESPACE) private String namespace;
-  private String sinkPath;
+  @Schema(description = SINK_PATH) private String sinkPath;
   @Schema(description = SecretManagerDescriptionConstants.USE_VAULT_AGENT) private boolean useVaultAgent;
+  @Schema(description = USE_AWS_IAM) private boolean useAwsIam;
+  @Schema(description = AWS_REGION) private String awsRegion;
+  @SecretReference
+  @ApiModelProperty(dataType = "string")
+  @Schema(description = VAULT_AWS_IAM_ROLE)
+  private SecretRefData vaultAwsIamRole;
+  @SecretReference
+  @ApiModelProperty(dataType = "string")
+  @Schema(description = VAULT_AWS_IAM_HEADER)
+  private SecretRefData xVaultAwsIamServerId;
 
   public AccessType getAccessType() {
     if (useVaultAgent) {
       return AccessType.VAULT_AGENT;
+    } else if (useAwsIam) {
+      return AccessType.AWS_IAM;
     } else {
       return isNotEmpty(appRoleId) ? AccessType.APP_ROLE : AccessType.TOKEN;
     }

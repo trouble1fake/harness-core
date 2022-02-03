@@ -12,6 +12,7 @@ import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.eraro.ErrorCode.VAULT_OPERATION_ERROR;
 import static io.harness.exception.WingsException.USER;
+import static io.harness.helpers.NGVaultTaskHelper.getVaultAwmIamAuthLoginResult;
 import static io.harness.helpers.ext.vault.VaultRestClientFactory.getFullPath;
 import static io.harness.threading.Morpheus.sleep;
 
@@ -22,6 +23,7 @@ import io.harness.concurrent.HTimeLimiter;
 import io.harness.encryptors.VaultEncryptor;
 import io.harness.exception.SecretManagementDelegateException;
 import io.harness.exception.runtime.HashiCorpVaultRuntimeException;
+import io.harness.helpers.ext.vault.VaultAppRoleLoginResult;
 import io.harness.helpers.ext.vault.VaultRestClientFactory;
 import io.harness.security.encryption.EncryptedRecord;
 import io.harness.security.encryption.EncryptedRecordData;
@@ -223,14 +225,17 @@ public class HashicorpVaultEncryptor implements VaultEncryptor {
     if (vaultConfig.isUseVaultAgent()) {
       try {
         byte[] content = Files.readAllBytes(Paths.get(URI.create("file://" + vaultConfig.getSinkPath())));
-        return new String(content);
+        String authToken = new String(content);
+        vaultConfig.setAuthToken(authToken);
       } catch (IOException e) {
         throw new SecretManagementDelegateException(VAULT_OPERATION_ERROR,
             "Using Vault Agent Cannot read Token From Sink Path:" + vaultConfig.getSinkPath(), e, USER);
       }
-    } else {
-      return vaultConfig.getAuthToken();
+    } else if (vaultConfig.isUseAwsIam()) {
+      VaultAppRoleLoginResult vaultAwmIamAuthLoginResult = getVaultAwmIamAuthLoginResult(vaultConfig);
+      vaultConfig.setAuthToken(vaultAwmIamAuthLoginResult.getClientToken());
     }
+    return vaultConfig.getAuthToken();
   }
 
   @Override

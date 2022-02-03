@@ -59,6 +59,7 @@ public class SecretManagerResourceNG {
   @Path("meta-data")
   @Produces("application/json")
   @Consumes("application/json")
+  @Deprecated
   public RestResponse<SecretManagerMetadataDTO> getMetadata(
       @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @NotNull String accountIdentifier,
       SecretManagerMetadataRequestDTO requestDTO) {

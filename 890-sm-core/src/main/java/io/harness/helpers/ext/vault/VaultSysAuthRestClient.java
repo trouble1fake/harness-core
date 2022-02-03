@@ -34,6 +34,7 @@ public interface VaultSysAuthRestClient {
   String CONFIG_CA_URL = "v1/{secret-engine-name}/config/ca";
   String SIGN_PUBLIC_SSH_KEY_URL = "v1/{secret-engine-name}/sign/{role-name}";
   String TOKEN_RENEW_URL = "v1/auth/token/renew-self";
+  String AWS_IAM_LOGIN_URL = "v1/auth/aws/login";
 
   /**
    * The JSON response will be returned as a String. The caller of this API need to '/secret/options/version' field in
@@ -46,6 +47,10 @@ public interface VaultSysAuthRestClient {
   @POST(APPROLE_LOGIN_URL)
   Call<VaultAppRoleLoginResponse> appRoleLogin(
       @Header("X-Vault-Namespace") String namespace, @Body VaultAppRoleLoginRequest request);
+
+  @POST(AWS_IAM_LOGIN_URL)
+  Call<VaultAppRoleLoginResponse> awsIamAuthLogin(
+      @Header("X-Vault-Namespace") String namespace, @Body VaultAwsIamAuthLoginRequest request);
 
   @GET(CONFIG_CA_URL)
   Call<SSHVaultAuthResponse> fetchAuthPublicKey(

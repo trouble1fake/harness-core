@@ -17,8 +17,6 @@ import io.harness.rest.RestResponse;
 import io.harness.secretmanagerclient.dto.EncryptedDataMigrationDTO;
 import io.harness.secretmanagerclient.dto.SecretManagerConfigDTO;
 import io.harness.secretmanagerclient.dto.SecretManagerConfigUpdateDTO;
-import io.harness.secretmanagerclient.dto.SecretManagerMetadataDTO;
-import io.harness.secretmanagerclient.dto.SecretManagerMetadataRequestDTO;
 import io.harness.serializer.kryo.KryoRequest;
 
 import java.util.List;
@@ -102,9 +100,4 @@ public interface SecretManagerClient {
       @Query(NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier,
       @Query(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
       @Query(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier);
-
-  @POST(SECRET_MANAGERS_API + "/meta-data")
-  Call<RestResponse<SecretManagerMetadataDTO>> getSecretManagerMetadata(
-      @Query(NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier,
-      @Body SecretManagerMetadataRequestDTO requestDTO);
 }
