@@ -95,7 +95,7 @@ public class K8sTrafficSplitState extends AbstractK8sState {
               .timeoutIntervalInMin(10)
               .virtualServiceName(virtualServiceName)
               .istioDestinationWeights(istioDestinationWeights)
-              .useVarSupportForKustomize(isUseVarSupportForKustomize(context.getAccountId()))
+              .useLatestKustomizeVersion(isUseLatestKustomizeVersion(context.getAccountId()))
               .useNewKubectlVersion(featureFlagService.isEnabled(NEW_KUBECTL_VERSION, infraMapping.getAccountId()))
               .build();
       return queueK8sDelegateTask(context, k8sTaskParameters, null);

@@ -117,6 +117,7 @@ public class PipelineSetupUsageHelper implements PipelineActionObserver {
 
   public void publishSetupUsageEvent(PipelineEntity pipelineEntity, List<EntityDetailProtoDTO> referredEntities) {
     if (EmptyPredicate.isEmpty(referredEntities)) {
+      deleteSetupUsagesForGivenPipeline(pipelineEntity);
       return;
     }
     EntityDetailProtoDTO pipelineDetails =
