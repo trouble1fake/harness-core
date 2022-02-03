@@ -17,9 +17,9 @@ import retrofit2.http.POST;
 import retrofit2.http.Path;
 
 public interface BanzaiRecommenderClient {
-  @GET("/status") Call<String> checkServiceStatus(); // success response is "ok"
+  @GET("status") Call<String> checkServiceStatus(); // success response is "ok"
 
-  @POST("/api/v1/recommender/provider/{provider}/service/{service}/region/{region}/cluster")
+  @POST("api/v1/recommender/provider/{provider}/service/{service}/region/{region}/cluster")
   Call<RecommendationResponse> getRecommendation(@Path("provider") String provider, @Path("service") String service,
       @Path("region") String region, @Body RecommendClusterRequest request);
 }

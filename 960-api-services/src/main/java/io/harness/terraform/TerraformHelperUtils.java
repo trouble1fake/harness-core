@@ -21,6 +21,7 @@ import static java.lang.String.format;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.ExceptionUtils;
 import io.harness.filesystem.FileIo;
+import io.harness.terraform.beans.TerraformVersion;
 
 import com.google.common.base.Throwables;
 import java.io.File;
@@ -88,5 +89,9 @@ public class TerraformHelperUtils {
     Path filePath = Files.createFile(Paths.get(scriptDirectory + "/" + format(fileName, uuid)));
     Files.write(filePath, fileContent.getBytes());
     return filePath.toString();
+  }
+
+  public String getAutoApproveArgument(TerraformVersion version) {
+    return version.minVersion(0, 15) ? "-auto-approve" : "-force";
   }
 }

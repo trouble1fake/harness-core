@@ -606,6 +606,12 @@ public class NodeExecutionServiceImpl implements NodeExecutionService {
   }
 
   @Override
+  public boolean ifExists(String nodeExecutionId) {
+    Query query = query(where(NodeExecutionKeys.uuid).is(nodeExecutionId));
+    return mongoTemplate.exists(query, NodeExecution.class);
+  }
+
+  @Override
   public Map<String, String> fetchNodeExecutionFromNodeUuidsAndPlanExecutionId(
       List<String> identifierOfSkipStages, String planExecutionId) {
     Query query = query(where(NodeExecutionKeys.planExecutionId).is(planExecutionId))

@@ -74,8 +74,9 @@ public class GitSyncConnectorHelper {
     final String connectorRef = gitSyncConfigDTO.getGitConnectorRef();
     IdentifierRef identifierRef = IdentifierRefHelper.getIdentifierRef(
         connectorRef, accountId, gitSyncConfigDTO.getOrganizationIdentifier(), gitSyncConfigDTO.getProjectIdentifier());
-    Optional<ConnectorResponseDTO> connectorDTO = connectorService.get(accountId, identifierRef.getOrgIdentifier(),
-        identifierRef.getProjectIdentifier(), identifierRef.getIdentifier());
+    Optional<ConnectorResponseDTO> connectorDTO = getConnectorFromDefaultBranchElseFromGitBranch(accountId,
+        identifierRef.getOrgIdentifier(), identifierRef.getProjectIdentifier(), identifierRef.getIdentifier(),
+        gitSyncConfigDTO.getGitConnectorsRepo(), gitSyncConfigDTO.getGitConnectorsBranch());
     if (connectorDTO.isPresent()) {
       ConnectorInfoDTO connector = connectorDTO.get().getConnector();
       ConnectorConfigDTO connectorConfig = connector.getConnectorConfig();

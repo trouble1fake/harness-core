@@ -146,8 +146,11 @@ public class ExecutionHelper {
     RetryExecutionInfo retryExecutionInfo = buildRetryInfo(isRetry, originalExecutionId);
 
     String pipelineYaml = getPipelineYamlAndValidate(mergedRuntimeInputYaml, pipelineEntity);
-    StagesExecutionInfo stagesExecutionInfo =
-        StagesExecutionInfo.builder().isStagesExecution(false).pipelineYamlToRun(pipelineYaml).build();
+    StagesExecutionInfo stagesExecutionInfo = StagesExecutionInfo.builder()
+                                                  .isStagesExecution(false)
+                                                  .pipelineYamlToRun(pipelineYaml)
+                                                  .allowStagesExecution(pipelineEntity.shouldAllowStageExecutions())
+                                                  .build();
     if (EmptyPredicate.isNotEmpty(stagesToRun)) {
       StagesExecutionHelper.throwErrorIfAllStagesAreDeleted(pipelineYaml, stagesToRun);
       pipelineYaml = StagesExpressionExtractor.replaceExpressions(pipelineYaml, expressionValues);
@@ -234,7 +237,8 @@ public class ExecutionHelper {
             .inputSetYaml(mergedRuntimeInputYaml)
             .yaml(pipelineYaml)
             .expandedPipelineJson(expandedPipelineJson)
-            .stagesExecutionMetadata(stagesExecutionInfo.toStagesExecutionMetadata());
+            .stagesExecutionMetadata(stagesExecutionInfo.toStagesExecutionMetadata())
+            .allowStagesExecution(stagesExecutionInfo.isAllowStagesExecution());
     String currentProcessedYaml;
     try {
       currentProcessedYaml = YamlUtils.injectUuid(pipelineYaml);

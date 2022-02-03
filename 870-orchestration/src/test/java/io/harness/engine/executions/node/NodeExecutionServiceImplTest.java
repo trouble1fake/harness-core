@@ -833,4 +833,30 @@ public class NodeExecutionServiceImplTest extends OrchestrationTestBase {
     assertThat(uuidNodeMap.containsKey(nodeExecutionUuid3)).isEqualTo(true);
     assertThat(uuidNodeMap.get(nodeExecutionUuid3).getIdentifier()).isEqualTo("stage3");
   }
+
+  @Test
+  @Owner(developers = PRASHANTSHARMA)
+  @Category(UnitTests.class)
+  public void shouldTestifExists() {
+    String nodeExecutionId = generateUuid();
+    NodeExecution nodeExecution =
+        NodeExecution.builder()
+            .uuid(nodeExecutionId)
+            .ambiance(AmbianceTestUtils.buildAmbiance())
+            .planNode(PlanNode.builder()
+                          .uuid(generateUuid())
+                          .name("name")
+                          .identifier("dummy")
+                          .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+                          .serviceName("CD")
+                          .build())
+            .startTs(System.currentTimeMillis())
+            .status(Status.QUEUED)
+            .build();
+    assertThat(nodeExecutionService.ifExists(nodeExecutionId)).isEqualTo(false);
+    NodeExecution savedExecution = nodeExecutionService.save(nodeExecution);
+    assertThat(savedExecution.getUuid()).isEqualTo(nodeExecutionId);
+
+    assertThat(nodeExecutionService.ifExists(nodeExecutionId)).isEqualTo(true);
+  }
 }

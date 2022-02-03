@@ -22,14 +22,12 @@ import io.harness.metrics.service.impl.MetricServiceImpl;
 import io.harness.service.impl.DelegateCacheImpl;
 import io.harness.service.impl.DelegateCallbackRegistryImpl;
 import io.harness.service.impl.DelegateInsightsServiceImpl;
-import io.harness.service.impl.DelegateNgTokenServiceImpl;
 import io.harness.service.impl.DelegateSetupServiceImpl;
 import io.harness.service.impl.DelegateTaskSelectorMapServiceImpl;
 import io.harness.service.impl.DelegateTaskServiceImpl;
 import io.harness.service.intfc.DelegateCache;
 import io.harness.service.intfc.DelegateCallbackRegistry;
 import io.harness.service.intfc.DelegateInsightsService;
-import io.harness.service.intfc.DelegateNgTokenService;
 import io.harness.service.intfc.DelegateSetupService;
 import io.harness.service.intfc.DelegateTaskSelectorMapService;
 import io.harness.service.intfc.DelegateTaskService;
@@ -57,6 +55,5 @@ public class DelegateServiceModule extends AbstractModule {
     filterPropertiesMapper.addBinding(FilterType.DELEGATE.toString()).to(DelegateFilterPropertiesMapper.class);
     filterPropertiesMapper.addBinding(FilterType.DELEGATEPROFILE.toString())
         .to(DelegateProfileFilterPropertiesMapper.class);
-    bind(DelegateNgTokenService.class).to(DelegateNgTokenServiceImpl.class);
   }
 }

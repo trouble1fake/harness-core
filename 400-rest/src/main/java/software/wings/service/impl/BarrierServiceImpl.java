@@ -239,6 +239,7 @@ public class BarrierServiceImpl implements BarrierService, ForceProctor {
 
     // Update the DB to not need to make the same queries again
     if (updated) {
+      log.info("Updating barrier instance {} with name {}", barrierInstance.getUuid(), barrierInstance.getName());
       barrierInstance.setNextIteration(System.currentTimeMillis() + ofMinutes(1).toMillis());
       wingsPersistence.merge(barrierInstance);
     }
@@ -261,6 +262,8 @@ public class BarrierServiceImpl implements BarrierService, ForceProctor {
         unhandled(state);
     }
 
+    log.info("Barrier instance {} with name {} reached final state {}", barrierInstance.getUuid(),
+        barrierInstance.getName(), state);
     UpdateOperations<BarrierInstance> updateOperations =
         wingsPersistence.createUpdateOperations(BarrierInstance.class).set(BarrierInstanceKeys.state, state.name());
     wingsPersistence.update(barrierInstance, updateOperations);

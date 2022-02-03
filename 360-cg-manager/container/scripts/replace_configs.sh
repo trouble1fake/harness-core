@@ -281,10 +281,6 @@ if [[ "" != "$DEPLOY_MODE" ]]; then
   yq write -i $CONFIG_FILE deployMode "$DEPLOY_MODE"
 fi
 
-if [[ "" != "$KUBECTL_VERSION" ]]; then
-  yq write -i $CONFIG_FILE kubectlVersion "$KUBECTL_VERSION"
-fi
-
 yq write -i $NEWRELIC_FILE common.license_key "$NEWRELIC_LICENSE_KEY"
 
 if [[ "$DISABLE_NEW_RELIC" == "true" ]]; then
@@ -932,9 +928,12 @@ replace_key_value eventsFramework.redis.sslConfig.enabled $EVENTS_FRAMEWORK_REDI
 replace_key_value eventsFramework.redis.sslConfig.CATrustStorePath $EVENTS_FRAMEWORK_REDIS_SSL_CA_TRUST_STORE_PATH
 replace_key_value eventsFramework.redis.sslConfig.CATrustStorePassword $EVENTS_FRAMEWORK_REDIS_SSL_CA_TRUST_STORE_PASSWORD
 replace_key_value ngAuthUIEnabled "$HARNESS_ENABLE_NG_AUTH_UI_PLACEHOLDER"
-replace_key_value portal.gatewayPathPrefix "$GATEWAY_PATH_PREFIX"
 replace_key_value portal.zendeskBaseUrl "$ZENDESK_BASE_URL"
 replace_key_value deployVariant "$DEPLOY_VERSION"
+
+if [[ "" != ${GATEWAY_PATH_PREFIX+x} ]]; then
+  yq write -i $CONFIG_FILE portal.gatewayPathPrefix "$GATEWAY_PATH_PREFIX"
+fi
 
 if [[ "" != "$NG_MANAGER_BASE_URL" ]]; then
   yq write -i $CONFIG_FILE ngManagerServiceHttpClientConfig.baseUrl "$NG_MANAGER_BASE_URL"

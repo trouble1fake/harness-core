@@ -126,6 +126,7 @@ import io.harness.delegate.beans.executioncapability.ExecutionCapability;
 import io.harness.delegate.beans.executioncapability.SelectorCapability;
 import io.harness.delegate.events.DelegateGroupDeleteEvent;
 import io.harness.delegate.events.DelegateGroupUpsertEvent;
+import io.harness.delegate.service.intfc.DelegateNgTokenService;
 import io.harness.delegate.service.intfc.DelegateRingService;
 import io.harness.delegate.task.DelegateLogContext;
 import io.harness.delegate.utils.DelegateEntityOwnerHelper;
@@ -166,7 +167,6 @@ import io.harness.serializer.KryoSerializer;
 import io.harness.service.intfc.DelegateCache;
 import io.harness.service.intfc.DelegateCallbackRegistry;
 import io.harness.service.intfc.DelegateInsightsService;
-import io.harness.service.intfc.DelegateNgTokenService;
 import io.harness.service.intfc.DelegateProfileObserver;
 import io.harness.service.intfc.DelegateSetupService;
 import io.harness.service.intfc.DelegateSyncService;
@@ -613,10 +613,8 @@ public class DelegateServiceImpl implements DelegateService {
     if (isBlank(delegateSetupDetails.getTokenName())) {
       throw new InvalidRequestException("Token name must be specified.", USER);
     }
-    DelegateTokenDetails delegateTokenDetails = delegateNgTokenService.getDelegateToken(accountId,
-        DelegateEntityOwnerHelper.buildOwner(
-            delegateSetupDetails.getOrgIdentifier(), delegateSetupDetails.getProjectIdentifier()),
-        delegateSetupDetails.getTokenName());
+    DelegateTokenDetails delegateTokenDetails =
+        delegateNgTokenService.getDelegateToken(accountId, delegateSetupDetails.getTokenName());
     if (delegateTokenDetails == null) {
       throw new InvalidRequestException("Provided token does not exist.", USER);
     }
@@ -1235,7 +1233,6 @@ public class DelegateServiceImpl implements DelegateService {
               .put("delegateCheckLocation", delegateCheckLocation)
               .put("deployMode", mainConfiguration.getDeployMode().name())
               .put("ciEnabled", String.valueOf(isCiEnabled))
-              .put("kubectlVersion", mainConfiguration.getKubectlVersion())
               .put("scmVersion", mainConfiguration.getScmVersion())
               .put("delegateGrpcServicePort", String.valueOf(delegateGrpcConfig.getPort()))
               .put("kubernetesAccountLabel", getAccountIdentifier(templateParameters.getAccountId()));
@@ -1435,10 +1432,7 @@ public class DelegateServiceImpl implements DelegateService {
     final Account account = accountService.get(inquiry.getAccountId());
     if (isNotBlank(inquiry.getDelegateTokenName())) {
       if (isNg) {
-        return delegateNgTokenService.getDelegateTokenValue(inquiry.getAccountId(),
-            DelegateEntityOwnerHelper.buildOwner(
-                inquiry.getDelegateOrgIdentifier(), inquiry.getDelegateProjectIdentifier()),
-            inquiry.getDelegateTokenName());
+        return delegateNgTokenService.getDelegateTokenValue(inquiry.getAccountId(), inquiry.getDelegateTokenName());
       } else {
         return delegateTokenService.getTokenValue(inquiry.getAccountId(), inquiry.getDelegateTokenName());
       }

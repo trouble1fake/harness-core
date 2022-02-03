@@ -50,6 +50,7 @@ import io.harness.delegate.task.k8s.K8sInfraDelegateConfig;
 import io.harness.delegate.task.k8s.K8sManifestDelegateConfig;
 import io.harness.delegate.task.k8s.K8sRollingDeployRequest;
 import io.harness.delegate.task.k8s.K8sTaskHelperBase;
+import io.harness.delegate.task.k8s.KustomizeManifestDelegateConfig;
 import io.harness.delegate.task.k8s.ManifestDelegateConfig;
 import io.harness.delegate.task.k8s.exception.KubernetesExceptionExplanation;
 import io.harness.delegate.task.k8s.exception.KubernetesExceptionHints;
@@ -145,7 +146,11 @@ public class K8sBGRequestHandlerTest extends CategoryTest {
   public void testExecuteTaskInternal() throws Exception {
     final List<K8sPod> deployedPods = Collections.singletonList(K8sPod.builder().build());
     final K8sBGDeployRequest k8sBGDeployRequest =
-        K8sBGDeployRequest.builder().skipResourceVersioning(true).releaseName("releaseName").build();
+        K8sBGDeployRequest.builder()
+            .skipResourceVersioning(true)
+            .manifestDelegateConfig(KustomizeManifestDelegateConfig.builder().build())
+            .releaseName("releaseName")
+            .build();
     doReturn(HarnessLabelValues.colorBlue)
         .when(k8sBGBaseHandler)
         .getPrimaryColor(any(KubernetesResource.class), eq(kubernetesConfig), eq(logCallback));
@@ -252,7 +257,11 @@ public class K8sBGRequestHandlerTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testExecuteTaskInternalApplyManifestFailed() throws Exception {
     final K8sBGDeployRequest k8sBGDeployRequest =
-        K8sBGDeployRequest.builder().skipResourceVersioning(true).releaseName("releaseName").build();
+        K8sBGDeployRequest.builder()
+            .skipResourceVersioning(true)
+            .manifestDelegateConfig(KustomizeManifestDelegateConfig.builder().build())
+            .releaseName("releaseName")
+            .build();
     final RuntimeException exception = new RuntimeException("failed");
 
     doReturn(HarnessLabelValues.colorBlue)
@@ -287,7 +296,11 @@ public class K8sBGRequestHandlerTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testExecuteTaskInternalStatusCheckFailed() throws Exception {
     final K8sBGDeployRequest k8sBGDeployRequest =
-        K8sBGDeployRequest.builder().skipResourceVersioning(true).releaseName("releaseName").build();
+        K8sBGDeployRequest.builder()
+            .skipResourceVersioning(true)
+            .manifestDelegateConfig(KustomizeManifestDelegateConfig.builder().build())
+            .releaseName("releaseName")
+            .build();
     final RuntimeException thrownException = new RuntimeException();
 
     doReturn(HarnessLabelValues.colorBlue)

@@ -33,7 +33,7 @@ public interface GitFullSyncEntityService {
   long count(String accountIdentifier, String orgIdentifier, String projectIdentifier,
       GitFullSyncEntityInfoFilterDTO gitFullSyncEntityInfoFilterDTO);
 
-  List<GitFullSyncEntityInfo> list(String accountIdentifier, String fullSyncJobId);
+  List<GitFullSyncEntityInfo> listEntitiesToBeSynced(String accountIdentifier, String fullSyncJobId);
 
   Optional<GitFullSyncEntityInfo> get(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, String filePath);
@@ -41,5 +41,5 @@ public interface GitFullSyncEntityService {
   void updateStatus(String accountIdentifier, String orgIdentifier, String projectIdentifier, String filePath,
       List<GitFullSyncEntityInfo.SyncStatus> oldStatus, GitFullSyncEntityInfo.SyncStatus newStatus);
 
-  void updateStatus(String accountId, String uuid, GitFullSyncEntityInfo.SyncStatus status);
+  void updateStatus(String accountIdentifier, String uuid, GitFullSyncEntityInfo.SyncStatus status);
 }

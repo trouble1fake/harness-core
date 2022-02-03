@@ -152,6 +152,13 @@ public class DeletedCVConfigServiceImplTest extends CvNextGenTestBase {
         hPersistence.createQuery(MonitoringSourcePerpetualTask.class)
             .filter(MonitoringSourcePerpetualTaskKeys.monitoringSourceIdentifier, cvConfig.getIdentifier())
             .asList();
+    assertThat(monitoringSourcePerpetualTasks).hasSize(2);
+    cvConfigService.delete(cvConfig.getUuid());
+    deletedCVConfigServiceWithMocks.triggerCleanup(saved);
+    monitoringSourcePerpetualTasks =
+        hPersistence.createQuery(MonitoringSourcePerpetualTask.class)
+            .filter(MonitoringSourcePerpetualTaskKeys.monitoringSourceIdentifier, cvConfig.getIdentifier())
+            .asList();
     assertThat(monitoringSourcePerpetualTasks).hasSize(0);
   }
 

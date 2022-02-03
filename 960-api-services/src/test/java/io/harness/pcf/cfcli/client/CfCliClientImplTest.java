@@ -16,6 +16,7 @@ import static io.harness.pcf.model.PcfConstants.HARNESS__STATUS__IDENTIFIER;
 import static io.harness.pcf.model.PcfRouteType.PCF_ROUTE_TYPE_HTTP;
 import static io.harness.pcf.model.PcfRouteType.PCF_ROUTE_TYPE_TCP;
 import static io.harness.rule.OwnerRule.ADWAIT;
+import static io.harness.rule.OwnerRule.IVAN;
 import static io.harness.rule.OwnerRule.ROHIT_KUMAR;
 import static io.harness.rule.OwnerRule.SATYAM;
 import static io.harness.rule.OwnerRule.TATHAGAT;
@@ -698,6 +699,31 @@ public class CfCliClientImplTest extends CategoryTest {
     Map<String, String> environmentProperties = cfCliClient.getEnvironmentMapForCfExecutor("app.host.io", "test");
     assertThat(environmentProperties.size()).isEqualTo(1);
     assertThat(environmentProperties.get("https_proxy")).isNull();
+  }
+
+  @Test
+  @Owner(developers = IVAN)
+  @Category(UnitTests.class)
+  public void testAddCfCliToPATHSystemVariable() {
+    String cfCliPath = "/Users/user.name/cf_cli/v7/cf";
+    String pathSystemVariable = cfCliClient.getFullDirectoryPathNoEndSeparator(cfCliPath);
+    assertThat(pathSystemVariable).isNotBlank();
+    assertThat(pathSystemVariable).isEqualTo("/Users/user.name/cf_cli/v7");
+
+    cfCliPath = "/usr/local/bin/v7/cf";
+    pathSystemVariable = cfCliClient.getFullDirectoryPathNoEndSeparator(cfCliPath);
+    assertThat(pathSystemVariable).isNotBlank();
+    assertThat(pathSystemVariable).isEqualTo("/usr/local/bin/v7");
+
+    cfCliPath = "/usr/bin/v6/cf";
+    pathSystemVariable = cfCliClient.getFullDirectoryPathNoEndSeparator(cfCliPath);
+    assertThat(pathSystemVariable).isNotBlank();
+    assertThat(pathSystemVariable).isEqualTo("/usr/bin/v6");
+
+    cfCliPath = "/custom/path/to/v6/cf";
+    pathSystemVariable = cfCliClient.getFullDirectoryPathNoEndSeparator(cfCliPath);
+    assertThat(pathSystemVariable).isNotBlank();
+    assertThat(pathSystemVariable).isEqualTo("/custom/path/to/v6");
   }
 
   private CfRequestConfig getCfRequestConfigWithCfCliPath() {

@@ -47,7 +47,7 @@ import org.mongodb.morphia.annotations.Entity;
 @EqualsAndHashCode(callSuper = true)
 @FieldNameConstants(innerTypeName = "InstanceKeys")
 @Entity(value = "instance", noClassnameStored = true)
-@HarnessEntity(exportable = false)
+@HarnessEntity(exportable = true)
 @TargetModule(HarnessModule._957_CG_BEANS)
 public class Instance extends Base implements AccountAccess, ApplicationAccess {
   public static List<MongoIndex> mongoIndexes() {

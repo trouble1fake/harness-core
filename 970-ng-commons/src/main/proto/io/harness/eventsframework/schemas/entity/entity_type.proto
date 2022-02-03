@@ -44,4 +44,5 @@ enum EntityTypeProtoEnum {
   HARNESS_APPROVAL_STEP = 31;
   BARRIER_STEP = 32;
   VERIFY_STEP = 33;
+  OPAPOLICIES = 34;
 }

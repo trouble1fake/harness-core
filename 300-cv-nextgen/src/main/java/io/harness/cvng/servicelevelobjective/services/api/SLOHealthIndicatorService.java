@@ -22,4 +22,5 @@ public interface SLOHealthIndicatorService {
       ProjectParams projectParams, List<String> serviceLevelObjectiveIdentifiers);
   void upsert(ServiceLevelIndicator serviceLevelIndicator);
   void upsert(ServiceLevelObjective serviceLevelObjective);
+  void delete(ProjectParams projectParams, String serviceLevelObjectiveIdentifier);
 }

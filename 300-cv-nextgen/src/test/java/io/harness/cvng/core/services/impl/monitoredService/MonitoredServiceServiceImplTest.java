@@ -468,6 +468,60 @@ public class MonitoredServiceServiceImplTest extends CvNextGenTestBase {
   }
 
   @Test
+  @Owner(developers = ABHIJITH)
+  @Category(UnitTests.class)
+  public void testDelete_beforeUpdatehandlerInvoked() {
+    MonitoredServiceDTO existingMonitoredService =
+        builderFactory.monitoredServiceDTOBuilder()
+            .sources(
+                Sources.builder()
+                    .healthSources(new HashSet<>(Arrays.asList(
+                        HealthSource.builder()
+                            .identifier("healthSourceIdentifier")
+                            .name("health source name")
+                            .type(MonitoredServiceDataSourceType.APP_DYNAMICS)
+                            .spec(AppDynamicsHealthSourceSpec.builder()
+                                      .applicationName("appApplicationName")
+                                      .tierName("tier")
+                                      .connectorRef("CONNECTOR_IDENTIFIER")
+                                      .feature("Application Monitoring")
+                                      .metricDefinitions(Arrays.asList(
+                                          AppDMetricDefinitions.builder()
+                                              .identifier("metric1")
+                                              .metricName("metric2")
+                                              .groupName("group1")
+                                              .metricPath("path2")
+                                              .baseFolder("baseFolder2")
+                                              .sli(SLIDTO.builder().enabled(true).build())
+                                              .analysis(
+                                                  AnalysisDTO.builder()
+                                                      .riskProfile(RiskProfile.builder()
+                                                                       .category(CVMonitoringCategory.ERRORS)
+                                                                       .metricType(TimeSeriesMetricType.INFRA)
+                                                                       .build())
+                                                      .deploymentVerification(DeploymentVerificationDTO.builder()
+                                                                                  .enabled(true)
+                                                                                  .serviceInstanceMetricPath("path")
+                                                                                  .build())
+                                                      .liveMonitoring(LiveMonitoringDTO.builder().enabled(true).build())
+                                                      .build())
+                                              .build()))
+                                      .build())
+                            .build())))
+                    .build())
+            .build();
+    monitoredServiceService.create(builderFactory.getContext().getAccountId(), existingMonitoredService);
+    serviceLevelIndicatorService.create(builderFactory.getProjectParams(),
+        Arrays.asList(builderFactory.getServiceLevelIndicatorDTOBuilder()), "sloIdentifier",
+        existingMonitoredService.getIdentifier(), "healthSourceIdentifier");
+    assertThatThrownBy(()
+                           -> monitoredServiceService.delete(
+                               builderFactory.getProjectParams(), existingMonitoredService.getIdentifier()))
+        .hasMessage(
+            "Deleting metrics are used in SLIs, Please delete the SLIs before deleting metrics. SLIs : sloIdentifier_metric1");
+  }
+
+  @Test
   @Owner(developers = KANHAIYA)
   @Category(UnitTests.class)
   public void testCreate_monitoredServiceNonEmptyDependencies() {

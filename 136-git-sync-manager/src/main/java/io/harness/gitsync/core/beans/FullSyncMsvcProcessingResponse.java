@@ -16,6 +16,6 @@ import lombok.Value;
 @Value
 @Builder
 public class FullSyncMsvcProcessingResponse {
-  boolean isStatusSuccess;
+  boolean isSyncFailed;
   List<FullSyncFileResponse> fullSyncFileResponses;
 }

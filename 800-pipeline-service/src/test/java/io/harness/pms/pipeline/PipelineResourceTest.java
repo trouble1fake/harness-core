@@ -19,6 +19,8 @@ import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import io.harness.CategoryTest;
 import io.harness.annotations.dev.OwnedBy;
@@ -164,6 +166,9 @@ public class PipelineResourceTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testCreatePipelineV2() throws IOException {
     doReturn(entityWithVersion).when(pmsPipelineService).create(entity);
+    TemplateMergeResponseDTO templateMergeResponseDTO =
+        TemplateMergeResponseDTO.builder().mergedPipelineYaml(yaml).build();
+    doReturn(templateMergeResponseDTO).when(pipelineTemplateHelper).resolveTemplateRefsInPipeline(entity);
     doReturn(GovernanceMetadata.newBuilder().setDeny(true).build())
         .when(mockGovernanceService)
         .evaluateGovernancePolicies(anyString(), anyString(), anyString(), anyString(), anyString(), anyString());
@@ -171,6 +176,7 @@ public class PipelineResourceTest extends CategoryTest {
         pipelineResource.createPipelineV2(ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER, null, yaml);
     assertThat(responseDTO.getData().getGovernanceMetadata()).isNotNull();
     assertThat(responseDTO.getData().getGovernanceMetadata().getDeny()).isTrue();
+    verify(pipelineTemplateHelper, times(1)).resolveTemplateRefsInPipeline(entity);
   }
 
   @Test
@@ -255,12 +261,19 @@ public class PipelineResourceTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testUpdatePipelineV2() throws IOException {
     doReturn(entityWithVersion).when(pmsPipelineService).updatePipelineYaml(entity, ChangeType.MODIFY);
+    TemplateMergeResponseDTO templateMergeResponseDTO =
+        TemplateMergeResponseDTO.builder().mergedPipelineYaml(yaml).build();
+    doReturn(templateMergeResponseDTO)
+        .when(pipelineTemplateHelper)
+        .resolveTemplateRefsInPipeline(ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER, yaml);
     doReturn(GovernanceMetadata.newBuilder().setDeny(true).build())
         .when(mockGovernanceService)
         .evaluateGovernancePolicies(anyString(), anyString(), anyString(), anyString(), anyString(), anyString());
     ResponseDTO<PipelineSaveResponse> responseDTO = pipelineResource.updatePipelineV2(
         null, ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER, PIPELINE_IDENTIFIER, null, yaml);
     assertThat(responseDTO.getData().getGovernanceMetadata().getDeny()).isTrue();
+    verify(pipelineTemplateHelper, times(1))
+        .resolveTemplateRefsInPipeline(ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER, yaml);
   }
 
   @Test
