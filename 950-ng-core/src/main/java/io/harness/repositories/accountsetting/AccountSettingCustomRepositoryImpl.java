@@ -41,7 +41,7 @@ public class AccountSettingCustomRepositoryImpl implements AccountSettingCustomR
                             .is(orgIdentifier)
                             .and(AccountSettings.AccountSettingsKeys.projectIdentifier)
                             .is(projectIdentifier);
-    if (isNotEmpty(String.valueOf(type))) {
+    if (type != null) {
       criteria = criteria.and(AccountSettings.AccountSettingsKeys.type).is(type);
     }
     Query query = new Query(criteria);

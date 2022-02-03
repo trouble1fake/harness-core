@@ -23,6 +23,9 @@ public class AccountSettingMapper {
   }
 
   public AccountSettingResponseDTO toDTO(AccountSettings accountSettings) {
+    if (accountSettings == null) {
+      return AccountSettingResponseDTO.builder().accountSettings(AccountSettingsDTO.builder().build()).build();
+    }
     return AccountSettingResponseDTO.builder()
         .accountSettings(AccountSettingsDTO.builder()
                              .accountIdentifier(accountSettings.getAccountIdentifier())

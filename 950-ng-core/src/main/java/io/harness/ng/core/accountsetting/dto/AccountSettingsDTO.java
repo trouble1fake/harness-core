@@ -39,8 +39,10 @@ public class AccountSettingsDTO {
 
   @Schema(description = NGCommonEntityConstants.ORG_PARAM_MESSAGE) String orgIdentifier;
   @Schema(description = NGCommonEntityConstants.PROJECT_PARAM_MESSAGE) String projectIdentifier;
-
-  @NotNull @JsonProperty(CONNECTOR_TYPES) AccountSettingType type;
+  @Schema(description = "This is the type of resource for which Account Setting is created.")
+  @NotNull
+  @JsonProperty("type")
+  AccountSettingType type;
 
   @JsonTypeInfo(
       use = JsonTypeInfo.Id.NAME, property = "type", include = JsonTypeInfo.As.EXTERNAL_PROPERTY, visible = true)

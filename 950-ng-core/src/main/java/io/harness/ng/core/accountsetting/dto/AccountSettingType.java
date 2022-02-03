@@ -20,9 +20,9 @@ public enum AccountSettingType implements EntitySubtype {
 
   @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
   public static AccountSettingType getAccountSettingType(@JsonProperty("type") String displayName) {
-    for (AccountSettingType connectorType : AccountSettingType.values()) {
-      if (connectorType.displayName.equalsIgnoreCase(displayName)) {
-        return connectorType;
+    for (AccountSettingType accountSettingType : AccountSettingType.values()) {
+      if (accountSettingType.displayName.equalsIgnoreCase(displayName)) {
+        return accountSettingType;
       }
     }
     throw new IllegalArgumentException("Invalid value: " + displayName);
