@@ -108,7 +108,8 @@ public class PrometheusState extends AbstractMetricAnalysisState {
             .encryptedDataDetails(secretManager.getEncryptionDetails(
                 prometheusConfig, context.getAppId(), context.getWorkflowExecutionId()))
             .hosts(hosts)
-            .usesBasicAuth(isNotEmpty(prometheusConfig.getUsername()) && isNotEmpty(prometheusConfig.getPassword()))
+            .usesBasicAuth(prometheusConfig.usesBasicAuth())
+            .headers(prometheusConfig.getHeaders())
             .stateType(StateType.PROMETHEUS)
             .applicationId(context.getAppId())
             .stateExecutionId(context.getStateExecutionInstanceId())

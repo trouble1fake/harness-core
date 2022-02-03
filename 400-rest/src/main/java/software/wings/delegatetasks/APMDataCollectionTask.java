@@ -293,15 +293,18 @@ public class APMDataCollectionTask extends AbstractDelegateDataCollectionTask {
         return output;
       }
       for (Map.Entry<String, String> entry : input.entrySet()) {
-        if (entry.getValue().startsWith("${")) {
+        String entryVal = entry.getValue();
+        int placeHolderIndex = entryVal.indexOf("${");
+        if (placeHolderIndex != -1) {
+          String stringToReplace = entryVal.substring(placeHolderIndex + 2, entryVal.indexOf("}", placeHolderIndex));
+          String updatedValue =
+              entryVal.replace(String.format("${%s}", stringToReplace), decryptedFields.get(stringToReplace));
+          output.put(entry.getKey(), updatedValue);
           if (dataCollectionInfo.isUsesBasicAuth()) {
-            output.put(entry.getKey(), encodeBasicAuthHeader(entry.getValue()));
-          } else {
-            output.put(
-                entry.getKey(), decryptedFields.get(entry.getValue().substring(2, entry.getValue().length() - 1)));
+            output.put(entry.getKey(), encodeBasicAuthHeader(updatedValue));
           }
         } else {
-          output.put(entry.getKey(), entry.getValue());
+          output.put(entry.getKey(), entryVal);
         }
       }
 

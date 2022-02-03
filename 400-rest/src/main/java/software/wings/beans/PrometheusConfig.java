@@ -7,6 +7,7 @@
 
 package software.wings.beans;
 
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import io.harness.delegate.beans.executioncapability.ExecutionCapability;
@@ -31,6 +32,7 @@ import com.github.reinert.jjschema.SchemaIgnore;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -84,24 +86,31 @@ public class PrometheusConfig extends SettingValue implements EncryptableSetting
   }
 
   public APMValidateCollectorConfig createAPMValidateCollectorConfig(String urlToFetch) {
-    HashMap<String, String> headersMap = new HashMap();
-    if (isNotEmpty(username)) {
-      if (isNotEmpty(password)) {
-        headersMap.put("Authorization",
-            String.format("Basic %s",
-                Base64.encodeBase64String(String.format("%s:%s", username, new String(password)).getBytes())));
-      } else if (isNotEmpty(encryptedPassword)) {
-        headersMap.put("Authorization", String.format("Basic %s:${password}", username));
-      }
-    }
-
     return APMValidateCollectorConfig.builder()
         .baseUrl(url)
         .url(urlToFetch)
         .collectionMethod(APMVerificationState.Method.GET)
-        .headers(headersMap)
+        .headers(getHeaders())
         .options(new HashMap<>())
         .build();
+  }
+
+  public Map<String, String> getHeaders() {
+    HashMap<String, String> headersMap = new HashMap();
+
+    if (isEmpty(username)) {
+      return headersMap;
+    }
+
+    if (isNotEmpty(password)) {
+      headersMap.put("Authorization",
+          String.format("Basic %s",
+              Base64.encodeBase64String(String.format("%s:%s", username, new String(password)).getBytes())));
+    } else if (isNotEmpty(encryptedPassword)) {
+      headersMap.put("Authorization", String.format("Basic %s:${password}", username));
+    }
+
+    return headersMap;
   }
 
   public boolean usesBasicAuth() {
