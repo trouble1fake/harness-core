@@ -319,7 +319,7 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
                                              .filter(null)
                                              .anomalousMetricsOnly(false)
                                              .anomalousNodesOnly(false)
-                                             .hostName(null)
+                                             .hostNames(null)
                                              .build();
 
     transactionMetricInfoSummaryPageDTO = deploymentTimeSeriesAnalysisService.getMetrics(
@@ -632,7 +632,7 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
                                                                                 .filter(null)
                                                                                 .anomalousMetricsOnly(false)
                                                                                 .anomalousNodesOnly(false)
-                                                                                .hostName(null)
+                                                                                .hostNames(null)
                                                                                 .build();
     PageParams pageParams = PageParams.builder().page(0).size(10).build();
 
@@ -924,7 +924,6 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
             .filter(null)
             .anomalousMetricsOnly(false)
             .anomalousNodesOnly(false)
-            .hostName(null)
             .hostNames(Arrays.asList("node1", "node2"))
             .transactionNames(null)
             .build();

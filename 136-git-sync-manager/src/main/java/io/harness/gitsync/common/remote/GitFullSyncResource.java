@@ -25,6 +25,7 @@ import io.harness.NGResourceFilterConstants;
 import io.harness.accesscontrol.NGAccessControlCheck;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.connector.accesscontrol.ResourceTypes;
+import io.harness.eraro.ErrorCode;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
 import io.harness.gitsync.common.dtos.TriggerFullSyncResponseDTO;
@@ -59,7 +60,6 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.BeanParam;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -183,31 +183,10 @@ public class GitFullSyncResource {
       harness.accesscontrol.ProjectIdentifier @ProjectIdentifier String projectIdentifier) {
     GitFullSyncConfigDTO gitFullSyncConfigDTO =
         gitFullSyncConfigService.get(accountIdentifier, orgIdentifier, projectIdentifier)
-            .orElseThrow(
-                () -> new InvalidRequestException("Config not found at the scope provided", WingsException.USER));
+            .orElseThrow(()
+                             -> new InvalidRequestException("No configuration found with given parameters",
+                                 ErrorCode.RESOURCE_NOT_FOUND, WingsException.USER));
     return ResponseDTO.newResponse(gitFullSyncConfigDTO);
-  }
-
-  @DELETE
-  @Path("/config")
-  @ApiOperation(value = "Delete full sync configuration", nickname = "deleteGitFullSyncConfig")
-  @Operation(operationId = "deleteGitFullSyncConfig", summary = "Delete configuration for performing git full sync",
-      responses =
-      {
-        @io.swagger.v3.oas.annotations.responses.
-        ApiResponse(description = "Returns true/false depending upon whether the operation was successful")
-      })
-  @NGAccessControlCheck(resourceType = ResourceTypes.PROJECT, permission = EDIT_PROJECT_PERMISSION)
-  public ResponseDTO<Boolean>
-  deleteFullSyncConfig(
-      @Parameter(description = ACCOUNT_PARAM_MESSAGE) @NotNull @QueryParam(
-          NGCommonEntityConstants.ACCOUNT_KEY) @io.harness.accesscontrol.AccountIdentifier String accountIdentifier,
-      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(
-          NGCommonEntityConstants.ORG_KEY) @io.harness.accesscontrol.OrgIdentifier @OrgIdentifier String orgIdentifier,
-      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(NGCommonEntityConstants.PROJECT_KEY) @io.
-      harness.accesscontrol.ProjectIdentifier @ProjectIdentifier String projectIdentifier) {
-    return ResponseDTO.newResponse(
-        gitFullSyncConfigService.delete(accountIdentifier, orgIdentifier, projectIdentifier));
   }
 
   @POST

@@ -22,16 +22,9 @@ import lombok.experimental.SuperBuilder;
 @Data
 @NoArgsConstructor
 public class DeploymentTimeSeriesAnalysisFilter extends TimeSeriesAnalysisFilter {
-  // currently not removing hostName for backward compatibility
-  // TODO: remove String hostName and only use List<String> hostNameList
-  @QueryParam("hostName") @Deprecated String hostName;
   @QueryParam("hostNames") List<String> hostNames;
   @QueryParam("transactionNames") List<String> transactionNames;
   @DefaultValue("false") @QueryParam("anomalousNodesOnly") boolean anomalousNodesOnly;
-
-  public boolean filterByHostName() {
-    return isNotEmpty(hostName);
-  }
 
   public boolean filterByHostNames() {
     return isNotEmpty(hostNames);

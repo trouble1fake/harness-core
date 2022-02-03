@@ -26,6 +26,7 @@ import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.google.gson.Gson;
 import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.informer.SharedInformerFactory;
+import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.models.V1PersistentVolumeClaim;
 import io.kubernetes.client.openapi.models.V1PersistentVolumeClaimBuilder;
@@ -42,17 +43,18 @@ public class PVCFetcherTest extends CategoryTest {
   private static final String NAMESPACE = "harness";
   private static final String CLAIM_NAME = "mongo-data";
 
-  @Rule public WireMockRule wireMockRule = new WireMockRule(65224);
+  @Rule public WireMockRule wireMockRule = new WireMockRule(0);
   private static final String URL_REGEX_SUFFIX = "(\\?(.*))?";
   private static final String GET_NAMESPACED_PVC_URL =
       "^/api/v1/namespaces/" + NAMESPACE + "/persistentvolumeclaims/" + CLAIM_NAME + URL_REGEX_SUFFIX;
 
   @Before
   public void setUp() throws Exception {
-    sharedInformerFactory = new SharedInformerFactory();
+    ApiClient apiClient =
+        new ClientBuilder().setBasePath("http://localhost:" + wireMockRule.port()).build().setReadTimeout(0);
+    sharedInformerFactory = new SharedInformerFactory(apiClient);
 
-    pvcFetcher = new PVCFetcher(
-        new ClientBuilder().setBasePath("http://localhost:" + wireMockRule.port()).build(), sharedInformerFactory);
+    pvcFetcher = new PVCFetcher(apiClient, sharedInformerFactory);
 
     testPVC = new V1PersistentVolumeClaimBuilder()
                   .withNewMetadata()

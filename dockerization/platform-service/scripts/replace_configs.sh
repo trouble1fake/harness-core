@@ -339,4 +339,11 @@ replace_key_value resourceGroupServiceConfig.resourceClients.template-service.ba
 
 replace_key_value resourceGroupServiceConfig.resourceClients.template-service.secret "$TEMPLATE_SERVICE_SECRET"
 
+replace_key_value resourceGroupServiceConfig.resourceClients.gitops-service.baseUrl "$GITOPS_SERVICE_CLIENT_BASEURL"
+
+replace_key_value resourceGroupServiceConfig.resourceClients.gitops-service.secret "$GITOPS_SERVICE_SECRET"
+
 replace_key_value enforcementClientConfiguration.enforcementCheckEnabled "$ENFORCEMENT_CHECK_ENABLED"
+
+replace_key_value secretsConfiguration.gcpSecretManagerProject "$GCP_SECRET_MANAGER_PROJECT"
+replace_key_value secretsConfiguration.secretResolutionEnabled "$RESOLVE_SECRETS"

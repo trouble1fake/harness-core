@@ -29,6 +29,7 @@ import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.startsWith;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -57,6 +58,8 @@ import io.harness.rule.OwnerRule;
 import io.harness.secretmanagerclient.EncryptDecryptHelper;
 import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.security.encryption.EncryptedRecordData;
+import io.harness.terraform.TerraformClient;
+import io.harness.terraform.beans.TerraformVersion;
 
 import software.wings.WingsBaseTest;
 import software.wings.api.TerraformExecutionData;
@@ -109,6 +112,7 @@ public class TerraformProvisionTaskTest extends WingsBaseTest {
   @Mock private DelegateFileManager delegateFileManager;
   @Mock private EncryptDecryptHelper planEncryptDecryptHelper;
   @Mock private AwsHelperService awsHelperService;
+  @Mock private TerraformClient terraformClient;
   @InjectMocks private TerraformBaseHelperImpl terraformBaseHelper;
 
   private static final String GIT_BRANCH = "test/git_branch";
@@ -147,6 +151,7 @@ public class TerraformProvisionTaskTest extends WingsBaseTest {
     on(terraformProvisionTask).set("planEncryptDecryptHelper", planEncryptDecryptHelper);
     on(terraformProvisionTask).set("awsHelperService", awsHelperService);
     on(terraformProvisionTask).set("terraformBaseHelper", spyTerraformBaseHelperImpl);
+    on(terraformProvisionTask).set("terraformClient", terraformClient);
 
     gitConfig = GitConfig.builder().branch(GIT_BRANCH).build();
     gitConfig.setReference(COMMIT_REFERENCE);
@@ -182,6 +187,7 @@ public class TerraformProvisionTaskTest extends WingsBaseTest {
     doReturn(true).when(planEncryptDecryptHelper).deleteEncryptedRecord(any(), any());
 
     when(delegateFileManager.upload(any(DelegateFile.class), any(InputStream.class))).thenReturn(new DelegateFile());
+    doReturn(TerraformVersion.create(0, 12, 3)).when(terraformClient).version(anyLong(), anyString());
   }
 
   @Test
@@ -517,6 +523,40 @@ public class TerraformProvisionTaskTest extends WingsBaseTest {
     TerraformExecutionData terraformExecutionData = terraformProvisionTaskSpy.run(terraformProvisionParameters);
     verify(terraformExecutionData, TerraformCommand.DESTROY);
     verifyCommandExecuted("terraform init", "terraform workspace", "terraform refresh", "terraform destroy");
+
+    FileIo.deleteDirectoryAndItsContentIfExists(GIT_REPO_DIRECTORY);
+    FileIo.deleteDirectoryAndItsContentIfExists("./terraform-working-dir");
+  }
+
+  @Test
+  @Owner(developers = ABOSII)
+  @Category(UnitTests.class)
+  public void testRunDestroyTf012() throws IOException, TimeoutException, InterruptedException {
+    testRunDestroyAutoApprove(TerraformVersion.create(0, 12, 3), "terraform destroy -force");
+  }
+
+  @Test
+  @Owner(developers = ABOSII)
+  @Category(UnitTests.class)
+  public void testRunDestroyTf015() throws IOException, TimeoutException, InterruptedException {
+    testRunDestroyAutoApprove(TerraformVersion.create(0, 15, 0), "terraform destroy -auto-approve");
+  }
+
+  private void testRunDestroyAutoApprove(TerraformVersion version, String expectedCommand)
+      throws IOException, TimeoutException, InterruptedException {
+    setupForDestroyTests();
+    doReturn(version).when(terraformClient).version(anyLong(), anyString());
+
+    // regular destroy with no plan exported
+    TerraformProvisionParameters terraformProvisionParameters = createTerraformProvisionParameters(
+        false, false, null, TerraformCommandUnit.Destroy, TerraformCommand.DESTROY, false, true);
+    TerraformExecutionData terraformExecutionData = terraformProvisionTaskSpy.run(terraformProvisionParameters);
+    verify(terraformExecutionData, TerraformCommand.DESTROY);
+    verifyCommandExecuted("terraform init", "terraform workspace", "terraform refresh", "terraform destroy");
+
+    Mockito.verify(terraformProvisionTaskSpy, atLeastOnce())
+        .executeShellCommand(startsWith(expectedCommand), anyString(), eq(terraformProvisionParameters), anyMap(),
+            any(LogOutputStream.class));
 
     FileIo.deleteDirectoryAndItsContentIfExists(GIT_REPO_DIRECTORY);
     FileIo.deleteDirectoryAndItsContentIfExists("./terraform-working-dir");

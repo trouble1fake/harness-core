@@ -180,6 +180,8 @@ public class EnvState extends State implements WorkflowState {
     executionArgs.setOrchestrationId(workflowId);
     executionArgs.setArtifacts(artifacts);
     executionArgs.setArtifactVariables(artifactVariables);
+    executionArgs.setContinueRunningPipelinesDuringMigration(
+        featureFlagService.isEnabled(FeatureName.FREEZE_DURING_MIGRATION, accountId));
 
     if (featureFlagService.isEnabled(FeatureName.HELM_CHART_AS_ARTIFACT, context.getAccountId())) {
       List<HelmChart> helmCharts = deploymentExecutionContext.getHelmCharts();

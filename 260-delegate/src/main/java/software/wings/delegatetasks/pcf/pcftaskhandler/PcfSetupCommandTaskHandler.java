@@ -38,6 +38,7 @@ import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.beans.logstreaming.ILogStreamingTaskClient;
 import io.harness.delegate.beans.pcf.CfAppRenameInfo;
 import io.harness.delegate.beans.pcf.CfAppSetupTimeDetails;
+import io.harness.delegate.beans.pcf.CfInBuiltVariablesUpdateValues;
 import io.harness.delegate.beans.pcf.CfInternalConfig;
 import io.harness.delegate.cf.PcfCommandTaskHandler;
 import io.harness.delegate.cf.apprenaming.AppNamingStrategy;
@@ -455,8 +456,8 @@ public class PcfSetupCommandTaskHandler extends PcfCommandTaskHandler {
         pcfDeploymentManager.getPreviousReleases(cfRequestConfig, cfCommandSetupRequest.getReleaseNamePrefix());
 
     pcfCommandTaskBaseHelper.resetState(previousReleases, activeApplication, inactiveApplication,
-        cfCommandSetupRequest.getReleaseNamePrefix(), cfRequestConfig, nonVersioning, renames, -1,
-        executionLogCallback);
+        cfCommandSetupRequest.getReleaseNamePrefix(), cfRequestConfig, nonVersioning, renames, -1, executionLogCallback,
+        CfInBuiltVariablesUpdateValues.builder().build());
     return activeAppRevision;
   }
 

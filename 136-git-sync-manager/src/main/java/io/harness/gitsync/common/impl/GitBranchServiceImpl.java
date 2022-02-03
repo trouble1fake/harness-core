@@ -129,7 +129,7 @@ public class GitBranchServiceImpl implements GitBranchService {
         -> scmClientFacilitatorService.listBranchesForRepoByConnector(accountId, orgIdentifier, projectIdentifier,
             gitConnectorRef, repoUrl,
             io.harness.ng.beans.PageRequest.builder().pageSize(MAX_BRANCH_SIZE).pageIndex(0).build(), null),
-        projectIdentifier, orgIdentifier, accountId, gitConnectorRef);
+        projectIdentifier, orgIdentifier, accountId, gitConnectorRef, null, null);
 
     for (String branchName : branches) {
       GitBranch gitBranch = GitBranch.builder()

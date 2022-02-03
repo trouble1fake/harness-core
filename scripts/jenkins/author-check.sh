@@ -223,7 +223,17 @@ git log -1000 --oneline --format='%aN <%aE>' | sort -u |\
     grep -iv "^Shivam Negi <shivam.negi@harness.io>$" |\
     grep -iv "^sandeepa-kv-jois <sandeepa.kv@harness.io>$" |\
     grep -iv "^Vitalie Safronovici <vitalie.safronovici@harness.io>$" |\
-  grep -iv "^Alexandru Ciofu <alexandru.ciofu@harness.io>$"` || :
+    grep -iv "^Anders Hokinson anders.hokinson@harness.io$" |\
+    grep -iv "^Andrew Mollohan andrew.mollohan@harness.io$" |\
+    grep -iv "^Aubrey Klaft aubrey.klaft@harness.io$" |\
+    grep -iv "^Chris Hamper christopher.hamper@harness.io$" |\
+    grep -iv "^David McNamara david.mcnamara@harness.io$" |\
+    grep -iv "^Gabriel Aboy gabriel.aboy@harness.io$" |\
+    grep -iv "^Joseph Sentongo joseph.sentongo@harness.io$" |\
+    grep -iv "^Sergey Bobrov sergey.bobrov@harness.io$" |\
+    grep -iv "^William Wissemann william.wissemann@harness.io$" |\
+    grep -iv "^Shubham Maheshwari <shubham.maheshwari@harness.io>$" |\
+    grep -iv "^Alexandru Ciofu <alexandru.ciofu@harness.io>$"` || :
 
 if [ ! -z "$UNKNOWN_USERS" ]
 then

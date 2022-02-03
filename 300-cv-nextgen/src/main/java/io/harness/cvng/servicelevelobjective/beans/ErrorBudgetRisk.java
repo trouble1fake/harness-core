@@ -15,11 +15,12 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum ErrorBudgetRisk {
-  HEALTHY("Healthy"),
-  OBSERVE("Observe"),
-  NEED_ATTENTION("Need Attention"),
+  // the order determines the order of summary in SLO dashboard page
+  EXHAUSTED("Exhausted"),
   UNHEALTHY("Unhealthy"),
-  EXHAUSTED("Exhausted");
+  NEED_ATTENTION("Need Attention"),
+  OBSERVE("Observe"),
+  HEALTHY("Healthy");
 
   private String displayName;
 

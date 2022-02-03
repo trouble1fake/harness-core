@@ -146,7 +146,7 @@ public class K8sApplyStep extends TaskChainExecutableWithRollbackAndRbac impleme
             .skipSteadyStateCheck(skipSteadyStateCheck)
             .shouldOpenFetchFilesLogStream(shouldOpenFetchFilesLogStream)
             .commandUnitsProgress(UnitProgressDataMapper.toCommandUnitsProgress(unitProgressData))
-            .useVarSupportForKustomize(k8sStepHelper.isUseVarSupportForKustomize(accountId))
+            .useLatestKustomizeVersion(k8sStepHelper.isUseLatestKustomizeVersion(accountId))
             .useNewKubectlVersion(k8sStepHelper.isUseNewKubectlVersion(accountId))
             .build();
 

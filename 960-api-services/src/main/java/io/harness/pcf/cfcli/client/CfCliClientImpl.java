@@ -16,8 +16,10 @@ import static io.harness.pcf.model.PcfConstants.CF_HOME;
 import static io.harness.pcf.model.PcfConstants.CF_PASSWORD;
 import static io.harness.pcf.model.PcfConstants.CF_PLUGIN_HOME;
 import static io.harness.pcf.model.PcfConstants.CF_USERNAME;
+import static io.harness.pcf.model.PcfConstants.DEFAULT_CF_CLI_INSTALLATION_PATH;
 import static io.harness.pcf.model.PcfConstants.DISABLE_AUTOSCALING;
 import static io.harness.pcf.model.PcfConstants.ENABLE_AUTOSCALING;
+import static io.harness.pcf.model.PcfConstants.PATH_SYSTEM_VARIABLE_STR;
 import static io.harness.pcf.model.PcfConstants.PCF_ROUTE_PATH_SEPARATOR_CHAR;
 import static io.harness.pcf.model.PcfConstants.PCF_ROUTE_PORT_SEPARATOR;
 import static io.harness.pcf.model.PcfConstants.PIVOTAL_CLOUD_FOUNDRY_CLIENT_EXCEPTION;
@@ -539,8 +541,8 @@ public class CfCliClientImpl implements CfCliClient {
         logCallback.saveExecutionLog("# Executing pcf plugin script :");
         ProcessExecutor processExecutor = createProcessExecutorForCfTask(pcfRequestConfig.getTimeOutIntervalInMins(),
             cfRunPluginScriptRequestData.getFinalScriptString(),
-            getEnvironmentMapForCfExecutor(
-                pcfRequestConfig.getEndpointUrl(), cfRunPluginScriptRequestData.getWorkingDirectory(), pcfPluginHome),
+            getEnvironmentMapForPluginScript(pcfRequestConfig.getEndpointUrl(),
+                cfRunPluginScriptRequestData.getWorkingDirectory(), pcfPluginHome, pcfRequestConfig.getCfCliPath()),
             logCallback);
         ProcessResult processResult = runProcessExecutor(processExecutor);
         exitCode = processResult.getExitValue();
@@ -743,18 +745,36 @@ public class CfCliClientImpl implements CfCliClient {
 
   @VisibleForTesting
   Map<String, String> getEnvironmentMapForCfExecutor(String endpointUrl, String configPathVar) {
-    return getEnvironmentMapForCfExecutor(endpointUrl, configPathVar, null);
-  }
-
-  private Map<String, String> getEnvironmentMapForCfExecutor(
-      String endpointUrl, String configPathVar, String pluginHomeAbsPath) {
     final Map<String, String> map = new HashMap<>();
     map.put(CF_HOME, configPathVar);
+    addProxyPropertyIfRequired(endpointUrl, map);
+    return map;
+  }
+
+  private Map<String, String> getEnvironmentMapForPluginScript(
+      String endpointUrl, String configPathVar, String pluginHomeAbsPath, String cfCliPath) {
+    final Map<String, String> map = new HashMap<>();
+    map.put(CF_HOME, configPathVar);
+
     if (isNotEmpty(pluginHomeAbsPath)) {
       map.put(CF_PLUGIN_HOME, pluginHomeAbsPath);
     }
+
+    if (isNotEmpty(cfCliPath) && !cfCliPath.equals(DEFAULT_CF_CLI_INSTALLATION_PATH)) {
+      String path = System.getenv(PATH_SYSTEM_VARIABLE_STR);
+      String fullDirectoryPathNoEndSeparator = getFullDirectoryPathNoEndSeparator(cfCliPath);
+      path = format("%s:%s", fullDirectoryPathNoEndSeparator, path);
+      map.put(PATH_SYSTEM_VARIABLE_STR, path);
+    }
+
     addProxyPropertyIfRequired(endpointUrl, map);
     return map;
+  }
+
+  @VisibleForTesting
+  @NotNull
+  String getFullDirectoryPathNoEndSeparator(String cfCliPath) {
+    return Paths.get(cfCliPath).normalize().getParent().toString();
   }
 
   private void addProxyPropertyIfRequired(String endpointUrl, Map<String, String> map) {
@@ -762,12 +782,12 @@ public class CfCliClientImpl implements CfCliClient {
     if (!Http.shouldUseNonProxy(endpointUrl) && isNotEmpty(proxyHostName)) {
       String authDetails = "";
       if (Http.getProxyPassword() != null && Http.getProxyUserName() != null) {
-        authDetails = String.format("%s:%s@", Http.getProxyUserName(), Http.getProxyPassword());
+        authDetails = format("%s:%s@", Http.getProxyUserName(), Http.getProxyPassword());
       }
       String portProperty = Http.getProxyPort();
       String portDetails = "";
       if (!portProperty.equals("80")) {
-        portDetails = String.format(":%s", Http.getProxyPort());
+        portDetails = format(":%s", Http.getProxyPort());
       }
       map.put(PCF_PROXY_PROPERTY, Http.getProxyScheme() + "://" + authDetails + proxyHostName + portDetails);
     }

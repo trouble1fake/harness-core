@@ -17,6 +17,7 @@ import static java.lang.reflect.Modifier.isAbstract;
 
 import io.harness.annotation.HarnessEntity;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.delegate.service.intfc.DelegateNgTokenService;
 import io.harness.ff.FeatureFlagService;
 import io.harness.limits.checker.rate.UsageBucket;
 import io.harness.limits.checker.rate.UsageBucket.UsageBucketKeys;
@@ -26,7 +27,6 @@ import io.harness.persistence.HIterator;
 import io.harness.persistence.HPersistence;
 import io.harness.persistence.PersistentEntity;
 import io.harness.scheduler.PersistentScheduler;
-import io.harness.service.intfc.DelegateNgTokenService;
 
 import software.wings.beans.Account;
 import software.wings.beans.Application;
@@ -232,7 +232,7 @@ public class DeleteAccountHelper {
     deletePerpetualTasksForAccount(accountId);
     delegateService.deleteByAccountId(accountId);
     List<String> entitiesRemainingForDeletion = deleteAllEntities(accountId);
-    delegateNgTokenService.revokeDelegateToken(accountId, null, DelegateNgTokenService.DEFAULT_TOKEN_NAME);
+    delegateNgTokenService.deleteByAccountId(accountId);
     if (isEmpty(entitiesRemainingForDeletion)) {
       log.info("Deleting account entry {}", accountId);
       hPersistence.delete(Account.class, accountId);

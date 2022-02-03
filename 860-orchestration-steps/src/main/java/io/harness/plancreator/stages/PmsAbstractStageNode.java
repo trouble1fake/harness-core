@@ -11,7 +11,9 @@ import io.harness.plancreator.stages.stage.AbstractStageNode;
 import io.harness.yaml.core.failurestrategy.FailureStrategyConfig;
 
 import java.util.List;
+import lombok.Data;
 
+@Data
 public abstract class PmsAbstractStageNode extends AbstractStageNode {
   List<FailureStrategyConfig> failureStrategies;
 }

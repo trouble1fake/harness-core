@@ -57,6 +57,7 @@ import software.wings.security.EnvFilter.EnvFilterBuilder;
 import software.wings.security.EnvFilter.FilterType;
 import software.wings.security.Filter;
 import software.wings.security.GenericEntityFilter;
+import software.wings.security.PermissionAttribute;
 import software.wings.security.PermissionAttribute.Action;
 import software.wings.security.PermissionAttribute.PermissionType;
 import software.wings.security.UsageRestrictions;
@@ -1146,8 +1147,11 @@ public class UsageRestrictionsServiceImpl implements UsageRestrictionsService {
       if (settingAttribute == null || !accountId.equals(settingAttribute.getAccountId())) {
         return false;
       }
+      PermissionAttribute.PermissionType permissionType = settingServiceHelper.getPermissionType(settingAttribute);
+      boolean isAccountAdmin = userService.hasPermission(accountId, permissionType);
+
       return settingServiceHelper.userHasPermissionsToChangeEntity(
-          settingAttribute, accountId, settingAttribute.getUsageRestrictions());
+          settingAttribute, accountId, settingAttribute.getUsageRestrictions(), isAccountAdmin);
     }
   }
 

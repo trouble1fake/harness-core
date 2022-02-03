@@ -1,3 +1,10 @@
+/*
+ * Copyright 2022 Harness Inc. All rights reserved.
+ * Use of this source code is governed by the PolyForm Free Trial 1.0.0 license
+ * that can be found in the licenses directory at the root of this repository, also available at
+ * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
+ */
+
 package io.harness.batch.processing.metrics;
 
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
@@ -24,6 +31,8 @@ import io.harness.filter.FilterType;
 import io.harness.ng.beans.PageResponse;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -35,13 +44,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Slf4j
+@Singleton
 public class CENGTelemetryServiceImpl implements CENGTelemetryService {
-  @Autowired private ConnectorResourceClient connectorResourceClient;
-  @Autowired private K8sRecommendationDAO k8sRecommendationDAO;
-  @Autowired private CEViewDao ceViewDao;
-  @Autowired private BudgetDao budgetDao;
-  @Autowired private BudgetUtils budgetUtils;
-  @Autowired private CEReportScheduleDao ceReportScheduleDao;
+  @Autowired @Inject private ConnectorResourceClient connectorResourceClient;
+  @Autowired @Inject private K8sRecommendationDAO k8sRecommendationDAO;
+  @Autowired @Inject private CEViewDao ceViewDao;
+  @Autowired @Inject private BudgetDao budgetDao;
+  @Autowired @Inject private BudgetUtils budgetUtils;
+  @Autowired @Inject private CEReportScheduleDao ceReportScheduleDao;
 
   public HashMap<String, Object> getReportMetrics(String accountId) {
     HashMap<String, Object> properties = new HashMap<>();
@@ -82,15 +92,17 @@ public class CENGTelemetryServiceImpl implements CENGTelemetryService {
                    .collect(Collectors.toList());
     int awsPerspectives = 0, gcpPerspectives = 0, azurePerspectives = 0, clusterPerspectives = 0;
     for (CEView view : viewList) {
-      for (ViewFieldIdentifier datasource : view.getDataSources()) {
-        if (datasource == ViewFieldIdentifier.AWS) {
-          awsPerspectives += 1;
-        } else if (datasource == ViewFieldIdentifier.GCP) {
-          gcpPerspectives += 1;
-        } else if (datasource == ViewFieldIdentifier.AZURE) {
-          azurePerspectives += 1;
-        } else if (datasource == ViewFieldIdentifier.CLUSTER) {
-          clusterPerspectives += 1;
+      if (view.getDataSources() != null) {
+        for (ViewFieldIdentifier datasource : view.getDataSources()) {
+          if (datasource == ViewFieldIdentifier.AWS) {
+            awsPerspectives += 1;
+          } else if (datasource == ViewFieldIdentifier.GCP) {
+            gcpPerspectives += 1;
+          } else if (datasource == ViewFieldIdentifier.AZURE) {
+            azurePerspectives += 1;
+          } else if (datasource == ViewFieldIdentifier.CLUSTER) {
+            clusterPerspectives += 1;
+          }
         }
       }
     }

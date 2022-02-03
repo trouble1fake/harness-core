@@ -141,7 +141,7 @@ public class K8sDeleteStep extends TaskChainExecutableWithRollbackAndRbac implem
                     : null)
             .shouldOpenFetchFilesLogStream(shouldOpenFetchFilesLogStream)
             .commandUnitsProgress(UnitProgressDataMapper.toCommandUnitsProgress(unitProgressData))
-            .useVarSupportForKustomize(k8sStepHelper.isUseVarSupportForKustomize(accountId))
+            .useLatestKustomizeVersion(k8sStepHelper.isUseLatestKustomizeVersion(accountId))
             .useNewKubectlVersion(k8sStepHelper.isUseNewKubectlVersion(accountId))
             .build();
 

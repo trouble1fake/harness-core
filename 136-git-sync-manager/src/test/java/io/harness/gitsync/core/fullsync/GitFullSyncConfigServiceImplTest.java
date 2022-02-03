@@ -7,15 +7,14 @@
 
 package io.harness.gitsync.core.fullsync;
 
+import static io.harness.rule.OwnerRule.BHAVYA;
 import static io.harness.rule.OwnerRule.PHOENIKX;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
-import io.harness.exception.InvalidRequestException;
 import io.harness.gitsync.GitSyncTestBase;
 import io.harness.gitsync.fullsync.dtos.GitFullSyncConfigDTO;
 import io.harness.gitsync.fullsync.dtos.GitFullSyncConfigRequestDTO;
@@ -103,20 +102,24 @@ public class GitFullSyncConfigServiceImplTest extends GitSyncTestBase {
   @Test
   @Owner(developers = PHOENIKX)
   @Category(UnitTests.class)
-  public void testCreateConfig_failsIfConfigAlreadyExistsInScope() {
-    create();
-    try {
-      create();
-      fail("Execution should not reach here");
-    } catch (InvalidRequestException invalidRequestException) {
-      // ignore
-    }
+  public void testGet_whenNoConfigExists() {
+    assertThat(gitFullSyncConfigService.get(ACCOUNT, ORG, PROJECT)).isNotPresent();
   }
 
   @Test
-  @Owner(developers = PHOENIKX)
+  @Owner(developers = BHAVYA)
   @Category(UnitTests.class)
-  public void testGet_whenNoConfigExists() {
-    assertThat(gitFullSyncConfigService.get(ACCOUNT, ORG, PROJECT)).isNotPresent();
+  public void testUpdateConfig_whenSameConfigIsUpdated() {
+    create();
+    GitFullSyncConfigRequestDTO gitFullSyncConfigRequestDTO = GitFullSyncConfigRequestDTO.builder()
+                                                                  .repoIdentifier(YAML_GIT_CONFIG)
+                                                                  .createPullRequest(true)
+                                                                  .branch(BRANCH)
+                                                                  .prTitle(PR_TITLE)
+                                                                  .baseBranch(BASE_BRANCH)
+                                                                  .build();
+    GitFullSyncConfigDTO gitFullSyncConfigDTO =
+        gitFullSyncConfigService.updateConfig(ACCOUNT, ORG, PROJECT, gitFullSyncConfigRequestDTO);
+    assertThat(gitFullSyncConfigDTO).isNotNull();
   }
 }

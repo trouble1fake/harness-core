@@ -105,18 +105,22 @@ public class DatadogLogSourceSpecTransformerTest extends CvNextGenTestBase {
     assertThat(datadogLogHealthSourceSpec.getConnectorRef()).isEqualTo(MOCKED_CONNECTOR_IDENTIFIER);
     assertThat(datadogLogHealthSourceSpec.getFeature()).isEqualTo(MOCKED_PRODUCT_NAME);
     assertThat(datadogLogHealthSourceSpec.getQueries().size()).isEqualTo(queries.size());
+    datadogLogHealthSourceSpec.getQueries().forEach(query -> assertThat(query.getIndexes()).isNotNull());
   }
 
   private List<DatadogLogCVConfig> createCVConfigs() {
     return queries.stream()
-        .map(query
-            -> (DatadogLogCVConfig) builderFactory.datadogLogCVConfigBuilder()
-                   .queryName(query.getName())
-                   .query(query.getQuery())
-                   .connectorIdentifier(MOCKED_CONNECTOR_IDENTIFIER)
-                   .productName(MOCKED_PRODUCT_NAME)
-                   .identifier(MOCKED_GROUP_IDENTIFIER)
-                   .build())
+        .map(query -> {
+          DatadogLogCVConfig datadogLogCVConfig = (DatadogLogCVConfig) builderFactory.datadogLogCVConfigBuilder()
+                                                      .queryName(query.getName())
+                                                      .query(query.getQuery())
+                                                      .connectorIdentifier(MOCKED_CONNECTOR_IDENTIFIER)
+                                                      .productName(MOCKED_PRODUCT_NAME)
+                                                      .identifier(MOCKED_GROUP_IDENTIFIER)
+                                                      .build();
+          datadogLogCVConfig.setIndexes(null);
+          return datadogLogCVConfig;
+        })
         .collect(Collectors.toList());
   }
 }

@@ -22,7 +22,7 @@ public class TriggeredByHelper {
     Principal principal = currentUserHelper.getPrincipalFromSecurityContext();
     return TriggeredBy.newBuilder()
         .setUuid(PrincipalHelper.getUuid(principal))
-        .setIdentifier(PrincipalHelper.getIdentifier(principal))
+        .setIdentifier(PrincipalHelper.getUsername(principal))
         .putExtraInfo("email", PrincipalHelper.getEmail(principal))
         .build();
   }
