@@ -484,8 +484,6 @@ public class DelegateProfileServiceTest extends WingsBaseTest {
     delegateProfileService.update(delegateProfile);
   }
 
-  // TODO Remove two different profile tests for Cg and Ng seperately when the ScriptSecret check for ng has been
-  // developed (DEL-2401).
   @Test
   @Owner(developers = VUK)
   @Category(UnitTests.class)
@@ -501,7 +499,7 @@ public class DelegateProfileServiceTest extends WingsBaseTest {
             .name(profileName)
             .description(profileDescription)
             .startupScript(
-                "script export AWS_ACCESS_KEY_ID=${secrets.getValue(\"dummySecret\")} export AWS_SECRET_ACCESS_KEY=${secrets.getValue(\"dummySecret2\")}")
+                "script export AWS_ACCESS_KEY_ID=${secrets.getValue('dummySecret')} export AWS_SECRET_ACCESS_KEY=${secrets.getValue(\"dummySecret2\")}")
             .selectors(profileSelectors)
             .ng(false)
             .build();
