@@ -9,15 +9,13 @@ import io.harness.delegate.beans.connector.ConnectorConfigDTO;
 import io.harness.serializer.JsonUtils;
 
 import com.google.gson.Gson;
-import org.slf4j.Logger;
-
 import java.lang.reflect.Type;
+import org.slf4j.Logger;
 
 public interface DataCollectionRequestResultExtractor<ConnectorConfig extends ConnectorConfigDTO> {
   default<T> T performRequestAndGetDataResult(DataCollectionRequest<ConnectorConfig> dataCollectionRequest,
-                                              OnboardingService onboardingService, Type type, ProjectParams projectParams, String connectorIdentifier,
-                                              String tracingId, Logger logger) {
-
+      OnboardingService onboardingService, Type type, ProjectParams projectParams, String connectorIdentifier,
+      String tracingId, Logger logger) {
     OnboardingRequestDTO onboardingRequestDTO = OnboardingRequestDTO.builder()
                                                     .dataCollectionRequest(dataCollectionRequest)
                                                     .connectorIdentifier(connectorIdentifier)

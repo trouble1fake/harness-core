@@ -257,7 +257,6 @@ public enum FeatureName {
   FREEZE_DURING_MIGRATION,
   DYNATRACE_APM_ENABLED;
 
-
   FeatureName() {
     scope = Scope.PER_ACCOUNT;
   }

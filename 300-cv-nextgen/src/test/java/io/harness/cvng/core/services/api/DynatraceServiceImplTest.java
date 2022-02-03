@@ -81,7 +81,7 @@ public class DynatraceServiceImplTest extends CategoryTest {
     when(mockedOnboardingService.getOnboardingResponse(eq(mockedProjectParams.getAccountIdentifier()), any()))
         .thenReturn(OnboardingResponseDTO.builder().result(mockedServices).build());
     List<DynatraceServiceDTO> dynatraceServices =
-        classUnderTest.getAllServices(mockedProjectParams, connectorIdentifier, "", generateUuid());
+        classUnderTest.getAllServices(mockedProjectParams, connectorIdentifier, generateUuid());
 
     OnboardingRequestDTO onboardingRequestDTO =
         assertOnboardingRequest(mockedOnboardingService, mockedProjectParams, connectorIdentifier, requestCaptor);

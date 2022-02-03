@@ -150,10 +150,7 @@ public class DynatraceHealthSourceSpec extends HealthSourceSpec {
   }
 
   private Key getKeyFromCVConfig(DynatraceCVConfig cvConfig) {
-    return Key.builder()
-        .metricPack(cvConfig.getMetricPack())
-        .groupName(cvConfig.getGroupName())
-        .build();
+    return Key.builder().metricPack(cvConfig.getMetricPack()).groupName(cvConfig.getGroupName()).build();
   }
 
   @Value
