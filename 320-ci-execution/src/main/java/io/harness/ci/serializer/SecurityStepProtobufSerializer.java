@@ -8,8 +8,10 @@
 package io.harness.ci.serializer;
 
 import static io.harness.beans.serializer.RunTimeInputHandler.resolveJsonNodeMapParameter;
+import static io.harness.common.CIExecutionConstants.HARNESS_STEP_ID_VARIABLE;
 import static io.harness.common.CIExecutionConstants.SECURITY_ENV_PREFIX;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import static java.util.Collections.emptyList;
 
@@ -29,6 +31,7 @@ import io.harness.product.ci.engine.proto.StepContext;
 import io.harness.product.ci.engine.proto.UnitStep;
 import io.harness.utils.TimeoutUtils;
 import io.harness.yaml.core.timeout.Timeout;
+import io.harness.yaml.core.variables.OutputNGVariable;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.inject.Inject;
@@ -38,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 @Singleton
 @OwnedBy(HarnessTeam.STO)
@@ -68,6 +72,8 @@ public class SecurityStepProtobufSerializer implements ProtobufStepSerializer<Se
       }
     }
 
+    envVarMap.put(HARNESS_STEP_ID_VARIABLE, identifier);
+
     PluginStep.Builder builder = PluginStep.newBuilder();
 
     UnitTestReport reports = securityStepInfo.getReports();
@@ -79,6 +85,12 @@ public class SecurityStepProtobufSerializer implements ProtobufStepSerializer<Se
         Report report = Report.newBuilder().setType(Report.Type.JUNIT).addAllPaths(resolvedReport).build();
         builder.addReports(report);
       }
+    }
+
+    if (isNotEmpty(securityStepInfo.getOutputVariables())) {
+      List<String> outputVarNames =
+          securityStepInfo.getOutputVariables().stream().map(OutputNGVariable::getName).collect(Collectors.toList());
+      builder.addAllEnvVarOutputs(outputVarNames);
     }
 
     PluginStep pluginStep =
