@@ -173,7 +173,7 @@ public class TerraformDestroyTaskHandlerTest extends CategoryTest {
     ArtifactoryStoreDelegateConfig artifactoryStoreDelegateConfig =
         ArtifactoryStoreDelegateConfig.builder()
             .artifacts(Arrays.asList(ArtifactoryFile.builder().path("artifactPath").name("artifactName").build()))
-            .repositoryPath("repoName")
+            .repositoryName("repoName")
             .encryptedDataDetails(encryptedDataDetails)
             .connectorDTO(ConnectorInfoDTO.builder().connectorConfig(artifactoryConnectorDTO).build())
             .build();

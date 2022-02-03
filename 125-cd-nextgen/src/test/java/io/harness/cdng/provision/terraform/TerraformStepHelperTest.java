@@ -328,7 +328,7 @@ public class TerraformStepHelperTest extends CategoryTest {
     RemoteTerraformVarFileInfo remoteTerraformVarFileInfo = (RemoteTerraformVarFileInfo) terraformVarFileInfo;
     ArtifactoryStoreDelegateConfig artifactoryStoreDelegateConfig =
         (ArtifactoryStoreDelegateConfig) remoteTerraformVarFileInfo.getFilestoreFetchFilesConfig();
-    assertThat(artifactoryStoreDelegateConfig.getRepositoryPath()).isEqualTo("RepositoryPath");
+    assertThat(artifactoryStoreDelegateConfig.getRepositoryName()).isEqualTo("RepositoryPath");
     assertThat(artifactoryStoreDelegateConfig.getConnectorDTO().getName()).isEqualTo("connectorName");
     assertThat(artifactoryStoreDelegateConfig.getConnectorDTO().getConnectorConfig() instanceof ArtifactoryConnectorDTO)
         .isTrue();
@@ -418,7 +418,7 @@ public class TerraformStepHelperTest extends CategoryTest {
     RemoteTerraformVarFileInfo remoteTerraformVarFileInfo = (RemoteTerraformVarFileInfo) terraformVarFileInfo;
     ArtifactoryStoreDelegateConfig artifactoryStoreDelegateConfig =
         (ArtifactoryStoreDelegateConfig) remoteTerraformVarFileInfo.getFilestoreFetchFilesConfig();
-    assertThat(artifactoryStoreDelegateConfig.getRepositoryPath()).isEqualTo("RepositoryPath");
+    assertThat(artifactoryStoreDelegateConfig.getRepositoryName()).isEqualTo("RepositoryPath");
     assertThat(artifactoryStoreDelegateConfig.getConnectorDTO().getName()).isEqualTo("connectorName");
     assertThat(artifactoryStoreDelegateConfig.getConnectorDTO().getConnectorConfig() instanceof ArtifactoryConnectorDTO)
         .isTrue();
@@ -427,7 +427,7 @@ public class TerraformStepHelperTest extends CategoryTest {
     RemoteTerraformVarFileInfo remoteTerraformVarFileInfoB = (RemoteTerraformVarFileInfo) terraformVarFileInfo;
     ArtifactoryStoreDelegateConfig artifactoryStoreDelegateConfigB =
         (ArtifactoryStoreDelegateConfig) remoteTerraformVarFileInfoB.getFilestoreFetchFilesConfig();
-    assertThat(artifactoryStoreDelegateConfigB.getRepositoryPath()).isEqualTo("RepositoryPath2");
+    assertThat(artifactoryStoreDelegateConfigB.getRepositoryName()).isEqualTo("RepositoryPath2");
     assertThat(artifactoryStoreDelegateConfigB.getConnectorDTO().getName()).isEqualTo("connectorName");
     assertThat(
         artifactoryStoreDelegateConfigB.getConnectorDTO().getConnectorConfig() instanceof ArtifactoryConnectorDTO)
@@ -583,7 +583,7 @@ public class TerraformStepHelperTest extends CategoryTest {
             .isEqualTo("TF_VAR_FILES_1");
         ArtifactoryStoreDelegateConfig artifactoryStoreDelegateConfig =
             (ArtifactoryStoreDelegateConfig) remoteTerraformVarFileInfo.getFilestoreFetchFilesConfig();
-        assertThat(artifactoryStoreDelegateConfig.getRepositoryPath()).isEqualTo("RepositoryPath");
+        assertThat(artifactoryStoreDelegateConfig.getRepositoryName()).isEqualTo("RepositoryPath");
         assertThat(artifactoryStoreDelegateConfig.getConnectorDTO().getName()).isEqualTo("connectorName");
       }
     }

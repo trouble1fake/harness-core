@@ -240,7 +240,7 @@ public class TerraformStepHelper {
     List<EncryptedDataDetail> encryptedDataDetails = secretManagerClientService.getEncryptionDetails(
         basicNGAccessObject, ((ArtifactoryConnectorDTO) connectorDTO.getConnectorConfig()).getAuth().getCredentials());
     return ArtifactoryStoreDelegateConfig.builder()
-        .repositoryPath(artifactoryStoreConfig.getRepositoryPath().getValue())
+        .repositoryName(artifactoryStoreConfig.getRepositoryName().getValue())
         .identifier(identifier)
         .manifestStoreType(store.getKind())
         .connectorDTO(connectorDTO)

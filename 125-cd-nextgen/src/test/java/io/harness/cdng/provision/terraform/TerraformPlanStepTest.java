@@ -278,7 +278,7 @@ public class TerraformPlanStepTest extends CategoryTest {
                                             .build();
 
     ArtifactoryStoreDelegateConfig artifactoryStoreDelegateConfig = ArtifactoryStoreDelegateConfig.builder()
-                                                                        .repositoryPath("repositoryPath")
+                                                                        .repositoryName("repositoryPath")
                                                                         .connectorDTO(connectorInfoDTO)
                                                                         .succeedIfFileNotFound(false)
                                                                         .build();

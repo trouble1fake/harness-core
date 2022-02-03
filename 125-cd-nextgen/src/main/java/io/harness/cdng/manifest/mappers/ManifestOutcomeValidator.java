@@ -147,8 +147,8 @@ public class ManifestOutcomeValidator {
       throw new InvalidArgumentsException(format(
           "Missing or empty connectorRef in Artifactory store spec for manifest with identifier: %s", manifestId));
     }
-    if (!hasValue(store.getRepositoryPath(), allowExpression)) {
-      throw new InvalidArgumentsException(Pair.of("repositoryPath", "Cannot be empty or null for Artifact store"));
+    if (!hasValue(store.getRepositoryName(), allowExpression)) {
+      throw new InvalidArgumentsException(Pair.of("repositoryName", "Cannot be empty or null for Artifact store"));
     }
   }
 

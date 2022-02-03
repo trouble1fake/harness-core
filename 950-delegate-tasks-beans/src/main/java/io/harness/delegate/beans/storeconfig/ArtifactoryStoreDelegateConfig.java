@@ -23,7 +23,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @OwnedBy(CDP)
 public class ArtifactoryStoreDelegateConfig extends FileStoreFetchFilesConfig {
-  String repositoryPath;
+  String repositoryName;
   List<ArtifactoryFile> artifacts;
 
   @Override

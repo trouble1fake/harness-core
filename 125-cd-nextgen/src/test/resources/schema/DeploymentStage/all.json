@@ -315,10 +315,14 @@
     "ArtifactFile": {
       "type": "object",
       "required": [
+        "artifactPathExpression",
         "name",
         "path"
       ],
       "properties": {
+        "artifactPathExpression": {
+          "type": "string"
+        },
         "name": {
           "type": "string"
         },
@@ -389,7 +393,7 @@
           "required": [
             "artifacts",
             "connectorRef",
-            "repositoryPath"
+            "repositoryName"
           ],
           "properties": {
             "artifacts": {
@@ -404,7 +408,7 @@
             "metadata": {
               "type": "string"
             },
-            "repositoryPath": {
+            "repositoryName": {
               "type": "string"
             }
           }

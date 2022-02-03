@@ -90,9 +90,9 @@ public class TerraformDestroyTaskHandler extends TerraformAbstractTaskHandler {
         && taskParameters.getFileStoreConfigFiles().getType() == ARTIFACTORY) {
       ArtifactoryStoreDelegateConfig artifactoryStoreDelegateConfig =
           (ArtifactoryStoreDelegateConfig) taskParameters.getFileStoreConfigFiles();
-      if (isNotEmpty(artifactoryStoreDelegateConfig.getRepositoryPath())) {
+      if (isNotEmpty(artifactoryStoreDelegateConfig.getRepositoryName())) {
         logCallback.saveExecutionLog(
-            "Repository: " + artifactoryStoreDelegateConfig.getRepositoryPath(), INFO, CommandExecutionStatus.RUNNING);
+            "Repository: " + artifactoryStoreDelegateConfig.getRepositoryName(), INFO, CommandExecutionStatus.RUNNING);
       }
 
       scriptDirectory = terraformBaseHelper.fetchConfigFileAndPrepareScriptDir(artifactoryStoreDelegateConfig,

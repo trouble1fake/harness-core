@@ -562,7 +562,7 @@ public class TerraformBaseHelperImpl implements TerraformBaseHelper {
     artifactMetadata.put(ARTIFACT_PATH_METADATA_KEY, artifactoryStoreDelegateConfig.getArtifacts().get(0).getPath());
     artifactMetadata.put(ARTIFACT_NAME_METADATA_KEY, artifactoryStoreDelegateConfig.getArtifacts().get(0).getName());
     InputStream artifactInputStream = artifactoryNgService.downloadArtifacts(artifactoryConfigRequest,
-        artifactoryStoreDelegateConfig.getRepositoryPath(), artifactMetadata, ARTIFACT_PATH_METADATA_KEY,
+        artifactoryStoreDelegateConfig.getRepositoryName(), artifactMetadata, ARTIFACT_PATH_METADATA_KEY,
         ARTIFACT_NAME_METADATA_KEY);
     if (artifactInputStream == null) {
       throw NestedExceptionUtils.hintWithExplanationException(HINT_FAILED_TO_DOWNLOAD_FROM_ARTIFACTORY,
@@ -573,9 +573,9 @@ public class TerraformBaseHelperImpl implements TerraformBaseHelper {
     String workingDir = getWorkingDir(baseDir);
 
     copyConfigFilesToWorkingDirectory(
-        logCallback, artifactInputStream, baseDir, workingDir, artifactoryStoreDelegateConfig.getRepositoryPath());
+        logCallback, artifactInputStream, baseDir, workingDir, artifactoryStoreDelegateConfig.getRepositoryName());
 
-    String scriptDirectory = resolveScriptDirectory(workingDir, artifactoryStoreDelegateConfig.getRepositoryPath());
+    String scriptDirectory = resolveScriptDirectory(workingDir, artifactoryStoreDelegateConfig.getRepositoryName());
 
     log.info("Script Directory: " + scriptDirectory);
     logCallback.saveExecutionLog(
@@ -743,7 +743,7 @@ public class TerraformBaseHelperImpl implements TerraformBaseHelper {
     ArtifactoryStoreDelegateConfig artifactoryStoreDelegateConfig =
         (ArtifactoryStoreDelegateConfig) varFile.getFilestoreFetchFilesConfig();
     logCallback.saveExecutionLog(format("Fetching Var files from Artifactory repository: [%s]",
-                                     artifactoryStoreDelegateConfig.getRepositoryPath()),
+                                     artifactoryStoreDelegateConfig.getRepositoryName()),
         INFO, CommandExecutionStatus.RUNNING);
     ArtifactoryConnectorDTO artifactoryConnectorDTO =
         (ArtifactoryConnectorDTO) artifactoryStoreDelegateConfig.getConnectorDTO().getConnectorConfig();
@@ -757,7 +757,7 @@ public class TerraformBaseHelperImpl implements TerraformBaseHelper {
       artifactMetadata.put(ARTIFACT_PATH_METADATA_KEY, artifactoryFile.getPath());
       artifactMetadata.put(ARTIFACT_NAME_METADATA_KEY, artifactoryFile.getName());
       InputStream artifactInputStream = artifactoryNgService.downloadArtifacts(artifactoryConfigRequest,
-          artifactoryStoreDelegateConfig.getRepositoryPath(), artifactMetadata, ARTIFACT_PATH_METADATA_KEY,
+          artifactoryStoreDelegateConfig.getRepositoryName(), artifactMetadata, ARTIFACT_PATH_METADATA_KEY,
           ARTIFACT_NAME_METADATA_KEY);
       if (artifactInputStream == null) {
         throw NestedExceptionUtils.hintWithExplanationException(HINT_FAILED_TO_DOWNLOAD_FROM_ARTIFACTORY,

@@ -305,7 +305,7 @@ public class TerraformBaseHelperImplTest extends CategoryTest {
     ArtifactoryStoreDelegateConfig artifactoryStoreDelegateConfig =
         ArtifactoryStoreDelegateConfig.builder()
             .artifacts(Arrays.asList(ArtifactoryFile.builder().path("artifactPath").name("artifactName").build()))
-            .repositoryPath("repoName")
+            .repositoryName("repoName")
             .encryptedDataDetails(encryptedDataDetails)
             .connectorDTO(ConnectorInfoDTO.builder().connectorConfig(artifactoryConnectorDTO).build())
             .build();
@@ -364,7 +364,7 @@ public class TerraformBaseHelperImplTest extends CategoryTest {
         ArtifactoryStoreDelegateConfig.builder()
             .artifacts(Arrays.asList(ArtifactoryFile.builder().path("artifactPath").name("artifactName").build(),
                 ArtifactoryFile.builder().path("/artifactPath/artifactPath").name("artifactName").build()))
-            .repositoryPath("repoName")
+            .repositoryName("repoName")
             .encryptedDataDetails(encryptedDataDetails)
             .connectorDTO(ConnectorInfoDTO.builder().connectorConfig(artifactoryConnectorDTO).build())
             .build();
@@ -408,7 +408,7 @@ public class TerraformBaseHelperImplTest extends CategoryTest {
     ArtifactoryStoreDelegateConfig artifactoryStoreDelegateConfig =
         ArtifactoryStoreDelegateConfig.builder()
             .artifacts(Arrays.asList(ArtifactoryFile.builder().path("artifactPath").name("artifactName").build()))
-            .repositoryPath("repoName")
+            .repositoryName("repoName")
             .encryptedDataDetails(encryptedDataDetails)
             .connectorDTO(ConnectorInfoDTO.builder().connectorConfig(artifactoryConnectorDTO).build())
             .build();

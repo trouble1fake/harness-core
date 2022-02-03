@@ -50,7 +50,7 @@ public class ArtifactoryStoreConfig implements StoreConfig, Visitable, WithConne
   @NotNull
   @Wither
   @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
-  private ParameterField<String> repositoryPath;
+  private ParameterField<String> repositoryName;
   @NotNull @Wither @JsonProperty("artifacts") List<ArtifactoryFromYaml> artifacts;
 
   @Override
@@ -62,7 +62,7 @@ public class ArtifactoryStoreConfig implements StoreConfig, Visitable, WithConne
   public StoreConfig cloneInternal() {
     return ArtifactoryStoreConfig.builder()
         .connectorRef(connectorRef)
-        .repositoryPath(repositoryPath)
+        .repositoryName(repositoryName)
         .artifacts(artifacts)
         .build();
   }
@@ -86,9 +86,9 @@ public class ArtifactoryStoreConfig implements StoreConfig, Visitable, WithConne
     if (!ParameterField.isNull(artifactoryStoreConfig.getConnectorRef())) {
       resultantArtifactoryStore = resultantArtifactoryStore.withConnectorRef(artifactoryStoreConfig.getConnectorRef());
     }
-    if (!ParameterField.isNull(artifactoryStoreConfig.getRepositoryPath())) {
+    if (!ParameterField.isNull(artifactoryStoreConfig.getRepositoryName())) {
       resultantArtifactoryStore =
-          resultantArtifactoryStore.withRepositoryPath(artifactoryStoreConfig.getRepositoryPath());
+          resultantArtifactoryStore.withRepositoryName(artifactoryStoreConfig.getRepositoryName());
     }
     if (artifactoryStoreConfig.getArtifacts() != null) {
       resultantArtifactoryStore = resultantArtifactoryStore.withArtifacts(artifactoryStoreConfig.getArtifacts());

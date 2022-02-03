@@ -65,7 +65,7 @@ public class ArtifactoryStoreConfigTest extends CategoryTest {
     ArtifactoryStoreConfig originClone = (ArtifactoryStoreConfig) origin.cloneInternal();
 
     assertThat(originClone.getConnectorReference().getValue()).isEqualTo(MOCK_CONNECTOR_REF);
-    assertThat(originClone.getRepositoryPath().getValue()).isEqualTo(MOCK_REPOSITORY_PATH);
+    assertThat(originClone.getRepositoryName().getValue()).isEqualTo(MOCK_REPOSITORY_PATH);
   }
 
   @Test
@@ -81,14 +81,14 @@ public class ArtifactoryStoreConfigTest extends CategoryTest {
       String mockConnectorRef, String mockArtifactName, String mockRepositoryPath, String mockVersion) {
     ArtifactoryStoreConfig result = (ArtifactoryStoreConfig) origin.applyOverrides(override);
     assertThat(result.getConnectorReference().getValue()).isEqualTo(mockConnectorRef);
-    assertThat(result.getRepositoryPath().getValue()).isEqualTo(mockRepositoryPath);
+    assertThat(result.getRepositoryName().getValue()).isEqualTo(mockRepositoryPath);
   }
 
   private ArtifactoryStoreConfig CreateMockArtifactoryStoreConfig(
       String mockConnector, String mockArtifact, String mockRepository, String mockVersion) {
     return ArtifactoryStoreConfig.builder()
         .connectorRef(ParameterField.createValueField(mockConnector))
-        .repositoryPath(ParameterField.createValueField(mockRepository))
+        .repositoryName(ParameterField.createValueField(mockRepository))
         .build();
   }
 }
