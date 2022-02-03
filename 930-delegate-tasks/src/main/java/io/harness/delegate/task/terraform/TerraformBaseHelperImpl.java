@@ -485,6 +485,9 @@ public class TerraformBaseHelperImpl implements TerraformBaseHelper {
 
   public void addVarFilesCommitIdsToMap(
       String accountId, List<TerraformVarFileInfo> varFileInfo, Map<String, String> commitIdForConfigFilesMap) {
+    if (commitIdForConfigFilesMap == null) {
+      commitIdForConfigFilesMap = new HashMap<>();
+    }
     for (TerraformVarFileInfo varFile : varFileInfo) {
       if (varFile instanceof RemoteTerraformVarFileInfo
           && ((RemoteTerraformVarFileInfo) varFile).gitFetchFilesConfig != null) {
