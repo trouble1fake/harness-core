@@ -1988,8 +1988,6 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       DelegateTaskEvent delegateTaskEvent, String taskId) {
     return delegateConnectionResults -> {
       try (AutoLogContext ignored = new TaskLogContext(taskId, OVERRIDE_ERROR)) {
-        // Tools might be installed asynchronously, so get the flag early on
-        final boolean areAllClientToolsInstalled = isClientToolsInstallationFinished();
         currentlyValidatingTasks.remove(taskId);
         log.info("Removed from validating futures on post validation");
         List<DelegateConnectionResult> results = Optional.ofNullable(delegateConnectionResults).orElse(emptyList());

@@ -66,7 +66,9 @@ public class DelegateTaskValidationFailIterator implements MongoPersistenceItera
   }
   @Override
   public void handle(DelegateTask delegateTask) {
+    log.info("Check delegate Task {} with validation fail", delegateTask.getUuid());
     if (delegateTask.getValidationCompleteDelegateIds().containsAll(delegateTask.getEligibleToExecuteDelegateIds())) {
+      log.info("Found delegate task with all validation completed but not assigned");
       try (AutoLogContext ignore = new TaskLogContext(delegateTask.getUuid(), delegateTask.getData().getTaskType(),
                TaskType.valueOf(delegateTask.getData().getTaskType()).getTaskGroup().name(), OVERRIDE_ERROR)) {
         // Check whether a whitelisted delegate is connected
@@ -76,7 +78,7 @@ public class DelegateTaskValidationFailIterator implements MongoPersistenceItera
               whitelistedDelegates);
           return;
         }
-
+        log.info("Failing task {} due to validation failed ", delegateTask.getUuid());
         String errorMessage = generateCapabilitiesMessage(delegateTask);
         log.info(errorMessage);
         DelegateResponseData response;
