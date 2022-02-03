@@ -424,10 +424,12 @@ public class SecretCrudServiceImpl implements SecretCrudService {
   public SecretResponseWrapper updateFile(String accountIdentifier, String orgIdentifier, String projectIdentifier,
       String identifier, @Valid SecretDTOV2 dto, @NotNull InputStream inputStream) {
     validateUpdateRequestAndGetSecret(accountIdentifier, orgIdentifier, projectIdentifier, identifier, dto);
-    boolean success = Optional
-                          .ofNullable(encryptedDataService.updateSecretFile(accountIdentifier, dto,
-                              new BoundedInputStream(inputStream, fileUploadLimit.getEncryptedFileLimit())))
-                          .isPresent();
+    boolean success =
+        Optional
+            .ofNullable(encryptedDataService.updateSecretFile(accountIdentifier, dto,
+                (inputStream == null) ? null
+                                      : new BoundedInputStream(inputStream, fileUploadLimit.getEncryptedFileLimit())))
+            .isPresent();
 
     if (success) {
       Secret updatedSecret = ngSecretService.update(accountIdentifier, dto, false);
