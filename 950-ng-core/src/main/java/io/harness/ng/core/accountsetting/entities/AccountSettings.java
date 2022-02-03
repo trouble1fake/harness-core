@@ -51,7 +51,7 @@ public class AccountSettings implements PersistentEntity, NGAccountAccess {
     this.type = type;
     this.config = config;
   }
-  //  @Id @org.mongodb.morphia.annotations.Id String id;
+  @Id @org.mongodb.morphia.annotations.Id String id;
   @Trimmed @NotEmpty String accountIdentifier;
   @Trimmed String orgIdentifier;
   @Trimmed String projectIdentifier;

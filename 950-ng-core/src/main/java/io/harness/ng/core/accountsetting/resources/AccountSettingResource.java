@@ -11,6 +11,7 @@ import static io.harness.NGCommonEntityConstants.*;
 
 import io.harness.NGCommonEntityConstants;
 import io.harness.ng.core.accountsetting.dto.AccountSettingResponseDTO;
+import io.harness.ng.core.accountsetting.dto.AccountSettingType;
 import io.harness.ng.core.accountsetting.dto.AccountSettingsDTO;
 import io.harness.ng.core.accountsetting.entities.AccountSettings;
 import io.harness.ng.core.accountsetting.services.NGAccountSettingService;
@@ -72,7 +73,7 @@ public class AccountSettingResource {
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
       @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
       @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
-      @NotNull @QueryParam(TYPE_KEY) String type) {
+      @NotNull @QueryParam(TYPE_KEY) AccountSettingType type) {
     return ResponseDTO.newResponse(accountSettingService.get(accountId, orgIdentifier, projectIdentifier, type));
   }
 
@@ -82,7 +83,8 @@ public class AccountSettingResource {
   public ResponseDTO<List<AccountSettings>> listSettings(
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
       @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
-      @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier, @QueryParam(TYPE_KEY) String type) {
+      @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
+      @QueryParam(TYPE_KEY) AccountSettingType type) {
     return ResponseDTO.newResponse(accountSettingService.list(accountId, orgIdentifier, projectIdentifier, type));
   }
 

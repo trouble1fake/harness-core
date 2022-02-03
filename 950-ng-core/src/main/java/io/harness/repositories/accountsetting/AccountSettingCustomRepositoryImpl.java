@@ -62,7 +62,6 @@ public class AccountSettingCustomRepositoryImpl implements AccountSettingCustomR
     Update update = update(AccountSettings.AccountSettingsKeys.config, accountSettings.getConfig());
 
     UpdateResult upsert = mongoTemplate.upsert(new Query(criteria), update, AccountSettings.class);
-    //    upsert.
     return accountSettings;
   }
 
