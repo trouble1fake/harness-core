@@ -18,7 +18,6 @@ import io.harness.telemetry.Category;
 import io.harness.telemetry.TelemetryOption;
 import io.harness.telemetry.TelemetryReporter;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Singleton;
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,9 +26,6 @@ import java.util.concurrent.ExecutorService;
 import javax.annotation.Priority;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
-import javax.ws.rs.container.ResourceInfo;
-import javax.ws.rs.core.Context;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -49,8 +45,6 @@ public class APIAuthTelemetryFilter implements ContainerRequestFilter {
 
   private TelemetryReporter telemetryReporter;
   private ExecutorService executorService;
-
-  @Context @Setter @VisibleForTesting private ResourceInfo resourceInfo;
 
   public APIAuthTelemetryFilter(TelemetryReporter telemetryReporter, ExecutorService executorService) {
     this.telemetryReporter = telemetryReporter;
