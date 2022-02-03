@@ -52,6 +52,7 @@ public class DelegateConfiguration {
   private boolean grpcServiceEnabled;
   private Integer grpcServiceConnectorPort;
 
+  private int taskExecutorThreads;
   private String logStreamingServiceBaseUrl;
   private boolean clientToolsDownloadDisabled;
   private boolean installClientToolsInBackground;
