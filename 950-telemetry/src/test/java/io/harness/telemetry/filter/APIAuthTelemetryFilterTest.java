@@ -7,6 +7,7 @@
 
 package io.harness.telemetry.filter;
 
+import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.rule.OwnerRule.ASHISHSANODIA;
 import static io.harness.telemetry.Destination.AMPLITUDE;
 import static io.harness.telemetry.filter.APIAuthTelemetryFilter.*;
@@ -14,10 +15,9 @@ import static io.harness.telemetry.filter.APIAuthTelemetryFilter.*;
 import static org.mockito.Mockito.when;
 
 import io.harness.NGCommonEntityConstants;
-import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.category.element.UnitTests;
 import io.harness.rule.Owner;
-import io.harness.telemetry.Category;
 import io.harness.telemetry.TelemetryOption;
 import io.harness.telemetry.TelemetryReporter;
 
@@ -30,12 +30,13 @@ import javax.ws.rs.core.MultivaluedMap;
 import org.glassfish.jersey.server.internal.routing.UriRoutingContext;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
-@OwnedBy(HarnessTeam.PL)
+@OwnedBy(PL)
 @RunWith(MockitoJUnitRunner.class)
 public class APIAuthTelemetryFilterTest {
   public static final String SOME_API_KEY = "some-api-key";
@@ -67,6 +68,7 @@ public class APIAuthTelemetryFilterTest {
 
   @Test
   @Owner(developers = ASHISHSANODIA)
+  @Category(UnitTests.class)
   public void shouldNotSendTelemetryDataIfAccountIdentifierNotPresentInUri() {
     when(parametersMap.getFirst(NGCommonEntityConstants.ACCOUNT_KEY)).thenReturn(null);
 
@@ -77,6 +79,7 @@ public class APIAuthTelemetryFilterTest {
 
   @Test
   @Owner(developers = ASHISHSANODIA)
+  @Category(UnitTests.class)
   public void shouldSendTelemetryForApiKey() {
     when(containerRequestContext.getHeaderString(X_API_KEY)).thenReturn(SOME_API_KEY);
     properties.put(AUTH_TYPE, X_API_KEY);
@@ -85,12 +88,13 @@ public class APIAuthTelemetryFilterTest {
 
     Mockito.verify(telemetryReporter)
         .sendTrackEvent(API_ENDPOINTS_AUTH_SCHEMES, null, SOME_ACCOUNT_ID, properties,
-            Collections.singletonMap(AMPLITUDE, true), Category.GLOBAL,
+            Collections.singletonMap(AMPLITUDE, true), io.harness.telemetry.Category.GLOBAL,
             TelemetryOption.builder().sendForCommunity(false).build());
   }
 
   @Test
   @Owner(developers = ASHISHSANODIA)
+  @Category(UnitTests.class)
   public void shouldSendTelemetryForAuthorization() {
     when(containerRequestContext.getHeaderString(APIAuthTelemetryFilter.AUTHORIZATION_HEADER))
         .thenReturn(SOME_AUTH_TOKEN);
@@ -100,12 +104,13 @@ public class APIAuthTelemetryFilterTest {
 
     Mockito.verify(telemetryReporter)
         .sendTrackEvent(API_ENDPOINTS_AUTH_SCHEMES, null, SOME_ACCOUNT_ID, properties,
-            Collections.singletonMap(AMPLITUDE, true), Category.GLOBAL,
+            Collections.singletonMap(AMPLITUDE, true), io.harness.telemetry.Category.GLOBAL,
             TelemetryOption.builder().sendForCommunity(false).build());
   }
 
   @Test
   @Owner(developers = ASHISHSANODIA)
+  @Category(UnitTests.class)
   public void shouldSendTelemetryForUnknownAuthorization() {
     properties.put(AUTH_TYPE, UNKNOWN);
 
@@ -113,7 +118,7 @@ public class APIAuthTelemetryFilterTest {
 
     Mockito.verify(telemetryReporter)
         .sendTrackEvent(API_ENDPOINTS_AUTH_SCHEMES, null, SOME_ACCOUNT_ID, properties,
-            Collections.singletonMap(AMPLITUDE, true), Category.GLOBAL,
+            Collections.singletonMap(AMPLITUDE, true), io.harness.telemetry.Category.GLOBAL,
             TelemetryOption.builder().sendForCommunity(false).build());
   }
 }
