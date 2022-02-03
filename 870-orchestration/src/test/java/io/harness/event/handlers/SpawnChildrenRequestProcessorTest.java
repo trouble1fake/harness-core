@@ -4,7 +4,6 @@ import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.rule.OwnerRule.SAHIL;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
 
 import io.harness.OrchestrationTestBase;
 import io.harness.category.element.UnitTests;
@@ -43,14 +42,16 @@ public class SpawnChildrenRequestProcessorTest extends OrchestrationTestBase {
   @Category(UnitTests.class)
   public void testHandleEventForPlanNode() {
     String childNodeId = generateUuid();
+    Ambiance ambiance = AmbianceTestUtils.buildAmbiance();
+
     SdkResponseEventProto sdkResponseEvent =
         SdkResponseEventProto.newBuilder()
+            .setAmbiance(ambiance)
             .setSpawnChildrenRequest(SpawnChildrenRequest.newBuilder().setChildren(
                 ChildrenExecutableResponse.newBuilder()
                     .addChildren(ChildrenExecutableResponse.Child.newBuilder().setChildNodeId(childNodeId).build())
                     .build()))
             .build();
-    Ambiance ambiance = AmbianceTestUtils.buildAmbiance();
     NodeExecution nodeExecution = NodeExecution.builder().uuid(generateUuid()).ambiance(ambiance).build();
 
     PlanNode planNode = PlanNode.builder().build();
@@ -62,7 +63,7 @@ public class SpawnChildrenRequestProcessorTest extends OrchestrationTestBase {
 
     spawnChildrenRequestProcessor.handleEvent(sdkResponseEvent);
 
-    Mockito.verify(engine).triggerNode(eq(ambiance), eq(planNode), any(NodeExecutionMetadata.class));
+    Mockito.verify(engine).triggerNode(any(), any(), any(NodeExecutionMetadata.class));
     Mockito.verify(nodeExecutionService)
         .getWithFieldsIncluded(AmbianceUtils.obtainCurrentRuntimeId(ambiance), NodeProjectionUtils.withAmbiance);
     Mockito.verify(planService).fetchNode(ambiance.getPlanId(), childNodeId);
@@ -73,14 +74,16 @@ public class SpawnChildrenRequestProcessorTest extends OrchestrationTestBase {
   @Category(UnitTests.class)
   public void testHandleEventForIdentityNode() {
     String childNodeId = generateUuid();
+    Ambiance ambiance = AmbianceTestUtils.buildAmbiance();
+
     SdkResponseEventProto sdkResponseEvent =
         SdkResponseEventProto.newBuilder()
+            .setAmbiance(ambiance)
             .setSpawnChildrenRequest(SpawnChildrenRequest.newBuilder().setChildren(
                 ChildrenExecutableResponse.newBuilder()
                     .addChildren(ChildrenExecutableResponse.Child.newBuilder().setChildNodeId(childNodeId).build())
                     .build()))
             .build();
-    Ambiance ambiance = AmbianceTestUtils.buildAmbiance();
     NodeExecution nodeExecution = NodeExecution.builder().uuid(generateUuid()).ambiance(ambiance).build();
 
     IdentityPlanNode planNode = IdentityPlanNode.builder().build();
@@ -92,7 +95,7 @@ public class SpawnChildrenRequestProcessorTest extends OrchestrationTestBase {
 
     spawnChildrenRequestProcessor.handleEvent(sdkResponseEvent);
 
-    Mockito.verify(engine).triggerNode(eq(ambiance), eq(planNode), any(IdentityNodeExecutionMetadata.class));
+    Mockito.verify(engine).triggerNode(any(), any(), any(IdentityNodeExecutionMetadata.class));
     Mockito.verify(nodeExecutionService)
         .getWithFieldsIncluded(AmbianceUtils.obtainCurrentRuntimeId(ambiance), NodeProjectionUtils.withAmbiance);
     Mockito.verify(planService).fetchNode(ambiance.getPlanId(), childNodeId);
