@@ -16,7 +16,6 @@ import static io.harness.common.CIExecutionConstants.HARNESS_CI_INDIRECT_LOG_UPL
 import static io.harness.common.CIExecutionConstants.HARNESS_ORG_ID_VARIABLE;
 import static io.harness.common.CIExecutionConstants.HARNESS_PROJECT_ID_VARIABLE;
 import static io.harness.common.CIExecutionConstants.HARNESS_STAGE_ID_VARIABLE;
-import static io.harness.common.CIExecutionConstants.HARNESS_STEP_ID_VARIABLE;
 import static io.harness.common.CIExecutionConstants.LOG_SERVICE_ENDPOINT_VARIABLE;
 import static io.harness.common.CIExecutionConstants.LOG_SERVICE_TOKEN_VARIABLE;
 import static io.harness.common.CIExecutionConstants.SECRET_KEY_MINIO_VARIABLE;
@@ -212,7 +211,6 @@ public class K8BuildSetupUtilsTest extends CIExecutionTestBase {
     stepEnvVars.put(HARNESS_PROJECT_ID_VARIABLE, projectID);
     stepEnvVars.put(HARNESS_BUILD_ID_VARIABLE, String.valueOf(buildID));
     stepEnvVars.put(HARNESS_STAGE_ID_VARIABLE, stageID);
-    stepEnvVars.put(HARNESS_STEP_ID_VARIABLE, stepIdentifier);
     stepEnvVars.put(HARNESS_CI_INDIRECT_LOG_UPLOAD_FF, "true");
     stepEnvVars.putAll(ciExecutionPlanTestHelper.getEnvVariables(true));
 
