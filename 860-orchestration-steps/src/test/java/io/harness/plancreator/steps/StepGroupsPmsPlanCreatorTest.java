@@ -5,26 +5,29 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.plancreator.execution;
+package io.harness.plancreator.steps;
 
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 import static io.harness.rule.OwnerRule.NAMAN;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.harness.OrchestrationStepsTestBase;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
-import io.harness.plancreator.steps.StepGroupElementConfig;
-import io.harness.plancreator.steps.StepGroupPMSPlanCreator;
+import io.harness.pms.sdk.core.plan.PlanNode;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationContext;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationResponse;
 import io.harness.pms.yaml.YamlField;
 import io.harness.pms.yaml.YamlNode;
 import io.harness.pms.yaml.YamlUtils;
 import io.harness.rule.Owner;
+import io.harness.serializer.KryoSerializer;
+import io.harness.steps.common.steps.stepgroup.StepGroupStep;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
+import com.google.inject.Inject;
 import java.io.IOException;
 import java.net.URL;
 import java.util.LinkedHashMap;
@@ -33,11 +36,14 @@ import java.util.Objects;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mockito.InjectMocks;
 
 @OwnedBy(PIPELINE)
-public class StepGroupsPmsPlanCreatorTest {
+public class StepGroupsPmsPlanCreatorTest extends OrchestrationStepsTestBase {
+  @Inject private KryoSerializer kryoSerializer;
+  @Inject @InjectMocks StepGroupPMSPlanCreator stepGroupPMSPlanCreator;
   YamlField stepGroupYamlField;
-  StepGroupElementConfig executionElementConfig;
+  StepGroupElementConfig stepElementConfig;
   PlanCreationContext context;
 
   @Before
@@ -60,6 +66,8 @@ public class StepGroupsPmsPlanCreatorTest {
     stepGroupYamlField = executionField.getNode().getField("steps").getNode().asArray().get(0).getField("stepGroup");
     assertThat(stepGroupYamlField).isNotNull();
 
+    stepElementConfig = YamlUtils.read(stepGroupYamlField.getNode().toString(), StepGroupElementConfig.class);
+
     context = PlanCreationContext.builder().currentField(stepGroupYamlField).build();
   }
 
@@ -70,40 +78,32 @@ public class StepGroupsPmsPlanCreatorTest {
     YamlField stepsField = stepGroupYamlField.getNode().getField("steps");
     assertThat(stepsField).isNotNull();
 
-    StepGroupPMSPlanCreator stepGroupPMSPlanCreator = new StepGroupPMSPlanCreator();
     LinkedHashMap<String, PlanCreationResponse> planForChildrenNodes =
-            stepGroupPMSPlanCreator.createPlanForChildrenNodes(context, executionElementConfig);
+        stepGroupPMSPlanCreator.createPlanForChildrenNodes(context, stepElementConfig);
     assertThat(planForChildrenNodes).hasSize(1);
 
     assertThat(planForChildrenNodes.containsKey(stepsField.getNode().getUuid())).isTrue();
     PlanCreationResponse stepsResponse = planForChildrenNodes.get(stepsField.getNode().getUuid());
     assertThat(stepsResponse.getDependencies()).isNotNull();
-    assertThat(stepsResponse.getDependencies().getDependenciesMap().containsKey(stepsField.getNode().getUuid())).isTrue();
+    assertThat(stepsResponse.getDependencies().getDependenciesMap().containsKey(stepsField.getNode().getUuid()))
+        .isTrue();
     assertThat(stepsResponse.getDependencies().getDependenciesMap().get(stepsField.getNode().getUuid()))
-            .isEqualTo("pipeline/stages/[0]/stage/spec/execution/steps");
+        .isEqualTo("pipeline/stages/[0]/stage/spec/execution/steps/[0]/stepGroup/steps");
   }
 
-//  @Test
-//  @Owner(developers = NAMAN)
-//  @Category(UnitTests.class)
-//  public void testCreatePlanForParentNode() {
-//    YamlField stepsField = stepGroupYamlField.getNode().getField("steps");
-//    assertThat(stepsField).isNotNull();
-//
-//    ExecutionPmsPlanCreator executionPmsPlanCreator = new ExecutionPmsPlanCreator();
-//    PlanNode planForParentNode = executionPmsPlanCreator.createPlanForParentNode(context, executionElementConfig, null);
-//    assertThat(planForParentNode.getUuid()).isEqualTo(stepGroupYamlField.getNode().getUuid());
-//    assertThat(planForParentNode.getIdentifier()).isEqualTo("execution");
-//    assertThat(planForParentNode.getStepType()).isEqualTo(NGExecutionStep.STEP_TYPE);
-//    assertThat(planForParentNode.getGroup()).isEqualTo("EXECUTION");
-//    assertThat(planForParentNode.getName()).isEqualTo("Execution");
-//    assertThat(planForParentNode.getFacilitatorObtainments()).hasSize(1);
-//    assertThat(planForParentNode.getFacilitatorObtainments().get(0).getType().getType()).isEqualTo("CHILD");
-//    assertThat(planForParentNode.isSkipExpressionChain()).isFalse();
-//
-//    assertThat(planForParentNode.getStepParameters() instanceof NGSectionStepParameters).isTrue();
-//    NGSectionStepParameters stepParameters = (NGSectionStepParameters) planForParentNode.getStepParameters();
-//    assertThat(stepParameters.getChildNodeId()).isEqualTo(stepsField.getNode().getUuid());
-//    assertThat(stepParameters.getLogMessage()).isEqualTo("Execution Element");
-//  }
+  @Test
+  @Owner(developers = NAMAN)
+  @Category(UnitTests.class)
+  public void testCreatePlanForParentNode() {
+    YamlField stepsField = stepGroupYamlField.getNode().getField("steps");
+    assertThat(stepsField).isNotNull();
+
+    PlanNode planForParentNode = stepGroupPMSPlanCreator.createPlanForParentNode(context, stepElementConfig, null);
+    assertThat(planForParentNode.getUuid()).isEqualTo(stepGroupYamlField.getNode().getUuid());
+    assertThat(planForParentNode.getIdentifier()).isEqualTo(stepElementConfig.getIdentifier());
+    assertThat(planForParentNode.getStepType()).isEqualTo(StepGroupStep.STEP_TYPE);
+    assertThat(planForParentNode.getFacilitatorObtainments()).hasSize(1);
+    assertThat(planForParentNode.getFacilitatorObtainments().get(0).getType().getType()).isEqualTo("CHILD");
+    assertThat(planForParentNode.isSkipExpressionChain()).isFalse();
+  }
 }
