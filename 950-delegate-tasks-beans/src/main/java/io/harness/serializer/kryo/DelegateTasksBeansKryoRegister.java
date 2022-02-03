@@ -37,6 +37,7 @@ import io.harness.delegate.beans.SecretDetail;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.beans.artifactory.ArtifactoryFetchBuildsResponse;
 import io.harness.delegate.beans.artifactory.ArtifactoryFetchRepositoriesResponse;
+import io.harness.delegate.beans.artifactory.ArtifactoryFile;
 import io.harness.delegate.beans.artifactory.ArtifactoryTaskParams;
 import io.harness.delegate.beans.artifactory.ArtifactoryTaskResponse;
 import io.harness.delegate.beans.aws.codecommit.AwsCodeCommitApiConfirmSubParams;
@@ -203,6 +204,7 @@ import io.harness.delegate.beans.polling.ArtifactPollingDelegateResponse;
 import io.harness.delegate.beans.polling.ManifestPollingDelegateResponse;
 import io.harness.delegate.beans.polling.PollingDelegateResponse;
 import io.harness.delegate.beans.secrets.SSHConfigValidationTaskResponse;
+import io.harness.delegate.beans.storeconfig.ArtifactoryStoreDelegateConfig;
 import io.harness.delegate.beans.storeconfig.FetchType;
 import io.harness.delegate.beans.storeconfig.GcsHelmStoreDelegateConfig;
 import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
@@ -1091,5 +1093,7 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(HelmNGException.class, 543471);
     kryo.register(ArtifactoryFetchRepositoriesResponse.class, 543472);
     kryo.register(ArtifactoryFetchBuildsResponse.class, 543473);
+    kryo.register(ArtifactoryStoreDelegateConfig.class, 543474);
+    kryo.register(ArtifactoryFile.class, 543475);
   }
 }

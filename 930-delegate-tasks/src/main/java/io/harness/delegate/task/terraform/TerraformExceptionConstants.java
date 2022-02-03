@@ -36,6 +36,11 @@ public final class TerraformExceptionConstants {
         "Please check your inputs for Configuration File Repository";
     public static final String HINT_FAIL_TO_INSTALL_PROVIDER =
         "To run pipelines, having same terraform config, in parallel, Please ensure they have unique Provisioner Identifier";
+    public static final String HINT_NO_CONFIG_SET = "Check if terraform step has a config files configured";
+    public static final String HINT_FAILED_TO_DOWNLOAD_FROM_ARTIFACTORY =
+        "Please check if artifact details point to an existing file";
+    public static final String HINT_NO_ARTIFACT_DETAILS_FOR_ARTIFACTORY_CONFIG =
+        "Please check if Artifactory config has artifact details";
   }
 
   public static final class Explanation {
@@ -43,6 +48,11 @@ public final class TerraformExceptionConstants {
         "Provided credentials for AWS provider may be missing or are invalid";
     public static final String EXPLANATION_FAIL_TO_INSTALL_PROVIDER =
         "Multiple pipeline executions might be trying to use same directory path for installing terraform providers";
+    public static final String EXPLANATION_NO_CONFIG_SET = "No config set";
+    public static final String EXPLANATION_FAILED_TO_DOWNLOAD_FROM_ARTIFACTORY =
+        "Failed to download file: %s from Artifactory: %s";
+    public static final String EXPLANATION_NO_ARTIFACT_DETAILS_FOR_ARTIFACTORY_CONFIG =
+        "No Artifactory config files details set";
   }
 
   public static final class Message {

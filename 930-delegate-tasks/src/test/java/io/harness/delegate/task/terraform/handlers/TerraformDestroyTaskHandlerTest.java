@@ -9,32 +9,46 @@ package io.harness.delegate.task.terraform.handlers;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.rule.OwnerRule.ROHITKARELIA;
+import static io.harness.rule.OwnerRule.TMACARI;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import io.harness.CategoryTest;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.cli.CliResponse;
+import io.harness.connector.ConnectorInfoDTO;
+import io.harness.delegate.beans.artifactory.ArtifactoryFile;
+import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryAuthenticationDTO;
+import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryConnectorDTO;
+import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryUsernamePasswordAuthDTO;
 import io.harness.delegate.beans.connector.scm.GitAuthType;
 import io.harness.delegate.beans.connector.scm.genericgitconnector.GitConfigDTO;
 import io.harness.delegate.beans.connector.scm.genericgitconnector.GitHTTPAuthenticationDTO;
+import io.harness.delegate.beans.storeconfig.ArtifactoryStoreDelegateConfig;
 import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
 import io.harness.delegate.task.git.GitFetchFilesConfig;
+import io.harness.delegate.task.terraform.RemoteTerraformVarFileInfo;
 import io.harness.delegate.task.terraform.TFTaskType;
 import io.harness.delegate.task.terraform.TerraformBaseHelper;
 import io.harness.delegate.task.terraform.TerraformTaskNGParameters;
 import io.harness.delegate.task.terraform.TerraformTaskNGResponse;
 import io.harness.encryption.SecretRefData;
+import io.harness.filesystem.FileIo;
 import io.harness.git.GitClientHelper;
 import io.harness.git.model.GitBaseRequest;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
 import io.harness.rule.Owner;
+import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.security.encryption.EncryptedRecordData;
 import io.harness.security.encryption.SecretDecryptionService;
 
@@ -43,6 +57,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeoutException;
 import org.apache.commons.io.FileUtils;
 import org.junit.Before;
@@ -96,6 +113,30 @@ public class TerraformDestroyTaskHandlerTest extends CategoryTest {
     Files.deleteIfExists(Paths.get("sourceDir"));
   }
 
+  @Test
+  @Owner(developers = TMACARI)
+  @Category(UnitTests.class)
+  public void testApplyWithArtifactoryConfigAndVarFiles() throws IOException, TimeoutException, InterruptedException {
+    when(secretDecryptionService.decrypt(any(), any())).thenReturn(null);
+    when(terraformBaseHelper.fetchConfigFileAndPrepareScriptDir(
+             any(), anyString(), anyString(), anyString(), eq(logCallback), anyString()))
+        .thenReturn("sourceDir");
+    doNothing().when(terraformBaseHelper).downloadTfStateFile(null, "accountId", null, "scriptDir");
+    FileIo.createDirectoryIfDoesNotExist("sourceDir");
+    File outputFile = new File("sourceDir/terraform-output.tfvars");
+    FileUtils.touch(outputFile);
+    doNothing().when(terraformBaseHelper).addVarFilesCommitIdsToMap(any(), any(), any());
+    when(terraformBaseHelper.executeTerraformDestroyStep(any()))
+        .thenReturn(CliResponse.builder().commandExecutionStatus(CommandExecutionStatus.SUCCESS).build());
+    TerraformTaskNGResponse response = terraformDestroyTaskHandler.executeTaskInternal(
+        getTerraformTaskParametersWithArtifactoryConfig(), "delegateId", "taskId", logCallback);
+    assertThat(response).isNotNull();
+    assertThat(response.getCommandExecutionStatus()).isEqualTo(CommandExecutionStatus.SUCCESS);
+    Files.deleteIfExists(Paths.get(outputFile.getPath()));
+    Files.deleteIfExists(Paths.get("sourceDir"));
+    verify(terraformBaseHelper, times(1)).addVarFilesCommitIdsToMap(any(), any(), any());
+  }
+
   private TerraformTaskNGParameters getTerraformTaskParameters() {
     return TerraformTaskNGParameters.builder()
         .accountId("accountId")
@@ -118,6 +159,32 @@ public class TerraformDestroyTaskHandlerTest extends CategoryTest {
                                 .build())
                         .build())
                 .build())
+        .planName("planName")
+        .build();
+  }
+
+  private TerraformTaskNGParameters getTerraformTaskParametersWithArtifactoryConfig() {
+    List<EncryptedDataDetail> encryptedDataDetails = Collections.singletonList(mock(EncryptedDataDetail.class));
+    ArtifactoryUsernamePasswordAuthDTO credentials = ArtifactoryUsernamePasswordAuthDTO.builder().build();
+    ArtifactoryConnectorDTO artifactoryConnectorDTO =
+        ArtifactoryConnectorDTO.builder()
+            .auth(ArtifactoryAuthenticationDTO.builder().credentials(credentials).build())
+            .build();
+    ArtifactoryStoreDelegateConfig artifactoryStoreDelegateConfig =
+        ArtifactoryStoreDelegateConfig.builder()
+            .artifacts(Arrays.asList(ArtifactoryFile.builder().path("artifactPath").name("artifactName").build()))
+            .repositoryPath("repoName")
+            .encryptedDataDetails(encryptedDataDetails)
+            .connectorDTO(ConnectorInfoDTO.builder().connectorConfig(artifactoryConnectorDTO).build())
+            .build();
+    return TerraformTaskNGParameters.builder()
+        .accountId("accountId")
+        .taskType(TFTaskType.DESTROY)
+        .entityId("provisionerIdentifier")
+        .encryptedTfPlan(encryptedPlanContent)
+        .configFile(null)
+        .fileStoreConfigFiles(artifactoryStoreDelegateConfig)
+        .varFileInfos(Collections.singletonList(RemoteTerraformVarFileInfo.builder().build()))
         .planName("planName")
         .build();
   }

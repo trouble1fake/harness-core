@@ -7,6 +7,7 @@ import software.wings.helpers.ext.jenkins.BuildDetails;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -28,5 +29,12 @@ public class ArtifactoryNgServiceImpl implements ArtifactoryNgService {
   public Map<String, String> getRepositories(ArtifactoryConfigRequest artifactoryConfig, String packageType) {
     return artifactoryClient.getRepositories(
         artifactoryConfig, Arrays.stream(PackageTypeImpl.values()).filter(type -> docker != type).collect(toList()));
+  }
+
+  @Override
+  public InputStream downloadArtifacts(ArtifactoryConfigRequest artifactoryConfig, String repoKey,
+      Map<String, String> metadata, String artifactPathMetadataKey, String artifactFileNameMetadataKey) {
+    return artifactoryClient.downloadArtifacts(
+        artifactoryConfig, repoKey, metadata, artifactPathMetadataKey, artifactFileNameMetadataKey);
   }
 }

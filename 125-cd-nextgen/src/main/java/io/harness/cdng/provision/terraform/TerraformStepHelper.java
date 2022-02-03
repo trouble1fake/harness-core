@@ -41,6 +41,7 @@ import io.harness.connector.validator.scmValidators.GitConfigAuthenticationInfoH
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.beans.FileBucket;
 import io.harness.delegate.beans.artifactory.ArtifactoryFile;
+import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryConnectorDTO;
 import io.harness.delegate.beans.connector.scm.GitConnectionType;
 import io.harness.delegate.beans.connector.scm.ScmConnector;
 import io.harness.delegate.beans.connector.scm.adapter.ScmConnectorMapper;
@@ -236,8 +237,8 @@ public class TerraformStepHelper {
     }
     k8sStepHelper.validateManifest(store.getKind(), connectorDTO, validationMessage);
     NGAccess basicNGAccessObject = AmbianceUtils.getNgAccess(ambiance);
-    List<EncryptedDataDetail> encryptedDataDetails =
-        secretManagerClientService.getEncryptionDetails(basicNGAccessObject, connectorDTO.getConnectorConfig());
+    List<EncryptedDataDetail> encryptedDataDetails = secretManagerClientService.getEncryptionDetails(
+        basicNGAccessObject, ((ArtifactoryConnectorDTO) connectorDTO.getConnectorConfig()).getAuth().getCredentials());
 
     return ArtifactoryStoreDelegateConfig.builder()
         .repositoryPath(artifactoryStoreConfig.getRepositoryPath().getValue())
