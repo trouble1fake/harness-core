@@ -11,6 +11,7 @@ import "google/protobuf/wrappers.proto";
 import "970-ng-commons/src/main/proto/io/harness/eventsframework/schemas/entity/entity_detail.proto";
 import "970-ng-commons/src/main/proto/io/harness/eventsframework/schemas/entity/entity_scope_info.proto";
 import "io/harness/gitsync/change_type.proto";
+import "io/harness/gitsync/user_principal.proto";
 
 option java_multiple_files = true;
 
@@ -53,6 +54,7 @@ message FileInfo {
   io.harness.gitsync.ChangeType change_type = 12;
   google.protobuf.StringValue commit_msg = 13;
   google.protobuf.StringValue old_file_sha = 14;
+  bool is_full_sync_flow = 15;
 }
 
 message PushFileResponse {
@@ -71,19 +73,13 @@ message IsGitSyncEnabled {
 }
 message Principal {
   oneof principal {
-    UserPrincipal user_principal = 1;
+    io.harness.gitsync.UserPrincipal user_principal = 1;
     ServicePrincipal service_principal = 2;
   }
 }
 
 message ServicePrincipal {
   string name = 1;
-}
-
-message UserPrincipal {
-  google.protobuf.StringValue user_id = 1;
-  google.protobuf.StringValue email = 2;
-  google.protobuf.StringValue user_name = 3;
 }
 
 message RepoDetails {

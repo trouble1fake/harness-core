@@ -83,11 +83,7 @@ public class UserProfileHelper {
         && SourcePrincipalContextBuilder.getSourcePrincipal().getType() == PrincipalType.USER) {
       io.harness.security.dto.UserPrincipal userPrincipal =
           (io.harness.security.dto.UserPrincipal) SourcePrincipalContextBuilder.getSourcePrincipal();
-      return UserPrincipal.newBuilder()
-          .setEmail(StringValue.of(userPrincipal.getEmail()))
-          .setUserId(StringValue.of(userPrincipal.getName()))
-          .setUserName(StringValue.of(userPrincipal.getUsername()))
-          .build();
+      return UserPrincipalMapper.toProto(userPrincipal);
     }
     throw new InvalidRequestException("User not set for push event.");
   }

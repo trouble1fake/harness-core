@@ -27,4 +27,6 @@ public interface FullSyncJobService {
 
   Optional<GitFullSyncJob> getRunningOrQueuedJob(
       String accountIdentifier, String orgIdentifier, String projectIdentifier);
+
+  Optional<GitFullSyncJob> getRunningJob(String accountIdentifier, String orgIdentifier, String projectIdentifier);
 }

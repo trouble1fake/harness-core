@@ -19,4 +19,6 @@ import org.springframework.data.repository.CrudRepository;
 @OwnedBy(PL)
 public interface FullSyncJobRepository extends CrudRepository<GitFullSyncJob, String>, FullSyncJobRepositoryCustom {
   GitFullSyncJob findByAccountIdentifierAndUuid(String accountIdentifier, String uuid);
+  GitFullSyncJob findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndSyncStatus(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, GitFullSyncJob.SyncStatus status);
 }

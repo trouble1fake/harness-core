@@ -91,7 +91,9 @@ public class HarnessToGitPushInfoGrpcService extends HarnessToGitPushInfoService
 
   private io.harness.security.dto.Principal getPrincipal(FileInfo request) {
     final Principal principalFromProto = request.getPrincipal();
-    if (principalFromProto.hasUserPrincipal()) {
+    if (request.getIsFullSyncFlow()) {
+      return harnessToGitHelperService.getFullSyncUser(request);
+    } else if (principalFromProto.hasUserPrincipal()) {
       final io.harness.gitsync.UserPrincipal userPrincipal = principalFromProto.getUserPrincipal();
       return new UserPrincipal(userPrincipal.getUserId().getValue(), userPrincipal.getEmail().getValue(),
           userPrincipal.getUserName().getValue(), request.getAccountId());

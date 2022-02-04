@@ -14,6 +14,7 @@ import io.harness.iterator.PersistentRegularIterable;
 import io.harness.mongo.index.FdIndex;
 import io.harness.mongo.index.FdUniqueIndex;
 import io.harness.persistence.PersistentEntity;
+import io.harness.security.dto.UserPrincipal;
 
 import java.util.List;
 import javax.validation.constraints.NotNull;
@@ -53,6 +54,7 @@ public class GitFullSyncJob implements PersistentEntity, PersistentRegularIterab
   String targetBranch;
   String branch;
   String prTitle;
+  UserPrincipal triggeredBy;
 
   int retryCount;
   @FdIndex @NonFinal Long nextRuntime;

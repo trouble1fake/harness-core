@@ -16,6 +16,7 @@ import io.harness.gitsync.FileInfo;
 import io.harness.gitsync.PushFileResponse;
 import io.harness.gitsync.PushInfo;
 import io.harness.gitsync.RepoDetails;
+import io.harness.security.dto.UserPrincipal;
 
 @OwnedBy(DX)
 public interface HarnessToGitHelperService {
@@ -26,4 +27,6 @@ public interface HarnessToGitHelperService {
   BranchDetails getBranchDetails(RepoDetails repoDetails);
 
   PushFileResponse pushFile(FileInfo request);
+
+  UserPrincipal getFullSyncUser(FileInfo request);
 }

@@ -25,6 +25,7 @@ import io.harness.gitsync.PushFileResponse;
 import io.harness.gitsync.UserPrincipal;
 import io.harness.gitsync.common.helper.ChangeTypeMapper;
 import io.harness.gitsync.common.helper.GitSyncGrpcClientUtils;
+import io.harness.gitsync.common.helper.UserPrincipalMapper;
 import io.harness.gitsync.exceptions.GitSyncException;
 import io.harness.gitsync.interceptor.GitEntityInfo;
 import io.harness.gitsync.persistance.GitSyncSdkService;
@@ -94,7 +95,8 @@ public class SCMGitSyncHelper {
                                    .setCommitMsg(StringValue.of(gitBranchInfo.getCommitMsg()))
                                    .setYamlGitConfigId(gitBranchInfo.getYamlGitConfigId())
                                    .putAllContextMap(MDC.getCopyOfContextMap())
-                                   .setYaml(emptyIfNull(yaml));
+                                   .setYaml(emptyIfNull(yaml))
+                                   .setIsFullSyncFlow(gitBranchInfo.getIsFullSyncFlow());
     if (gitBranchInfo.getBaseBranch() != null) {
       builder.setBaseBranch(StringValue.of(gitBranchInfo.getBaseBranch()));
     }
@@ -139,12 +141,7 @@ public class SCMGitSyncHelper {
       case USER:
         io.harness.security.dto.UserPrincipal userPrincipalFromContext =
             (io.harness.security.dto.UserPrincipal) sourcePrincipal;
-        final UserPrincipal userPrincipal = UserPrincipal.newBuilder()
-                                                .setEmail(StringValue.of(userPrincipalFromContext.getEmail()))
-                                                .setUserId(StringValue.of(userPrincipalFromContext.getName()))
-                                                .setUserName(StringValue.of(userPrincipalFromContext.getUsername()))
-                                                .build();
-        return principalBuilder.setUserPrincipal(userPrincipal).build();
+        return principalBuilder.setUserPrincipal(UserPrincipalMapper.toProto(userPrincipalFromContext)).build();
       case SERVICE:
         final ServicePrincipal servicePrincipalFromContext = (ServicePrincipal) sourcePrincipal;
         final io.harness.gitsync.ServicePrincipal servicePrincipal =

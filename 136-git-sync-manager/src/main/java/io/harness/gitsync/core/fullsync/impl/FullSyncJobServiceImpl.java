@@ -93,4 +93,13 @@ public class FullSyncJobServiceImpl implements FullSyncJobService {
                             .in(statusOfRunningOrQueuedJobs);
     return Optional.ofNullable(fullSyncJobRepository.find(criteria));
   }
+
+  @Override
+  public Optional<GitFullSyncJob> getRunningJob(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier) {
+    GitFullSyncJob fullSyncJob =
+        fullSyncJobRepository.findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndSyncStatus(
+            accountIdentifier, orgIdentifier, projectIdentifier, SyncStatus.RUNNING);
+    return Optional.ofNullable(fullSyncJob);
+  }
 }
