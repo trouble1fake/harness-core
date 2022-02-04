@@ -121,7 +121,7 @@ public class AccountSettingResource {
         ApiResponse(responseCode = "default", description = "Returns created account setting")
       })
   public ResponseDTO<AccountSettingResponseDTO>
-  update(@RequestBody(required = true, description = "Details of the ACcountSetting to create") @Valid
+  update(@RequestBody(required = true, description = "Details of the AccountSetting to create") @Valid
          @NotNull AccountSettingsDTO accountSettingsDTO,
       @Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
           NGCommonEntityConstants.ACCOUNT_KEY) @NotNull String accountIdentifier) {

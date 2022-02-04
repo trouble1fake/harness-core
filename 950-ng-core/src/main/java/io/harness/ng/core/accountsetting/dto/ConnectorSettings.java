@@ -17,5 +17,10 @@ import org.springframework.data.annotation.TypeAlias;
 @EqualsAndHashCode(callSuper = true)
 @TypeAlias("io.harness.ng.core.accountsetting.dto.ConnectorSettings")
 public class ConnectorSettings extends AccountSettingConfig {
-  Boolean builtInSMDisabled = Boolean.FALSE;
+  Boolean builtInSMDisabled;
+
+  @Override
+  public AccountSettingConfig getDefaultConfig() {
+    return ConnectorSettings.builder().builtInSMDisabled(Boolean.FALSE).build();
+  }
 }

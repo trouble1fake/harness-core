@@ -16,4 +16,6 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 @OwnedBy(HarnessTeam.PL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonSubTypes({ @JsonSubTypes.Type(value = ConnectorSettings.class, name = "Connector") })
-public class AccountSettingConfig {}
+public abstract class AccountSettingConfig {
+  public abstract AccountSettingConfig getDefaultConfig();
+}
