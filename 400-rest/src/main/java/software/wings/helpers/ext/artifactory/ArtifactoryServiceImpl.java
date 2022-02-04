@@ -281,20 +281,25 @@ public class ArtifactoryServiceImpl implements ArtifactoryService {
           artifactPath = artifactPath.substring(1);
         }
         String subPath;
-        if (artifactPath.contains("/")) {
-          String[] pathElems = artifactPath.split("/");
-          subPath = getPath(Arrays.stream(pathElems).limit(pathElems.length - 1).collect(toList()));
-          artifactName = pathElems[pathElems.length - 1];
-          if (!artifactName.contains("?") && !artifactName.contains("*")) {
-            artifactName = artifactName + "*";
-          }
-          requestBody = "items.find({\"repo\":\"" + repositoryName + "\"}, {\"path\": {\"$match\":\"" + subPath
-              + "\"}}, {\"name\": {\"$match\": \"" + artifactName + "\"}}).sort({\"$desc\" : [\"created\"]}).limit("
-              + maxVersions + ")";
+        if (repositoryType.equals("helm")) {
+          requestBody = "items.find({\"repo\":\"" + repositoryName + "\"}, {\"@chart.name\": \"" + artifactPath
+              + "\"}).include(\"@chart.version\").sort({\"$desc\" : [\"created\"]}).limit(" + maxVersions + ")";
         } else {
-          artifactPath = artifactPath + "*";
-          requestBody = "items.find({\"repo\":\"" + repositoryName + "\"}, {\"depth\": 1}, {\"name\": {\"$match\": \""
-              + artifactPath + "\"}}).sort({\"$desc\" : [\"created\"]}).limit(" + maxVersions + ")";
+          if (artifactPath.contains("/")) {
+            String[] pathElems = artifactPath.split("/");
+            subPath = getPath(Arrays.stream(pathElems).limit(pathElems.length - 1).collect(toList()));
+            artifactName = pathElems[pathElems.length - 1];
+            if (!artifactName.contains("?") && !artifactName.contains("*")) {
+              artifactName = artifactName + "*";
+            }
+            requestBody = "items.find({\"repo\":\"" + repositoryName + "\"}, {\"path\": {\"$match\":\"" + subPath
+                + "\"}}, {\"name\": {\"$match\": \"" + artifactName + "\"}}).sort({\"$desc\" : [\"created\"]}).limit("
+                + maxVersions + ")";
+          } else {
+            artifactPath = artifactPath + "*";
+            requestBody = "items.find({\"repo\":\"" + repositoryName + "\"}, {\"depth\": 1}, {\"name\": {\"$match\": \""
+                + artifactPath + "\"}}).sort({\"$desc\" : [\"created\"]}).limit(" + maxVersions + ")";
+          }
         }
         ArtifactoryRequest repositoryRequest = new ArtifactoryRequestImpl()
                                                    .apiUrl(aclQuery)
@@ -312,6 +317,9 @@ public class ArtifactoryServiceImpl implements ArtifactoryService {
         }
         Map<String, List> response = artifactoryResponse.parseBody(Map.class);
         if (response != null) {
+          if (repositoryType.equals("helm")) {
+            return getHelmChartDetailsFromResponse(response);
+          }
           List<Map<String, String>> results = response.get(RESULTS);
           if (results != null) {
             for (Map<String, String> result : results) {
@@ -354,6 +362,28 @@ public class ArtifactoryServiceImpl implements ArtifactoryService {
       handleAndRethrow(e, USER);
     }
     return new ArrayList<>();
+  }
+
+  private List<BuildDetails> getHelmChartDetailsFromResponse(Map<String, List> response) {
+    List<Map<String, Object>> results = response.get(RESULTS);
+    List<BuildDetails> helmChartDetails = new ArrayList<>();
+    if (results != null) {
+      for (Map<String, Object> item : results) {
+        String name = (String) item.get("name");
+        List<Map<String, String>> properties = (List<Map<String, String>>) item.get("properties");
+        if (isEmpty(properties)) {
+          continue;
+        }
+        Map<String, String> versionProperty =
+            properties.stream().filter(property -> property.get("key").equals("chart.version")).findAny().orElse(null);
+        if (versionProperty == null) {
+          continue;
+        }
+        String version = versionProperty.get("value");
+        helmChartDetails.add(aBuildDetails().withNumber(version).withUiDisplayName(name).build());
+      }
+    }
+    return helmChartDetails;
   }
 
   private String constructBuildNumber(String artifactPattern, String path) {

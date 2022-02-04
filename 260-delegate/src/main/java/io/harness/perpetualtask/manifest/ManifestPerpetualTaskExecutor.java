@@ -29,6 +29,7 @@ import io.harness.perpetualtask.artifact.ArtifactsPublishedCache;
 import io.harness.serializer.KryoSerializer;
 
 import software.wings.beans.appmanifest.HelmChart;
+import software.wings.delegatetasks.helm.ManifestRepoServiceType;
 import software.wings.delegatetasks.manifest.ApplicationManifestLogContext;
 import software.wings.delegatetasks.manifest.ManifestCollectionExecutionResponse;
 import software.wings.delegatetasks.manifest.ManifestCollectionResponse;
@@ -37,6 +38,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
@@ -62,7 +64,8 @@ public class ManifestPerpetualTaskExecutor implements PerpetualTaskExecutor {
   private final @Getter Cache<String, ArtifactsPublishedCache<HelmChart>> cache = Caffeine.newBuilder().build();
 
   @Inject
-  public ManifestPerpetualTaskExecutor(ManifestRepositoryService manifestRepositoryService,
+  public ManifestPerpetualTaskExecutor(
+      @Named(ManifestRepoServiceType.HELM_COMMAND_SERVICE) ManifestRepositoryService manifestRepositoryService,
       DelegateAgentManagerClient delegateAgentManagerClient, KryoSerializer kryoSerializer) {
     this.kryoSerializer = kryoSerializer;
     this.manifestRepositoryService = manifestRepositoryService;

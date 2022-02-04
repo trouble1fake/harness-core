@@ -32,6 +32,8 @@ public class ManifestVariable extends Variable {
   private List<String> workflowIds;
   private String serviceId;
   private String serviceName;
+  private String appManifestId;
+  private HelmChartInputType inputType;
   private List<ApplicationManifestSummary> applicationManifestSummary;
   private LastDeployedHelmChartInformation lastDeployedHelmChartInfo;
 

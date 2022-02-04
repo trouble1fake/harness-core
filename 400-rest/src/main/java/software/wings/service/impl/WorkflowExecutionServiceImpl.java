@@ -67,6 +67,7 @@ import static software.wings.beans.deployment.DeploymentMetadata.Include;
 import static software.wings.beans.deployment.DeploymentMetadata.Include.ARTIFACT_SERVICE;
 import static software.wings.beans.deployment.DeploymentMetadata.Include.DEPLOYMENT_TYPE;
 import static software.wings.beans.deployment.DeploymentMetadata.Include.ENVIRONMENT;
+import static software.wings.service.impl.ApplicationManifestServiceImpl.CHART_NAME;
 import static software.wings.sm.InstanceStatusSummary.InstanceStatusSummaryBuilder.anInstanceStatusSummary;
 import static software.wings.sm.StateType.APPROVAL;
 import static software.wings.sm.StateType.APPROVAL_RESUME;
@@ -201,6 +202,7 @@ import software.wings.beans.EnvSummary;
 import software.wings.beans.ExecutionArgs;
 import software.wings.beans.GraphGroup;
 import software.wings.beans.GraphNode;
+import software.wings.beans.HelmChartInputType;
 import software.wings.beans.HelmExecutionSummary;
 import software.wings.beans.InfrastructureMapping;
 import software.wings.beans.NameValuePair;
@@ -2444,22 +2446,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
     if (isEmpty(executionArgs.getHelmCharts())) {
       return;
     }
-    List<String> helmChartIds = executionArgs.getHelmCharts()
-                                    .stream()
-                                    .map(HelmChart::getUuid)
-                                    .filter(Objects::nonNull)
-                                    .distinct()
-                                    .collect(toList());
-
-    List<HelmChart> helmCharts = helmChartService.listByIds(accountId, helmChartIds);
-    helmCharts.forEach(helmChart
-        -> helmChart.setMetadata(applicationManifestService.fetchAppManifestProperties(
-            helmChart.getAppId(), helmChart.getApplicationManifestId())));
-
-    if (helmCharts == null || helmChartIds.size() != helmCharts.size()) {
-      log.error("helmChartIds from executionArgs contains invalid helmCharts");
-      throw new InvalidRequestException("Invalid helm chart");
-    }
+    List<HelmChart> helmCharts = populateHelmChartInExecutionArgs(executionArgs, accountId);
 
     List<String> serviceIds =
         isEmpty(workflowExecution.getServiceIds()) ? new ArrayList<>() : workflowExecution.getServiceIds();
@@ -2476,6 +2463,43 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
 
     executionArgs.setHelmCharts(helmCharts);
     workflowExecution.setHelmCharts(filteredHelmCharts);
+  }
+
+  private List<HelmChart> populateHelmChartInExecutionArgs(ExecutionArgs executionArgs, String accountId) {
+    List<String> helmChartIds = executionArgs.getHelmCharts()
+                                    .stream()
+                                    .map(HelmChart::getUuid)
+                                    .filter(Objects::nonNull)
+                                    .distinct()
+                                    .collect(toList());
+
+    List<HelmChart> versionInputHelmCharts =
+        executionArgs.getHelmCharts()
+            .stream()
+            .filter(helmChart -> helmChart.getUuid() == null && helmChart.getVersion() != null)
+            .distinct()
+            .collect(toList());
+
+    List<HelmChart> helmCharts = helmChartService.listByIds(accountId, helmChartIds);
+    helmCharts.forEach(helmChart
+        -> helmChart.setMetadata(applicationManifestService.fetchAppManifestProperties(
+            helmChart.getAppId(), helmChart.getApplicationManifestId())));
+    versionInputHelmCharts.forEach(helmChart -> {
+      Map<String, String> properties = applicationManifestService.fetchAppManifestProperties(
+          helmChart.getAppId(), helmChart.getApplicationManifestId());
+      helmChart.setName(properties.get(CHART_NAME));
+      helmChart.setDisplayName(
+          helmChart.getName() != null ? helmChart.getName() + "-" + helmChart.getVersion() : helmChart.getVersion());
+      helmChartService.create(helmChart);
+      helmChart.setMetadata(properties);
+    });
+    helmCharts.addAll(versionInputHelmCharts);
+
+    if (helmCharts == null || helmChartIds.size() + versionInputHelmCharts.size() != helmCharts.size()) {
+      log.error("helmChartIds from executionArgs contains invalid helmCharts");
+      throw new InvalidRequestException("Invalid helm chart");
+    }
+    return helmCharts;
   }
 
   private void populateArtifacts(WorkflowExecution workflowExecution, WorkflowStandardParams stdParams,
@@ -3017,14 +3041,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
 
     setArtifactsFromArtifactVariables(executionArgs);
 
-    if (isEmpty(executionArgs.getHelmCharts()) && isNotEmpty(executionArgs.getManifestVariables())) {
-      List<HelmChart> manifests =
-          executionArgs.getManifestVariables()
-              .stream()
-              .map(manifestVariable -> HelmChart.builder().uuid(manifestVariable.getValue()).build())
-              .collect(toList());
-      executionArgs.setHelmCharts(manifests);
-    }
+    setManifestsFromManifestVariables(appId, executionArgs, accountId);
 
     switch (executionArgs.getWorkflowType()) {
       case PIPELINE: {
@@ -3047,6 +3064,31 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
 
       default:
         throw new WingsException(ErrorCode.INVALID_ARGUMENT).addParam("args", "workflowType");
+    }
+  }
+
+  private void setManifestsFromManifestVariables(String appId, ExecutionArgs executionArgs, String accountId) {
+    if (isEmpty(executionArgs.getHelmCharts()) && isNotEmpty(executionArgs.getManifestVariables())) {
+      List<HelmChart> manifests =
+          executionArgs.getManifestVariables()
+              .stream()
+              .filter(manifestVariable -> HelmChartInputType.ID.equals(manifestVariable.getInputType()))
+              .map(manifestVariable -> HelmChart.builder().uuid(manifestVariable.getValue()).build())
+              .collect(toList());
+      manifests.addAll(
+          executionArgs.getManifestVariables()
+              .stream()
+              .filter(manifestVariable -> HelmChartInputType.VERSION.equals(manifestVariable.getInputType()))
+              .map(manifestVariable
+                  -> HelmChart.builder()
+                         .appId(appId)
+                         .accountId(accountId)
+                         .serviceId(manifestVariable.getServiceId())
+                         .applicationManifestId(manifestVariable.getAppManifestId())
+                         .version(manifestVariable.getValue())
+                         .build())
+              .collect(toList()));
+      executionArgs.setHelmCharts(manifests);
     }
   }
 
