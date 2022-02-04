@@ -49,7 +49,6 @@ public class PipelineOutboxEventHandler implements OutboxEventHandler {
   private final InputSetEventHandler inputSetEventHandler;
 
   @Getter private final Subject<PipelineActionObserver> pipelineActionObserverSubject = new Subject<>();
-  ;
 
   @Inject
   PipelineOutboxEventHandler(AuditClientService auditClientService, InputSetEventHandler inputSetEventHandler) {
@@ -106,6 +105,17 @@ public class PipelineOutboxEventHandler implements OutboxEventHandler {
   private boolean handlePipelineDeleteEvent(OutboxEvent outboxEvent) throws IOException {
     GlobalContext globalContext = outboxEvent.getGlobalContext();
     PipelineDeleteEvent event = objectMapper.readValue(outboxEvent.getEventData(), PipelineDeleteEvent.class);
+
+    Principal principal = null;
+    if (globalContext.get(PRINCIPAL_CONTEXT) == null) {
+      principal = new ServicePrincipal(PIPELINE_SERVICE.getServiceId());
+    } else if (globalContext.get(PRINCIPAL_CONTEXT) != null) {
+      principal = ((PrincipalContextData) globalContext.get(PRINCIPAL_CONTEXT)).getPrincipal();
+    }
+    pipelineActionObserverSubject.fireInform(PipelineActionObserver::onDelete, event);
+    if (event.getIsFromGit()) {
+      return true;
+    }
     AuditEntry auditEntry = AuditEntry.builder()
                                 .action(Action.DELETE)
                                 .module(ModuleType.CORE)
@@ -115,13 +125,6 @@ public class PipelineOutboxEventHandler implements OutboxEventHandler {
                                 .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))
                                 .insertId(outboxEvent.getId())
                                 .build();
-    Principal principal = null;
-    if (globalContext.get(PRINCIPAL_CONTEXT) == null) {
-      principal = new ServicePrincipal(PIPELINE_SERVICE.getServiceId());
-    } else if (globalContext.get(PRINCIPAL_CONTEXT) != null) {
-      principal = ((PrincipalContextData) globalContext.get(PRINCIPAL_CONTEXT)).getPrincipal();
-    }
-    pipelineActionObserverSubject.fireInform(PipelineActionObserver::onDelete, event);
     return auditClientService.publishAudit(auditEntry, fromSecurityPrincipal(principal), globalContext);
   }
 

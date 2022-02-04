@@ -163,6 +163,7 @@ public class DelegateTask
   private int broadcastCount;
   private long nextBroadcast;
   private boolean forceExecute;
+  private int broadcastRound;
 
   private long expiry;
 

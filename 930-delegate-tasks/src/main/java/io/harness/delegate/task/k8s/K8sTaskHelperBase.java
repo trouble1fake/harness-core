@@ -2292,10 +2292,8 @@ public class K8sTaskHelperBase {
       case KUSTOMIZE:
         KustomizeManifestDelegateConfig kustomizeManifest = (KustomizeManifestDelegateConfig) manifestDelegateConfig;
 
-        if (k8sDelegateTaskParams.isUseVarSupportForKustomize()) {
-          String kustomizePath = manifestFilesDirectory + '/' + kustomizeManifest.getKustomizeDirPath();
-          savingPatchesToDirectory(kustomizePath, manifestOverrideFiles, executionLogCallback);
-        }
+        String kustomizePath = Paths.get(manifestFilesDirectory, kustomizeManifest.getKustomizeDirPath()).toString();
+        savingPatchesToDirectory(kustomizePath, manifestOverrideFiles, executionLogCallback);
         return kustomizeTaskHelper.build(manifestFilesDirectory, k8sDelegateTaskParams.getKustomizeBinaryPath(),
             kustomizeManifest.getPluginPath(), kustomizeManifest.getKustomizeDirPath(), executionLogCallback);
 
@@ -2336,8 +2334,8 @@ public class K8sTaskHelperBase {
       case KUSTOMIZE:
         KustomizeManifestDelegateConfig kustomizeManifest = (KustomizeManifestDelegateConfig) manifestDelegateConfig;
         return kustomizeTaskHelper.buildForApply(k8sDelegateTaskParams.getKustomizeBinaryPath(),
-            kustomizeManifest.getPluginPath(), manifestFilesDirectory, filesList,
-            k8sDelegateTaskParams.isUseVarSupportForKustomize(), manifestOverrideFiles, executionLogCallback);
+            kustomizeManifest.getPluginPath(), manifestFilesDirectory, filesList, true, manifestOverrideFiles,
+            executionLogCallback);
 
       default:
         throw new UnsupportedOperationException(

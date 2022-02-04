@@ -26,6 +26,7 @@ public class StagesExecutionInfo {
   String fullPipelineYaml;
   List<String> stageIdentifiers;
   Map<String, String> expressionValues;
+  boolean allowStagesExecution;
 
   public StagesExecutionMetadata toStagesExecutionMetadata() {
     return StagesExecutionMetadata.builder()

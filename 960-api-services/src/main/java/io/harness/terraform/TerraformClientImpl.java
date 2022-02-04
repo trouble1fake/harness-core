@@ -22,7 +22,9 @@ import io.harness.exception.TerraformCommandExecutionException;
 import io.harness.exception.runtime.TerraformCliRuntimeException;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
+import io.harness.logging.NoopExecutionCallback;
 import io.harness.logging.PlanJsonLogOutputStream;
+import io.harness.terraform.beans.TerraformVersion;
 import io.harness.terraform.request.TerraformApplyCommandRequest;
 import io.harness.terraform.request.TerraformDestroyCommandRequest;
 import io.harness.terraform.request.TerraformInitCommandRequest;
@@ -35,10 +37,12 @@ import com.google.inject.Singleton;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import javax.annotation.Nonnull;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.zeroturnaround.exec.stream.LogOutputStream;
 
 @Slf4j
@@ -75,7 +79,8 @@ public class TerraformClientImpl implements TerraformClient {
   public CliResponse destroy(TerraformDestroyCommandRequest terraformDestroyCommandRequest, long timeoutInMillis,
       Map<String, String> envVariables, String scriptDirectory, @Nonnull LogCallback executionLogCallback)
       throws InterruptedException, TimeoutException, IOException {
-    String command = format("terraform destroy -force %s %s",
+    String command = format("terraform destroy %s %s %s",
+        TerraformHelperUtils.getAutoApproveArgument(version(timeoutInMillis, scriptDirectory)),
         TerraformHelperUtils.generateCommandFlagsString(terraformDestroyCommandRequest.getTargets(), TARGET_PARAM),
         TerraformHelperUtils.generateCommandFlagsString(
             terraformDestroyCommandRequest.getVarFilePaths(), VAR_FILE_PARAM));
@@ -183,6 +188,20 @@ public class TerraformClientImpl implements TerraformClient {
     String command = "terraform output -json > " + tfOutputsFile;
     return executeTerraformCLICommand(command, timeoutInMillis, envVariables, scriptDirectory, executionLogCallback,
         command, new LogCallbackOutputStream(executionLogCallback));
+  }
+
+  @NotNull
+  @Override
+  public TerraformVersion version(long timeoutInMillis, String scriptDirectory)
+      throws InterruptedException, TimeoutException, IOException {
+    String command = "terraform version";
+    CliResponse response = cliHelper.executeCliCommand(
+        command, timeoutInMillis, Collections.emptyMap(), scriptDirectory, new NoopExecutionCallback());
+    if (response.getCommandExecutionStatus() == CommandExecutionStatus.SUCCESS) {
+      return TerraformVersion.create(response.getOutput());
+    }
+
+    return TerraformVersion.createDefault();
   }
 
   @VisibleForTesting

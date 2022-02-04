@@ -120,6 +120,7 @@ public class PipelineExecutionSummaryEntity implements PersistentEntity, UuidAwa
   FailureInfoDTO failureInfo;
   GovernanceMetadata governanceMetadata;
   StagesExecutionMetadata stagesExecutionMetadata;
+  Boolean allowStagesExecution;
 
   Long startTs;
   Long endTs;
@@ -222,5 +223,9 @@ public class PipelineExecutionSummaryEntity implements PersistentEntity, UuidAwa
         + "rootExecutionId";
     public String parentExecutionId = PlanExecutionSummaryKeys.retryExecutionMetadata + "."
         + "parentExecutionId";
+  }
+
+  public boolean isStagesExecutionAllowed() {
+    return allowStagesExecution != null && allowStagesExecution;
   }
 }

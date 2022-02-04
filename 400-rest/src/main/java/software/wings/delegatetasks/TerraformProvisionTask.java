@@ -69,6 +69,7 @@ import io.harness.logging.PlanJsonLogOutputStream;
 import io.harness.secretmanagerclient.EncryptDecryptHelper;
 import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.security.encryption.EncryptedRecordData;
+import io.harness.terraform.TerraformClient;
 import io.harness.terraform.TerraformHelperUtils;
 import io.harness.terraform.expression.TerraformPlanExpressionInterface;
 import io.harness.terraform.request.TerraformExecuteStepRequest;
@@ -147,6 +148,7 @@ public class TerraformProvisionTask extends AbstractDelegateRunnableTask {
   @Inject private EncryptDecryptHelper planEncryptDecryptHelper;
   @Inject private TerraformBaseHelper terraformBaseHelper;
   @Inject private AwsHelperService awsHelperService;
+  @Inject private TerraformClient terraformClient;
 
   private static final String AWS_ACCESS_KEY_ID = "AWS_ACCESS_KEY_ID";
   private static final String AWS_SECRET_ACCESS_KEY = "AWS_SECRET_ACCESS_KEY";
@@ -429,8 +431,10 @@ public class TerraformProvisionTask extends AbstractDelegateRunnableTask {
                 }
               } else {
                 if (parameters.getEncryptedTfPlan() == null) {
-                  command = format("terraform destroy -force %s %s", targetArgs, varParams);
-                  commandToLog = format("terraform destroy -force %s %s", targetArgs, uiLogs);
+                  String autoApproveArg = TerraformHelperUtils.getAutoApproveArgument(
+                      terraformClient.version(parameters.getTimeoutInMillis(), scriptDirectory));
+                  command = format("terraform destroy %s %s %s", autoApproveArg, targetArgs, varParams);
+                  commandToLog = format("terraform destroy %s %s %s", autoApproveArg, targetArgs, uiLogs);
                   saveExecutionLog(commandToLog, CommandExecutionStatus.RUNNING, INFO, logCallback);
                   code = executeShellCommand(command, scriptDirectory, parameters, envVars, activityLogOutputStream);
                 } else {

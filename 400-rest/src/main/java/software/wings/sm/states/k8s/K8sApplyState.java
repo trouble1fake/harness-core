@@ -176,7 +176,7 @@ public class K8sApplyState extends AbstractK8sState {
             .valuesYamlList(fetchRenderedValuesFiles(appManifestMap, context))
             .skipDryRun(skipDryRun)
             .skipRendering(skipRendering)
-            .useVarSupportForKustomize(isUseVarSupportForKustomize(context.getAccountId()))
+            .useLatestKustomizeVersion(isUseLatestKustomizeVersion(context.getAccountId()))
             .useNewKubectlVersion(featureFlagService.isEnabled(NEW_KUBECTL_VERSION, infraMapping.getAccountId()))
             .build();
 

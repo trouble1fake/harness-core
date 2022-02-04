@@ -549,8 +549,8 @@ public class CDStepHelper {
     return k8sEntityHelper.getK8sInfraDelegateConfig(infrastructure, ngAccess);
   }
 
-  public boolean isUseVarSupportForKustomize(String accountId) {
-    return cdFeatureFlagHelper.isEnabled(accountId, FeatureName.VARIABLE_SUPPORT_FOR_KUSTOMIZE);
+  public boolean isUseLatestKustomizeVersion(String accountId) {
+    return cdFeatureFlagHelper.isEnabled(accountId, FeatureName.NEW_KUSTOMIZE_BINARY);
   }
 
   public boolean isUseNewKubectlVersion(String accountId) {

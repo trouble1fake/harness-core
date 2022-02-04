@@ -39,6 +39,7 @@ import io.harness.eventsframework.EventsFrameworkMetadataConstants;
 import io.harness.eventsframework.api.Producer;
 import io.harness.eventsframework.entity_crud.EntityChangeDTO;
 import io.harness.eventsframework.producer.Message;
+import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ff.FeatureFlagService;
 import io.harness.ng.core.utils.NGUtils;
@@ -552,12 +553,32 @@ public class DelegateProfileServiceImpl implements DelegateProfileService, Accou
     }
     Matcher matcher = secretNamePattern.matcher(script);
     while (matcher.find()) {
-      String secret =
-          matcher.group(0).substring(matcher.group(0).indexOf("\"") + 1, matcher.group(0).lastIndexOf("\""));
+      String secret = getSecretNameFromMatcher(matcher);
       if (!secretService.getAccountScopedSecretByName(accountId, secret).isPresent()) {
         secretsName.add(secret);
       }
     }
     return secretsName;
+  }
+
+  private String getSecretNameFromMatcher(Matcher matcher) {
+    String secret = null;
+    try {
+      secret = matcher.group(0).substring(matcher.group(0).indexOf('\"') + 1, matcher.group(0).lastIndexOf('\"'));
+    } catch (Exception e) {
+      log.debug("Exception occurred during parsing secret name inside double quotes", e);
+    }
+
+    try {
+      secret = matcher.group(0).substring(matcher.group(0).indexOf('\'') + 1, matcher.group(0).lastIndexOf('\''));
+    } catch (Exception e) {
+      log.debug("Exception occurred during parsing secret name inside single quotes", e);
+    }
+    if (secret == null) {
+      log.error("Unable to parse some secret name used in the delegate profile");
+      throw new InvalidArgumentsException(
+          "Unable to parse some secret name used in the delegate profile. Make sure secret names are inside single quotes or double quotes only.");
+    }
+    return secret;
   }
 }

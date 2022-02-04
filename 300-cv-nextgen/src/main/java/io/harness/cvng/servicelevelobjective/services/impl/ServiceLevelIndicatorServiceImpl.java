@@ -295,9 +295,9 @@ public class ServiceLevelIndicatorServiceImpl implements ServiceLevelIndicatorSe
         hPersistence.createUpdateOperations(ServiceLevelIndicator.class);
     ServiceLevelIndicator updatableServiceLevelIndicator =
         convertDTOToEntity(projectParams, serviceLevelIndicatorDTO, monitoredServiceIndicator, healthSourceIndicator);
-    updatableEntity.setUpdateOperations(updateOperations, updatableServiceLevelIndicator);
     if (serviceLevelIndicator.shouldReAnalysis(updatableServiceLevelIndicator)) {
-      Instant startTime = timePeriod.getStartTime(ZoneOffset.UTC);
+      updatableEntity.setUpdateOperations(updateOperations, updatableServiceLevelIndicator);
+      Instant startTime = timePeriod.getStartTime(ZoneOffset.UTC).minus(INTERVAL_HOURS, ChronoUnit.HOURS);
       Instant endTime = DateTimeUtils.roundDownTo5MinBoundary(clock.instant());
       for (Instant intervalStartTime = startTime; intervalStartTime.isBefore(endTime);) {
         Instant intervalEndTime = intervalStartTime.plus(INTERVAL_HOURS, ChronoUnit.HOURS);
@@ -309,8 +309,8 @@ public class ServiceLevelIndicatorServiceImpl implements ServiceLevelIndicatorSe
             intervalStartTime, intervalEndTime);
         intervalStartTime = intervalEndTime;
       }
+      hPersistence.update(serviceLevelIndicator, updateOperations);
     }
-    hPersistence.update(serviceLevelIndicator, updateOperations);
   }
 
   private void saveServiceLevelIndicatorEntity(ProjectParams projectParams,

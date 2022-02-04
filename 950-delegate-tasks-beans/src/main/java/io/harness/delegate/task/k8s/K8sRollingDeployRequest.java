@@ -40,6 +40,6 @@ public class K8sRollingDeployRequest implements K8sDeployRequest {
   boolean skipResourceVersioning;
   @Builder.Default boolean shouldOpenFetchFilesLogStream = true;
   CommandUnitsProgress commandUnitsProgress;
-  boolean useVarSupportForKustomize;
+  boolean useLatestKustomizeVersion;
   boolean useNewKubectlVersion;
 }

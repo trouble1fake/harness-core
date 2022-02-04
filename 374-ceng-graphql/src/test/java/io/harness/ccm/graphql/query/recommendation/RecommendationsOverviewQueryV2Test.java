@@ -54,11 +54,13 @@ import org.jooq.Condition;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.runners.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class RecommendationsOverviewQueryV2Test extends CategoryTest {
   private static final String ACCOUNT_ID = "accountId";
   private static final String NAME = "name";
@@ -82,8 +84,6 @@ public class RecommendationsOverviewQueryV2Test extends CategoryTest {
 
   @Before
   public void setUp() throws Exception {
-    MockitoAnnotations.initMocks(this);
-
     when(graphQLUtils.getAccountIdentifier(any())).thenReturn(ACCOUNT_ID);
 
     conditionCaptor = ArgumentCaptor.forClass(Condition.class);
@@ -232,17 +232,18 @@ public class RecommendationsOverviewQueryV2Test extends CategoryTest {
 
     final Condition condition = conditionCaptor.getValue();
 
-    final String expectedCondition = " (\n"
+    final String expectedConditon = "  and (\n"
         + "    (\n"
         + "      \"public\".\"ce_recommendations\".\"clustername\" in ('clusterName')\n"
         + "      and \"public\".\"ce_recommendations\".\"namespace\" in ('namespace')\n"
         + "      and \"public\".\"ce_recommendations\".\"name\" not in ('name')\n"
         + "    )\n"
         + "    or \"public\".\"ce_recommendations\".\"name\" is not null\n"
-        + "  )";
+        + "  )\n"
+        + "  and \"public\".\"ce_recommendations\".\"clustername\" in ('clusterName')";
 
     assertThat(condition).isNotNull();
-    assertThat(condition.toString()).contains(expectedCondition);
+    assertThat(condition.toString()).contains(expectedConditon);
   }
 
   @Test
@@ -304,6 +305,7 @@ public class RecommendationsOverviewQueryV2Test extends CategoryTest {
         ImmutableList.of(QLCEViewFilterWrapper.builder()
                              .viewMetadataFilter(QLCEViewMetadataFilter.builder().viewId(PERSPECTIVE_ID).build())
                              .ruleFilter(QLCEViewRule.builder().conditions(conditions).build())
+                             .idFilter(createViewFilter("clusterName", QLCEViewFilterOperator.IN, CLUSTER_NAME))
                              .build());
 
     return buildFilter(perspectiveFilters);
