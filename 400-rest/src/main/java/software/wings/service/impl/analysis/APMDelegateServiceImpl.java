@@ -235,7 +235,7 @@ public class APMDelegateServiceImpl implements APMDelegateService {
       int placeholderIndex = headerValue.indexOf("encodeWithBase64(");
       if (placeholderIndex != -1) {
         String stringToEncode = headerValue.substring(
-            placeholderIndex + "encodeWithBase64(".length(), headerValue.indexOf(")", placeholderIndex));
+            placeholderIndex + "encodeWithBase64(".length(), headerValue.indexOf(')', placeholderIndex));
         String encodedString = headerValue.replace(
             String.format("encodeWithBase64(%s)", stringToEncode), Base64.encode(stringToEncode.getBytes()));
         headers.put(entry.getKey(), encodedString);
