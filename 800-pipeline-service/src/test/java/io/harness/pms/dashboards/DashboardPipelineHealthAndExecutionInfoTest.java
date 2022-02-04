@@ -10,6 +10,7 @@ package io.harness.pms.dashboards;
 import static io.harness.rule.OwnerRule.PRASHANTSHARMA;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
 
@@ -66,9 +67,17 @@ public class DashboardPipelineHealthAndExecutionInfoTest extends CategoryTest {
         1617624465000L, 1619006865000L, 1619721000000L, 1617129000000L, 1617235200000L, 1616610600000L, 1616697939000L);
     StatusAndTime statusAndTime = StatusAndTime.builder().status(status).time(time).build();
 
-    doReturn(statusAndTime).when(pipelineDashboardService).queryCalculatorForStatusAndTime(anyString());
-    doReturn(0L).when(pipelineDashboardService).queryCalculatorMean(anyString());
-    doReturn(0L).when(pipelineDashboardService).queryCalculatorMedian(anyString());
+    doReturn(statusAndTime)
+        .when(pipelineDashboardService)
+        .queryBuilderSelectStatusAndTime(
+            anyString(), anyString(), anyString(), anyString(), anyLong(), anyLong(), anyString());
+    doReturn(0L)
+        .when(pipelineDashboardService)
+        .queryBuilderMean(anyString(), anyString(), anyString(), anyString(), anyLong(), anyLong(), anyString());
+
+    doReturn(0L)
+        .when(pipelineDashboardService)
+        .queryBuilderMedian(anyString(), anyString(), anyString(), anyString(), anyLong(), anyLong(), anyString());
 
     DashboardPipelineHealthInfo dashboardPipelineHealthInfo = pipelineDashboardService.getDashboardPipelineHealthInfo(
         "ac", "or", "pr", "pip", startInterval, endInterval, previousStartInterval, "CI");
@@ -85,7 +94,8 @@ public class DashboardPipelineHealthAndExecutionInfoTest extends CategoryTest {
     List<Long> emptyTime = new ArrayList<>();
     doReturn(StatusAndTime.builder().time(emptyTime).status(emptyStatus).build())
         .when(pipelineDashboardService)
-        .queryCalculatorForStatusAndTime(anyString());
+        .queryBuilderSelectStatusAndTime(
+            anyString(), anyString(), anyString(), anyString(), anyLong(), anyLong(), anyString());
 
     DashboardPipelineHealthInfo dashboardPipelineHealthInfoEmptyList =
         pipelineDashboardService.getDashboardPipelineHealthInfo(
@@ -99,24 +109,24 @@ public class DashboardPipelineHealthAndExecutionInfoTest extends CategoryTest {
     String table = "pipeline_execution_summary_ci";
 
     // currentMean
-    String queryCurrentMean =
-        pipelineDashboardService.queryBuilderMean("ac", "or", "pr", "pip", startInterval, 1619827200000L, table);
-    doReturn(100L).when(pipelineDashboardService).queryCalculatorMean(queryCurrentMean);
+    doReturn(100L)
+        .when(pipelineDashboardService)
+        .queryBuilderMean("ac", "or", "pr", "pip", startInterval, 1619827200000L, table);
 
     // currentMedian
-    String queryCurrentMedian =
-        pipelineDashboardService.queryBuilderMedian("ac", "or", "pr", "pip", startInterval, 1619827200000L, table);
-    doReturn(150L).when(pipelineDashboardService).queryCalculatorMedian(queryCurrentMedian);
+    doReturn(150L)
+        .when(pipelineDashboardService)
+        .queryBuilderMedian("ac", "or", "pr", "pip", startInterval, 1619827200000L, table);
 
     // PreviousMean
-    String queryPreviousMean =
-        pipelineDashboardService.queryBuilderMean("ac", "or", "pr", "pip", previousStartInterval, startInterval, table);
-    doReturn(40L).when(pipelineDashboardService).queryCalculatorMean(queryPreviousMean);
+    doReturn(40L)
+        .when(pipelineDashboardService)
+        .queryBuilderMean("ac", "or", "pr", "pip", previousStartInterval, startInterval, table);
 
     // previousMedian
-    String queryPreviousMedian = pipelineDashboardService.queryBuilderMedian(
-        "ac", "or", "pr", "pip", previousStartInterval, startInterval, table);
-    doReturn(180L).when(pipelineDashboardService).queryCalculatorMedian(queryPreviousMedian);
+    doReturn(180L)
+        .when(pipelineDashboardService)
+        .queryBuilderMedian("ac", "or", "pr", "pip", previousStartInterval, startInterval, table);
 
     DashboardPipelineHealthInfo dashboardPipelineHealthInfoMeanMedian =
         pipelineDashboardService.getDashboardPipelineHealthInfo(
@@ -141,7 +151,10 @@ public class DashboardPipelineHealthAndExecutionInfoTest extends CategoryTest {
         1617365265000L, 1617365265000L, 1617321600000L, 1617580800000L, 1617408000000L, 1617235200000L, 1617302739000L);
     StatusAndTime statusAndTime = StatusAndTime.builder().status(status).time(time).build();
 
-    doReturn(statusAndTime).when(pipelineDashboardService).queryCalculatorForStatusAndTime(anyString());
+    doReturn(statusAndTime)
+        .when(pipelineDashboardService)
+        .queryBuilderSelectStatusAndTime(
+            anyString(), anyString(), anyString(), anyString(), anyLong(), anyLong(), anyString());
 
     DashboardPipelineExecutionInfo dashboardPipelineExecutionInfo =
         pipelineDashboardService.getDashboardPipelineExecutionInfo(

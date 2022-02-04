@@ -21,7 +21,6 @@ import io.harness.pms.Dashboard.StatusAndTime;
 import io.harness.pms.Dashboard.SuccessHealthInfo;
 import io.harness.pms.Dashboard.TotalHealthInfo;
 import io.harness.pms.execution.ExecutionStatus;
-import io.harness.timescaledb.DBUtils;
 import io.harness.timescaledb.Tables;
 import io.harness.timescaledb.TimeScaleDBService;
 import io.harness.timescaledb.tables.pojos.PipelineExecutionSummaryCd;
@@ -29,10 +28,6 @@ import io.harness.timescaledb.tables.pojos.PipelineExecutionSummaryCi;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -131,7 +126,7 @@ public class PipelineDashboardServiceImpl implements PipelineDashboardService {
   public long queryBuilderMean(String accountId, String orgId, String projectId, String pipelineId, long startInterval,
       long endInterval, String tableName) {
     @NotNull List<Long> mean;
-    if (tableName == CD_TableName)
+    if (tableName == CD_TableName) {
       mean = this.dsl
                  .select(DSL.avg(
                      (Tables.PIPELINE_EXECUTION_SUMMARY_CD.ENDTS.sub(Tables.PIPELINE_EXECUTION_SUMMARY_CD.STARTTS))
@@ -152,7 +147,7 @@ public class PipelineDashboardServiceImpl implements PipelineDashboardService {
                             .and(Tables.PIPELINE_EXECUTION_SUMMARY_CD.ENDTS != null))
                  .fetch()
                  .into(long.class);
-    else
+    } else {
       mean = this.dsl
                  .select(DSL.avg(
                      (Tables.PIPELINE_EXECUTION_SUMMARY_CI.ENDTS.sub(Tables.PIPELINE_EXECUTION_SUMMARY_CI.STARTTS))
@@ -173,13 +168,14 @@ public class PipelineDashboardServiceImpl implements PipelineDashboardService {
                             .and(Tables.PIPELINE_EXECUTION_SUMMARY_CI.ENDTS != null))
                  .fetch()
                  .into(long.class);
+    }
     return mean.get(0);
   }
 
   public long queryBuilderMedian(String accountId, String orgId, String projectId, String pipelineId,
       long startInterval, long endInterval, String tableName) {
     @NotNull List<Long> median;
-    if (tableName == CD_TableName)
+    if (tableName == CD_TableName) {
       median = this.dsl
                    .select(DSL.percentileDisc(0.5).withinGroupOrderBy(
                        (Tables.PIPELINE_EXECUTION_SUMMARY_CD.ENDTS.sub(Tables.PIPELINE_EXECUTION_SUMMARY_CD.STARTTS))
@@ -200,7 +196,7 @@ public class PipelineDashboardServiceImpl implements PipelineDashboardService {
                               .and(Tables.PIPELINE_EXECUTION_SUMMARY_CD.ENDTS != null))
                    .fetch()
                    .into(long.class);
-    else
+    } else {
       median = this.dsl
                    .select(DSL.percentileDisc(0.5).withinGroupOrderBy(
                        (Tables.PIPELINE_EXECUTION_SUMMARY_CI.ENDTS.sub(Tables.PIPELINE_EXECUTION_SUMMARY_CI.STARTTS))
@@ -221,82 +217,8 @@ public class PipelineDashboardServiceImpl implements PipelineDashboardService {
                               .and(Tables.PIPELINE_EXECUTION_SUMMARY_CI.ENDTS != null))
                    .fetch()
                    .into(long.class);
+    }
     return median.get(0);
-  }
-
-  public StatusAndTime queryCalculatorForStatusAndTime(String query) {
-    long totalTries = 0;
-
-    List<String> status = new ArrayList<>();
-    List<Long> time = new ArrayList<>();
-    boolean successfulOperation = false;
-    while (!successfulOperation && totalTries <= MAX_RETRY_COUNT) {
-      ResultSet resultSet = null;
-      try (Connection connection = timeScaleDBService.getDBConnection();
-           PreparedStatement statement = connection.prepareStatement(query)) {
-        resultSet = statement.executeQuery();
-        while (resultSet != null && resultSet.next()) {
-          status.add(resultSet.getString("status"));
-          time.add(Long.parseLong(resultSet.getString("startts")));
-        }
-        successfulOperation = true;
-      } catch (SQLException ex) {
-        totalTries++;
-      } finally {
-        DBUtils.close(resultSet);
-      }
-    }
-    return StatusAndTime.builder().status(status).time(time).build();
-  }
-
-  public long queryCalculatorMean(String query) {
-    long totalTries = 0;
-
-    long mean = 0;
-    boolean successfulOperation = false;
-    while (!successfulOperation && totalTries <= MAX_RETRY_COUNT) {
-      ResultSet resultSet = null;
-      try (Connection connection = timeScaleDBService.getDBConnection();
-           PreparedStatement statement = connection.prepareStatement(query)) {
-        resultSet = statement.executeQuery();
-        while (resultSet != null && resultSet.next()) {
-          if (resultSet.getString("avg") != null) {
-            mean = (long) Double.parseDouble(resultSet.getString("avg"));
-          }
-        }
-        successfulOperation = true;
-      } catch (SQLException ex) {
-        totalTries++;
-      } finally {
-        DBUtils.close(resultSet);
-      }
-    }
-    return mean;
-  }
-
-  public long queryCalculatorMedian(String query) {
-    long totalTries = 0;
-
-    long mdedian = 0;
-    boolean successfulOperation = false;
-    while (!successfulOperation && totalTries <= MAX_RETRY_COUNT) {
-      ResultSet resultSet = null;
-      try (Connection connection = timeScaleDBService.getDBConnection();
-           PreparedStatement statement = connection.prepareStatement(query)) {
-        resultSet = statement.executeQuery();
-        while (resultSet != null && resultSet.next()) {
-          if (resultSet.getString("percentile_disc") != null) {
-            mdedian = (long) Double.parseDouble(resultSet.getString("percentile_disc"));
-          }
-        }
-        successfulOperation = true;
-      } catch (SQLException ex) {
-        totalTries++;
-      } finally {
-        DBUtils.close(resultSet);
-      }
-    }
-    return mdedian;
   }
 
   public String selectTableFromModuleInfo(String moduleInfo) {
