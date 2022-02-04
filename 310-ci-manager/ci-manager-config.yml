@@ -106,8 +106,8 @@ ciExecutionServiceConfig:
   defaultInternalImageConnector: ''
   pvcDefaultStorageSize: 25600
   delegateServiceEndpointVariableValue: "delegate-service:8080"
-  addonImage: harness/ci-addon:release-61
-  liteEngineImage: harness/ci-lite-engine:release-30
+  addonImage: harness/ci-addon:release-84
+  liteEngineImage: harness/ci-lite-engine:release-38
   isLocal: false
   stepConfig:
     # The below config is for K8 steps
@@ -136,6 +136,12 @@ ciExecutionServiceConfig:
       image: plugins/s3:1.0.3
       entrypoint:
         - /bin/drone-s3
+    securityConfig:
+      image: zeronorth/sto_plugin:dev
+      entrypoint:
+        - /bin/sh
+        - -c
+        - python3 ${DOCKER_ENTRYPOINT}
     artifactoryUploadConfig:
       image: plugins/artifactory:1.0.4
       entrypoint:
@@ -157,6 +163,7 @@ ciExecutionServiceConfig:
       buildAndPushGCR: plugins/gcr:latest
       gcsUpload: plugins/gcs:1.2.4
       s3Upload: plugins/s3:1.0.3
+      security: plugin/sto_plugin:dev
       artifactoryUpload: plugins/artifactory:1.0.4
       cacheGCS: plugins/cache:1.3.5
       cacheS3: plugins/cache:1.3.5

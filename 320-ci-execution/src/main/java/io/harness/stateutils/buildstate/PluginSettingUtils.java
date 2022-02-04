@@ -138,14 +138,13 @@ public class PluginSettingUtils {
         map.put(EnvVariableEnum.AWS_ACCESS_KEY, PLUGIN_ACCESS_KEY);
         map.put(EnvVariableEnum.AWS_SECRET_KEY, PLUGIN_SECRET_KEY);
         return map;
-      case SECURITY:
-        return map;
       case GCR:
       case RESTORE_CACHE_GCS:
       case SAVE_CACHE_GCS:
       case UPLOAD_GCS:
         map.put(EnvVariableEnum.GCP_KEY, PLUGIN_JSON_KEY);
         return map;
+      case SECURITY:
       case DOCKER:
         map.put(EnvVariableEnum.DOCKER_USERNAME, PLUGIN_USERNAME);
         map.put(EnvVariableEnum.DOCKER_PASSWORD, PLUGIN_PASSW);
