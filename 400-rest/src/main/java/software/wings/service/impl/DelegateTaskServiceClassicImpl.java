@@ -846,7 +846,6 @@ public class DelegateTaskServiceClassicImpl implements DelegateTaskServiceClassi
     }
   }
 
-
   private String generateValidationError(final DelegateTask delegateTask, final boolean areClientToolsInstalled) {
     final String capabilities = generateCapabilitiesMessage(delegateTask);
     final String delegates = generateValidatedDelegatesMessage(delegateTask);
