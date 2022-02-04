@@ -172,8 +172,8 @@ public class APMDelegateServiceImpl implements APMDelegateService {
                         resolveDollarReferences(config.getOptions()), body);
     } else {
       Map<String, Object> resolvedHeaders = resolveDollarReferences(config.getHeaders());
-      if (config.isUsesBase64Header()) {
-        encodeBasicAuthHeader(resolvedHeaders);
+      if (config.isBase64EncodingRequired()) {
+        resolveBase64Reference(resolvedHeaders);
       }
       request = getAPMRestClient(config.getBaseUrl())
                     .collect(resolveDollarReferences(config.getUrl()), resolvedHeaders,
@@ -222,19 +222,23 @@ public class APMDelegateServiceImpl implements APMDelegateService {
     return header;
   }
 
-  private void encodeBasicAuthHeader(Map<String, Object> headers) {
+  private void resolveBase64Reference(Map<String, Object> headers) {
     if (isEmpty(headers)) {
       return;
     }
 
     for (Map.Entry<String, Object> entry : headers.entrySet()) {
-      if (entry == null)
+      if (entry == null) {
         continue;
+      }
       String headerValue = (String) entry.getValue();
-      String[] basicAuthHeader = headerValue.split("\\s+");
-      if (isNotEmpty(basicAuthHeader) && basicAuthHeader.length == 2 && "Basic".equals(basicAuthHeader[0])) {
-        headers.put(
-            entry.getKey(), String.format("%s %s", basicAuthHeader[0], Base64.encode(basicAuthHeader[1].getBytes())));
+      int placeholderIndex = headerValue.indexOf("encodeWithBase64(");
+      if (placeholderIndex != -1) {
+        String stringToEncode = headerValue.substring(
+            placeholderIndex + "encodeWithBase64(".length(), headerValue.indexOf(")", placeholderIndex));
+        String encodedString = headerValue.replace(
+            String.format("encodeWithBase64(%s)", stringToEncode), Base64.encode(stringToEncode.getBytes()));
+        headers.put(entry.getKey(), encodedString);
       }
     }
   }

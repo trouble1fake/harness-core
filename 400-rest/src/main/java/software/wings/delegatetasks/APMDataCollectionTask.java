@@ -300,8 +300,8 @@ public class APMDataCollectionTask extends AbstractDelegateDataCollectionTask {
           String updatedValue =
               entryVal.replace(String.format("${%s}", stringToReplace), decryptedFields.get(stringToReplace));
           output.put(entry.getKey(), updatedValue);
-          if (dataCollectionInfo.isUsesBasicAuth()) {
-            output.put(entry.getKey(), encodeBasicAuthHeader(updatedValue));
+          if (dataCollectionInfo.isBase64EncodingRequired()) {
+            output.put(entry.getKey(), resolveBase64Reference(updatedValue));
           }
         } else {
           output.put(entry.getKey(), entryVal);
@@ -514,15 +514,19 @@ public class APMDataCollectionTask extends AbstractDelegateDataCollectionTask {
       return responses;
     }
 
-    private String encodeBasicAuthHeader(Object entry) {
-      if (entry == null)
+    private String resolveBase64Reference(Object entry) {
+      if (entry == null) {
         return null;
-      String headerValue = (String) entry;
-      String[] basicAuthHeader = headerValue.split("\\s+");
-      if (isNotEmpty(basicAuthHeader) && basicAuthHeader.length == 2 && "Basic".equals(basicAuthHeader[0])) {
-        return String.format("%s %s", basicAuthHeader[0], Base64.encode(basicAuthHeader[1].getBytes()));
       }
-      return null;
+      String headerValue = (String) entry;
+      int placeholderIndex = headerValue.indexOf("encodeWithBase64(");
+      if (placeholderIndex != -1) {
+        String stringToEncode = headerValue.substring(
+            placeholderIndex + "encodeWithBase64(".length(), headerValue.indexOf(")", placeholderIndex));
+        return headerValue.replace(
+            String.format("encodeWithBase64(%s)", stringToEncode), Base64.encode(stringToEncode.getBytes()));
+      }
+      return headerValue;
     }
 
     /**

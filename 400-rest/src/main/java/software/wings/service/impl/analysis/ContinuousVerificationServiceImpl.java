@@ -2035,7 +2035,7 @@ public class ContinuousVerificationServiceImpl implements ContinuousVerification
             .serviceId(config.getServiceId())
             .startTime(startTime)
             .headers(prometheusConfig.getHeaders())
-            .usesBasicAuth(prometheusConfig.usesBasicAuth())
+            .base64EncodingRequired(prometheusConfig.usesBasicAuth())
             .cvConfigId(config.getUuid())
             .dataCollectionMinute(0)
             .metricEndpoints(prometheusAnalysisService.apmMetricEndPointsFetchInfo(config.getTimeSeriesToAnalyze()))

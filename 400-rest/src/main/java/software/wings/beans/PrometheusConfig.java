@@ -107,7 +107,7 @@ public class PrometheusConfig extends SettingValue implements EncryptableSetting
           String.format("Basic %s",
               Base64.encodeBase64String(String.format("%s:%s", username, new String(password)).getBytes())));
     } else if (isNotEmpty(encryptedPassword)) {
-      headersMap.put("Authorization", String.format("Basic %s:${password}", username));
+      headersMap.put("Authorization", String.format("Basic encodeWithBase64(%s:${password})", username));
     }
 
     return headersMap;

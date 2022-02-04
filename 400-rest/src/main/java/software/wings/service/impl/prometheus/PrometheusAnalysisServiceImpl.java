@@ -185,7 +185,7 @@ public class PrometheusAnalysisServiceImpl implements PrometheusAnalysisService 
                                         .build();
       final PrometheusConfig prometheusConfig = (PrometheusConfig) settingAttribute.getValue();
       APMValidateCollectorConfig apmValidateCollectorConfig = prometheusConfig.createAPMValidateCollectorConfig(url);
-      apmValidateCollectorConfig.setUsesBase64Header(prometheusConfig.usesBasicAuth());
+      apmValidateCollectorConfig.setBase64EncodingRequired(prometheusConfig.usesBasicAuth());
 
       List<EncryptedDataDetail> encryptionDetails =
           secretManager.getEncryptionDetails((EncryptableSetting) settingAttribute.getValue(), null, null);
