@@ -28,9 +28,8 @@ import lombok.Singular;
 @OwnedBy(HarnessTeam.PIPELINE)
 @Data
 @Builder
-public class PlanCreationResponse implements AsyncCreatorResponse {
-  @Singular @Deprecated Map<String, PlanNode> nodes;
-  PlanNode planNode;
+public class MergePlanCreationResponse implements AsyncCreatorResponse {
+  @Singular Map<String, PlanNode> nodes;
   Dependencies dependencies;
   YamlUpdates yamlUpdates;
   @Singular("contextMap") Map<String, PlanCreationContextValue> contextMap;
@@ -39,16 +38,35 @@ public class PlanCreationResponse implements AsyncCreatorResponse {
   String startingNodeId;
   @Singular List<String> errorMessages;
 
-  public void merge(PlanCreationResponse other) {
+  public void merge(PlanCreationResponse response) {
+    // adding PlanNode to map of nodes
+    addNode(response.getPlanNode());
+
+    addNodes(response.getNodes());
+    addDependencies(response.getDependencies());
+    mergeStartingNodeId(response.getStartingNodeId());
+    mergeContext(response.getContextMap());
+    mergeLayoutNodeInfo(response.getGraphLayoutResponse());
+    addYamlUpdates(response.getYamlUpdates());
+  }
+
+  public void mergeWithoutDependencies(PlanCreationResponse other) {
     // adding PlanNode to map of nodes
     addNode(other.getPlanNode());
 
     addNodes(other.getNodes());
-    addDependencies(other.getDependencies());
     mergeStartingNodeId(other.getStartingNodeId());
     mergeContext(other.getContextMap());
     mergeLayoutNodeInfo(other.getGraphLayoutResponse());
     addYamlUpdates(other.getYamlUpdates());
+  }
+
+  public void updateYamlInDependencies(String updatedYaml) {
+    if (dependencies == null) {
+      dependencies = Dependencies.newBuilder().setYaml(updatedYaml).build();
+      return;
+    }
+    dependencies = dependencies.toBuilder().setYaml(updatedYaml).build();
   }
 
   public void mergeContext(Map<String, PlanCreationContextValue> contextMap) {

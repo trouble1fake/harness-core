@@ -10,12 +10,16 @@ package io.harness.ccm.graphql.dto.recommendation;
 import io.harness.ccm.commons.beans.recommendation.ResourceType;
 import io.harness.ccm.views.graphql.QLCEViewFilterWrapper;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 import lombok.Builder;
-import lombok.Value;
+import lombok.Data;
 
-@Value
+@Data
 @Builder
+@JsonIgnoreProperties
+@Schema(name = "K8sRecommendationFilter", description = "Common filter for all Cloud Cost Recommendation APIs.")
 public class K8sRecommendationFilterDTO {
   List<String> ids;
   List<String> names;
@@ -24,6 +28,7 @@ public class K8sRecommendationFilterDTO {
   List<ResourceType> resourceTypes;
 
   // generic field filter, supporting perspective
+  @Schema(name = "perspectiveFilters", description = "Get Recommendations for a perspective")
   List<QLCEViewFilterWrapper> perspectiveFilters;
 
   Double minSaving;
