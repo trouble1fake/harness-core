@@ -13,6 +13,7 @@ import io.harness.cvng.servicelevelobjective.entities.SLOErrorBudgetReset;
 import io.harness.cvng.servicelevelobjective.entities.SLOErrorBudgetReset.SLOErrorBudgetResetKeys;
 import io.harness.cvng.servicelevelobjective.entities.ServiceLevelObjective;
 import io.harness.cvng.servicelevelobjective.services.api.SLOErrorBudgetResetService;
+import io.harness.cvng.servicelevelobjective.services.api.SLOHealthIndicatorService;
 import io.harness.cvng.servicelevelobjective.services.api.ServiceLevelObjectiveService;
 import io.harness.persistence.HPersistence;
 
@@ -31,6 +32,7 @@ import java.util.stream.Collectors;
 public class SLOErrorBudgetResetServiceImpl implements SLOErrorBudgetResetService {
   @Inject private HPersistence hPersistence;
   @Inject private ServiceLevelObjectiveService serviceLevelObjectiveService;
+  @Inject private SLOHealthIndicatorService sloHealthIndicatorService;
   @Inject private Clock clock;
 
   @Override
@@ -46,6 +48,7 @@ public class SLOErrorBudgetResetServiceImpl implements SLOErrorBudgetResetServic
             .getEndTime()
             .toInstant(ZoneOffset.UTC));
     hPersistence.save(sloErrorBudgetReset);
+    sloHealthIndicatorService.upsert(serviceLevelObjective);
     return dtoFromEntity(sloErrorBudgetReset);
   }
 
