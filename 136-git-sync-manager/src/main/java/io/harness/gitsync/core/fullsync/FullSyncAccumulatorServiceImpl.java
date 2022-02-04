@@ -9,7 +9,6 @@ package io.harness.gitsync.core.fullsync;
 
 import static io.harness.annotations.dev.HarnessTeam.DX;
 import static io.harness.data.structure.CollectionUtils.emptyIfNull;
-import static io.harness.data.structure.CollectionUtils.filterAndGetFirst;
 import static io.harness.gitsync.core.beans.GitFullSyncEntityInfo.SyncStatus.FAILED;
 import static io.harness.gitsync.core.beans.GitFullSyncEntityInfo.SyncStatus.OVERRIDDEN;
 import static io.harness.gitsync.core.beans.GitFullSyncEntityInfo.SyncStatus.QUEUED;

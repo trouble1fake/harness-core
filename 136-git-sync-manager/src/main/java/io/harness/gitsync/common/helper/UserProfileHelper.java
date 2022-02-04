@@ -31,7 +31,6 @@ import io.harness.security.dto.PrincipalType;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.google.protobuf.StringValue;
 import java.util.List;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
