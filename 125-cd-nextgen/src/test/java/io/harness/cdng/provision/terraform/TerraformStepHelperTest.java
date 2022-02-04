@@ -34,6 +34,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.cdng.fileservice.FileServiceClientFactory;
 import io.harness.cdng.k8s.K8sStepHelper;
+import io.harness.cdng.manifest.yaml.ArtifactoryStoreConfig;
 import io.harness.cdng.manifest.yaml.BitBucketStoreDTO;
 import io.harness.cdng.manifest.yaml.GitLabStoreDTO;
 import io.harness.cdng.manifest.yaml.GitStoreConfigDTO;
@@ -129,7 +130,7 @@ public class TerraformStepHelperTest extends CategoryTest {
   @Test
   @Owner(developers = SATYAM)
   @Category(UnitTests.class)
-  public void testSaveTerraformInheritOutput() {
+  public void testSaveTerraformInheritOutputWithGithubStore() {
     Ambiance ambiance = getAmbiance();
     TerraformStepDataGenerator.GitStoreConfig gitStoreConfigFiles =
         TerraformStepDataGenerator.GitStoreConfig.builder()
@@ -138,8 +139,8 @@ public class TerraformStepHelperTest extends CategoryTest {
             .folderPath(ParameterField.createValueField("Config/"))
             .connectoref(ParameterField.createValueField("terraform"))
             .build();
-    TerraformPlanStepParameters planStepParameters =
-        TerraformStepDataGenerator.generateStepPlan(StoreConfigType.GITHUB, null, gitStoreConfigFiles, null);
+    TerraformPlanStepParameters planStepParameters = TerraformStepDataGenerator.generateStepPlanWithVarFiles(
+        StoreConfigType.GITHUB, null, gitStoreConfigFiles, null, true);
     TerraformTaskNGResponse response =
         TerraformTaskNGResponse.builder()
             .commitIdForConfigFilesMap(ImmutableMap.of(TerraformStepHelper.TF_CONFIG_FILES, "commit-1"))
@@ -162,6 +163,57 @@ public class TerraformStepHelperTest extends CategoryTest {
     assertThat(varFileConfigs.size()).isEqualTo(1);
     assertThat(varFileConfigs.get(0) instanceof TerraformInlineVarFileConfig).isTrue();
     assertThat(((TerraformInlineVarFileConfig) varFileConfigs.get(0)).getVarFileContent()).isEqualTo("var-content");
+    assertThat(output.getBackendConfig()).isEqualTo("back-content");
+    assertThat(output.getEnvironmentVariables()).isNotNull();
+    assertThat(output.getEnvironmentVariables().size()).isEqualTo(1);
+    assertThat(output.getEnvironmentVariables().get("KEY")).isEqualTo("VAL");
+  }
+
+  @Test
+  @Owner(developers = NGONZALEZ)
+  @Category(UnitTests.class)
+  public void testSaveTerraformInheritOutputWithArtifactoryStore() {
+    Ambiance ambiance = getAmbiance();
+
+    TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreVarFiles =
+        TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
+            .repositoryPath("RepositoryPath")
+            .connectorRef("ConnectorRef")
+            .artifacts(TerraformStepDataGenerator.generateArtifacts())
+            .build();
+    TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreConfigFiles =
+        TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
+            .repositoryPath("RepositoryPathConfig")
+            .connectorRef("ConnectorRefConfig")
+            .artifacts(TerraformStepDataGenerator.generateArtifacts())
+            .build();
+
+    TerraformPlanStepParameters planStepParameters =
+        TerraformStepDataGenerator.generateStepPlanWithVarFiles(StoreConfigType.ARTIFACTORY,
+            StoreConfigType.ARTIFACTORY, artifactoryStoreConfigFiles, artifactoryStoreVarFiles, true);
+    TerraformTaskNGResponse response =
+        TerraformTaskNGResponse.builder()
+            .commitIdForConfigFilesMap(ImmutableMap.of(TerraformStepHelper.TF_CONFIG_FILES, "commit-1"))
+            .build();
+    doReturn(LocalConfigDTO.builder().encryptionType(EncryptionType.LOCAL).build())
+        .when(mockSecretManagerClientService)
+        .getSecretManager(anyString(), anyString(), anyString(), anyString(), anyBoolean());
+    helper.saveTerraformInheritOutput(planStepParameters, response, ambiance);
+    ArgumentCaptor<TerraformInheritOutput> captor = ArgumentCaptor.forClass(TerraformInheritOutput.class);
+    verify(mockExecutionSweepingOutputService).consume(any(), anyString(), captor.capture(), anyString());
+    TerraformInheritOutput output = captor.getValue();
+    assertThat(output).isNotNull();
+    ArtifactoryStoreConfig configFiles = (ArtifactoryStoreConfig) output.getFileStoreConfig();
+    assertThat(configFiles).isNotNull();
+    assertThat(configFiles.getArtifacts().size()).isEqualTo(1);
+    List<TerraformVarFileConfig> varFileConfigs = output.getVarFileConfigs();
+    assertThat(varFileConfigs).isNotNull();
+    assertThat(varFileConfigs.size()).isEqualTo(2);
+    assertThat(varFileConfigs.get(1) instanceof TerraformInlineVarFileConfig).isTrue();
+    assertThat(((TerraformInlineVarFileConfig) varFileConfigs.get(1)).getVarFileContent()).isEqualTo("var-content");
+    assertThat(varFileConfigs.get(0) instanceof TerraformRemoteVarFileConfig).isTrue();
+    assertThat(((TerraformRemoteVarFileConfig) varFileConfigs.get(0)).getFileStoreConfig().getKind())
+        .isEqualTo("Artifactory");
     assertThat(output.getBackendConfig()).isEqualTo("back-content");
     assertThat(output.getEnvironmentVariables()).isNotNull();
     assertThat(output.getEnvironmentVariables().size()).isEqualTo(1);

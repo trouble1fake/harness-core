@@ -123,7 +123,7 @@ public class TerraformPlanStepTest extends CategoryTest {
             .connectoref(ParameterField.createValueField("terraform"))
             .build();
     TerraformPlanStepParameters planStepParameters =
-        TerraformStepDataGenerator.generateStepPlan(StoreConfigType.GITHUB, gitStoreConfigFiles, gitStoreVarFiles);
+        TerraformStepDataGenerator.generateStepPlanFile(StoreConfigType.GITHUB, gitStoreConfigFiles, gitStoreVarFiles);
     StepElementParameters stepElementParameters = StepElementParameters.builder().spec(planStepParameters).build();
     terraformPlanStep.validateResources(ambiance, stepElementParameters);
     verify(pipelineRbacHelper, times(1)).checkRuntimePermissions(eq(ambiance), captor.capture(), eq(true));
@@ -153,7 +153,7 @@ public class TerraformPlanStepTest extends CategoryTest {
             .connectorRef("connectorRef2")
             .repositoryPath("repositoryPathtoVars")
             .build();
-    TerraformPlanStepParameters planStepParameters = TerraformStepDataGenerator.generateStepPlan(
+    TerraformPlanStepParameters planStepParameters = TerraformStepDataGenerator.generateStepPlanFile(
         StoreConfigType.ARTIFACTORY, artifactoryStoreConfigFiles, artifactoryStoreVarFiles);
     StepElementParameters stepElementParameters = StepElementParameters.builder().spec(planStepParameters).build();
     terraformPlanStep.validateResources(ambiance, stepElementParameters);
@@ -189,7 +189,7 @@ public class TerraformPlanStepTest extends CategoryTest {
             .connectoref(ParameterField.createValueField("terraform"))
             .build();
     TerraformPlanStepParameters planStepParameters =
-        TerraformStepDataGenerator.generateStepPlan(StoreConfigType.GITHUB, gitStoreConfigFiles, gitStoreVarFiles);
+        TerraformStepDataGenerator.generateStepPlanFile(StoreConfigType.GITHUB, gitStoreConfigFiles, gitStoreVarFiles);
 
     GitConfigDTO gitConfigDTO = GitConfigDTO.builder()
                                     .gitAuthType(GitAuthType.HTTP)
@@ -250,7 +250,7 @@ public class TerraformPlanStepTest extends CategoryTest {
             .connectorRef("connectorRef2")
             .repositoryPath("repositoryPathtoVars")
             .build();
-    TerraformPlanStepParameters planStepParameters = TerraformStepDataGenerator.generateStepPlan(
+    TerraformPlanStepParameters planStepParameters = TerraformStepDataGenerator.generateStepPlanFile(
         StoreConfigType.ARTIFACTORY, artifactoryStoreConfigFiles, artifactoryStoreVarFiles);
 
     // Create auth with user and password

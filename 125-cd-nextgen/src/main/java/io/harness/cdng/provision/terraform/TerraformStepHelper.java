@@ -31,6 +31,7 @@ import io.harness.cdng.manifest.yaml.GitStoreConfig;
 import io.harness.cdng.manifest.yaml.GitStoreConfigDTO;
 import io.harness.cdng.manifest.yaml.GithubStore;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfig;
+import io.harness.cdng.manifest.yaml.storeConfig.StoreConfigType;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfigWrapper;
 import io.harness.cdng.provision.terraform.TerraformConfig.TerraformConfigBuilder;
 import io.harness.cdng.provision.terraform.TerraformConfig.TerraformConfigKeys;
@@ -293,11 +294,25 @@ public class TerraformStepHelper {
     TerraformPlanExecutionDataParameters configuration = planStepParameters.getConfiguration();
     TerraformInheritOutputBuilder builder = TerraformInheritOutput.builder().workspace(
         ParameterFieldHelper.getParameterFieldValue(configuration.getWorkspace()));
-    Map<String, String> commitIdMap = terraformTaskNGResponse.getCommitIdForConfigFilesMap();
-    builder
-        .configFiles(getStoreConfigAtCommitId(
-            configuration.getConfigFiles().getStore().getSpec(), commitIdMap.get(TF_CONFIG_FILES)))
-        .varFileConfigs(toTerraformVarFileConfig(configuration.getVarFiles(), terraformTaskNGResponse, ambiance))
+    StoreConfigWrapper store = configuration.getConfigFiles().getStore();
+    StoreConfigType storeConfigType = store.getType();
+    switch (storeConfigType) {
+      case GIT:
+      case GITHUB:
+      case GITLAB:
+      case BITBUCKET:
+        Map<String, String> commitIdMap = terraformTaskNGResponse.getCommitIdForConfigFilesMap();
+        builder.configFiles(getStoreConfigAtCommitId(
+            configuration.getConfigFiles().getStore().getSpec(), commitIdMap.get(TF_CONFIG_FILES)));
+        break;
+      case ARTIFACTORY:
+        builder.fileStoreConfig(configuration.getConfigFiles().getStore().getSpec());
+        break;
+      default:
+        throw new InvalidRequestException(format("Unsupported store type: [%s]", storeConfigType));
+    }
+
+    builder.varFileConfigs(toTerraformVarFileConfig(configuration.getVarFiles(), terraformTaskNGResponse, ambiance))
         .backendConfig(getBackendConfig(configuration.getBackendConfig()))
         .environmentVariables(getEnvironmentVariablesMap(configuration.getEnvironmentVariables()))
         .targets(ParameterFieldHelper.getParameterFieldValue(configuration.getTargets()))
@@ -389,6 +404,7 @@ public class TerraformStepHelper {
                 generateFullIdentifier(getParameterFieldValue(stepParameters.getProvisionerIdentifier()), ambiance))
             .pipelineExecutionId(ambiance.getPlanExecutionId())
             .configFiles(inheritOutput.getConfigFiles().toGitStoreConfigDTO())
+            .fileStoreConfig(inheritOutput.getFileStoreConfig())
             .varFileConfigs(inheritOutput.getVarFileConfigs())
             .backendConfig(inheritOutput.getBackendConfig())
             .environmentVariables(inheritOutput.getEnvironmentVariables())
@@ -452,12 +468,25 @@ public class TerraformStepHelper {
                 ParameterFieldHelper.getParameterFieldValue(stepParameters.getProvisionerIdentifier()), ambiance))
             .pipelineExecutionId(ambiance.getPlanExecutionId());
 
-    Map<String, String> commitIdMap = response.getCommitIdForConfigFilesMap();
-    builder
-        .configFiles(
+    StoreConfigWrapper store = spec.getConfigFiles().getStore();
+    StoreConfigType storeConfigType = store.getType();
+    switch (storeConfigType) {
+      case GIT:
+      case GITHUB:
+      case GITLAB:
+      case BITBUCKET:
+        Map<String, String> commitIdMap = response.getCommitIdForConfigFilesMap();
+        builder.configFiles(
             getStoreConfigAtCommitId(spec.getConfigFiles().getStore().getSpec(), commitIdMap.get(TF_CONFIG_FILES))
-                .toGitStoreConfigDTO())
-        .varFileConfigs(toTerraformVarFileConfig(spec.getVarFiles(), response, ambiance))
+                .toGitStoreConfigDTO());
+        break;
+      case ARTIFACTORY:
+        builder.fileStoreConfig(store.getSpec());
+        break;
+      default:
+        throw new InvalidRequestException(format("Unsupported store type: [%s]", storeConfigType));
+    }
+    builder.varFileConfigs(toTerraformVarFileConfig(spec.getVarFiles(), response, ambiance))
         .backendConfig(getBackendConfig(spec.getBackendConfig()))
         .environmentVariables(getEnvironmentVariablesMap(spec.getEnvironmentVariables()))
         .workspace(ParameterFieldHelper.getParameterFieldValue(spec.getWorkspace()))
@@ -608,10 +637,18 @@ public class TerraformStepHelper {
             if (storeConfigWrapper != null) {
               i++;
               StoreConfig storeConfig = storeConfigWrapper.getSpec();
-              GitStoreConfigDTO gitStoreConfigDTO = getStoreConfigAtCommitId(
-                  storeConfig, response.getCommitIdForConfigFilesMap().get(format(TF_VAR_FILES, i)))
-                                                        .toGitStoreConfigDTO();
-              varFileConfigs.add(TerraformRemoteVarFileConfig.builder().gitStoreConfigDTO(gitStoreConfigDTO).build());
+              if (storeConfig.getKind().equals(ManifestStoreType.ARTIFACTORY)) {
+                varFileConfigs.add(TerraformRemoteVarFileConfig.builder().fileStoreConfig(storeConfig).build());
+              } else {
+                GitStoreConfigDTO gitStoreConfigDTO = getStoreConfigAtCommitId(
+                    storeConfig, response.getCommitIdForConfigFilesMap().get(format(TF_VAR_FILES, i)))
+                                                          .toGitStoreConfigDTO();
+
+                varFileConfigs.add(TerraformRemoteVarFileConfig.builder()
+                                       .gitStoreConfigDTO(gitStoreConfigDTO)
+                                       .fileStoreConfig(storeConfig)
+                                       .build());
+              }
             }
           }
         }

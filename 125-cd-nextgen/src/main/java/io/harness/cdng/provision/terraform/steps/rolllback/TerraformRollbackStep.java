@@ -185,7 +185,7 @@ public class TerraformRollbackStep extends TaskExecutableWithRollbackAndRbac<Ter
     StepResponse stepResponse = null;
 
     try {
-      stepResponse = generateStepResponse(ambiance, stepParameters, responseDataSupplier);
+      stepResponse = generateStepResponse(ambiance, responseDataSupplier);
     } finally {
       String accountName = accountService.getAccount(AmbianceUtils.getAccountId(ambiance)).getName();
       stepHelper.sendRollbackTelemetryEvent(
@@ -195,9 +195,8 @@ public class TerraformRollbackStep extends TaskExecutableWithRollbackAndRbac<Ter
     return stepResponse;
   }
 
-  private StepResponse generateStepResponse(Ambiance ambiance, StepElementParameters stepParameters,
-      ThrowingSupplier<TerraformTaskNGResponse> responseDataSupplier) throws Exception {
-    TerraformRollbackStepParameters stepParametersSpec = (TerraformRollbackStepParameters) stepParameters.getSpec();
+  private StepResponse generateStepResponse(
+      Ambiance ambiance, ThrowingSupplier<TerraformTaskNGResponse> responseDataSupplier) throws Exception {
     TerraformTaskNGResponse taskResponse = responseDataSupplier.get();
     StepResponseBuilder stepResponseBuilder = StepResponse.builder();
 

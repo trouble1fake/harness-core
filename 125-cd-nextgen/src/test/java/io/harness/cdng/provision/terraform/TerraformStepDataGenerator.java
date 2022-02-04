@@ -176,14 +176,16 @@ public class TerraformStepDataGenerator {
         .build();
   }
 
-  public static TerraformPlanStepParameters generateStepPlan(StoreConfigType storeTypeForConfig,
-      StoreConfigType storeTypeForVar, Object storeConfigFilesParam, Object varStoreConfigFilesParam) {
+  public static TerraformPlanStepParameters generateStepPlanWithVarFiles(StoreConfigType storeTypeForConfig,
+      StoreConfigType storeTypeForVar, Object storeConfigFilesParam, Object varStoreConfigFilesParam,
+      boolean generateInlineVarFiles) {
     TerraformConfigFilesWrapper configFilesWrapper = new TerraformConfigFilesWrapper();
 
     generateConfigFileStore(configFilesWrapper, storeTypeForConfig, storeConfigFilesParam);
     RemoteTerraformVarFileSpec remoteVarFilesSpec =
         generateRemoteVarFileSpec(storeTypeForVar, varStoreConfigFilesParam);
-    LinkedHashMap<String, TerraformVarFile> varFilesMap = generateVarFileSpecs(remoteVarFilesSpec, true);
+    LinkedHashMap<String, TerraformVarFile> varFilesMap =
+        generateVarFileSpecs(remoteVarFilesSpec, generateInlineVarFiles);
     InlineTerraformBackendConfigSpec inlineTerraformBackendConfigSpec = new InlineTerraformBackendConfigSpec();
     inlineTerraformBackendConfigSpec.setContent(ParameterField.createValueField("back-content"));
     TerraformBackendConfig terraformBackendConfig = new TerraformBackendConfig();
@@ -201,7 +203,7 @@ public class TerraformStepDataGenerator {
         .build();
   }
 
-  public static TerraformPlanStepParameters generateStepPlan(
+  public static TerraformPlanStepParameters generateStepPlanFile(
       StoreConfigType storeType, Object storeConfigFilesParam, Object varStoreConfigFilesParam) {
     StoreConfig storeConfigFiles;
     StoreConfig storeVarFiles;
