@@ -175,6 +175,11 @@ public class CVNGStepTaskServiceImpl implements CVNGStepTaskService {
         accountId, getByCallBackId(callBackId).getVerificationJobInstanceId());
   }
 
+  @Override
+  public List<VerificationJobInstance.ProgressLog> getExecutionLogs(String accountId, String callBackId) {
+    return verificationJobInstanceService.getProgressLogs(getByCallBackId(callBackId).getVerificationJobInstanceId());
+  }
+
   private String getServiceNameFromStep(CVNGStepTask step) {
     return nextGenService
         .getService(

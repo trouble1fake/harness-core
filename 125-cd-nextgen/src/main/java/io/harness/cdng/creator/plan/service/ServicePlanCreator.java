@@ -7,18 +7,16 @@
 
 package io.harness.cdng.creator.plan.service;
 
-import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
-
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.artifact.bean.yaml.ArtifactListConfig;
 import io.harness.cdng.artifact.bean.yaml.ArtifactOverrideSets.ArtifactOverrideSetsStepParametersWrapper;
 import io.harness.cdng.creator.plan.PlanCreatorConstants;
-import io.harness.cdng.creator.plan.manifest.ManifestsPlanCreator;
 import io.harness.cdng.creator.plan.stage.DeploymentStageConfig;
 import io.harness.cdng.infra.steps.EnvironmentStep;
 import io.harness.cdng.infra.steps.InfraSectionStepParameters;
 import io.harness.cdng.licenserestriction.EnforcementValidator;
+import io.harness.cdng.manifest.yaml.ManifestConfigWrapper;
 import io.harness.cdng.manifest.yaml.ManifestOverrideSets.ManifestOverrideSetsStepParametersWrapper;
 import io.harness.cdng.service.ServiceSpec;
 import io.harness.cdng.service.beans.ServiceConfig;
@@ -33,6 +31,7 @@ import io.harness.cdng.service.steps.ServiceSpecStepParameters;
 import io.harness.cdng.service.steps.ServiceStep;
 import io.harness.cdng.service.steps.ServiceStepParameters;
 import io.harness.cdng.utilities.ArtifactsUtility;
+import io.harness.cdng.utilities.ManifestsUtility;
 import io.harness.cdng.visitor.YamlTypes;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.data.structure.UUIDGenerator;
@@ -97,8 +96,7 @@ public class ServicePlanCreator extends ChildrenPlanCreator<ServiceConfig> {
         ArtifactsUtility.fetchArtifactYamlFieldAndSetYamlUpdates(ctx.getCurrentField(), isUseFromStage, yamlUpdates);
     String artifactsPlanNodeId = UUIDGenerator.generateUuid();
 
-    Map<String, ByteString> metadataDependency =
-        prepareMetadataForArtifactsPlanCreator(artifactsPlanNodeId, actualServiceConfig);
+    Map<String, ByteString> metadataDependency = prepareMetadata(artifactsPlanNodeId, actualServiceConfig);
 
     Map<String, YamlField> dependenciesMap = new HashMap<>();
     dependenciesMap.put(artifactsPlanNodeId, artifactYamlField);
@@ -114,6 +112,39 @@ public class ServicePlanCreator extends ChildrenPlanCreator<ServiceConfig> {
     planCreationResponseMap.put(artifactsPlanNodeId, artifactPlanCreationResponse.build());
     return artifactsPlanNodeId;
   }
+
+  public String addDependenciesForManifests(PlanCreationContext ctx,
+      LinkedHashMap<String, PlanCreationResponse> planCreationResponseMap, ServiceConfig actualServiceConfig) {
+    YamlUpdates.Builder yamlUpdates = YamlUpdates.newBuilder();
+    boolean isUseFromStage = actualServiceConfig.getUseFromStage() != null;
+    YamlField manifestsYamlField =
+        ManifestsUtility.fetchManifestsYamlFieldAndSetYamlUpdates(ctx.getCurrentField(), isUseFromStage, yamlUpdates);
+    String manifestsPlanNodeId = "manifests-" + UUIDGenerator.generateUuid();
+
+    Map<String, ByteString> metadataDependency = prepareMetadata(manifestsPlanNodeId, actualServiceConfig);
+
+    Map<String, YamlField> dependenciesMap = new HashMap<>();
+    dependenciesMap.put(manifestsPlanNodeId, manifestsYamlField);
+    PlanCreationResponseBuilder manifestsPlanCreationResponse = PlanCreationResponse.builder().dependencies(
+        DependenciesUtils.toDependenciesProto(dependenciesMap)
+            .toBuilder()
+            .putDependencyMetadata(
+                manifestsPlanNodeId, Dependency.newBuilder().putAllMetadata(metadataDependency).build())
+            .build());
+    if (yamlUpdates.getFqnToYamlCount() > 0) {
+      manifestsPlanCreationResponse.yamlUpdates(yamlUpdates.build());
+    }
+    planCreationResponseMap.put(manifestsPlanNodeId, manifestsPlanCreationResponse.build());
+    return manifestsPlanNodeId;
+  }
+
+  /*
+  TODO: currently we are using many yaml updates. For ex - if we do not have service definition and we need to call plan
+  creators for either of artifacts or manifests we are using yamlUpdates which contains dummy artifact and manifests
+  yaml node. The best way is to pre calculate the overridesets and override stage and create the resolved
+  serviceDefinition and do the yaml updates in service plan creator.
+   */
+
   @Override
   public LinkedHashMap<String, PlanCreationResponse> createPlanForChildrenNodes(
       PlanCreationContext ctx, ServiceConfig serviceConfig) {
@@ -136,7 +167,6 @@ public class ServicePlanCreator extends ChildrenPlanCreator<ServiceConfig> {
     actualServiceConfig = applyUseFromStageOverrides(actualServiceConfig);
 
     List<String> serviceSpecChildrenIds = new ArrayList<>();
-    PlanCreationResponse response;
 
     boolean createPlanForArtifacts = validateCreatePlanNodeForArtifacts(actualServiceConfig);
     if (createPlanForArtifacts) {
@@ -144,11 +174,9 @@ public class ServicePlanCreator extends ChildrenPlanCreator<ServiceConfig> {
       serviceSpecChildrenIds.add(artifactNodeId);
     }
 
-    final String finalManifestId = "manifests-" + UUIDGenerator.generateUuid();
-    response = ManifestsPlanCreator.createPlanForManifestsNode(actualServiceConfig, finalManifestId);
-    if (response != null && isNotEmpty(response.getNodes())) {
-      serviceSpecChildrenIds.add(finalManifestId);
-      planCreationResponseMap.put(finalManifestId, response);
+    if (shouldCreatePlanNodeForManifests(actualServiceConfig)) {
+      String manifestPlanNodeId = addDependenciesForManifests(ctx, planCreationResponseMap, actualServiceConfig);
+      serviceSpecChildrenIds.add(manifestPlanNodeId);
     }
 
     String serviceConfigNodeId = serviceNode.getUuid();
@@ -190,10 +218,9 @@ public class ServicePlanCreator extends ChildrenPlanCreator<ServiceConfig> {
         .build();
   }
 
-  public Map<String, ByteString> prepareMetadataForArtifactsPlanCreator(
-      String artifactsPlanNodeId, ServiceConfig actualServiceConfig) {
+  public Map<String, ByteString> prepareMetadata(String planNodeId, ServiceConfig actualServiceConfig) {
     Map<String, ByteString> metadataDependency = new HashMap<>();
-    metadataDependency.put(YamlTypes.UUID, ByteString.copyFrom(kryoSerializer.asDeflatedBytes(artifactsPlanNodeId)));
+    metadataDependency.put(YamlTypes.UUID, ByteString.copyFrom(kryoSerializer.asDeflatedBytes(planNodeId)));
     // TODO: Find an efficient way to not pass whole service config
     metadataDependency.put(
         YamlTypes.SERVICE_CONFIG, ByteString.copyFrom(kryoSerializer.asDeflatedBytes(actualServiceConfig)));
@@ -216,6 +243,23 @@ public class ServicePlanCreator extends ChildrenPlanCreator<ServiceConfig> {
           || EmptyPredicate.isNotEmpty(actualServiceConfig.getStageOverrides().getArtifacts().getSidecars())) {
         return true;
       }
+    }
+
+    return false;
+  }
+
+  public boolean shouldCreatePlanNodeForManifests(ServiceConfig actualServiceConfig) {
+    List<ManifestConfigWrapper> manifests = actualServiceConfig.getServiceDefinition().getServiceSpec().getManifests();
+
+    // Contains either primary artifacts or side-car artifacts
+    if (manifests != null && EmptyPredicate.isNotEmpty(manifests)) {
+      return true;
+    }
+
+    if (actualServiceConfig.getStageOverrides() != null
+        && actualServiceConfig.getStageOverrides().getManifests() != null
+        && EmptyPredicate.isNotEmpty(actualServiceConfig.getStageOverrides().getManifests())) {
+      return true;
     }
 
     return false;

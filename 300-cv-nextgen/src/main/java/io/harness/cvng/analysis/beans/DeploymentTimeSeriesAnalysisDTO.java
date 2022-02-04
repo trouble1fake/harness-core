@@ -56,6 +56,7 @@ public class DeploymentTimeSeriesAnalysisDTO {
   @Value
   @Builder
   public static class HostData implements Comparable<HostData> {
+    String nearestControlHost;
     String hostName;
     @JsonDeserialize(using = RiskDeserializer.class) int risk;
     public Risk getRisk() {

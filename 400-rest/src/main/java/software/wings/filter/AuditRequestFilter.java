@@ -8,6 +8,7 @@
 package software.wings.filter;
 
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.network.Localhost.getLocalHostAddress;
 import static io.harness.network.Localhost.getLocalHostName;
 
@@ -21,11 +22,14 @@ import io.harness.security.annotations.LearningEngineAuth;
 import io.harness.stream.BoundedInputStream;
 
 import software.wings.app.MainConfiguration;
+import software.wings.audit.ApiKeyAuditDetails;
 import software.wings.audit.AuditHeader;
 import software.wings.audit.AuditHeader.RequestType;
 import software.wings.audit.AuditSkip;
+import software.wings.beans.ApiKeyEntry;
 import software.wings.beans.HttpMethod;
 import software.wings.common.AuditHelper;
+import software.wings.service.intfc.ApiKeyService;
 import software.wings.service.intfc.FileService;
 
 import com.google.inject.Inject;
@@ -66,6 +70,7 @@ public class AuditRequestFilter implements ContainerRequestFilter {
   @Inject private AuditHelper auditHelper;
   @Inject private FileService fileService;
   @Inject private MainConfiguration configuration;
+  @Inject private ApiKeyService apiKeyService;
 
   /* (non-Javadoc)
    * @see javax.ws.rs.container.ContainerRequestFilter#filter(javax.ws.rs.container.ContainerRequestContext)
@@ -106,6 +111,22 @@ public class AuditRequestFilter implements ContainerRequestFilter {
     header.setRemoteHostPort(request.getRemotePort());
     header.setLocalHostName(getLocalHostName());
     header.setLocalIpAddress(getLocalHostAddress());
+
+    MultivaluedMap<String, String> pathParameters = requestContext.getUriInfo().getPathParameters();
+    MultivaluedMap<String, String> queryParameters = requestContext.getUriInfo().getQueryParameters();
+
+    String accountId = getRequestParamFromContext("accountId", pathParameters, queryParameters);
+
+    if (isNotEmpty(requestContext.getHeaderString("X-Api-Key"))) {
+      if (isEmpty(accountId)) {
+        accountId = apiKeyService.getAccountIdFromApiKey(requestContext.getHeaderString("X-Api-Key"));
+      }
+      if (isNotEmpty(accountId)) {
+        ApiKeyEntry apiKeyEntry = apiKeyService.getByKey(requestContext.getHeaderString("X-Api-Key"), accountId, false);
+        header.setApiKeyAuditDetails(
+            ApiKeyAuditDetails.builder().apiKeyName(apiKeyEntry.getName()).apiKeyId(apiKeyEntry.getUuid()).build());
+      }
+    }
 
     header = auditHelper.create(header);
 
@@ -169,6 +190,12 @@ public class AuditRequestFilter implements ContainerRequestFilter {
       headerStr = headerStr.substring(0, headerStr.length() - 1);
     }
     return headerStr;
+  }
+
+  private String getRequestParamFromContext(String key, MultivaluedMap<String, String> requestPathParameters,
+      MultivaluedMap<String, String> requestQueryParameters) {
+    return requestQueryParameters.getFirst(key) != null ? requestQueryParameters.getFirst(key)
+                                                        : requestPathParameters.getFirst(key);
   }
 
   private String getQueryParams(MultivaluedMap<String, String> queryParameters) {

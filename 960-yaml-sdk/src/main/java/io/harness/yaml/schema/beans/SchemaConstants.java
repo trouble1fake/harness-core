@@ -42,4 +42,6 @@ public class SchemaConstants {
   public static final String MIN_LENGTH_NODE = "minLength";
   public static final String RUNTIME_INPUT_PATTERN = "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$";
   public static final String SPEC_NODE = "spec";
+  public static final String STAGE_ELEMENT_WRAPPER_CONFIG = "StageElementWrapperConfig";
+  public static final String STAGE_NODE = "stage";
 }

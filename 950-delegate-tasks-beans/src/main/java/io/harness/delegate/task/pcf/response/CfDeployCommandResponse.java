@@ -10,6 +10,7 @@ package io.harness.delegate.task.pcf.response;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.delegate.beans.pcf.CfInBuiltVariablesUpdateValues;
 import io.harness.delegate.beans.pcf.CfInternalInstanceElement;
 import io.harness.delegate.beans.pcf.CfServiceData;
 import io.harness.delegate.task.pcf.CfCommandResponse;
@@ -31,6 +32,7 @@ public class CfDeployCommandResponse extends CfCommandResponse {
    */
   private List<CfServiceData> instanceDataUpdated;
   private List<CfInternalInstanceElement> pcfInstanceElements;
+  private CfInBuiltVariablesUpdateValues updatedValues;
 
   @Builder
   public CfDeployCommandResponse(CommandExecutionStatus commandExecutionStatus, String output,

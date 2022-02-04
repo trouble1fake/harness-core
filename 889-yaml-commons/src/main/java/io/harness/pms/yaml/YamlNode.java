@@ -99,11 +99,21 @@ public class YamlNode implements Visitable {
 
   public String extractStageLocalYamlPath() {
     String fullYamlPath = getYamlPath();
+    List<String> localFQNSplit;
     List<String> split = Arrays.stream(fullYamlPath.split(PATH_SEP)).collect(Collectors.toList());
-    if (split.size() < 4 || !split.get(3).equals(YAMLFieldNameConstants.STAGE)) {
+    if (split.size() < 4) {
       throw new InvalidRequestException("Yaml node is not a node inside a stage.");
     }
-    List<String> localFQNSplit = split.subList(3, split.size());
+    String stageOrParallel = split.get(3);
+    if (stageOrParallel.equals(YAMLFieldNameConstants.PARALLEL)) {
+      if (split.size() < 6 || !split.get(5).equals(YAMLFieldNameConstants.STAGE)) {
+        throw new InvalidRequestException("Yaml node is not a node inside a parallel stage.");
+      }
+      localFQNSplit = split.subList(5, split.size());
+    } else {
+      localFQNSplit = split.subList(3, split.size());
+    }
+
     return String.join(PATH_SEP, localFQNSplit);
   }
 

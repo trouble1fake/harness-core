@@ -55,6 +55,7 @@ import io.harness.cdng.k8s.beans.HelmValuesFetchResponsePassThroughData;
 import io.harness.cdng.k8s.beans.K8sExecutionPassThroughData;
 import io.harness.cdng.k8s.beans.StepExceptionPassThroughData;
 import io.harness.cdng.manifest.ManifestConfigType;
+import io.harness.cdng.manifest.steps.ManifestStepParameters;
 import io.harness.cdng.manifest.yaml.BitbucketStore;
 import io.harness.cdng.manifest.yaml.GcsStoreConfig;
 import io.harness.cdng.manifest.yaml.GitLabStore;
@@ -97,6 +98,7 @@ import io.harness.cdng.service.steps.ServiceStepParameters;
 import io.harness.cdng.tasks.manifestFetch.step.ManifestFetchOutcome;
 import io.harness.cdng.tasks.manifestFetch.step.ManifestFetchParameters;
 import io.harness.cdng.variables.beans.NGVariableOverrideSetWrapper;
+import io.harness.cdng.variables.beans.NGVariableOverrideSets;
 import io.harness.serializer.KryoRegistrar;
 
 import com.esotericsoftware.kryo.Kryo;
@@ -203,5 +205,7 @@ public class NGKryoRegistrar implements KryoRegistrar {
     kryo.register(ManifestConfigWrapper.class, 12555);
     kryo.register(StoreConfigType.class, 12556);
     kryo.register(ManifestConfigType.class, 12557);
+    kryo.register(ManifestStepParameters.class, 12558);
+    kryo.register(NGVariableOverrideSets.class, 12559);
   }
 }

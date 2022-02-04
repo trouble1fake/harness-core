@@ -47,4 +47,5 @@ public interface EntityTypeConstants {
   String HARNESS_APPROVAL = "HarnessApproval";
   String BARRIER = "Barrier";
   String Verify = "Verify";
+  String OPAPOLICIES = "GovernancePolicies";
 }

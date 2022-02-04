@@ -8,6 +8,7 @@
 package io.harness.event.grpc;
 
 import static io.harness.annotations.dev.HarnessTeam.DEL;
+import static io.harness.data.encoding.EncodingUtils.decodeBase64ToString;
 import static io.harness.eraro.ErrorCode.DEFAULT_ERROR_CODE;
 import static io.harness.eraro.ErrorCode.EXPIRED_TOKEN;
 import static io.harness.exception.WingsException.USER_ADMIN;
@@ -18,6 +19,8 @@ import static software.wings.beans.Account.GLOBAL_ACCOUNT_ID;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.context.GlobalContext;
+import io.harness.delegate.beans.DelegateNgToken;
+import io.harness.delegate.beans.DelegateNgToken.DelegateNgTokenKeys;
 import io.harness.delegate.beans.DelegateToken;
 import io.harness.delegate.beans.DelegateToken.DelegateTokenKeys;
 import io.harness.delegate.beans.DelegateTokenStatus;
@@ -29,6 +32,7 @@ import io.harness.globalcontex.DelegateTokenGlobalContextData;
 import io.harness.manage.GlobalContextManager;
 import io.harness.persistence.HIterator;
 import io.harness.persistence.HPersistence;
+import io.harness.persistence.NameAndValueAccess;
 import io.harness.security.DelegateTokenAuthenticator;
 
 import software.wings.beans.Account;
@@ -184,11 +188,17 @@ public class DelegateTokenEventServerAuthenticatorImpl implements DelegateTokenA
               accountId);
         }
       }
+      Query<DelegateNgToken> queryNg = persistence.createQuery(DelegateNgToken.class)
+                                           .field(DelegateNgTokenKeys.accountId)
+                                           .equal(accountId)
+                                           .field(DelegateNgTokenKeys.status)
+                                           .equal(status);
+      boolean result = decryptDelegateNgTokenByQuery(queryNg, accountId, status, encryptedJWT);
       long time_end = System.currentTimeMillis() - time_start;
       log.info("Delegate Token verification for accountId {} and status {} has taken {} milliseconds.", accountId,
           status.name(), time_end);
 
-      return false;
+      return result;
     }
   }
 
@@ -211,6 +221,29 @@ public class DelegateTokenEventServerAuthenticatorImpl implements DelegateTokenA
       encryptedJWT.decrypt(decrypter);
     } catch (JOSEException e) {
       throw new InvalidTokenException("Invalid delegate token", USER_ADMIN);
+    }
+  }
+
+  private boolean decryptDelegateNgTokenByQuery(
+      Query query, String accountId, DelegateTokenStatus status, EncryptedJWT encryptedJWT) {
+    try (HIterator<NameAndValueAccess> records = new HIterator<>(query.fetch())) {
+      for (NameAndValueAccess delegateToken : records) {
+        try {
+          decryptDelegateToken(encryptedJWT, decodeBase64ToString(delegateToken.getValue()));
+          if (DelegateTokenStatus.ACTIVE == status) {
+            if (!GlobalContextManager.isAvailable()) {
+              initGlobalContextGuard(new GlobalContext());
+            }
+            upsertGlobalContextRecord(
+                DelegateTokenGlobalContextData.builder().tokenName(delegateToken.getName()).build());
+          }
+          return true;
+        } catch (Exception e) {
+          log.debug("Fail to decrypt Delegate JWT using delete token {} for the account {}", delegateToken.getName(),
+              accountId);
+        }
+      }
+      return false;
     }
   }
 }

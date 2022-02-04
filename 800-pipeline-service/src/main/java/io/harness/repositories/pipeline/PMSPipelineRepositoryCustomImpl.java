@@ -163,12 +163,8 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
   @Override
   public PipelineEntity updatePipelineMetadata(
       String accountId, String orgIdentifier, String projectIdentifier, Criteria criteria, Update update) {
-    Criteria gitSyncCriteria =
-        gitAwarePersistence.getCriteriaWithGitSync(projectIdentifier, orgIdentifier, accountId, PipelineEntity.class);
-    if (gitSyncCriteria != null) {
-      criteria = new Criteria().andOperator(criteria, gitSyncCriteria);
-    }
-
+    criteria = gitAwarePersistence.makeCriteriaGitAware(
+        accountId, orgIdentifier, projectIdentifier, PipelineEntity.class, criteria);
     Query query = new Query(criteria);
     RetryPolicy<Object> retryPolicy = getRetryPolicyForPipelineUpdate();
     return Failsafe.with(retryPolicy)
@@ -187,8 +183,15 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
       Supplier<OutboxEvent> supplier = ()
           -> outboxService.save(new PipelineDeleteEvent(pipelineToUpdate.getAccountIdentifier(),
               pipelineToUpdate.getOrgIdentifier(), pipelineToUpdate.getProjectIdentifier(), pipelineToUpdate));
-      return gitAwarePersistence.save(
+      PipelineEntity pipelineEntity = gitAwarePersistence.save(
           pipelineToUpdate, pipelineToUpdate.getYaml(), ChangeType.DELETE, PipelineEntity.class, supplier);
+      if (pipelineEntity.getDeleted()
+          && gitSyncSdkService.isGitSyncEnabled(pipelineToUpdate.getAccountIdentifier(),
+              pipelineToUpdate.getOrgIdentifier(), pipelineToUpdate.getProjectIdentifier())) {
+        outboxService.save(new PipelineDeleteEvent(pipelineToUpdate.getAccountIdentifier(),
+            pipelineToUpdate.getOrgIdentifier(), pipelineToUpdate.getProjectIdentifier(), pipelineToUpdate, true));
+      }
+      return pipelineEntity;
     }
     throw new InvalidRequestException("No such pipeline exists");
   }

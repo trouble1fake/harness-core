@@ -57,6 +57,10 @@ spec:
         harness.io/app: harness-delegate
         harness.io/account: accoun
         harness.io/name: harness-delegate
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3460"
+        prometheus.io/path: "/api/metrics"
     spec:
       terminationGracePeriodSeconds: 600
       containers:

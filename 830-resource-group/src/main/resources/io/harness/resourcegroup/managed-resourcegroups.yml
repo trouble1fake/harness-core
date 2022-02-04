@@ -1,11 +1,11 @@
 # Any edit in this file should accompany an increment in version.
 name: resourceGroupsConfiguration
-version: 2
+version: 3
 resourceGroups:
   - identifier: _all_resources
     name: All Resources
     fullScopeSelected: true
-    description: All the resources in this scope are included in this resource group.
+    description: All the resources in this scope are included in this resource group. (deprecated)
     allowedScopeLevels:
       - account
       - organization
@@ -28,3 +28,12 @@ resourceGroups:
     description: All the resources at this project scope are included in this resource group.
     allowedScopeLevels:
       - project
+  - identifier: _all_resources_including_child_scopes
+    name: All Resources Including Child Scopes
+    description: All the resources in this scope as well as the child scopes are included in this resource group.
+    resourceSelectors:
+      - type: ResourceSelectorByScope
+        includeChildScopes: true
+    allowedScopeLevels:
+      - account
+      - organization

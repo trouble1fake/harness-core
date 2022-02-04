@@ -29,7 +29,6 @@ import static software.wings.service.impl.DelegateServiceImpl.KUBERNETES_DELEGAT
 import static java.util.stream.Collectors.toList;
 
 import io.harness.NGCommonEntityConstants;
-import io.harness.accesscontrol.AccountIdentifier;
 import io.harness.accesscontrol.OrgIdentifier;
 import io.harness.accesscontrol.ProjectIdentifier;
 import io.harness.accesscontrol.clients.AccessControlClient;
@@ -562,7 +561,7 @@ public class DelegateSetupResourceV3 {
         Resource.of(DELEGATE_RESOURCE_TYPE, null), DELEGATE_EDIT_PERMISSION);
 
     try (AutoLogContext ignore1 = new AccountLogContext(accountId, OVERRIDE_ERROR)) {
-      return new RestResponse<>(delegateService.validateKubernetesYamlNg(accountId, delegateSetupDetails));
+      return new RestResponse<>(delegateService.validateKubernetesYaml(accountId, delegateSetupDetails));
     }
   }
 
@@ -995,12 +994,12 @@ public class DelegateSetupResourceV3 {
       { @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Validates docker delegate details.") })
   public RestResponse<Void>
   validateDockerSetupDetails(@Parameter(description = "Account id") @QueryParam("accountId") @NotEmpty String accountId,
-      @Parameter(description = "Delegate name") @QueryParam("delegateName") String delegateName) {
+      @Parameter(description = "Delegate name") @QueryParam("delegateName") String delegateName,
+      @Parameter(description = "Delegate token") @QueryParam("tokenName") String tokenName) {
     try (AutoLogContext ignore1 = new AccountLogContext(accountId, OVERRIDE_ERROR)) {
       DelegateSetupDetails delegateSetupDetails =
-          DelegateSetupDetails.builder().delegateType(DOCKER).name(delegateName).build();
-      delegateService.validateDockerSetupDetailsNg(accountId, delegateSetupDetails, DOCKER);
-
+          DelegateSetupDetails.builder().delegateType(DOCKER).name(delegateName).tokenName(tokenName).build();
+      delegateService.validateDelegateSetupDetails(accountId, delegateSetupDetails, DOCKER);
       return new RestResponse<>();
     }
   }
@@ -1056,58 +1055,8 @@ public class DelegateSetupResourceV3 {
     }
   }
 
-  @POST
-  @Path("/ng/generate-kubernetes-yaml")
-  @Timed
-  @ExceptionMetered
-  @AuthRule(permissionType = LOGGED_IN)
-  @Operation(operationId = "generateKubernetesYaml",
-      summary = "Generates k8s yaml file from the data specified in request body (Delegate Setup Details). "
-          + "If Delegate Token name is provided within Delegate Setup Details its value will be used for account secret in generated yaml file.",
-      responses =
-      {
-        @io.swagger.v3.oas.annotations.responses.
-        ApiResponse(responseCode = "default", description = "Generated yaml file.")
-      })
-  // This NG specific, switching to NG access control. AuthRule to be removed also when NG access control is fully
-  // enabled.
-  public Response
-  generateKubernetesYamlUsingNgToken(@Context HttpServletRequest request,
-      @Parameter(description = NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE) @QueryParam(
-          "accountId") @NotEmpty String accountId,
-      @Parameter(description = NGCommonEntityConstants.ORG_PARAM_MESSAGE) @QueryParam("orgId") String orgId,
-      @Parameter(description = NGCommonEntityConstants.PROJECT_PARAM_MESSAGE) @QueryParam("projectId") String projectId,
-      @RequestBody(
-          required = true, description = "Delegate setup details, containing data to populate yaml file values.")
-      DelegateSetupDetails delegateSetupDetails,
-      // text/plain
-      @Parameter(description = "File format: text/plain for .yaml file, otherwise tar.gz will be generated.")
-      @QueryParam("fileFormat") MediaType fileFormat) throws IOException {
-    accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountId, orgId, projectId),
-        Resource.of(DELEGATE_RESOURCE_TYPE, null), DELEGATE_EDIT_PERMISSION);
-
-    try (AutoLogContext ignore1 = new AccountLogContext(accountId, OVERRIDE_ERROR)) {
-      File delegateFile = delegateService.generateKubernetesYamlNg(accountId, delegateSetupDetails,
-          subdomainUrlHelper.getManagerUrl(request, accountId), getVerificationUrl(request), fileFormat);
-
-      if (fileFormat != null && fileFormat.equals(MediaType.TEXT_PLAIN_TYPE)) {
-        return Response.ok(delegateFile)
-            .header(CONTENT_TRANSFER_ENCODING, BINARY)
-            .type("text/plain; charset=UTF-8")
-            .header(CONTENT_DISPOSITION, ATTACHMENT_FILENAME + KUBERNETES_DELEGATE + YAML)
-            .build();
-      }
-
-      return Response.ok(delegateFile)
-          .header(CONTENT_TRANSFER_ENCODING, BINARY)
-          .type(APPLICATION_ZIP_CHARSET_BINARY)
-          .header(CONTENT_DISPOSITION, ATTACHMENT_FILENAME + KUBERNETES_DELEGATE + TAR_GZ)
-          .build();
-    }
-  }
-
   @GET
-  @Path("/ng")
+  @Path("/ng/delegate-token")
   @Timed
   @ExceptionMetered
   @Operation(operationId = "getDelegateGroups", summary = "Lists Delegate Groups.",
@@ -1118,7 +1067,7 @@ public class DelegateSetupResourceV3 {
       })
   public RestResponse<DelegateGroupListing>
   list(@Parameter(description = NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE) @NotEmpty @QueryParam(
-           NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier String accountIdentifier,
+           "accountId") @NotNull String accountIdentifier,
       @Parameter(description = NGCommonEntityConstants.ORG_PARAM_MESSAGE) @QueryParam(
           NGCommonEntityConstants.ORG_KEY) @OrgIdentifier String orgIdentifier,
       @Parameter(description = NGCommonEntityConstants.PROJECT_PARAM_MESSAGE) @QueryParam(

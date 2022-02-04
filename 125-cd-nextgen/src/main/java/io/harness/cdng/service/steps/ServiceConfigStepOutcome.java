@@ -11,8 +11,8 @@ import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.common.VariablesSweepingOutput;
+import io.harness.cdng.artifact.outcome.ArtifactsOutcome;
 import io.harness.cdng.manifest.steps.ManifestsOutcome;
-import io.harness.ngpipeline.artifact.bean.ArtifactsOutcome;
 import io.harness.pms.sdk.core.data.Outcome;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;

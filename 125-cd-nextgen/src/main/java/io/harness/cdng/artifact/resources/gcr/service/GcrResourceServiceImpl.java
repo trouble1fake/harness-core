@@ -35,8 +35,12 @@ import io.harness.delegate.task.artifacts.request.ArtifactTaskParameters;
 import io.harness.delegate.task.artifacts.response.ArtifactTaskExecutionResponse;
 import io.harness.delegate.task.artifacts.response.ArtifactTaskResponse;
 import io.harness.exception.ArtifactServerException;
+import io.harness.exception.DelegateNotAvailableException;
+import io.harness.exception.DelegateServiceDriverException;
+import io.harness.exception.HintException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
+import io.harness.exception.exceptionmanager.exceptionhandler.DocumentLinksConstants;
 import io.harness.ng.core.BaseNGAccess;
 import io.harness.ng.core.NGAccess;
 import io.harness.secretmanagerclient.services.api.SecretManagerClientService;
@@ -80,9 +84,15 @@ public class GcrResourceServiceImpl implements GcrResourceService {
     List<EncryptedDataDetail> encryptionDetails = getEncryptionDetails(connector, baseNGAccess);
     GcrArtifactDelegateRequest gcrRequest = ArtifactDelegateRequestUtils.getGcrDelegateRequest(
         imagePath, null, null, null, registryHostname, null, connector, encryptionDetails, ArtifactSourceType.GCR);
-    ArtifactTaskExecutionResponse artifactTaskExecutionResponse = executeSyncTask(
-        gcrRequest, ArtifactTaskType.GET_BUILDS, baseNGAccess, "Gcr Get Builds task failure due to error");
-    return getGcrResponseDTO(artifactTaskExecutionResponse);
+    try {
+      ArtifactTaskExecutionResponse artifactTaskExecutionResponse = executeSyncTask(
+          gcrRequest, ArtifactTaskType.GET_BUILDS, baseNGAccess, "Gcr Get Builds task failure due to error");
+      return getGcrResponseDTO(artifactTaskExecutionResponse);
+    } catch (DelegateServiceDriverException ex) {
+      throw new HintException(
+          String.format(HintException.DELEGATE_NOT_AVAILABLE, DocumentLinksConstants.DELEGATE_INSTALLATION_LINK),
+          new DelegateNotAvailableException(ex.getCause().getMessage(), WingsException.USER));
+    }
   }
 
   @Override

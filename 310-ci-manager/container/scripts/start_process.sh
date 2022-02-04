@@ -39,4 +39,11 @@ if [[ "${ENABLE_APPDYNAMICS}" == "true" ]]; then
     echo "Using Appdynamics java agent"
 fi
 
-java $JAVA_OPTS -jar $CAPSULE_JAR $COMMAND /opt/harness/ci-manager-config.yml
+JAVA_BINARY=""
+if type -p java; then
+  JAVA_BINARY="java"
+else
+  JAVA_BINARY="jdk8u242-b08-jre/bin/java"
+fi
+
+$JAVA_BINARY $JAVA_OPTS -jar $CAPSULE_JAR $COMMAND /opt/harness/ci-manager-config.yml

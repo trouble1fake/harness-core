@@ -28,7 +28,7 @@ public class K8sCanaryDeleteRequest implements K8sDeployRequest {
   String commandName;
   Integer timeoutIntervalInMin;
   CommandUnitsProgress commandUnitsProgress;
-  boolean useVarSupportForKustomize;
+  boolean useLatestKustomizeVersion;
   boolean useNewKubectlVersion;
 
   @Override

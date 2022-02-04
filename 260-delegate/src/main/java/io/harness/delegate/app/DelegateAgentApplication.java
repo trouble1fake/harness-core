@@ -15,6 +15,8 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import io.harness.delegate.app.modules.DelegateAgentModule;
 import io.harness.delegate.app.resource.HealthResource;
 import io.harness.delegate.configuration.DelegateConfiguration;
+import io.harness.delegate.metrics.DelegateAgentMetricResource;
+import io.harness.delegate.metrics.DelegateAgentMetrics;
 import io.harness.delegate.service.DelegateAgentService;
 import io.harness.event.client.EventPublisher;
 import io.harness.grpc.pingpong.PingPongClient;
@@ -25,6 +27,7 @@ import io.harness.threading.ExecutorModule;
 import io.harness.threading.ThreadPool;
 
 import ch.qos.logback.classic.LoggerContext;
+import com.codahale.metrics.MetricRegistry;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -88,6 +91,7 @@ public class DelegateAgentApplication extends Application<DelegateAgentConfig> {
 
     registerHealthChecks(environment, injector);
     registerResources(environment, injector);
+    initializeMetrics(environment, injector);
     injector.getInstance(PingPongClient.class).startAsync();
 
     log.info("Starting Delegate");
@@ -110,6 +114,8 @@ public class DelegateAgentApplication extends Application<DelegateAgentConfig> {
     java.util.logging.LogManager.getLogManager().getLogger("").setLevel(Level.INFO);
 
     initializeLogging();
+
+    bootstrap.setMetricRegistry(new MetricRegistry());
   }
 
   private void addShutdownHook(final Injector injector) {
@@ -151,7 +157,15 @@ public class DelegateAgentApplication extends Application<DelegateAgentConfig> {
     environment.healthChecks().register("DelegateAgentApp", healthService);
   }
 
+  private void initializeMetrics(Environment environment, Injector injector) {
+    log.info("Initializing metrics for Delegate agent.");
+    DelegateAgentMetrics delegateAgentMetrics = injector.getInstance(DelegateAgentMetrics.class);
+    delegateAgentMetrics.scheduleDelegateAgentMetricsPoll();
+    delegateAgentMetrics.registerDelegateMetrics();
+  }
+
   private void registerResources(final Environment environment, final Injector injector) {
     environment.jersey().register(injector.getInstance(HealthResource.class));
+    environment.jersey().register(injector.getInstance(DelegateAgentMetricResource.class));
   }
 }

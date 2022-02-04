@@ -33,6 +33,7 @@ import io.harness.gitsync.common.beans.BranchSyncStatus;
 import io.harness.gitsync.common.beans.GitBranch;
 import io.harness.gitsync.common.beans.GitSyncDirection;
 import io.harness.gitsync.common.beans.InfoForGitPush;
+import io.harness.gitsync.common.helper.GitSyncConnectorHelper;
 import io.harness.gitsync.common.helper.UserProfileHelper;
 import io.harness.gitsync.common.service.GitBranchService;
 import io.harness.gitsync.common.service.GitBranchSyncService;
@@ -81,6 +82,7 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
   private final GitCommitService gitCommitService;
   private final UserProfileHelper userProfileHelper;
   private final GitSyncErrorService gitSyncErrorService;
+  private final GitSyncConnectorHelper gitSyncConnectorHelper;
 
   @Inject
   public HarnessToGitHelperServiceImpl(@Named("connectorDecoratorService") ConnectorService connectorService,
@@ -88,7 +90,8 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
       YamlGitConfigService yamlGitConfigService, EntityDetailProtoToRestMapper entityDetailRestToProtoMapper,
       ExecutorService executorService, GitBranchService gitBranchService, EncryptionHelper encryptionHelper,
       ScmOrchestratorService scmOrchestratorService, GitBranchSyncService gitBranchSyncService,
-      GitCommitService gitCommitService, UserProfileHelper userProfileHelper, GitSyncErrorService gitSyncErrorService) {
+      GitCommitService gitCommitService, UserProfileHelper userProfileHelper, GitSyncErrorService gitSyncErrorService,
+      GitSyncConnectorHelper gitSyncConnectorHelper) {
     this.connectorService = connectorService;
     this.decryptScmApiAccess = decryptScmApiAccess;
     this.gitEntityService = gitEntityService;
@@ -102,15 +105,21 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
     this.gitCommitService = gitCommitService;
     this.userProfileHelper = userProfileHelper;
     this.gitSyncErrorService = gitSyncErrorService;
+    this.gitSyncConnectorHelper = gitSyncConnectorHelper;
   }
 
   private Optional<ConnectorResponseDTO> getConnector(
       String accountId, YamlGitConfigDTO yamlGitConfig, Principal principal) {
     final String gitConnectorId = yamlGitConfig.getGitConnectorRef();
+    final String connectorRepo = yamlGitConfig.getGitConnectorsRepo();
+    final String connectorBranch = yamlGitConfig.getGitConnectorsBranch();
     final IdentifierRef identifierRef = IdentifierRefHelper.getIdentifierRef(gitConnectorId, accountId,
         yamlGitConfig.getOrganizationIdentifier(), yamlGitConfig.getProjectIdentifier(), null);
-    final Optional<ConnectorResponseDTO> connectorResponseDTO = connectorService.get(accountId,
-        identifierRef.getOrgIdentifier(), identifierRef.getProjectIdentifier(), identifierRef.getIdentifier());
+
+    final Optional<ConnectorResponseDTO> connectorResponseDTO =
+        gitSyncConnectorHelper.getConnectorFromDefaultBranchElseFromGitBranch(accountId,
+            identifierRef.getOrgIdentifier(), identifierRef.getProjectIdentifier(), identifierRef.getIdentifier(),
+            connectorRepo, connectorBranch);
     if (!connectorResponseDTO.isPresent()) {
       throw new InvalidRequestException(String.format("Ref Connector [{}] doesn't exist.", gitConnectorId));
     }

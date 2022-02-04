@@ -21,6 +21,9 @@ import io.harness.cdng.artifact.bean.yaml.PrimaryArtifact;
 import io.harness.cdng.artifact.bean.yaml.SidecarArtifact;
 import io.harness.cdng.artifact.bean.yaml.SidecarArtifactWrapper;
 import io.harness.cdng.licenserestriction.EnforcementValidator;
+import io.harness.cdng.manifest.ManifestConfigType;
+import io.harness.cdng.manifest.yaml.ManifestConfig;
+import io.harness.cdng.manifest.yaml.ManifestConfigWrapper;
 import io.harness.cdng.service.beans.KubernetesServiceSpec;
 import io.harness.cdng.service.beans.ServiceConfig;
 import io.harness.cdng.service.beans.ServiceDefinition;
@@ -40,6 +43,8 @@ import com.google.inject.Inject;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -191,8 +196,7 @@ public class ServicePlanCreatorTest extends CDNGTestBase {
   public void testPrepareMetadataForArtifactsPlanCreator() {
     String uuid = UUIDGenerator.generateUuid();
     ServiceConfig serviceConfig = ServiceConfig.builder().build();
-    Map<String, ByteString> metadataDependency =
-        servicePlanCreator.prepareMetadataForArtifactsPlanCreator(uuid, serviceConfig);
+    Map<String, ByteString> metadataDependency = servicePlanCreator.prepareMetadata(uuid, serviceConfig);
     assertThat(metadataDependency.size()).isEqualTo(2);
     assertThat(metadataDependency.containsKey(YamlTypes.UUID)).isEqualTo(true);
   }
@@ -306,5 +310,195 @@ public class ServicePlanCreatorTest extends CDNGTestBase {
         .isEqualTo("stageOverrides/artifacts");
 
     assertThat(planCreationResponse1.getYamlUpdates().getFqnToYamlCount()).isEqualTo(1);
+  }
+
+  @Test
+  @Owner(developers = PRASHANTSHARMA)
+  @Category(UnitTests.class)
+  public void testAddDependenciesForManifestsHavingServiceDefinition() throws IOException {
+    LinkedHashMap<String, PlanCreationResponse> planCreationResponseMap = new LinkedHashMap<>();
+
+    ServiceConfig actualServiceConfig = ServiceConfig.builder().build();
+    ClassLoader classLoader = this.getClass().getClassLoader();
+    InputStream yamlFile =
+        classLoader.getResourceAsStream("cdng/plan/manifests/manifests_test_with_service_definition.yml");
+    assertThat(yamlFile).isNotNull();
+
+    String yaml = new Scanner(yamlFile, "UTF-8").useDelimiter("\\A").next();
+    yaml = YamlUtils.injectUuid(yaml);
+    YamlField serviceField = YamlUtils.readTree(yaml);
+
+    PlanCreationContext ctx = PlanCreationContext.builder().currentField(serviceField).build();
+    String nodeUuid = servicePlanCreator.addDependenciesForManifests(ctx, planCreationResponseMap, actualServiceConfig);
+    assertThat(planCreationResponseMap.size()).isEqualTo(1);
+    assertThat(planCreationResponseMap.containsKey(nodeUuid)).isEqualTo(true);
+    PlanCreationResponse planCreationResponse1 = planCreationResponseMap.get(nodeUuid);
+    checksForDependenciesForArtifact(planCreationResponse1, nodeUuid);
+    assertThat(planCreationResponse1.getDependencies().getDependenciesMap().get(nodeUuid))
+        .isEqualTo("serviceDefinition/spec/manifests");
+
+    assertThat(planCreationResponse1.getYamlUpdates()).isNull();
+  }
+
+  @Test
+  @Owner(developers = PRASHANTSHARMA)
+  @Category(UnitTests.class)
+  public void testAddDependenciesForManifestsWithStageOverrideHavingEmptyManifests() throws IOException {
+    LinkedHashMap<String, PlanCreationResponse> planCreationResponseMap = new LinkedHashMap<>();
+
+    ServiceConfig actualServiceConfig =
+        ServiceConfig.builder().useFromStage(ServiceUseFromStage.builder().stage("stage1").build()).build();
+    ClassLoader classLoader = this.getClass().getClassLoader();
+    InputStream yamlFile =
+        classLoader.getResourceAsStream("cdng/plan/manifests/manifests_test_with_stage_override_manifests_empty.yml");
+    assertThat(yamlFile).isNotNull();
+
+    String yaml = new Scanner(yamlFile, "UTF-8").useDelimiter("\\A").next();
+    yaml = YamlUtils.injectUuid(yaml);
+    YamlField serviceField = YamlUtils.readTree(yaml);
+
+    PlanCreationContext ctx = PlanCreationContext.builder().currentField(serviceField).build();
+    String nodeUuid = servicePlanCreator.addDependenciesForManifests(ctx, planCreationResponseMap, actualServiceConfig);
+    assertThat(planCreationResponseMap.size()).isEqualTo(1);
+    assertThat(planCreationResponseMap.containsKey(nodeUuid)).isEqualTo(true);
+    PlanCreationResponse planCreationResponse1 = planCreationResponseMap.get(nodeUuid);
+    checksForDependenciesForArtifact(planCreationResponse1, nodeUuid);
+    assertThat(planCreationResponse1.getDependencies().getDependenciesMap().get(nodeUuid))
+        .isEqualTo("stageOverrides/manifests");
+
+    assertThat(planCreationResponse1.getYamlUpdates()).isNotNull();
+  }
+
+  @Test
+  @Owner(developers = PRASHANTSHARMA)
+  @Category(UnitTests.class)
+  public void testAddDependenciesForManifestsWithStageOverrideHavingWithoutManifests() throws IOException {
+    LinkedHashMap<String, PlanCreationResponse> planCreationResponseMap = new LinkedHashMap<>();
+
+    ServiceConfig actualServiceConfig =
+        ServiceConfig.builder().useFromStage(ServiceUseFromStage.builder().stage("stage1").build()).build();
+    ClassLoader classLoader = this.getClass().getClassLoader();
+    InputStream yamlFile =
+        classLoader.getResourceAsStream("cdng/plan/manifests/manifests_test_with_stage_override_without_manifests.yml");
+    assertThat(yamlFile).isNotNull();
+
+    String yaml = new Scanner(yamlFile, "UTF-8").useDelimiter("\\A").next();
+    yaml = YamlUtils.injectUuid(yaml);
+    YamlField serviceField = YamlUtils.readTree(yaml);
+
+    PlanCreationContext ctx = PlanCreationContext.builder().currentField(serviceField).build();
+    String nodeUuid = servicePlanCreator.addDependenciesForManifests(ctx, planCreationResponseMap, actualServiceConfig);
+    assertThat(planCreationResponseMap.size()).isEqualTo(1);
+    assertThat(planCreationResponseMap.containsKey(nodeUuid)).isEqualTo(true);
+    PlanCreationResponse planCreationResponse1 = planCreationResponseMap.get(nodeUuid);
+    checksForDependenciesForArtifact(planCreationResponse1, nodeUuid);
+    assertThat(planCreationResponse1.getDependencies().getDependenciesMap().get(nodeUuid))
+        .isEqualTo("stageOverrides/manifests");
+
+    assertThat(planCreationResponse1.getYamlUpdates()).isNotNull();
+  }
+
+  @Test
+  @Owner(developers = PRASHANTSHARMA)
+  @Category(UnitTests.class)
+  public void testAddDependenciesForManifestsWithoutStageOverride() throws IOException {
+    LinkedHashMap<String, PlanCreationResponse> planCreationResponseMap = new LinkedHashMap<>();
+
+    ServiceConfig actualServiceConfig =
+        ServiceConfig.builder().useFromStage(ServiceUseFromStage.builder().stage("stage1").build()).build();
+    ClassLoader classLoader = this.getClass().getClassLoader();
+    InputStream yamlFile =
+        classLoader.getResourceAsStream("cdng/plan/manifests/manifests_test_without_stage_override.yml");
+    assertThat(yamlFile).isNotNull();
+
+    String yaml = new Scanner(yamlFile, "UTF-8").useDelimiter("\\A").next();
+    yaml = YamlUtils.injectUuid(yaml);
+    YamlField serviceField = YamlUtils.readTree(yaml);
+
+    PlanCreationContext ctx = PlanCreationContext.builder().currentField(serviceField).build();
+    String nodeUuid = servicePlanCreator.addDependenciesForManifests(ctx, planCreationResponseMap, actualServiceConfig);
+    assertThat(planCreationResponseMap.size()).isEqualTo(1);
+    assertThat(planCreationResponseMap.containsKey(nodeUuid)).isEqualTo(true);
+    PlanCreationResponse planCreationResponse1 = planCreationResponseMap.get(nodeUuid);
+    checksForDependenciesForArtifact(planCreationResponse1, nodeUuid);
+    assertThat(planCreationResponse1.getDependencies().getDependenciesMap().get(nodeUuid))
+        .isEqualTo("stageOverrides/manifests");
+
+    assertThat(planCreationResponse1.getYamlUpdates()).isNotNull();
+  }
+
+  @Test
+  @Owner(developers = PRASHANTSHARMA)
+  @Category(UnitTests.class)
+  public void testAddDependenciesForManifestsWithManifestUnderStagesOverrides() throws IOException {
+    LinkedHashMap<String, PlanCreationResponse> planCreationResponseMap = new LinkedHashMap<>();
+
+    ServiceConfig actualServiceConfig =
+        ServiceConfig.builder().useFromStage(ServiceUseFromStage.builder().stage("stage1").build()).build();
+    ClassLoader classLoader = this.getClass().getClassLoader();
+    InputStream yamlFile =
+        classLoader.getResourceAsStream("cdng/plan/manifests/manifests_test_with_manifests_under_stageoverride.yml");
+    assertThat(yamlFile).isNotNull();
+
+    String yaml = new Scanner(yamlFile, "UTF-8").useDelimiter("\\A").next();
+    yaml = YamlUtils.injectUuid(yaml);
+    YamlField serviceField = YamlUtils.readTree(yaml);
+
+    PlanCreationContext ctx = PlanCreationContext.builder().currentField(serviceField).build();
+    String nodeUuid = servicePlanCreator.addDependenciesForManifests(ctx, planCreationResponseMap, actualServiceConfig);
+    assertThat(planCreationResponseMap.size()).isEqualTo(1);
+    assertThat(planCreationResponseMap.containsKey(nodeUuid)).isEqualTo(true);
+    PlanCreationResponse planCreationResponse1 = planCreationResponseMap.get(nodeUuid);
+    checksForDependenciesForArtifact(planCreationResponse1, nodeUuid);
+    assertThat(planCreationResponse1.getDependencies().getDependenciesMap().get(nodeUuid))
+        .isEqualTo("stageOverrides/manifests");
+
+    assertThat(planCreationResponse1.getYamlUpdates()).isNull();
+  }
+
+  @Test
+  @Owner(developers = PRASHANTSHARMA)
+  @Category(UnitTests.class)
+  public void testValidateCreatePlanNodeForManifests() {
+    ManifestConfigWrapper k8sManifest =
+        ManifestConfigWrapper.builder()
+            .manifest(ManifestConfig.builder().identifier("test").type(ManifestConfigType.K8_MANIFEST).build())
+            .build();
+    ManifestConfigWrapper valuesManifest =
+        ManifestConfigWrapper.builder()
+            .manifest(ManifestConfig.builder().identifier("test").type(ManifestConfigType.VALUES).build())
+            .build();
+
+    // Case1: having manifests in service definition
+    ServiceConfig serviceConfig =
+        ServiceConfig.builder()
+            .serviceDefinition(
+                ServiceDefinition.builder()
+                    .serviceSpec(
+                        KubernetesServiceSpec.builder().manifests(Arrays.asList(k8sManifest, valuesManifest)).build())
+                    .build())
+            .build();
+    boolean result = servicePlanCreator.shouldCreatePlanNodeForManifests(serviceConfig);
+    assertThat(result).isEqualTo(true);
+
+    // Case2: having empty list of manifests
+    serviceConfig =
+        ServiceConfig.builder()
+            .serviceDefinition(ServiceDefinition.builder()
+                                   .serviceSpec(KubernetesServiceSpec.builder().manifests(new ArrayList<>()).build())
+                                   .build())
+            .build();
+    result = servicePlanCreator.shouldCreatePlanNodeForManifests(serviceConfig);
+    assertThat(result).isEqualTo(false);
+
+    // StageOverrides: having non-empty manifests list
+    serviceConfig =
+        ServiceConfig.builder()
+            .serviceDefinition(ServiceDefinition.builder().serviceSpec(KubernetesServiceSpec.builder().build()).build())
+            .stageOverrides(
+                StageOverridesConfig.builder().manifests(Arrays.asList(k8sManifest, valuesManifest)).build())
+            .build();
+    result = servicePlanCreator.shouldCreatePlanNodeForManifests(serviceConfig);
+    assertThat(result).isEqualTo(true);
   }
 }

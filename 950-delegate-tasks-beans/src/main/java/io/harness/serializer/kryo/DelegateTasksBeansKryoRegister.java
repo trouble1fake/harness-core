@@ -193,6 +193,7 @@ import io.harness.delegate.beans.logstreaming.UnitProgressData;
 import io.harness.delegate.beans.nexus.NexusTaskParams;
 import io.harness.delegate.beans.nexus.NexusTaskResponse;
 import io.harness.delegate.beans.pcf.CfAppSetupTimeDetails;
+import io.harness.delegate.beans.pcf.CfInBuiltVariablesUpdateValues;
 import io.harness.delegate.beans.pcf.CfInternalConfig;
 import io.harness.delegate.beans.pcf.CfInternalInstanceElement;
 import io.harness.delegate.beans.pcf.CfRouteUpdateRequestConfigData;
@@ -382,6 +383,7 @@ import io.harness.delegate.task.pcf.response.CfCommandExecutionResponse;
 import io.harness.delegate.task.pcf.response.CfDeployCommandResponse;
 import io.harness.delegate.task.pcf.response.CfInfraMappingDataResponse;
 import io.harness.delegate.task.pcf.response.CfInstanceSyncResponse;
+import io.harness.delegate.task.pcf.response.CfRouteUpdateCommandResponse;
 import io.harness.delegate.task.pcf.response.CfSetupCommandResponse;
 import io.harness.delegate.task.scm.GitFileTaskResponseData;
 import io.harness.delegate.task.scm.GitFileTaskType;
@@ -1092,5 +1094,7 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(AzureResourceProvider.class, 543469);
     kryo.register(AzureOperationName.class, 543470);
     kryo.register(HelmNGException.class, 543471);
+    kryo.register(CfRouteUpdateCommandResponse.class, 543472);
+    kryo.register(CfInBuiltVariablesUpdateValues.class, 543473);
   }
 }

@@ -2971,7 +2971,7 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
     doReturn(renderedFiles)
         .when(kustomizeTaskHelper)
         .buildForApply(
-            kustomizePath, kustomizePluginPath, "manifest", fileList, false, emptyList(), executionLogCallback);
+            kustomizePath, kustomizePluginPath, "manifest", fileList, true, emptyList(), executionLogCallback);
 
     List<FileData> result = k8sTaskHelperBase.renderTemplateForGivenFiles(delegateTaskParams, manifestDelegateConfig,
         "manifest", fileList, valuesList, "release", "namespace", executionLogCallback, 10);
@@ -2979,7 +2979,7 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
     assertThat(result).isEqualTo(renderedFiles);
     verify(kustomizeTaskHelper, times(1))
         .buildForApply(
-            kustomizePath, kustomizePluginPath, "manifest", fileList, false, emptyList(), executionLogCallback);
+            kustomizePath, kustomizePluginPath, "manifest", fileList, true, emptyList(), executionLogCallback);
   }
 
   @Test
@@ -3176,7 +3176,7 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
         .thenReturn(new V1TokenReviewStatusBuilder().withNewUser().withUsername(username).endUser().build());
 
     V1TokenReviewStatus v1TokenReviewStatus = k8sTaskHelperBase.fetchTokenReviewStatus(
-        manualK8sConfig(), ImmutableList.of(EncryptedDataDetail.builder().build()));
+        manualK8sConfig(), ImmutableList.of(EncryptedDataDetail.builder().fieldName("accessKey").build()));
 
     assertThat(v1TokenReviewStatus).isNotNull();
     assertThat(v1TokenReviewStatus.getUser()).isNotNull();

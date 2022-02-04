@@ -36,6 +36,7 @@ import com.google.protobuf.Message;
 import com.google.protobuf.Timestamp;
 import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.informer.SharedInformerFactory;
+import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.JSON;
 import io.kubernetes.client.openapi.models.V1PersistentVolume;
 import io.kubernetes.client.openapi.models.V1PersistentVolumeBuilder;
@@ -72,10 +73,13 @@ public class PVWatcherTest extends CategoryTest {
   ArgumentCaptor<Message> captor = ArgumentCaptor.forClass(Message.class);
   @Captor ArgumentCaptor<Map<String, String>> mapArgumentCaptor;
 
-  @Rule public WireMockRule wireMockRule = new WireMockRule(65225);
+  @Rule public WireMockRule wireMockRule = new WireMockRule(0);
 
   @Before
   public void setUp() throws Exception {
+    ApiClient apiClient =
+        new ClientBuilder().setBasePath("http://localhost:" + wireMockRule.port()).build().setReadTimeout(0);
+
     eventPublisher = mock(EventPublisher.class);
     MockitoAnnotations.initMocks(this);
     clusterDetails = ClusterDetails.builder()
@@ -84,8 +88,7 @@ public class PVWatcherTest extends CategoryTest {
                          .cloudProviderId("cloud-provider-id")
                          .kubeSystemUid("cluster-uid")
                          .build();
-    pvWatcher = new PVWatcher(new ClientBuilder().setBasePath("http://localhost:" + wireMockRule.port()).build(),
-        clusterDetails, new SharedInformerFactory(), eventPublisher);
+    pvWatcher = new PVWatcher(apiClient, clusterDetails, new SharedInformerFactory(apiClient), eventPublisher);
 
     samplePV = new V1PersistentVolumeBuilder()
                    .withNewMetadata()

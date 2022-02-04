@@ -43,9 +43,10 @@ public interface ActivityService {
 
   void updateActivityStatus(Activity activity);
 
-  Optional<Activity> getAnyDemoKubernetesEvent(
+  Optional<Activity> getAnyKubernetesEvent(
       ServiceEnvironmentParams serviceEnvironmentParams, Instant startTime, Instant endTime);
-
+  Optional<Activity> getAnyDemoDeploymentEvent(ServiceEnvironmentParams dependencyServiceEnvParams, Instant startTime,
+      Instant endTime, ActivityVerificationStatus verificationStatus);
   Activity getActivityFromDTO(ActivityDTO activityDTO);
 
   String getDeploymentTagFromActivity(String accountId, String verificationJobInstanceId);
@@ -89,6 +90,4 @@ public interface ActivityService {
   Long getCount(ProjectParams projectParams, List<String> serviceIdentifiers, List<String> environmentIdentifiers,
       Instant startTime, Instant endTime, List<ActivityType> activityTypes);
   @Deprecated String createActivityForDemo(DeploymentActivity activity, ActivityVerificationStatus verificationStatus);
-  List<DeploymentActivity> getDemoDeploymentActivity(
-      ServiceEnvironmentParams serviceEnvironmentParams, Instant startTime, Instant endTime);
 }

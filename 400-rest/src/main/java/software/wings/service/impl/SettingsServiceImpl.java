@@ -644,8 +644,11 @@ public class SettingsServiceImpl implements SettingsService {
       settingServiceHelper.resetEncryptedFields((EncryptableSetting) settingAttribute.getValue());
     }
 
+    PermissionAttribute.PermissionType permissionType = settingServiceHelper.getPermissionType(settingAttribute);
+    boolean isAccountAdmin = userService.hasPermission(accountId, permissionType);
+
     settingServiceHelper.validateUsageRestrictionsOnEntitySave(
-        settingAttribute, accountId, getUsageRestrictions(settingAttribute));
+        settingAttribute, accountId, getUsageRestrictions(settingAttribute), isAccountAdmin);
 
     if (settingAttribute.getValue() != null) {
       if (settingAttribute.getValue() instanceof EncryptableSetting) {
@@ -1146,8 +1149,11 @@ public class SettingsServiceImpl implements SettingsService {
     } else {
       resetUnchangedEncryptedFields(existingSetting, settingAttribute);
     }
+    PermissionAttribute.PermissionType permissionType = settingServiceHelper.getPermissionType(settingAttribute);
+    boolean isAccountAdmin = userService.hasPermission(settingAttribute.getAccountId(), permissionType);
+
     settingServiceHelper.validateUsageRestrictionsOnEntityUpdate(settingAttribute, settingAttribute.getAccountId(),
-        existingSetting.getUsageRestrictions(), getUsageRestrictions(settingAttribute));
+        existingSetting.getUsageRestrictions(), getUsageRestrictions(settingAttribute), isAccountAdmin);
     validateSettingAttribute(settingAttribute, existingSetting);
     autoGenerateFieldsIfRequired(settingAttribute);
 
@@ -1324,8 +1330,11 @@ public class SettingsServiceImpl implements SettingsService {
     SettingAttribute settingAttribute = getById(varId);
     notNullCheck("Setting Value", settingAttribute, USER);
     String accountId = settingAttribute.getAccountId();
+    PermissionAttribute.PermissionType permissionType = settingServiceHelper.getPermissionType(settingAttribute);
+    boolean isAccountAdmin = userService.hasPermission(settingAttribute.getAccountId(), permissionType);
+
     if (!settingServiceHelper.userHasPermissionsToChangeEntity(
-            settingAttribute, accountId, settingAttribute.getUsageRestrictions())) {
+            settingAttribute, accountId, settingAttribute.getUsageRestrictions(), isAccountAdmin)) {
       throw new UnauthorizedUsageRestrictionsException(USER);
     }
 

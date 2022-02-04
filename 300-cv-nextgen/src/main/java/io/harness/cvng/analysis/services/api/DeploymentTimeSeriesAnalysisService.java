@@ -9,6 +9,7 @@ package io.harness.cvng.analysis.services.api;
 
 import io.harness.cvng.activity.beans.DeploymentActivityResultDTO.TimeSeriesAnalysisSummary;
 import io.harness.cvng.analysis.beans.Risk;
+import io.harness.cvng.analysis.beans.TransactionMetricInfo;
 import io.harness.cvng.analysis.beans.TransactionMetricInfoSummaryPageDTO;
 import io.harness.cvng.analysis.entities.DeploymentTimeSeriesAnalysis;
 import io.harness.cvng.core.beans.params.PageParams;
@@ -23,6 +24,7 @@ public interface DeploymentTimeSeriesAnalysisService {
   void save(DeploymentTimeSeriesAnalysis deploymentTimeSeriesAnalysis);
   TransactionMetricInfoSummaryPageDTO getMetrics(String accountId, String verificationJobInstanceId,
       DeploymentTimeSeriesAnalysisFilter deploymentTimeSeriesAnalysisFilter, PageParams pageParams);
+  List<TransactionMetricInfo> getTransactionMetricInfos(String accountId, String verificationJobInstanceId);
   List<DeploymentTimeSeriesAnalysis> getAnalysisResults(String verificationTaskId);
   Optional<Risk> getRecentHighestRiskScore(String accountId, String verificationJobInstanceId);
 

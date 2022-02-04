@@ -571,7 +571,7 @@ public class VerificationApplication extends Application<VerificationConfigurati
             .mode(PersistenceIterator.ProcessMode.PUMP)
             .clazz(AnalysisOrchestrator.class)
             .fieldName(AnalysisOrchestratorKeys.analysisOrchestrationIteration)
-            .targetInterval(ofSeconds(30))
+            .targetInterval(ofSeconds(15))
             .acceptableNoAlertDelay(ofSeconds(30))
             .executorService(workflowVerificationExecutor)
             .semaphore(new Semaphore(poolSize - 1))

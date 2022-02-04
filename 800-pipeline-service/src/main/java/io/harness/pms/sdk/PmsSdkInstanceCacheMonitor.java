@@ -53,6 +53,9 @@ public class PmsSdkInstanceCacheMonitor {
   }
 
   public void syncCache() {
+    if (!pmsSdkInstanceService.shouldUseInstanceCache) {
+      return;
+    }
     log.info("Starting to monitor if sdkInstanceCache and sdkInstances in db are in sync");
     List<PmsSdkInstance> pmsSdkInstances = pmsSdkInstanceService.getActiveInstancesFromDB();
     for (PmsSdkInstance sdkInstance : pmsSdkInstances) {
@@ -66,10 +69,6 @@ public class PmsSdkInstanceCacheMonitor {
         log.warn("SdkInstance Redis Cache gone out of sync with the mongo collection, updating it");
         instanceCache.put(sdkInstance.getName(), sdkInstance);
       }
-    }
-    if (!pmsSdkInstanceService.shouldUseInstanceCache) {
-      log.info("The SdkInstanceCache Monitor ran successfully, now switching to use sdkInstanceCache");
-      pmsSdkInstanceService.setShouldUseInstanceCache(true);
     }
   }
 }
