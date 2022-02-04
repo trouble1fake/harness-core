@@ -296,7 +296,7 @@ public class APMDataCollectionTask extends AbstractDelegateDataCollectionTask {
         String entryVal = entry.getValue();
         int placeHolderIndex = entryVal.indexOf("${");
         if (placeHolderIndex != -1) {
-          String stringToReplace = entryVal.substring(placeHolderIndex + 2, entryVal.indexOf("}", placeHolderIndex));
+          String stringToReplace = entryVal.substring(placeHolderIndex + 2, entryVal.indexOf('}', placeHolderIndex));
           String updatedValue =
               entryVal.replace(String.format("${%s}", stringToReplace), decryptedFields.get(stringToReplace));
           output.put(entry.getKey(), updatedValue);
