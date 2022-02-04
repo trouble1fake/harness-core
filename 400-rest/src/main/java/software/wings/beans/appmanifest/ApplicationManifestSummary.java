@@ -22,6 +22,7 @@ import lombok.Data;
 @TargetModule(HarnessModule._870_CG_ORCHESTRATION)
 public class ApplicationManifestSummary {
   private String appManifestId;
+  private String appManifestName;
   private String settingId;
   private ManifestSummary lastCollectedManifest;
   private ManifestSummary defaultManifest;

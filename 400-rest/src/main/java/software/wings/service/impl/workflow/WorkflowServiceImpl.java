@@ -2614,6 +2614,7 @@ public class WorkflowServiceImpl implements WorkflowService, DataProvider {
       applicationManifestSummaryList.add(
           ApplicationManifestSummary.builder()
               .appManifestId(applicationManifest.getUuid())
+              .appManifestName(applicationManifest.getName())
               .settingId(applicationManifest.getHelmChartConfig().getConnectorId())
               .defaultManifest(helmChartOptional.map(ManifestSummary::prepareSummaryFromHelmChart).orElse(null))
               .lastCollectedManifest(ManifestSummary.prepareSummaryFromHelmChart(lastCollectedHelmChart))
