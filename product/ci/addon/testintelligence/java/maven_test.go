@@ -7,6 +7,8 @@ package java
 
 import (
 	"context"
+	"testing"
+
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	mexec "github.com/wings-software/portal/commons/go/lib/exec"
@@ -14,7 +16,6 @@ import (
 	"github.com/wings-software/portal/commons/go/lib/logs"
 	"github.com/wings-software/portal/product/ci/ti-service/types"
 	"go.uber.org/zap"
-	"testing"
 )
 
 func TestMaven_GetCmd(t *testing.T) {
@@ -23,6 +24,7 @@ func TestMaven_GetCmd(t *testing.T) {
 
 	log, _ := logs.GetObservedLogger(zap.InfoLevel)
 	fs := filesystem.NewMockFileSystem(ctrl)
+	fs.EXPECT().ReadFile(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 
 	cmdFactory := mexec.NewMockCmdContextFactory(ctrl)
 
@@ -90,6 +92,74 @@ func TestMaven_GetCmd(t *testing.T) {
 	}
 
 	for _, tc := range tests {
+		got, err := runner.GetCmd(ctx, tc.tests, tc.args, "/test/tmp/config.ini", false, !tc.runOnlySelectedTests)
+		if tc.expectedErr == (err == nil) {
+			t.Fatalf("%s: expected error: %v, got: %v", tc.name, tc.expectedErr, got)
+		}
+		assert.Equal(t, got, tc.want)
+	}
+
+	// Check with HarnessArgLine
+	detectHarnessTag = func(log *zap.SugaredLogger, fs filesystem.FileSystem) (bool, error) {
+		return true, nil
+	}
+	/*
+		harnessArgLine = func() bool {
+			return true
+		}*/
+
+	tests2 := []struct {
+		name                 string // description of test
+		args                 string
+		runOnlySelectedTests bool
+		want                 string
+		expectedErr          bool
+		tests                []types.RunnableTest
+	}{
+		{
+			name:                 "run all tests with non-empty test list and -Duser parameters",
+			args:                 "clean test -Duser.timezone=US/Mountain -Duser.locale=en/US",
+			runOnlySelectedTests: false,
+			want:                 "mvn -am -DharnessArgLine=\"-Duser.timezone=US/Mountain -Duser.locale=en/US -javaagent:/addon/bin/java-agent.jar=/test/tmp/config.ini\" clean test",
+			expectedErr:          false,
+			tests:                []types.RunnableTest{t1, t2},
+		},
+		{
+			name:                 "run all tests with empty test list and no -Duser parameters",
+			args:                 "clean test",
+			runOnlySelectedTests: false,
+			want:                 "mvn -am -DharnessArgLine=-javaagent:/addon/bin/java-agent.jar=/test/tmp/config.ini clean test",
+			expectedErr:          false,
+			tests:                []types.RunnableTest{},
+		},
+		{
+			name:                 "run selected tests with given test list and -Duser parameters",
+			args:                 "clean test -Duser.timezone=US/Mountain -Duser.locale=en/US",
+			runOnlySelectedTests: true,
+			want:                 "mvn -Dtest=pkg1.cls1,pkg2.cls2 -am -DharnessArgLine=\"-Duser.timezone=US/Mountain -Duser.locale=en/US -javaagent:/addon/bin/java-agent.jar=/test/tmp/config.ini\" clean test",
+			expectedErr:          false,
+			tests:                []types.RunnableTest{t1, t2},
+		},
+		{
+			name:                 "run selected tests with repeating test list and -Duser parameters",
+			args:                 "clean test -B -2C-Duser.timezone=US/Mountain -Duser.locale=en/US",
+			runOnlySelectedTests: true,
+			want:                 "mvn -Dtest=pkg1.cls1,pkg2.cls2 -am -DharnessArgLine=\"-Duser.timezone=US/Mountain -Duser.locale=en/US -javaagent:/addon/bin/java-agent.jar=/test/tmp/config.ini\" clean test -B -2C",
+			expectedErr:          false,
+			tests:                []types.RunnableTest{t1, t2, t1, t2},
+		},
+		{
+			name:                 "run selected tests with single test and -Duser parameters and or condition",
+			args:                 "clean test -B -2C -Duser.timezone=US/Mountain -Duser.locale=en/US || true",
+			runOnlySelectedTests: true,
+			want:                 "mvn -Dtest=pkg2.cls2 -am -DharnessArgLine=\"-Duser.timezone=US/Mountain -Duser.locale=en/US -javaagent:/addon/bin/java-agent.jar=/test/tmp/config.ini\" clean test -B -2C   || true",
+			expectedErr:          false,
+			tests:                []types.RunnableTest{t2},
+		},
+	}
+
+	for _, tc := range tests2 {
+		t.Log("Running test: %s", tc.name)
 		got, err := runner.GetCmd(ctx, tc.tests, tc.args, "/test/tmp/config.ini", false, !tc.runOnlySelectedTests)
 		if tc.expectedErr == (err == nil) {
 			t.Fatalf("%s: expected error: %v, got: %v", tc.name, tc.expectedErr, got)

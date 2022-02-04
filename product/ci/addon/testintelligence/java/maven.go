@@ -18,7 +18,8 @@ import (
 )
 
 var (
-	mavenCmd = "mvn"
+	mavenCmd         = "mvn"
+	detectHarnessTag = DetectHarnessTag
 )
 
 type mavenRunner struct {
@@ -50,7 +51,7 @@ func (m *mavenRunner) GetCmd(ctx context.Context, tests []types.RunnableTest, us
 	re := regexp.MustCompile(`(-Duser\.\S*)`)
 	s := re.FindAllString(userArgs, -1)
 	argLineStr := "argLine"
-	hasHarnessTag := DetectHarnessTag()
+	hasHarnessTag, _ := detectHarnessTag(m.log, m.fs)
 	if hasHarnessTag {
 		argLineStr = "harnessArgLine"
 	}

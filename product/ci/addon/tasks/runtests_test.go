@@ -12,10 +12,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/wings-software/portal/product/ci/addon/testintelligence/mocks"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/wings-software/portal/product/ci/addon/testintelligence/mocks"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -184,6 +185,7 @@ func TestGetCmd_SelectAll(t *testing.T) {
 	outputFile := "test.out"
 	log, _ := logs.GetObservedLogger(zap.InfoLevel)
 	fs := filesystem.NewMockFileSystem(ctrl)
+	fs.EXPECT().ReadFile(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 
 	t1 := types.RunnableTest{Pkg: "pkg1", Class: "cls1", Method: "m1"}
 	t2 := types.RunnableTest{Pkg: "pkg2", Class: "cls2", Method: "m2"}
@@ -257,6 +259,7 @@ func TestGetCmd_RunAll(t *testing.T) {
 	outputFile := "test.out"
 	log, _ := logs.GetObservedLogger(zap.InfoLevel)
 	fs := filesystem.NewMockFileSystem(ctrl)
+	fs.EXPECT().ReadFile(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 
 	tmpFilePath := "/test/tmp"
 	packages := "p1, p2, p3"
@@ -591,6 +594,7 @@ func TestRun_Execution_Failure(t *testing.T) {
 
 	log, _ := logs.GetObservedLogger(zap.InfoLevel)
 	fs := filesystem.NewMockFileSystem(ctrl)
+	fs.EXPECT().ReadFile(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 
 	cmdFactory := mexec.NewMockCmdContextFactory(ctrl)
 	cmd := mexec.NewMockCommand(ctrl)
@@ -703,6 +707,7 @@ func TestRun_Execution_Cg_Failure(t *testing.T) {
 
 	log, _ := logs.GetObservedLogger(zap.InfoLevel)
 	fs := filesystem.NewMockFileSystem(ctrl)
+	fs.EXPECT().ReadFile(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 
 	cmdFactory := mexec.NewMockCmdContextFactory(ctrl)
 	cmd := mexec.NewMockCommand(ctrl)
@@ -811,6 +816,7 @@ func TestRun_Execution_Reports_Failure(t *testing.T) {
 
 	log, _ := logs.GetObservedLogger(zap.InfoLevel)
 	fs := filesystem.NewMockFileSystem(ctrl)
+	fs.EXPECT().ReadFile(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 
 	cmdFactory := mexec.NewMockCmdContextFactory(ctrl)
 	cmd := mexec.NewMockCommand(ctrl)

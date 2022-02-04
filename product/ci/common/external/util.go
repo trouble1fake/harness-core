@@ -46,6 +46,7 @@ const (
 	logUploadFf      = "HARNESS_CI_INDIRECT_LOG_UPLOAD_FF"
 	gitBin           = "git"
 	diffFilesCmd     = "%s diff --name-status --diff-filter=MADR HEAD@{1} HEAD -1"
+	harnessArgLine   = "harnessArgLine"
 )
 
 // GetChangedFiles executes a shell command and returns a list of files changed in the PR
@@ -300,6 +301,10 @@ func GetWrkspcPath() (string, error) {
 		return "", fmt.Errorf("workspace path variable not set %s", wrkspcPath)
 	}
 	return path, nil
+}
+
+func GetHarnessArgLine() string {
+	return harnessArgLine
 }
 
 func GetCommitLink() (string, error) {

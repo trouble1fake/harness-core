@@ -10,7 +10,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
-	"os"
+	"io/ioutil"
 	"path/filepath"
 	"strings"
 
@@ -21,8 +21,9 @@ import (
 )
 
 var (
-	getWorkspace = external.GetWrkspcPath
-	javaAgentArg = "-javaagent:/addon/bin/java-agent.jar=%s"
+	getWorkspace   = external.GetWrkspcPath
+	harnessArgLine = external.GetHarnessArgLine
+	javaAgentArg   = "-javaagent:/addon/bin/java-agent.jar=%s"
 )
 
 // get list of all file paths matching a provided regex
@@ -38,19 +39,26 @@ func getFiles(path string) ([]string, error) {
 // Checks if a given XML file has an "harnessArgLine".
 //
 // Args:
+//     log (SugaredLogger): The logging interface.
 //     filePath (string): The absolute path to XML file to be checked.
-//
+//     fs (FileSystem): FileSystem interface for File IO.
 // Returns:
-//     bool:  True if the Harness tag exists, false otherwise
-//     error: error if there's any, nil otherwise
+//     bool:  True if the Harness tag exists in given file, false otherwise.
+//     error: error if there's any, nil otherwise.
 
-func checkHarnessTag(filePath string) (bool, error) {
-	data, err := os.ReadFile(filePath)
-	if err != nil {
-		log.Errorw("Failed to read file at: ", filePath)
-		return false, err
+func checkHarnessTag(log *zap.SugaredLogger, filePath string, fs filesystem.FileSystem) (bool, error) {
+	var data []byte
+	var err error
+	er := fs.ReadFile(filePath, func(r io.Reader) error {
+		data, err = ioutil.ReadAll(r)
+		return err
+	})
+	if er != nil {
+		log.Errorw("failed to read file", "file_path", filePath, zap.Error(er))
+		return false, er
 	}
-	harnessTag := "harnessArgLine" // FIXME: Make this a global constant or a flag.
+
+	harnessTag := harnessArgLine()
 	xmlDecoder := xml.NewDecoder(strings.NewReader(string(data)))
 	for {
 		token, err := xmlDecoder.Token()
@@ -69,29 +77,40 @@ func checkHarnessTag(filePath string) (bool, error) {
 }
 
 // Scan all XML files in the workspace and detect if any of them have harnessArgLine tag.
+// Args:
+//   log (SugaredLogger): Logging interface.
+//   fs  (FileSystem): Filesystem interface for File IO.
+//
+// Returns:
+//  bool : True if harnessArgLine is present in any of the XML files. False otherwise.
+//  error: Error if there's one, nil otherwise.
 
-func DetectHarnessTag() (bool, error) {
+func DetectHarnessTag(log *zap.SugaredLogger, fs filesystem.FileSystem) (bool, error) {
 	// Get all the XML files from $HARNESS_WORKSPACE
-	wp, _ := GetWrkspcPath()
+	wp, _ := getWorkspace()
 	files, _ := getFiles(fmt.Sprintf("%s/**/*.xml", wp))
 	foundHarnessTag := false
-	err := nil
+	var err error
 
 	// Check each XML file for the harnessArgLine tag.
 	for _, f := range files {
 		absPath, err := filepath.Abs(f)
-		if err == nil {
-			fmt.Println("Checking file: ", absPath)
-			log.Infow(fmt.Sprintf("Checking XML file %s for Harness tag", absPath))
-			found, _ := checkHarnessTag(absPath)
-			if found {
-				foundHarnessTag = true
-			}
-		} else {
-			log.Errorw("Failed to absolute path. Error", err)
+		if err != nil {
+			log.Errorw("failed to fetch absolute path. Error", err)
+			continue
+		}
+		log.Infow(fmt.Sprintf("Checking XML file %s for Harness tag", absPath))
+		found, _ := checkHarnessTag(log, absPath, fs)
+		if found {
+			foundHarnessTag = true
+			break
 		}
 	}
-	return foundHarnessTag, err
+
+	if err != nil {
+		return foundHarnessTag, err
+	}
+	return foundHarnessTag, nil
 }
 
 // detect java packages by reading all the files and parsing their package names
