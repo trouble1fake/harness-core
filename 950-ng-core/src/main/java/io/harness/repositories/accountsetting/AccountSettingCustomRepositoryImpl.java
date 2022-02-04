@@ -7,8 +7,6 @@
 
 package io.harness.repositories.accountsetting;
 
-import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
-
 import static org.springframework.data.mongodb.core.query.Update.update;
 
 import io.harness.ng.core.accountsetting.dto.AccountSettingType;
@@ -77,5 +75,20 @@ public class AccountSettingCustomRepositoryImpl implements AccountSettingCustomR
                             .and(AccountSettings.AccountSettingsKeys.type)
                             .is(type);
     return mongoTemplate.findOne(new Query(criteria), AccountSettings.class);
+  }
+
+  @Override
+  public AccountSettings updateAccountSetting(AccountSettings accountSettings, String accountIdentifier) {
+    Criteria criteria = Criteria.where(AccountSettings.AccountSettingsKeys.accountIdentifier)
+                            .is(accountIdentifier)
+                            .and(AccountSettings.AccountSettingsKeys.orgIdentifier)
+                            .is(accountSettings.getOrgIdentifier())
+                            .and(AccountSettings.AccountSettingsKeys.projectIdentifier)
+                            .is(accountSettings.getProjectIdentifier())
+                            .and(AccountSettings.AccountSettingsKeys.type)
+                            .is(accountSettings.getType());
+
+    Update update = update(AccountSettings.AccountSettingsKeys.config, accountSettings.getConfig());
+    return mongoTemplate.findAndModify(new Query(criteria), update, AccountSettings.class);
   }
 }

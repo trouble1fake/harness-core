@@ -10,6 +10,7 @@ package io.harness.ng.core.accountsetting.services;
 import static java.lang.String.format;
 
 import io.harness.exception.DuplicateFieldException;
+import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
 import io.harness.ng.core.accountsetting.AccountSettingMapper;
 import io.harness.ng.core.accountsetting.dto.AccountSettingResponseDTO;
@@ -20,6 +21,7 @@ import io.harness.repositories.accountsetting.AccountSettingRepository;
 
 import com.google.inject.Inject;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.springframework.dao.DuplicateKeyException;
 
@@ -36,11 +38,12 @@ public class NGAccountSettingServiceImpl implements NGAccountSettingService {
 
     AccountSettings updatedAccountSetting = null;
     try {
-      updatedAccountSetting = accountSettingRepository.upsert(accountSettings, accountIdentifier);
+      updatedAccountSetting = accountSettingRepository.updateAccountSetting(accountSettings, accountIdentifier);
     } catch (WingsException ex) {
-      //      throw new DuplicateFieldException(format("Account Setting already created for account [%s] org [%s]
-      //      project [%s] already exists", accountSettings.getAccountIdentifier(), accountSettings.getOrgIdentifier(),
-      //      accountSettings.getProjectIdentifier()));
+      throw new InvalidRequestException(
+          format("Unable to save settings for account [%s] org [%s] project [%s] already exists",
+              accountSettings.getAccountIdentifier(), accountSettings.getOrgIdentifier(),
+              accountSettings.getProjectIdentifier()));
     }
     return getResponse(updatedAccountSetting);
   }
@@ -53,6 +56,7 @@ public class NGAccountSettingServiceImpl implements NGAccountSettingService {
     AccountSettings savedAccountSetting = null;
     try {
       savedAccountSetting = accountSettingRepository.save(accountSettings);
+      savedAccountSetting.setConfig(accountSettings.getConfig());
     } catch (DuplicateKeyException ex) {
       throw new DuplicateFieldException(
           format("Account Setting already created for account [%s] org [%s] project [%s] already exists",
@@ -63,9 +67,15 @@ public class NGAccountSettingServiceImpl implements NGAccountSettingService {
   }
 
   @Override
-  public List<AccountSettings> list(
+  public List<AccountSettingsDTO> list(
       String accountId, String orgIdentifier, String projectIdentifier, AccountSettingType type) {
-    return accountSettingRepository.findAll(accountId, orgIdentifier, projectIdentifier, type);
+    final List<AccountSettings> accountSettingList =
+        accountSettingRepository.findAll(accountId, orgIdentifier, projectIdentifier, type);
+    return getListResponse(accountSettingList);
+  }
+
+  private List<AccountSettingsDTO> getListResponse(List<AccountSettings> accountSettingList) {
+    return accountSettingList.stream().map(accountSettingMapper::toDTO).collect(Collectors.toList());
   }
 
   @Override
@@ -77,7 +87,7 @@ public class NGAccountSettingServiceImpl implements NGAccountSettingService {
   }
 
   private AccountSettingResponseDTO getResponse(AccountSettings accountSettings) {
-    AccountSettingResponseDTO accountSettingResponseDTO = accountSettingMapper.toDTO(accountSettings);
+    AccountSettingResponseDTO accountSettingResponseDTO = accountSettingMapper.toResponseDTO(accountSettings);
     return accountSettingResponseDTO;
   }
 }

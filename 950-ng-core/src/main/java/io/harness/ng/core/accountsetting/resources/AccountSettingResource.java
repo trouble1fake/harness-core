@@ -80,7 +80,7 @@ public class AccountSettingResource {
   @GET
   @Path("/list")
   @ApiOperation(value = "List account setting", nickname = "listAccountSetting")
-  public ResponseDTO<List<AccountSettings>> listSettings(
+  public ResponseDTO<List<AccountSettingsDTO>> listSettings(
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
       @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
       @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,

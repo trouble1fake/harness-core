@@ -22,20 +22,27 @@ public class AccountSettingMapper {
         .build();
   }
 
-  public AccountSettingResponseDTO toDTO(AccountSettings accountSettings) {
+  public AccountSettingResponseDTO toResponseDTO(AccountSettings accountSettings) {
     if (accountSettings == null) {
       return AccountSettingResponseDTO.builder().accountSettings(AccountSettingsDTO.builder().build()).build();
     }
     return AccountSettingResponseDTO.builder()
-        .accountSettings(AccountSettingsDTO.builder()
-                             .accountIdentifier(accountSettings.getAccountIdentifier())
-                             .orgIdentifier(accountSettings.getOrgIdentifier())
-                             .projectIdentifier(accountSettings.getProjectIdentifier())
-                             .type(accountSettings.getType())
-                             .config(accountSettings.getConfig())
-                             .build())
+        .accountSettings(toDTO(accountSettings))
         .createdAt(accountSettings.getCreatedAt())
         .lastModifiedAt(accountSettings.getLastModifiedAt())
+        .build();
+  }
+
+  public AccountSettingsDTO toDTO(AccountSettings accountSettings) {
+    if (accountSettings == null) {
+      return AccountSettingsDTO.builder().build();
+    }
+    return AccountSettingsDTO.builder()
+        .accountIdentifier(accountSettings.getAccountIdentifier())
+        .orgIdentifier(accountSettings.getOrgIdentifier())
+        .projectIdentifier(accountSettings.getProjectIdentifier())
+        .type(accountSettings.getType())
+        .config(accountSettings.getConfig())
         .build();
   }
 }

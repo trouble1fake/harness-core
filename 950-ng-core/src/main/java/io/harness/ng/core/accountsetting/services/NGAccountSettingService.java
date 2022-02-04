@@ -19,7 +19,8 @@ public interface NGAccountSettingService {
 
   AccountSettingResponseDTO create(AccountSettingsDTO accountSettingsDTO, String accountIdentifier);
 
-  List<AccountSettings> list(String accountId, String orgIdentifier, String projectIdentifier, AccountSettingType type);
+  List<AccountSettingsDTO> list(
+      String accountId, String orgIdentifier, String projectIdentifier, AccountSettingType type);
 
   AccountSettingResponseDTO get(
       String accountId, String orgIdentifier, String projectIdentifier, AccountSettingType type);
