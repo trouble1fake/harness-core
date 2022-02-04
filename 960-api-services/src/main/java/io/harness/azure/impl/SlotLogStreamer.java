@@ -32,7 +32,6 @@ import com.microsoft.azure.CloudException;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import rx.Observable;
 import rx.Subscriber;
 import rx.Subscription;
@@ -43,7 +42,6 @@ public class SlotLogStreamer implements Runnable {
   String slotName;
   LogCallback logCallback;
   AzureLogParser logParser;
-  boolean containerDeployment;
   private Subscription subscription;
   private final DateTime startTime;
   private final AtomicBoolean operationCompleted = new AtomicBoolean();
@@ -51,14 +49,13 @@ public class SlotLogStreamer implements Runnable {
   private String errorLog;
 
   public SlotLogStreamer(AzureWebClientContext azureWebClientContext, AzureWebClient azureWebClient, String slotName,
-      LogCallback logCallback, boolean containerDeployment) {
+      LogCallback logCallback, DateTime startTime) {
     this.azureWebClientContext = azureWebClientContext;
     this.azureWebClient = azureWebClient;
     this.slotName = slotName;
     this.logCallback = logCallback;
     this.logParser = new AzureLogParser();
-    this.containerDeployment = containerDeployment;
-    this.startTime = new DateTime(DateTimeZone.UTC);
+    this.startTime = startTime;
   }
 
   private void validateAndLog(String log) {
@@ -74,13 +71,13 @@ public class SlotLogStreamer implements Runnable {
     }
     String log = logParser.removeTimestamp(s);
     validateAndLog(log);
-    if (logParser.checkIsSuccessDeployment(log, containerDeployment)) {
+    if (logParser.checkIsSuccessDeployment(log)) {
       operationCompleted.set(true);
       logCallback.saveExecutionLog(String.format(LOG_STREAM_SUCCESS_MSG, slotName), INFO, SUCCESS);
       subscription.unsubscribe();
     }
 
-    if (logParser.checkIfFailed(log, containerDeployment)) {
+    if (logParser.checkIfFailed(log)) {
       operationCompleted.set(true);
       operationFailed.set(true);
       errorLog = log;

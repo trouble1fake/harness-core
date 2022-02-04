@@ -32,16 +32,12 @@ public class AzureLogParser {
       Pattern.compile("ERROR - Container .* didn't respond to HTTP pings on port:", Pattern.CASE_INSENSITIVE);
   private static final Pattern timestampPattern = Pattern.compile(TIME_STAMP_REGEX, Pattern.CASE_INSENSITIVE);
 
-  public boolean checkIsSuccessDeployment(String log, boolean containerDeployment) {
-    if (containerDeployment) {
-      Matcher matcher = containerSuccessPattern.matcher(log);
-      return matcher.find();
-    } else {
-      Matcher deploymentLogMatcher = deploymentLogPattern.matcher(log);
-      Matcher containerLogMatcher = containerSuccessPattern.matcher(log);
-      Matcher tomcatLogMatcher = tomcatSuccessPattern.matcher(log);
-      return deploymentLogMatcher.find() || containerLogMatcher.find() || tomcatLogMatcher.find();
-    }
+  public boolean checkIsSuccessDeployment(String log) {
+    Matcher matcher = containerSuccessPattern.matcher(log);
+    Matcher deploymentLogMatcher = deploymentLogPattern.matcher(log);
+    Matcher containerLogMatcher = containerSuccessPattern.matcher(log);
+    Matcher tomcatLogMatcher = tomcatSuccessPattern.matcher(log);
+    return matcher.find() || deploymentLogMatcher.find() || containerLogMatcher.find() || tomcatLogMatcher.find();
   }
 
   public boolean checkIsWelcomeLog(String log) {
@@ -57,10 +53,7 @@ public class AzureLogParser {
     return !checkIsWelcomeLog(log) && !log.isEmpty();
   }
 
-  public boolean checkIfFailed(String log, boolean containerDeployment) {
-    if (!containerDeployment) {
-      return false;
-    }
+  public boolean checkIfFailed(String log) {
     Matcher matcher = failureContainerLogPattern.matcher(log);
     return matcher.find();
   }
