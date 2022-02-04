@@ -13,16 +13,17 @@ import io.harness.pms.yaml.YamlUtils;
 import io.harness.rule.Owner;
 
 import java.io.IOException;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 @OwnedBy(PIPELINE)
 public class PolicyStepInfoTest extends CategoryTest {
-  @Test
-  @Owner(developers = NAMAN)
-  @Category(UnitTests.class)
-  public void testDeserialize() throws IOException {
-    String basicStepYaml = "name: myPolicyStep\n"
+  String basicStepYaml;
+
+  @Before
+  public void setUp() {
+    basicStepYaml = "name: myPolicyStep\n"
         + "identifier: myPolicyStep\n"
         + "type: Policy\n"
         + "timeout: 10m\n"
@@ -37,7 +38,21 @@ public class PolicyStepInfoTest extends CategoryTest {
         + "      {\n"
         + "        \"this\" : \"that\"\n"
         + "      }";
-    StepElementConfig stepElementConfig = YamlUtils.read(basicStepYaml, StepElementConfig.class);
-    assertThat(stepElementConfig).isNotNull();
+  }
+
+  @Test
+  @Owner(developers = NAMAN)
+  @Category(UnitTests.class)
+  public void testDeserializeToPolicyStepNode() throws IOException {
+    PolicyStepNode policyStepNode = YamlUtils.read(basicStepYaml, PolicyStepNode.class);
+    assertThat(policyStepNode).isNotNull();
+  }
+
+  @Test
+  @Owner(developers = NAMAN)
+  @Category(UnitTests.class)
+  public void testDeserializeToStepElementConfig() throws IOException {
+    StepElementConfig policyStepNode = YamlUtils.read(basicStepYaml, StepElementConfig.class);
+    assertThat(policyStepNode).isNotNull();
   }
 }

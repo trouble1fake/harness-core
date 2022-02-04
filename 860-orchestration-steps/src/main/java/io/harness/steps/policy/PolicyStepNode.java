@@ -24,8 +24,8 @@ import org.springframework.data.annotation.TypeAlias;
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@JsonTypeName(StepSpecTypeConstants.HTTP)
-@TypeAlias("HttpStepNode")
+@JsonTypeName(StepSpecTypeConstants.POLICY_STEP)
+@TypeAlias("PolicyStepNode")
 @OwnedBy(PIPELINE)
 @RecasterAlias("io.harness.steps.policy.PolicyStepNode")
 public class PolicyStepNode extends PmsAbstractStepNode {
