@@ -82,4 +82,6 @@ public interface ArtifactoryService {
       ArtifactoryConfigRequest artifactoryConfig, String repoType, String artifactPath, String repositoryType);
 
   Long getFileSize(ArtifactoryConfigRequest artifactoryConfig, Map<String, String> metadata);
+
+  void checkIfValidHelmRepository(ArtifactoryConfigRequest artifactoryConfigRequest, String repoName);
 }

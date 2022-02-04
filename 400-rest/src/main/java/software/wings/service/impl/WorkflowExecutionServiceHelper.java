@@ -226,7 +226,9 @@ public class WorkflowExecutionServiceHelper {
     }
 
     if (isNotEmpty(executionArgs.getHelmCharts())) {
-      stdParams.setHelmChartIds(executionArgs.getHelmCharts().stream().map(HelmChart::getUuid).collect(toList()));
+      stdParams.setHelmChartIds(
+          executionArgs.getHelmCharts().stream().map(HelmChart::getUuid).filter(Objects::nonNull).collect(toList()));
+      stdParams.setHelmCharts(executionArgs.getHelmCharts());
     }
 
     stdParams.setExecutionCredential(executionArgs.getExecutionCredential());

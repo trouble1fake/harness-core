@@ -117,7 +117,7 @@ public class WorkflowStandardParams implements ExecutionContextAware, ContextEle
   @JsonIgnore @Transient private transient Environment env;
   @JsonIgnore @Transient private transient List<Artifact> artifacts;
   @JsonIgnore @Transient private transient List<Artifact> rollbackArtifacts;
-  @JsonIgnore @Transient private transient List<HelmChart> helmCharts;
+  private List<HelmChart> helmCharts;
   @JsonIgnore @Transient private transient Account account;
 
   private List<ServiceElement> services;
@@ -356,6 +356,15 @@ public class WorkflowStandardParams implements ExecutionContextAware, ContextEle
    */
   public void setHelmChartIds(List<String> helmChartIds) {
     this.helmChartIds = helmChartIds;
+  }
+
+  /**
+   * Sets helmCharts.
+   *
+   * @param helmCharts the helm chart ids
+   */
+  public void setHelmCharts(List<HelmChart> helmCharts) {
+    this.helmCharts = helmCharts;
   }
 
   /**

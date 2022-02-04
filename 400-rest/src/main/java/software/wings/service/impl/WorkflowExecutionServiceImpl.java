@@ -1473,7 +1473,9 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
       stdParams.setArtifactIds(executionArgs.getArtifacts().stream().map(Artifact::getUuid).collect(toList()));
     }
     if (isNotEmpty(executionArgs.getHelmCharts())) {
-      stdParams.setHelmChartIds(executionArgs.getHelmCharts().stream().map(HelmChart::getUuid).collect(toList()));
+      stdParams.setHelmChartIds(
+          executionArgs.getHelmCharts().stream().map(HelmChart::getUuid).filter(Objects::nonNull).collect(toList()));
+      stdParams.setHelmCharts(executionArgs.getHelmCharts());
     }
     if (isNotEmpty(executionArgs.getWorkflowVariables())) {
       stdParams.setWorkflowVariables(executionArgs.getWorkflowVariables());

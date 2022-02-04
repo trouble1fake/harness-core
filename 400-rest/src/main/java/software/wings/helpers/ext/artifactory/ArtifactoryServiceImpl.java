@@ -28,6 +28,7 @@ import static org.jfrog.artifactory.client.ArtifactoryRequest.ContentType.TEXT;
 import static org.jfrog.artifactory.client.ArtifactoryRequest.Method.GET;
 import static org.jfrog.artifactory.client.ArtifactoryRequest.Method.POST;
 import static org.jfrog.artifactory.client.model.impl.PackageTypeImpl.docker;
+import static org.jfrog.artifactory.client.model.impl.PackageTypeImpl.helm;
 import static org.jfrog.artifactory.client.model.impl.PackageTypeImpl.maven;
 
 import io.harness.annotations.dev.BreakDependencyOn;
@@ -39,6 +40,7 @@ import io.harness.artifactory.ArtifactoryConfigRequest;
 import io.harness.delegate.task.ListNotifyResponseData;
 import io.harness.eraro.ErrorCode;
 import io.harness.exception.ArtifactoryServerException;
+import io.harness.exception.InvalidArtifactServerException;
 import io.harness.exception.WingsException.ReportTarget;
 import io.harness.network.Http;
 
@@ -633,6 +635,23 @@ public class ArtifactoryServiceImpl implements ArtifactoryService {
       handleAndRethrow(e, USER);
     }
     return 0L;
+  }
+
+  @Override
+  public void checkIfValidHelmRepository(ArtifactoryConfigRequest artifactoryConfigRequest, String repoName) {
+    log.info("Checking if valid helm repo for {}", repoName);
+    Artifactory artifactory = getArtifactoryClient(artifactoryConfigRequest);
+    String errorOccurredWhileRetrievingRepositories = "Error occurred while validating repository";
+    try {
+      Repository repo = artifactory.repository(repoName).get();
+      RepositorySettings settings = repo.getRepositorySettings();
+      if (settings.getPackageType() != helm) {
+        throw new InvalidArtifactServerException("Given chart url is not a valid helm repo");
+      }
+    } catch (Exception e) {
+      log.error(errorOccurredWhileRetrievingRepositories, e);
+      handleAndRethrow(e, USER);
+    }
   }
 
   private List<BuildDetails> getBuildDetails(ArtifactoryConfigRequest artifactoryConfig, Artifactory artifactory,

@@ -49,6 +49,9 @@ public class ArtifactoryHelmRepositoryService implements ManifestRepositoryServi
             .password(helmRepoConfig.getPassword())
             .hasCredentials(helmRepoConfig.getUsername() != null || helmRepoConfig.getPassword() != null)
             .build();
+
+    artifactoryService.checkIfValidHelmRepository(request, repoName);
+
     List<BuildDetails> buildDetails = artifactoryService.getFilePaths(
         request, repoName, helmChartCollectionParams.getHelmChartConfigParams().getChartName(), "helm", 50);
     if (buildDetails == null) {
