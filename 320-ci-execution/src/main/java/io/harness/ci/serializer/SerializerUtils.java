@@ -34,6 +34,8 @@ public class SerializerUtils {
       entrypoint = Arrays.asList("bash", "-c");
     } else if (shellType == CIShellType.POWERSHELL) {
       entrypoint = Arrays.asList("powershell", "-Command");
+    } else if (shellType == CIShellType.PWSH) {
+      entrypoint = Arrays.asList("pwsh", "-Command");
     } else {
       throw new CIStageExecutionException(format("Invalid shell type: %s", shellType));
     }
@@ -45,7 +47,7 @@ public class SerializerUtils {
     CIShellType shellType = RunTimeInputHandler.resolveShellType(parametrizedShellType);
     if (shellType == CIShellType.SH || shellType == CIShellType.BASH) {
       cmd = "set -xe; ";
-    } else if (shellType == CIShellType.POWERSHELL) {
+    } else if (shellType == CIShellType.POWERSHELL || shellType == CIShellType.PWSH) {
       cmd = "$ErrorActionPreference = 'Stop' \n";
     } else {
       throw new CIStageExecutionException(format("Invalid shell type: %s", shellType));
