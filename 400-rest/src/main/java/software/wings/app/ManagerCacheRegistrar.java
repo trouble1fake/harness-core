@@ -11,6 +11,8 @@ import static io.harness.annotations.dev.HarnessTeam.PL;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cache.HarnessCacheManager;
+import io.harness.delegate.beans.DelegateToken;
+import io.harness.delegate.beans.DelegateTokenCacheKey;
 import io.harness.security.encryption.EncryptedRecordData;
 import io.harness.version.VersionInfoManager;
 
@@ -47,6 +49,7 @@ public class ManagerCacheRegistrar extends AbstractModule {
   public static final String WHITELIST_CACHE = "whitelistCache";
   public static final String PRIMARY_CACHE_PREFIX = "primary_";
   public static final String SECRET_TOKEN_CACHE = "secretTokenCache";
+  public static final String DELEGATE_TOKEN_CACHE = "delegateTokenCache";
 
   @Provides
   @Named(AUTH_TOKEN_CACHE)
@@ -125,6 +128,15 @@ public class ManagerCacheRegistrar extends AbstractModule {
       HarnessCacheManager harnessCacheManager, VersionInfoManager versionInfoManager) {
     return harnessCacheManager.getCache(SECRET_TOKEN_CACHE, String.class, EncryptedRecordData.class,
         CreatedExpiryPolicy.factoryOf(Duration.TEN_MINUTES), versionInfoManager.getVersionInfo().getBuildNo());
+  }
+
+  @Provides
+  @Named(DELEGATE_TOKEN_CACHE)
+  @Singleton
+  public Cache<DelegateTokenCacheKey, DelegateToken> getDelegateTokenCache(
+      HarnessCacheManager harnessCacheManager, VersionInfoManager versionInfoManager) {
+    return harnessCacheManager.getCache(DELEGATE_TOKEN_CACHE, DelegateTokenCacheKey.class, DelegateToken.class,
+        AccessedExpiryPolicy.factoryOf(Duration.TEN_MINUTES), versionInfoManager.getVersionInfo().getBuildNo());
   }
 
   @Override

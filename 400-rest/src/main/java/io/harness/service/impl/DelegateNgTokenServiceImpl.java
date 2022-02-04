@@ -78,6 +78,7 @@ public class DelegateNgTokenServiceImpl implements DelegateNgTokenService, Accou
     return getDelegateTokenDetails(delegateToken, true);
   }
 
+  // TODO: on revoking, invalidate the token cache also
   @Override
   public DelegateTokenDetails revokeDelegateToken(String accountId, DelegateEntityOwner owner, String tokenName) {
     Query<DelegateToken> filterQuery = matchNameTokenQuery(accountId, tokenName);

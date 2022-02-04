@@ -21,21 +21,19 @@ import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.context.GlobalContext;
-import io.harness.delegate.beans.DelegateNgToken;
-import io.harness.delegate.beans.DelegateNgToken.DelegateNgTokenKeys;
 import io.harness.delegate.beans.DelegateToken;
 import io.harness.delegate.beans.DelegateToken.DelegateTokenKeys;
+import io.harness.delegate.beans.DelegateTokenCacheKey;
 import io.harness.delegate.beans.DelegateTokenStatus;
+import io.harness.delegate.utils.DelegateTokenCacheHelper;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.InvalidTokenException;
 import io.harness.exception.RevokedTokenException;
 import io.harness.exception.WingsException;
-import io.harness.ff.FeatureFlagService;
 import io.harness.globalcontex.DelegateTokenGlobalContextData;
 import io.harness.manage.GlobalContextManager;
 import io.harness.persistence.HIterator;
 import io.harness.persistence.HPersistence;
-import io.harness.persistence.NameAndValueAccess;
 import io.harness.security.DelegateTokenAuthenticator;
 
 import software.wings.beans.Account;
@@ -64,7 +62,7 @@ import org.mongodb.morphia.query.Query;
 @OwnedBy(DEL)
 @TargetModule(HarnessModule._420_DELEGATE_SERVICE)
 public class DelegateTokenAuthenticatorImpl implements DelegateTokenAuthenticator {
-  @Inject private FeatureFlagService featureFlagService;
+  @Inject private DelegateTokenCacheHelper delegateTokenCacheHelper;
   @Inject private HPersistence persistence;
 
   private final LoadingCache<String, String> keyCache =
@@ -84,21 +82,35 @@ public class DelegateTokenAuthenticatorImpl implements DelegateTokenAuthenticato
     } catch (ParseException e) {
       throw new InvalidTokenException("Invalid delegate token format", USER_ADMIN);
     }
+    String delegateHostName = "";
+    try {
+      delegateHostName = encryptedJWT.getJWTClaimsSet().getIssuer();
+    } catch (ParseException e) {
+      log.warn("Couldn't parse delegate token", e);
+    }
 
-    boolean successfullyDecrypted = decryptJWTDelegateToken(accountId, DelegateTokenStatus.ACTIVE, encryptedJWT);
-    if (!successfullyDecrypted) {
-      boolean decryptedWithRevokedToken = decryptJWTDelegateToken(accountId, DelegateTokenStatus.REVOKED, encryptedJWT);
-      if (decryptedWithRevokedToken) {
-        String delegateHostName = "";
-        try {
-          delegateHostName = encryptedJWT.getJWTClaimsSet().getIssuer();
-        } catch (ParseException e) {
-          log.warn("Couldn't parse token", e);
-        }
-        log.warn("Delegate {} is using REVOKED delegate token", delegateHostName);
-        throw new RevokedTokenException("Invalid delegate token. Delegate is using revoked token", USER_ADMIN);
+    boolean decryptedWithRevokedToken = false;
+    boolean decryptedWithActiveToken = false;
+    DelegateToken delegateToken =
+        delegateTokenCacheHelper.getDelegateToken(new DelegateTokenCacheKey(accountId, delegateHostName));
+    boolean decryptedWithTokenFromCache = decryptJwtTokenWithDelegateToken(encryptedJWT, delegateToken);
+    if (!decryptedWithTokenFromCache) {
+      delegateTokenCacheHelper.invalidateCacheUsingKey(new DelegateTokenCacheKey(accountId, delegateHostName));
+      decryptedWithActiveToken =
+          decryptJWTDelegateToken(accountId, delegateHostName, DelegateTokenStatus.ACTIVE, encryptedJWT);
+      if (!decryptedWithActiveToken) {
+        decryptedWithRevokedToken =
+            decryptJWTDelegateToken(accountId, delegateHostName, DelegateTokenStatus.REVOKED, encryptedJWT);
       }
+    }
 
+    if ((delegateToken != null && delegateToken.getStatus() == DelegateTokenStatus.REVOKED)
+        || decryptedWithRevokedToken) {
+      log.warn("Delegate {} is using REVOKED delegate token", delegateHostName);
+      throw new RevokedTokenException("Invalid delegate token. Delegate is using revoked token", USER_ADMIN);
+    }
+
+    if (!decryptedWithTokenFromCache && !decryptedWithActiveToken && !decryptedWithRevokedToken) {
       decryptWithAccountKey(accountId, encryptedJWT);
     }
 
@@ -127,56 +139,65 @@ public class DelegateTokenAuthenticatorImpl implements DelegateTokenAuthenticato
     decryptDelegateToken(encryptedJWT, accountKey);
   }
 
-  private boolean decryptJWTDelegateToken(String accountId, DelegateTokenStatus status, EncryptedJWT encryptedJWT) {
-    long time_start = System.currentTimeMillis();
+  private boolean decryptJWTDelegateToken(
+      String accountId, String delegateHostName, DelegateTokenStatus status, EncryptedJWT encryptedJWT) {
+    long startTime = System.currentTimeMillis();
+    // first try to decrypt with cg tokens and if you failed then try with ng tokens
     Query<DelegateToken> query = persistence.createQuery(DelegateToken.class)
                                      .field(DelegateTokenKeys.accountId)
                                      .equal(accountId)
                                      .field(DelegateTokenKeys.status)
                                      .equal(status);
 
-    boolean result = decryptDelegateTokenByQuery(query, accountId, status, encryptedJWT, false);
+    boolean result = decryptDelegateTokenByQuery(query, accountId, delegateHostName, encryptedJWT);
     if (!result) {
-      Query<DelegateNgToken> queryNg = persistence.createQuery(DelegateNgToken.class)
-                                           .field(DelegateNgTokenKeys.accountId)
-                                           .equal(accountId)
-                                           .field(DelegateNgTokenKeys.status)
-                                           .equal(status);
-      result = decryptDelegateTokenByQuery(queryNg, accountId, status, encryptedJWT, true);
+      result = decryptDelegateTokenByQuery(
+          query.filter(DelegateTokenKeys.isNg, true), accountId, delegateHostName, encryptedJWT);
     }
-    long time_end = System.currentTimeMillis() - time_start;
+    long endTime = System.currentTimeMillis() - startTime;
     log.debug("Delegate Token verification for accountId {} and status {} has taken {} milliseconds.", accountId,
-        status.name(), time_end);
+        status.name(), endTime);
     return result;
   }
 
-  // TODO: Arpit associate delegate token correspondingly
+  // TODO: Arpit, check owner also and filter accordingly
   private boolean decryptDelegateTokenByQuery(
-      Query query, String accountId, DelegateTokenStatus status, EncryptedJWT encryptedJWT, boolean isNg) {
-    try (HIterator<NameAndValueAccess> records = new HIterator<>(query.fetch())) {
-      for (NameAndValueAccess delegateToken : records) {
-        try {
-          if (isNg) {
-            decryptDelegateToken(encryptedJWT, decodeBase64ToString(delegateToken.getValue()));
-          } else {
-            decryptDelegateToken(encryptedJWT, delegateToken.getValue());
-          }
-
-          if (DelegateTokenStatus.ACTIVE == status) {
-            if (!GlobalContextManager.isAvailable()) {
-              initGlobalContextGuard(new GlobalContext());
-            }
-            upsertGlobalContextRecord(
-                DelegateTokenGlobalContextData.builder().tokenName(delegateToken.getName()).build());
-          }
+      Query query, String accountId, String delegateHostName, EncryptedJWT encryptedJWT) {
+    try (HIterator<DelegateToken> iterator = new HIterator<>(query.fetch())) {
+      while (iterator.hasNext()) {
+        boolean decryptedJwtTokenWithDelegateToken = decryptJwtTokenWithDelegateToken(encryptedJWT, iterator.next());
+        if (decryptedJwtTokenWithDelegateToken) {
+          delegateTokenCacheHelper.putIfTokenIsAbsent(
+              new DelegateTokenCacheKey(accountId, delegateHostName), iterator.next());
           return true;
-        } catch (Exception e) {
-          log.debug("Fail to decrypt Delegate JWT using delete token {} for the account {}", delegateToken.getName(),
-              accountId);
         }
       }
       return false;
     }
+  }
+
+  private boolean decryptJwtTokenWithDelegateToken(EncryptedJWT encryptedJWT, DelegateToken delegateToken) {
+    if (delegateToken == null) {
+      return false;
+    }
+    try {
+      if (delegateToken.isNg()) {
+        decryptDelegateToken(encryptedJWT, decodeBase64ToString(delegateToken.getValue()));
+      } else {
+        decryptDelegateToken(encryptedJWT, delegateToken.getValue());
+      }
+      if (delegateToken.getStatus() == DelegateTokenStatus.ACTIVE) {
+        if (!GlobalContextManager.isAvailable()) {
+          initGlobalContextGuard(new GlobalContext());
+        }
+        upsertGlobalContextRecord(DelegateTokenGlobalContextData.builder().tokenName(delegateToken.getName()).build());
+      }
+      return true;
+    } catch (Exception e) {
+      log.debug("Fail to decrypt Delegate JWT using delete token {} for the account {} from cache",
+          delegateToken.getName(), delegateToken.getAccountId());
+    }
+    return false;
   }
 
   private void decryptDelegateToken(EncryptedJWT encryptedJWT, String delegateToken) {
