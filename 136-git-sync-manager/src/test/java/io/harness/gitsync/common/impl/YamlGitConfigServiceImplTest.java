@@ -173,22 +173,32 @@ public class YamlGitConfigServiceImplTest extends GitSyncTestBase {
   @Owner(developers = DEEPAK)
   @Category(UnitTests.class)
   public void testValidateThatHarnessStringComesOnceWithValidInput() {
-    List<YamlGitConfigDTO.RootFolder> rootFolders =
-        Arrays.asList(YamlGitConfigDTO.RootFolder.builder().rootFolder(ROOT_FOLDER).build(),
-            YamlGitConfigDTO.RootFolder.builder().rootFolder(ROOT_FOLDER_1).build());
+    List<YamlGitConfigDTO.RootFolder> rootFolders = Arrays.asList(getRootFolder(ROOT_FOLDER),
+        getRootFolder(ROOT_FOLDER_1), getRootFolder("config/code/config-harness/config-.harness/.harness/"),
+        getRootFolder("config-harness/.harness/"), getRootFolder("/.harness/"),
+        getRootFolder("config////abc///.harness/"), getRootFolder("harness/.harness/"));
     YamlGitConfigDTO yamlGitConfigDTO = YamlGitConfigDTO.builder().rootFolders(rootFolders).build();
-    yamlGitConfigService.validateThatHarnessStringComesOnce(yamlGitConfigDTO);
+    yamlGitConfigService.validateThatHarnessStringShouldNotComeMoreThanOnce(yamlGitConfigDTO);
   }
 
   @Test
   @Owner(developers = DEEPAK)
   @Category(UnitTests.class)
-  public void testValidateThatHarnessStringComesOnceWithInValidInput() {
-    List<YamlGitConfigDTO.RootFolder> rootFolders =
-        Arrays.asList(YamlGitConfigDTO.RootFolder.builder().rootFolder("/src/.harness/src1/.harness").build(),
-            YamlGitConfigDTO.RootFolder.builder().rootFolder(ROOT_FOLDER_1).build());
-    YamlGitConfigDTO yamlGitConfigDTO = YamlGitConfigDTO.builder().rootFolders(rootFolders).build();
-    assertThatThrownBy(() -> yamlGitConfigService.validateThatHarnessStringComesOnce(yamlGitConfigDTO))
-        .isInstanceOf(InvalidRequestException.class);
+  public void testValidateThatHarnessStringComesOnceWithInvalidInput() {
+    List<YamlGitConfigDTO.RootFolder> rootFolders = Arrays.asList(getRootFolder("/src/.harness/src1/.harness"),
+        getRootFolder("harness-config/.harness/xyz-.harness/.harness"), getRootFolder(".harness/.harness"),
+        getRootFolder("/.harness/harness/.harness"));
+
+    rootFolders.forEach(rootFolder -> {
+      YamlGitConfigDTO yamlGitConfigDTO =
+          YamlGitConfigDTO.builder().rootFolders(Collections.singletonList(rootFolder)).build();
+      assertThatThrownBy(
+          () -> yamlGitConfigService.validateThatHarnessStringShouldNotComeMoreThanOnce(yamlGitConfigDTO))
+          .isInstanceOf(InvalidRequestException.class);
+    });
+  }
+
+  private YamlGitConfigDTO.RootFolder getRootFolder(String folderPath) {
+    return YamlGitConfigDTO.RootFolder.builder().rootFolder(folderPath).build();
   }
 }
