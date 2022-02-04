@@ -39,7 +39,7 @@ PROJECTS="BT|CCE|CCM|CDC|CDNG|CDP|CE|CI|CV|CVNG|DEL|DOC|DX|ER|FFM|OPA|OPS|PIE|PL
 check_empty_output "$RELEASE_TYPE" "Release Type is not defined."
 
 # Check for not merged hot fixes
-echo "INFO: Checking for Not Merged Hot Fixes in Master."
+echo "STEP1: INFO: Checking for Not Merged Hot Fixes in Master."
 git log --remotes=origin/release/* --pretty=oneline --abbrev-commit | grep -iE "\[(${PROJECTS})-[0-9]+]:" -o | sort | uniq > release.txt
 git log --remotes=origin/[m]aster --pretty=oneline --abbrev-commit | grep -iE "\[(${PROJECTS})-[0-9]+]:" -o | sort | uniq > master.txt
 
@@ -51,17 +51,19 @@ then
     exit 1
 fi
 
+# Update jira issues
+echo "STEP2: INFO: Update jira issues"
+scripts/jenkins/release-branch-update-jiras.sh
+scripts/jenkins/release-branch-update-jira_status.sh
+
 #Performing operations of getting SHA and TAGGING SHA on master branch.
 export BRANCH=`echo "${GIT_BRANCH}" | sed -e "s/origin\///g"`
 export SHA=`git rev-parse HEAD`
 
 check_branch_name "master"
 
-# Update jira issues
-scripts/jenkins/release-branch-update-jiras.sh
-scripts/jenkins/release-branch-update-jira_status.sh
-
 #Get Previous Tag and Tagging Master Branch according to type of release.
+echo "STEP3: INFO: Get Previous Tag and Tagging Master Branch according to type of release."
 if [[ "$EXECUTE_NEW_CODE" == "true" ]]; then
     #Getting Latest Tag on master branch
     TAG=$(git describe --tags --abbrev=0 --match "*.*.*" 2> /dev/null || echo 0.0.0)
@@ -106,7 +108,7 @@ if [[ "$EXECUTE_NEW_CODE" == "true" ]]; then
 fi
 
 # Bumping version in build.properties in develop branch.
-echo "INFO: Bumping version in build.properties in develop branch."
+echo "STEP4: INFO: Bumping version in build.properties in develop branch."
 git fetch origin refs/heads/develop; git checkout develop && git branch
 check_branch_name "develop"
 
@@ -129,6 +131,7 @@ export NEW_VERSION=$(( ${VERSION}+1 ))
 
 sed -i "s:build.number=${VERSION}00:build.number=${NEW_VERSION}00:g" ${VERSION_FILE}
 sed -i "s#${DV}#${YEAR}.${MONTH}.${NEWDELEGATEVERSION}#g" ${VERSION_FILE}
+
 git add ${VERSION_FILE}
 git commit -m "Branching to release/${PURPOSE}/${VERSION}xx. New version ${NEW_VERSION}xx"
 git push origin develop
