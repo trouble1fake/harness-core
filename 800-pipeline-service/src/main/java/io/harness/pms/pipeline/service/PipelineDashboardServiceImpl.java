@@ -39,8 +39,6 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jooq.DSLContext;
-import org.jooq.Query;
-import org.jooq.conf.ParamType;
 import org.jooq.impl.DSL;
 
 @OwnedBy(HarnessTeam.CDC)
