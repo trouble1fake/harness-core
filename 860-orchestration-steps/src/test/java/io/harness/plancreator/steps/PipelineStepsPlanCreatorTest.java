@@ -15,21 +15,24 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.harness.OrchestrationStepsTestBase;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
+import io.harness.plancreator.execution.StepsExecutionConfig;
 import io.harness.pms.sdk.core.plan.PlanNode;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationContext;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationResponse;
+import io.harness.pms.yaml.YAMLFieldNameConstants;
 import io.harness.pms.yaml.YamlField;
 import io.harness.pms.yaml.YamlNode;
 import io.harness.pms.yaml.YamlUtils;
 import io.harness.rule.Owner;
 import io.harness.serializer.KryoSerializer;
-import io.harness.steps.common.steps.stepgroup.StepGroupStep;
+import io.harness.steps.common.NGSectionStepWithRollbackInfo;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import com.google.inject.Inject;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Objects;
@@ -39,11 +42,11 @@ import org.junit.experimental.categories.Category;
 import org.mockito.InjectMocks;
 
 @OwnedBy(PIPELINE)
-public class StepGroupsPmsPlanCreatorTest extends OrchestrationStepsTestBase {
+public class PipelineStepsPlanCreatorTest extends OrchestrationStepsTestBase {
   @Inject private KryoSerializer kryoSerializer;
-  @Inject @InjectMocks StepGroupPMSPlanCreator stepGroupPMSPlanCreator;
-  YamlField stepGroupYamlField;
-  StepGroupElementConfig stepElementConfig;
+  @Inject @InjectMocks PipelineStepsPlanCreator pipelineStepsPlanCreator;
+  YamlField stepsYamlField;
+  StepsExecutionConfig stepElementConfig;
   PlanCreationContext context;
 
   @Before
@@ -63,47 +66,56 @@ public class StepGroupsPmsPlanCreatorTest extends OrchestrationStepsTestBase {
     YamlField approvalSpecField = Objects.requireNonNull(approvalStageField).getNode().getField("spec");
     YamlField executionField = Objects.requireNonNull(approvalSpecField).getNode().getField("execution");
 
-    stepGroupYamlField = executionField.getNode().getField("steps").getNode().asArray().get(0).getField("stepGroup");
+    YamlField stepGroupYamlField =
+        executionField.getNode().getField("steps").getNode().asArray().get(0).getField("stepGroup");
     assertThat(stepGroupYamlField).isNotNull();
 
-    stepElementConfig = YamlUtils.read(stepGroupYamlField.getNode().toString(), StepGroupElementConfig.class);
+    stepsYamlField = Objects.requireNonNull(stepGroupYamlField).getNode().getField("steps");
+    stepElementConfig = YamlUtils.read(stepsYamlField.getNode().toString(), StepsExecutionConfig.class);
 
-    context = PlanCreationContext.builder().currentField(stepGroupYamlField).build();
+    context = PlanCreationContext.builder().currentField(stepsYamlField).build();
   }
 
   @Test
   @Owner(developers = PRASHANTSHARMA)
   @Category(UnitTests.class)
   public void testCreatePlanForChildrenNodes() {
-    YamlField stepsField = stepGroupYamlField.getNode().getField("steps");
+    List<YamlNode> stepsField = stepsYamlField.getNode().asArray();
     assertThat(stepsField).isNotNull();
 
     LinkedHashMap<String, PlanCreationResponse> planForChildrenNodes =
-        stepGroupPMSPlanCreator.createPlanForChildrenNodes(context, stepElementConfig);
-    assertThat(planForChildrenNodes).hasSize(1);
+        pipelineStepsPlanCreator.createPlanForChildrenNodes(context, stepElementConfig);
+    assertThat(planForChildrenNodes).hasSize(2);
 
-    assertThat(planForChildrenNodes.containsKey(stepsField.getNode().getUuid())).isTrue();
-    PlanCreationResponse stepsResponse = planForChildrenNodes.get(stepsField.getNode().getUuid());
+    YamlNode firstStep = stepsField.get(0).getField("step").getNode();
+    assertThat(planForChildrenNodes.containsKey(firstStep.getUuid())).isTrue();
+    PlanCreationResponse stepsResponse = planForChildrenNodes.get(firstStep.getUuid());
     assertThat(stepsResponse.getDependencies()).isNotNull();
-    assertThat(stepsResponse.getDependencies().getDependenciesMap().containsKey(stepsField.getNode().getUuid()))
-        .isTrue();
-    assertThat(stepsResponse.getDependencies().getDependenciesMap().get(stepsField.getNode().getUuid()))
-        .isEqualTo("pipeline/stages/[0]/stage/spec/execution/steps/[0]/stepGroup/steps");
+    assertThat(stepsResponse.getDependencies().getDependenciesMap().containsKey(firstStep.getUuid())).isTrue();
+    assertThat(stepsResponse.getDependencies().getDependenciesMap().get(firstStep.getUuid()))
+        .isEqualTo("pipeline/stages/[0]/stage/spec/execution/steps/[0]/stepGroup/steps/[0]/step");
+
+    YamlNode secondStep = stepsField.get(1).getField("step").getNode();
+    assertThat(planForChildrenNodes.containsKey(secondStep.getUuid())).isTrue();
+    stepsResponse = planForChildrenNodes.get(secondStep.getUuid());
+    assertThat(stepsResponse.getDependencies()).isNotNull();
+    assertThat(stepsResponse.getDependencies().getDependenciesMap().containsKey(secondStep.getUuid())).isTrue();
+    assertThat(stepsResponse.getDependencies().getDependenciesMap().get(secondStep.getUuid()))
+        .isEqualTo("pipeline/stages/[0]/stage/spec/execution/steps/[0]/stepGroup/steps/[1]/step");
   }
 
   @Test
   @Owner(developers = PRASHANTSHARMA)
   @Category(UnitTests.class)
   public void testCreatePlanForParentNode() {
-    YamlField stepsField = stepGroupYamlField.getNode().getField("steps");
-    assertThat(stepsField).isNotNull();
+    String firstChild = stepsYamlField.getNode().asArray().get(0).getField("step").getNode().getUuid();
 
-    PlanNode planForParentNode = stepGroupPMSPlanCreator.createPlanForParentNode(context, stepElementConfig, null);
-    assertThat(planForParentNode.getUuid()).isEqualTo(stepGroupYamlField.getNode().getUuid());
-    assertThat(planForParentNode.getIdentifier()).isEqualTo(stepElementConfig.getIdentifier());
-    assertThat(planForParentNode.getStepType()).isEqualTo(StepGroupStep.STEP_TYPE);
+    PlanNode planForParentNode = pipelineStepsPlanCreator.createPlanForParentNode(
+        context, stepElementConfig, Collections.singletonList(firstChild));
+    assertThat(planForParentNode.getUuid()).isEqualTo(stepsYamlField.getNode().getUuid());
+    assertThat(planForParentNode.getIdentifier()).isEqualTo(YAMLFieldNameConstants.STEPS);
+    assertThat(planForParentNode.getStepType()).isEqualTo(NGSectionStepWithRollbackInfo.STEP_TYPE);
     assertThat(planForParentNode.getFacilitatorObtainments()).hasSize(1);
     assertThat(planForParentNode.getFacilitatorObtainments().get(0).getType().getType()).isEqualTo("CHILD");
-    assertThat(planForParentNode.isSkipExpressionChain()).isFalse();
   }
 }

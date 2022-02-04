@@ -14,8 +14,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
-import io.harness.plancreator.execution.ExecutionElementConfig;
-import io.harness.plancreator.execution.ExecutionPmsPlanCreator;
 import io.harness.pms.sdk.core.plan.PlanNode;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationContext;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationResponse;
