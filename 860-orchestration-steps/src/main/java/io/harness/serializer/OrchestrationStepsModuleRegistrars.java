@@ -12,6 +12,7 @@ import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 import io.harness.EntityType;
 import io.harness.ModuleType;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.FeatureName;
 import io.harness.cf.pipeline.FeatureFlagStageNode;
 import io.harness.morphia.MorphiaRegistrar;
 import io.harness.plancreator.pipeline.PipelineConfig;
@@ -32,6 +33,7 @@ import io.harness.steps.approval.step.jira.JiraApprovalStepNode;
 import io.harness.steps.approval.step.servicenow.ServiceNowApprovalStepNode;
 import io.harness.steps.jira.create.JiraCreateStepNode;
 import io.harness.steps.jira.update.JiraUpdateStepNode;
+import io.harness.steps.policy.PolicyStepNode;
 import io.harness.steps.shellscript.ShellScriptStepNode;
 import io.harness.steps.template.TemplateStepNode;
 import io.harness.yaml.schema.beans.YamlGroup;
@@ -41,6 +43,7 @@ import io.harness.yaml.schema.beans.YamlSchemaRootClass;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.util.Arrays;
+import java.util.Collections;
 import lombok.experimental.UtilityClass;
 import org.mongodb.morphia.converters.TypeConverter;
 import org.springframework.core.convert.converter.Converter;
@@ -223,6 +226,19 @@ public class OrchestrationStepsModuleRegistrars {
                                            .modulesSupported(Arrays.asList(ModuleType.CD, ModuleType.PMS))
                                            .yamlGroup(YamlGroup.builder().group(StepCategory.STEP.name()).build())
                                            .build())
+                   .build())
+          .add(YamlSchemaRootClass.builder()
+                   .entityType(EntityType.POLICY_STEP)
+                   .availableAtProjectLevel(true)
+                   .availableAtOrgLevel(false)
+                   .availableAtAccountLevel(false)
+                   .clazz(PolicyStepNode.class)
+                   .yamlSchemaMetadata(
+                       YamlSchemaMetadata.builder()
+                           .modulesSupported(Arrays.asList(ModuleType.values()))
+                           .featureFlags(Collections.singletonList(FeatureName.CUSTOM_POLICY_STEP.name()))
+                           .yamlGroup(YamlGroup.builder().group(StepCategory.STEP.name()).build())
+                           .build())
                    .build())
           .build();
 }

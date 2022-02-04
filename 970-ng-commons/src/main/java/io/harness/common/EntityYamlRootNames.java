@@ -58,4 +58,5 @@ public class EntityYamlRootNames {
   public static String HARNESS_APPROVAL = "HarnessApproval";
   public static String BARRIER = "Barrier";
   public static String OPAPOLICY = "governancePolicy";
+  public static String POLICY_STEP = "PolicyStep";
 }
