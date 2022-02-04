@@ -77,13 +77,13 @@ public class InstallUtils {
   private static final String ocBaseDir = "./client-tools/oc/";
 
   private static Map<String, String> kubectlPaths = new HashMap<>();
+  private static Map<String, String> kustomizePaths = new HashMap<>();
 
   private static String kustomizeBaseDir = "./client-tools/kustomize/";
   private static String kustomizeVersionOld = "v3.5.4";
   private static String kustomizeVersionNew = "v4.0.0";
-  private static String kustomizePath = "kustomize";
-  private static boolean isCustomKustomizePath;
-  private static String kustomizeBinaryName = "kustomize";
+  public static String kustomizePath = "kustomize";
+  public static boolean isCustomKustomizePath;
 
   private static final List<String> kustomizeVersions = Arrays.asList(kustomizeVersionOld, kustomizeVersionNew);
 
@@ -96,6 +96,8 @@ public class InstallUtils {
     helmPaths.put(helm3Version, "helm");
     kubectlPaths.put(defaultKubectlVersion, "kubectl");
     kubectlPaths.put(newKubectlVersion, "kubectl");
+    kustomizePaths.put(kustomizeVersionOld, "kustomize");
+    kustomizePaths.put(kustomizeVersionNew, "kustomize");
   }
 
   private static String chartMuseumPath = "chartmuseum";
@@ -190,19 +192,11 @@ public class InstallUtils {
     return ocPath;
   }
 
-  public static String getKustomizePath() {
-    return kustomizePath;
-  }
-
   public static String getKustomizePath(boolean useLatestVersion) {
     if (isCustomKustomizePath) {
       return kustomizePath;
     }
-    return Paths
-        .get(kustomizeBaseDir, useLatestVersion ? kustomizeVersionNew : kustomizeVersionOld, kustomizeBinaryName)
-        .toAbsolutePath()
-        .normalize()
-        .toString();
+    return useLatestVersion ? kustomizePaths.get(kustomizeVersionNew) : kustomizePaths.get(kustomizeVersionOld);
   }
 
   public static boolean installKubectl(DelegateConfiguration configuration) {
@@ -1074,6 +1068,7 @@ public class InstallUtils {
       if (StringUtils.isNotEmpty(configuration.getKustomizePath())) {
         isCustomKustomizePath = true;
         kustomizePath = configuration.getKustomizePath();
+        kustomizePaths.put(kustomizeVersion, kustomizePath);
         log.info("Found user configured kustomize at {}. Skipping Install.", kustomizePath);
         return true;
       }
@@ -1083,10 +1078,11 @@ public class InstallUtils {
         return true;
       }
 
-      String kustomizeDir = kustomizeBaseDir + kustomizeVersion;
+      String kustomizeDir = Paths.get(kustomizeBaseDir, kustomizeVersion).toAbsolutePath().normalize().toString();
 
       if (validateKustomizeExists(kustomizeDir)) {
-        kustomizePath = Paths.get(kustomizeDir + "/kustomize").toAbsolutePath().normalize().toString();
+        kustomizePath = Paths.get(kustomizeDir, "kustomize").toAbsolutePath().normalize().toString();
+        kustomizePaths.put(kustomizeVersion, kustomizePath);
         log.info("kustomize version {} already installed", kustomizeVersion);
         return true;
       }
@@ -1206,6 +1202,13 @@ public class InstallUtils {
           .execute();
     } catch (Exception ex) {
       throw new ProcessExecutionException(format("Unable to execute bash command: %s", cmd), ex);
+    }
+  }
+
+  public static void setupDefaultPaths(DelegateConfiguration delegateConfiguration) {
+    if (isNotEmpty(delegateConfiguration.getKustomizePath())) {
+      kustomizePath = delegateConfiguration.getKustomizePath();
+      isCustomKustomizePath = true;
     }
   }
 }

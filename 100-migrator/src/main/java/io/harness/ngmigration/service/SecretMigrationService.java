@@ -11,13 +11,18 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.EncryptedData;
 import io.harness.beans.SecretManagerConfig;
+import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.ng.core.dto.secrets.SecretDTOV2;
 import io.harness.ng.core.dto.secrets.SecretRequestWrapper;
+import io.harness.ng.core.dto.secrets.SecretResponseWrapper;
 import io.harness.ng.core.dto.secrets.SecretTextSpecDTO;
 import io.harness.ngmigration.beans.MigrationInputDTO;
 import io.harness.ngmigration.beans.NgEntityDetail;
+import io.harness.ngmigration.client.NGClient;
+import io.harness.ngmigration.client.PmsClient;
 import io.harness.secretmanagerclient.ValueType;
 import io.harness.secrets.SecretService;
+import io.harness.serializer.JsonUtils;
 
 import software.wings.ngmigration.CgEntityId;
 import software.wings.ngmigration.CgEntityNode;
@@ -28,12 +33,16 @@ import software.wings.ngmigration.NGMigrationStatus;
 import software.wings.ngmigration.NGYamlFile;
 
 import com.google.inject.Inject;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
+import retrofit2.Response;
 
+@Slf4j
 @OwnedBy(HarnessTeam.CDC)
 public class SecretMigrationService implements NgMigration {
   @Inject private SecretService secretService;
@@ -66,8 +75,12 @@ public class SecretMigrationService implements NgMigration {
   }
 
   @Override
-  public void migrate(
-      Map<CgEntityId, CgEntityNode> entities, Map<CgEntityId, Set<CgEntityId>> graph, CgEntityId entityId) {}
+  public void migrate(String auth, NGClient ngClient, PmsClient pmsClient, MigrationInputDTO inputDTO,
+      NGYamlFile yamlFile) throws IOException {
+    Response<ResponseDTO<SecretResponseWrapper>> resp =
+        ngClient.createSecret(auth, inputDTO.getAccountIdentifier(), JsonUtils.asTree(yamlFile.getYaml())).execute();
+    log.info("Secret creation Response details {}", resp.code());
+  }
 
   @Override
   public List<NGYamlFile> getYamls(MigrationInputDTO inputDTO, Map<CgEntityId, CgEntityNode> entities,
@@ -79,6 +92,7 @@ public class SecretMigrationService implements NgMigration {
             .getEntity();
     List<NGYamlFile> files = new ArrayList<>();
     files.add(NGYamlFile.builder()
+                  .type(NGMigrationEntityType.SECRET)
                   .filename("secret/" + encryptedData.getName() + ".yaml")
                   .yaml(SecretRequestWrapper.builder()
                             .secret(SecretDTOV2.builder()

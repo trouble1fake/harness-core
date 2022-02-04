@@ -155,6 +155,7 @@ import io.harness.state.inspection.StateInspectionService;
 import io.harness.tasks.ResponseData;
 import io.harness.waiter.WaitNotifyEngine;
 
+import software.wings.api.AppManifestCollectionExecutionData;
 import software.wings.api.ApprovalStateExecutionData;
 import software.wings.api.ArtifactCollectionExecutionData;
 import software.wings.api.AwsAmiDeployStateExecutionData;
@@ -189,6 +190,7 @@ import software.wings.beans.AwsLambdaExecutionSummary;
 import software.wings.beans.Base;
 import software.wings.beans.BuildExecutionSummary;
 import software.wings.beans.CanaryWorkflowExecutionAdvisor;
+import software.wings.beans.CollectionEntityType;
 import software.wings.beans.ContainerInfrastructureMapping;
 import software.wings.beans.CountsByStatuses;
 import software.wings.beans.CustomOrchestrationWorkflow;
@@ -1595,7 +1597,6 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
         workflowService.getResolvedServiceIds(workflow, executionArgs.getWorkflowVariables());
     envId = resolveEnvId != null ? resolveEnvId : envId;
     User user = UserThreadLocal.get();
-    boolean shouldAuthorizeExecution = trigger == null && user != null;
 
     // The workflow execution is direct workflow execution and not in Pipeline or trigger.
     boolean isDirectExecution = trigger == null && user != null && isEmpty(pipelineExecutionId);
@@ -4695,6 +4696,32 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
   }
 
   @Override
+  public List<HelmChart> getManifestsCollected(String appId, String executionUuid) {
+    List<StateExecutionInstance> allStateExecutionInstances =
+        wingsPersistence.createQuery(StateExecutionInstance.class)
+            .filter(StateExecutionInstanceKeys.appId, appId)
+            .filter(StateExecutionInstanceKeys.executionUuid, executionUuid)
+            .filter(StateExecutionInstanceKeys.stateType, ARTIFACT_COLLECTION.name())
+            .asList();
+
+    if (isEmpty(allStateExecutionInstances)) {
+      return null;
+    }
+
+    List<HelmChart> helmCharts = new ArrayList<>();
+    allStateExecutionInstances.forEach(stateExecutionInstance -> {
+      if (!(stateExecutionInstance.fetchStateExecutionData() instanceof AppManifestCollectionExecutionData)) {
+        return;
+      }
+
+      AppManifestCollectionExecutionData executionData =
+          (AppManifestCollectionExecutionData) stateExecutionInstance.fetchStateExecutionData();
+      helmCharts.add(helmChartService.get(appId, executionData.getChartId()));
+    });
+    return helmCharts;
+  }
+
+  @Override
   public List<Artifact> getArtifactsCollected(String appId, String executionUuid) {
     List<StateExecutionInstance> allStateExecutionInstances =
         wingsPersistence.createQuery(StateExecutionInstance.class)
@@ -4763,8 +4790,10 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
       return false;
     }
 
-    return buildExecutionSummaries.stream().anyMatch(
-        summary -> summary.getArtifactStreamId().equals(buildExecutionSummary.getArtifactStreamId()));
+    return buildExecutionSummaries.stream().anyMatch(summary
+        -> CollectionEntityType.MANIFEST.name().equals(summary.getSourceType())
+            ? summary.getAppManifestId().equals(buildExecutionSummary.getAppManifestId())
+            : summary.getArtifactStreamId().equals(buildExecutionSummary.getArtifactStreamId()));
   }
 
   @Override

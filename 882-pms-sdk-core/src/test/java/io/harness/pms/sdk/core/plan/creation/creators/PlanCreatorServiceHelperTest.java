@@ -16,6 +16,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.pms.contracts.plan.Dependencies;
 import io.harness.pms.sdk.core.PmsSdkCoreTestBase;
+import io.harness.pms.sdk.core.plan.creation.beans.MergePlanCreationResponse;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationResponse;
 import io.harness.pms.yaml.YamlField;
 import io.harness.pms.yaml.YamlUtils;
@@ -79,7 +80,7 @@ public class PlanCreatorServiceHelperTest extends PmsSdkCoreTestBase {
   public void testHandlePlanCreationResponsesHavingError() throws IOException {
     PlanCreationResponse planCreationResponse =
         PlanCreationResponse.builder().errorMessage("The plan creation has errored").build();
-    PlanCreationResponse finalResponse = PlanCreationResponse.builder().build();
+    MergePlanCreationResponse finalResponse = MergePlanCreationResponse.builder().build();
     ClassLoader classLoader = this.getClass().getClassLoader();
     final URL testFile = classLoader.getResource("pipeline.yaml");
     String yamlContent = Resources.toString(testFile, Charsets.UTF_8);
@@ -96,7 +97,7 @@ public class PlanCreatorServiceHelperTest extends PmsSdkCoreTestBase {
   @Category(UnitTests.class)
   public void testHandlePlanCreationResponses() throws IOException {
     PlanCreationResponse planCreationResponse = PlanCreationResponse.builder().build();
-    PlanCreationResponse finalResponse = PlanCreationResponse.builder().build();
+    MergePlanCreationResponse finalResponse = MergePlanCreationResponse.builder().build();
     ClassLoader classLoader = this.getClass().getClassLoader();
     final URL testFile = classLoader.getResource("pipeline.yaml");
     String yamlContent = Resources.toString(testFile, Charsets.UTF_8);
@@ -115,7 +116,7 @@ public class PlanCreatorServiceHelperTest extends PmsSdkCoreTestBase {
   @Owner(developers = SAHIL)
   @Category(UnitTests.class)
   public void testHandlePlanCreationResponsesNullResponse() throws IOException {
-    PlanCreationResponse finalResponse = PlanCreationResponse.builder().build();
+    MergePlanCreationResponse finalResponse = MergePlanCreationResponse.builder().build();
     ClassLoader classLoader = this.getClass().getClassLoader();
     final URL testFile = classLoader.getResource("pipeline.yaml");
     String yamlContent = Resources.toString(testFile, Charsets.UTF_8);
