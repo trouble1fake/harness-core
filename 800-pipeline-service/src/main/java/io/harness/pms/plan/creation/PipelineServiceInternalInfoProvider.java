@@ -9,7 +9,6 @@ package io.harness.pms.plan.creation;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.beans.FeatureName;
 import io.harness.cf.pipeline.CfExecutionPMSPlanCreator;
 import io.harness.cf.pipeline.FeatureFlagStageFilterJsonCreator;
 import io.harness.cf.pipeline.FeatureFlagStagePlanCreator;
@@ -52,14 +51,12 @@ import io.harness.steps.cf.FlagConfigurationStep;
 import io.harness.steps.jira.JiraStepVariableCreator;
 import io.harness.steps.jira.create.JiraCreateStepPlanCreator;
 import io.harness.steps.jira.update.JiraUpdateStepPlanCreator;
-import io.harness.steps.policy.PolicyStepConstants;
 import io.harness.steps.shellscript.ShellScriptStepPlanCreator;
 import io.harness.steps.shellscript.ShellScriptStepVariableCreator;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @OwnedBy(HarnessTeam.PIPELINE)
@@ -125,16 +122,18 @@ public class PipelineServiceInternalInfoProvider implements PipelineServiceInfoP
 
   @Override
   public List<StepInfo> getStepInfo() {
-    StepInfo featureFlags = StepInfo.newBuilder()
-                                .setName(FlagConfigurationStep.STEP_NAME)
-                                .setType(StepSpecTypeConstants.FLAG_CONFIGURATION)
-                                .setStepMetaData(StepMetaData.newBuilder()
-                                                     .addCategory(FlagConfigurationStep.STEP_CATEGORY)
-                                                     .addFolderPaths("Feature Flags")
-                                                     .build())
-                                .build();
+    StepInfo k8sRolling = StepInfo.newBuilder()
+                              .setName(FlagConfigurationStep.STEP_NAME)
+                              .setType(StepSpecTypeConstants.FLAG_CONFIGURATION)
+                              .setStepMetaData(StepMetaData.newBuilder()
+                                                   .addCategory(FlagConfigurationStep.STEP_CATEGORY)
+                                                   .addFolderPaths("Feature Flags")
+                                                   .build())
+                              .build();
 
+    List<StepInfo> stepInfos = new ArrayList<>();
 
-    return Arrays.asList(featureFlags);
+    stepInfos.add(k8sRolling);
+    return stepInfos;
   }
 }
