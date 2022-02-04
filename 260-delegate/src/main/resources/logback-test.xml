@@ -38,25 +38,14 @@
         </encoder>
     </appender>
 
-    <if condition='isDefined("STACK_DRIVER_LOGGING_ENABLED")'>
+    <if condition='isNull("STACK_DRIVER_LOGGING_ENABLED") || property("STACK_DRIVER_LOGGING_ENABLED").equalsIgnoreCase("true")'>
         <then>
-            <if condition='property("STACK_DRIVER_LOGGING_ENABLED").equals("true")'>
-                <then>
-                    <appender name="REST2" class="io.harness.delegate.logging.DelegateStackdriverLogAppender">
-                        <threshold>TRACE</threshold>
-                        <managerHost>${MANAGER_HOST_AND_PORT}</managerHost>
-                        <accountId>${ACCOUNT_ID}</accountId>
-                    </appender>
-                </then>
-            </if>
-        </then>
-        <else>
             <appender name="REST2" class="io.harness.delegate.logging.DelegateStackdriverLogAppender">
                 <threshold>TRACE</threshold>
                 <managerHost>${MANAGER_HOST_AND_PORT}</managerHost>
                 <accountId>${ACCOUNT_ID}</accountId>
             </appender>
-        </else>
+        </then>
     </if>
 
     <logger name="software.wings" level="INFO"/>
