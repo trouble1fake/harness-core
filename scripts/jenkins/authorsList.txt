@@ -236,3 +236,4 @@ Joseph Sentongo joseph.sentongo@harness.io
 Sergey Bobrov sergey.bobrov@harness.io
 William Wissemann william.wissemann@harness.io
 Shubham Maheshwari shubham.maheshwari@harness.io
+Scott Walker scott.walker@harness.io

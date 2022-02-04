@@ -124,6 +124,4 @@ public interface NodeExecutionService {
   Map<String, Node> mapNodeExecutionIdWithPlanNodeForGivenStageFQN(String planExecutionId, List<String> stageFQNs);
 
   List<NodeExecution> fetchStageExecutionsWithEndTsAndStatusProjection(String planExecutionId);
-
-  boolean ifExists(String nodeExecutionId);
 }

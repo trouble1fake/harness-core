@@ -374,7 +374,7 @@ public class InitializeTaskStep implements TaskExecutableWithRbac<StepElementPar
       throw new CIStageExecutionException("Input infrastructure can not be empty");
     }
 
-    String infraConnectorRef = ((K8sDirectInfraYaml) infrastructure).getSpec().getConnectorRef();
+    String infraConnectorRef = ((K8sDirectInfraYaml) infrastructure).getSpec().getConnectorRef().getValue();
 
     // Add Infra connector
     entityDetails.add(createEntityDetails(infraConnectorRef, accountIdentifier, projectIdentifier, orgIdentifier));
