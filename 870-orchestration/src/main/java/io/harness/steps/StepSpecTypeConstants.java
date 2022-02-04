@@ -27,4 +27,5 @@ public interface StepSpecTypeConstants {
   String DEPLOYMENT_STAGE = "Deployment";
   String CI_STAGE = "CI";
   String FEATURE_FLAG_STAGE = "FeatureFlag";
+  String POLICY_STEP = "Policy";
 }
