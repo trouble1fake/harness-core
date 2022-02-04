@@ -39,6 +39,8 @@ import org.springframework.data.annotation.TypeAlias;
 @TypeAlias("policyStepInfo")
 @RecasterAlias("io.harness.steps.policy.PolicyStepInfo")
 public class PolicyStepInfo extends PolicyStepBase implements PMSStepInfo, Visitable {
+  public static StepType stepType =
+      StepType.newBuilder().setType(StepSpecTypeConstants.POLICY_STEP).setStepCategory(StepCategory.STEP).build();
   @Builder
   public PolicyStepInfo(ParameterField<List<String>> policySets, String type, PolicySpec policySpec) {
     super(policySets, type, policySpec);
@@ -48,7 +50,7 @@ public class PolicyStepInfo extends PolicyStepBase implements PMSStepInfo, Visit
   @JsonIgnore
   public StepType getStepType() {
     // todo(@NamanVerma): Move this to PolicyStep when it is added
-    return StepType.newBuilder().setType(StepSpecTypeConstants.POLICY_STEP).setStepCategory(StepCategory.STEP).build();
+    return stepType;
   }
 
   @Override
