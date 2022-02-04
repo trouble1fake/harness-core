@@ -9,6 +9,7 @@ package io.harness.cdng.provision.terraform;
 
 import static io.harness.rule.OwnerRule.NAMAN_TALAYCHA;
 
+import static io.harness.rule.OwnerRule.ROJ;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
@@ -100,51 +101,25 @@ public class TerraformDestroyStepTest extends CategoryTest {
   @Test
   @Owner(developers = NAMAN_TALAYCHA)
   @Category(UnitTests.class)
-  public void testValidateResources() {
+  public void testValidateResourcesWithGithub() {
     Ambiance ambiance = getAmbiance();
-    TerraformConfigFilesWrapper configFilesWrapper = new TerraformConfigFilesWrapper();
-    configFilesWrapper.setStore(StoreConfigWrapper.builder()
-                                    .spec(GithubStore.builder()
-                                              .branch(ParameterField.createValueField("master"))
-                                              .gitFetchType(FetchType.BRANCH)
-                                              .folderPath(ParameterField.createValueField("Config/"))
-                                              .connectorRef(ParameterField.createValueField("terraform"))
-                                              .build())
-                                    .type(StoreConfigType.GITHUB)
-                                    .build());
-    RemoteTerraformVarFileSpec remoteTerraformVarFileSpec = new RemoteTerraformVarFileSpec();
-    remoteTerraformVarFileSpec.setStore(
-        StoreConfigWrapper.builder()
-            .spec(GithubStore.builder()
-                      .branch(ParameterField.createValueField("master"))
-                      .gitFetchType(FetchType.BRANCH)
-                      .paths(ParameterField.createValueField(Collections.singletonList("VarFiles/")))
-                      .connectorRef(ParameterField.createValueField("terraform"))
-                      .build())
-            .type(StoreConfigType.GITHUB)
-            .build());
-    InlineTerraformVarFileSpec inlineTerraformVarFileSpec = new InlineTerraformVarFileSpec();
-    inlineTerraformVarFileSpec.setContent(ParameterField.createValueField("var-content"));
-    InlineTerraformBackendConfigSpec inlineTerraformBackendConfigSpec = new InlineTerraformBackendConfigSpec();
-    inlineTerraformBackendConfigSpec.setContent(ParameterField.createValueField("back-content"));
-    TerraformBackendConfig terraformBackendConfig = new TerraformBackendConfig();
-    terraformBackendConfig.setTerraformBackendConfigSpec(inlineTerraformBackendConfigSpec);
-    LinkedHashMap<String, TerraformVarFile> varFilesMap = new LinkedHashMap<>();
-    varFilesMap.put("var-file-01",
-        TerraformVarFile.builder().identifier("var-file-01").type("Inline").spec(inlineTerraformVarFileSpec).build());
-    varFilesMap.put("var-file-02",
-        TerraformVarFile.builder().identifier("var-file-02").type("Remote").spec(remoteTerraformVarFileSpec).build());
+    TerraformStepDataGenerator.GitStoreConfig gitStoreConfigFiles =
+            TerraformStepDataGenerator.GitStoreConfig.builder()
+                    .branch("master")
+                    .fetchType(FetchType.BRANCH)
+                    .folderPath(ParameterField.createValueField("Config/"))
+                    .connectoref(ParameterField.createValueField("terraform"))
+                    .build();
+    TerraformStepDataGenerator.GitStoreConfig gitStoreVarFiles =
+            TerraformStepDataGenerator.GitStoreConfig.builder()
+                    .branch("master")
+                    .fetchType(FetchType.BRANCH)
+                    .folderPath(ParameterField.createValueField("VarFiles/"))
+                    .connectoref(ParameterField.createValueField("terraform"))
+                    .build();
     TerraformDestroyStepParameters destroyStepParameters =
-        TerraformDestroyStepParameters.infoBuilder()
-            .provisionerIdentifier(ParameterField.createValueField("provId_$"))
-            .configuration(TerraformStepConfigurationParameters.builder()
-                               .type(TerraformStepConfigurationType.INLINE)
-                               .spec(TerraformExecutionDataParameters.builder()
-                                         .configFiles(configFilesWrapper)
-                                         .varFiles(varFilesMap)
-                                         .build())
-                               .build())
-            .build();
+            TerraformStepDataGenerator.generateDestroyStepPlan(StoreConfigType.GITHUB, gitStoreConfigFiles, gitStoreVarFiles);
+
     StepElementParameters stepElementParameters = StepElementParameters.builder().spec(destroyStepParameters).build();
     terraformDestroyStep.validateResources(ambiance, stepElementParameters);
     verify(pipelineRbacHelper, times(1)).checkRuntimePermissions(eq(ambiance), captor.capture(), eq(true));
@@ -158,53 +133,58 @@ public class TerraformDestroyStepTest extends CategoryTest {
   }
 
   @Test
+  @Owner(developers = ROJ)
+  @Category(UnitTests.class)
+  public void testValidateResourcesWithArtifactory() {
+    Ambiance ambiance = getAmbiance();
+    TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreConfigFiles =
+            TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
+                    .connectorRef("connectorRef")
+                    .repositoryPath("repositoryPath")
+                    .build();
+    TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreVarFiles =
+            TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
+                    .connectorRef("connectorRef2")
+                    .repositoryPath("repositoryPathtoVars")
+                    .build();
+    TerraformDestroyStepParameters destroyStepParameters = TerraformStepDataGenerator.generateDestroyStepPlan(
+            StoreConfigType.ARTIFACTORY, artifactoryStoreConfigFiles, artifactoryStoreVarFiles);
+
+    StepElementParameters stepElementParameters = StepElementParameters.builder().spec(destroyStepParameters).build();
+    terraformDestroyStep.validateResources(ambiance, stepElementParameters);
+    verify(pipelineRbacHelper, times(1)).checkRuntimePermissions(eq(ambiance), captor.capture(), eq(true));
+
+    List<EntityDetail> entityDetails = captor.getValue();
+    assertThat(entityDetails.size()).isEqualTo(2);
+    assertThat(entityDetails.get(0).getEntityRef().getIdentifier()).isEqualTo("connectorRef");
+    assertThat(entityDetails.get(0).getEntityRef().getAccountIdentifier()).isEqualTo("test-account");
+    assertThat(entityDetails.get(1).getEntityRef().getIdentifier()).isEqualTo("connectorRef2");
+    assertThat(entityDetails.get(1).getEntityRef().getAccountIdentifier()).isEqualTo("test-account");
+  }
+
+
+  @Test
   @Owner(developers = NAMAN_TALAYCHA)
   @Category(UnitTests.class)
   public void testobtainTaskAfterRbac() {
     Ambiance ambiance = getAmbiance();
-    TerraformConfigFilesWrapper configFilesWrapper = new TerraformConfigFilesWrapper();
-    configFilesWrapper.setStore(StoreConfigWrapper.builder()
-                                    .spec(GithubStore.builder()
-                                              .branch(ParameterField.createValueField("master"))
-                                              .gitFetchType(FetchType.BRANCH)
-                                              .folderPath(ParameterField.createValueField("Config/"))
-                                              .connectorRef(ParameterField.createValueField("terraform"))
-                                              .build())
-                                    .type(StoreConfigType.GITHUB)
-                                    .build());
-    RemoteTerraformVarFileSpec remoteTerraformVarFileSpec = new RemoteTerraformVarFileSpec();
-    remoteTerraformVarFileSpec.setStore(
-        StoreConfigWrapper.builder()
-            .spec(GithubStore.builder()
-                      .branch(ParameterField.createValueField("master"))
-                      .gitFetchType(FetchType.BRANCH)
-                      .paths(ParameterField.createValueField(Collections.singletonList("VarFiles/")))
-                      .connectorRef(ParameterField.createValueField("terraform"))
-                      .build())
-            .type(StoreConfigType.GITHUB)
-            .build());
-    InlineTerraformVarFileSpec inlineTerraformVarFileSpec = new InlineTerraformVarFileSpec();
-    inlineTerraformVarFileSpec.setContent(ParameterField.createValueField("var-content"));
-    InlineTerraformBackendConfigSpec inlineTerraformBackendConfigSpec = new InlineTerraformBackendConfigSpec();
-    inlineTerraformBackendConfigSpec.setContent(ParameterField.createValueField("back-content"));
-    TerraformBackendConfig terraformBackendConfig = new TerraformBackendConfig();
-    terraformBackendConfig.setTerraformBackendConfigSpec(inlineTerraformBackendConfigSpec);
-    LinkedHashMap<String, TerraformVarFile> varFilesMap = new LinkedHashMap<>();
-    varFilesMap.put("var-file-01",
-        TerraformVarFile.builder().identifier("var-file-01").type("Inline").spec(inlineTerraformVarFileSpec).build());
-    varFilesMap.put("var-file-02",
-        TerraformVarFile.builder().identifier("var-file-02").type("Remote").spec(remoteTerraformVarFileSpec).build());
+    TerraformStepDataGenerator.GitStoreConfig gitStoreConfigFiles =
+            TerraformStepDataGenerator.GitStoreConfig.builder()
+                    .branch("master")
+                    .fetchType(FetchType.BRANCH)
+                    .folderPath(ParameterField.createValueField("Config/"))
+                    .connectoref(ParameterField.createValueField("terraform"))
+                    .build();
+    TerraformStepDataGenerator.GitStoreConfig gitStoreVarFiles =
+            TerraformStepDataGenerator.GitStoreConfig.builder()
+                    .branch("master")
+                    .fetchType(FetchType.BRANCH)
+                    .folderPath(ParameterField.createValueField("VarFiles/"))
+                    .connectoref(ParameterField.createValueField("terraform"))
+                    .build();
     TerraformDestroyStepParameters destroyStepParameters =
-        TerraformDestroyStepParameters.infoBuilder()
-            .provisionerIdentifier(ParameterField.createValueField("Id"))
-            .configuration(TerraformStepConfigurationParameters.builder()
-                               .type(TerraformStepConfigurationType.INLINE)
-                               .spec(TerraformExecutionDataParameters.builder()
-                                         .configFiles(configFilesWrapper)
-                                         .varFiles(varFilesMap)
-                                         .build())
-                               .build())
-            .build();
+            TerraformStepDataGenerator.generateDestroyStepPlan(StoreConfigType.GITHUB, gitStoreConfigFiles, gitStoreVarFiles);
+
     GitConfigDTO gitConfigDTO = GitConfigDTO.builder()
                                     .gitAuthType(GitAuthType.HTTP)
                                     .gitConnectionType(GitConnectionType.ACCOUNT)

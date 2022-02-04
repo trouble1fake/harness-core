@@ -144,6 +144,8 @@ public class TerraformDestroyStep extends TaskExecutableWithRollbackAndRbac<Terr
         .workspace(ParameterFieldHelper.getParameterFieldValue(spec.getWorkspace()))
         .configFile(helper.getGitFetchFilesConfig(
             spec.getConfigFiles().getStore().getSpec(), ambiance, TerraformStepHelper.TF_CONFIG_FILES))
+        .fileStoreConfigFiles(helper.getFileFactoryFetchFilesConfig(
+                spec.getConfigFiles().getStore().getSpec(), ambiance, TerraformStepHelper.TF_CONFIG_FILES))
         .varFileInfos(helper.toTerraformVarFileInfo(spec.getVarFiles(), ambiance))
         .backendConfig(helper.getBackendConfig(spec.getBackendConfig()))
         .targets(ParameterFieldHelper.getParameterFieldValue(spec.getTargets()))
