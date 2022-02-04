@@ -32,6 +32,9 @@ import com.google.inject.name.Named;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoClientURI;
+import com.mongodb.ReadPreference;
+import com.mongodb.Tag;
+import com.mongodb.TagSet;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -189,6 +192,23 @@ public class MongoModule extends AbstractModule {
     hObjectFactory.setDatastore(primaryDatastore);
 
     return primaryDatastore;
+  }
+
+  @Provides
+  @Named("analyticsDatabase")
+  @Singleton
+  public AdvancedDatastore getAnalyticsDatabase(MongoConfig mongoConfig, Morphia morphia) {
+    TagSet tags = new TagSet(new Tag("nodeType", "ANALYTICS"));
+    final String mongoClientUrl = mongoConfig.getUri();
+    ReadPreference readPreference = ReadPreference.secondary(tags);
+    MongoClientURI uri = new MongoClientURI(mongoClientUrl,
+        MongoClientOptions.builder(MongoModule.getDefaultMongoClientOptions(mongoConfig))
+            .readPreference(readPreference));
+
+    MongoClient mongoClient = new MongoClient(uri);
+    AdvancedDatastore analyticalDataStore = (AdvancedDatastore) morphia.createDatastore(mongoClient, uri.getDatabase());
+    analyticalDataStore.setQueryFactory(new QueryFactory());
+    return analyticalDataStore;
   }
 
   @Provides

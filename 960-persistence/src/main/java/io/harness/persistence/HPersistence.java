@@ -34,6 +34,7 @@ import org.springframework.dao.OptimisticLockingFailureException;
 
 public interface HPersistence extends HealthMonitor {
   Store DEFAULT_STORE = Store.builder().name("default").build();
+  Store ANALYTIC_STORE = Store.builder().name("analytic").build();
 
   static Logger logger() {
     return LoggerFactory.getLogger(HPersistence.class);
@@ -46,6 +47,8 @@ public interface HPersistence extends HealthMonitor {
    * @param uri the datastore uri
    */
   void register(Store store, String uri);
+
+  void registerDatastore(String storeName, AdvancedDatastore datastore);
 
   /**
    * Gets the datastore.
@@ -86,6 +89,10 @@ public interface HPersistence extends HealthMonitor {
           .findFirst()
           .orElseGet(() -> DEFAULT_STORE);
     }));
+  }
+
+  default AdvancedDatastore getAnalyticsDatastore(Class cls) {
+    return getDatastore(ANALYTIC_STORE);
   }
 
   /**

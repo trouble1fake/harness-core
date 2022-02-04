@@ -7,6 +7,7 @@
 
 package software.wings.graphql.datafetcher;
 
+import static io.harness.beans.FeatureName.USE_ANALYTIC_MONGO_FOR_GRAPHQL_QUERY;
 import static io.harness.exception.WingsException.ReportTarget.GRAPHQL_API;
 import static io.harness.exception.WingsException.USER_SRE;
 
@@ -21,6 +22,7 @@ import io.harness.eraro.ErrorCode;
 import io.harness.eraro.ResponseMessage;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
+import io.harness.ff.FeatureFlagService;
 import io.harness.logging.ExceptionLogger;
 
 import software.wings.beans.SettingAttribute.SettingAttributeKeys;
@@ -31,6 +33,7 @@ import software.wings.graphql.schema.query.QLPageQueryParameters;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
+import com.google.inject.Inject;
 import graphql.schema.DataFetchingEnvironment;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -51,6 +54,8 @@ public abstract class AbstractConnectionV2DataFetcher<F, S, O> extends BaseDataF
   private static final String LIMIT = "limit";
   private static final String OFFSET = "offset";
   private static final int MAX_RECORD_LIMIT = 100;
+
+  @Inject FeatureFlagService featureFlagService;
 
   @Override
   public void addDataFetcherDirectiveAttributesForParent(
@@ -182,8 +187,13 @@ public abstract class AbstractConnectionV2DataFetcher<F, S, O> extends BaseDataF
 
   @NotNull
   public Query populateAccountFilter(WingsPersistence wingsPersistence, Class entityClass, boolean accountFilter) {
-    Query query = wingsPersistence.createAuthorizedQuery(entityClass);
     final String accountId = getAccountId();
+    Query query;
+    if (featureFlagService.isEnabled(USE_ANALYTIC_MONGO_FOR_GRAPHQL_QUERY, accountId)) {
+      query = wingsPersistence.createAuthorizedQueryOnAnalyticNode(entityClass);
+    } else {
+      query = wingsPersistence.createAuthorizedQuery(entityClass);
+    }
     if (accountId != null && accountFilter) {
       query.filter(SettingAttributeKeys.accountId, accountId);
       return query;

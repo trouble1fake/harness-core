@@ -132,6 +132,11 @@ public class MongoPersistence implements HPersistence {
   }
 
   @Override
+  public void registerDatastore(String storeName, AdvancedDatastore datastore) {
+    datastoreMap.put(storeName, datastore);
+  }
+
+  @Override
   public AdvancedDatastore getDatastore(Store store) {
     return datastoreMap.computeIfAbsent(store.getName(), key -> {
       Info info = storeInfo.get(store.getName());
@@ -179,6 +184,10 @@ public class MongoPersistence implements HPersistence {
   @Override
   public <T extends PersistentEntity> Query<T> createQuery(Class<T> cls) {
     return getDatastore(cls).createQuery(cls);
+  }
+
+  public <T extends PersistentEntity> Query<T> createAnalyticsQuery(Class<T> cls) {
+    return getAnalyticsDatastore(cls).createQuery(cls);
   }
 
   @Override

@@ -399,6 +399,12 @@ public class WingsMongoPersistence extends MongoPersistence implements WingsPers
     return authorizeQuery(collectionClass, query);
   }
 
+  @Override
+  public <T extends PersistentEntity> Query<T> createAuthorizedQueryOnAnalyticNode(Class<T> collectionClass) {
+    Query query = createAnalyticsQuery(collectionClass);
+    return authorizeQuery(collectionClass, query);
+  }
+
   private <T extends PersistentEntity> Query<T> authorizeQuery(Class<T> collectionClass, Query query) {
     if (authFilters(query, collectionClass)) {
       return query;

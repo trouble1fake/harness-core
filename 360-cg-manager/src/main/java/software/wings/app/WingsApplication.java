@@ -651,6 +651,7 @@ public class WingsApplication extends Application<MainConfiguration> {
     }
 
     registerStores(configuration, injector);
+    registerDataStores(injector);
     if (configuration.getMongoConnectionFactory().getTraceMode() == TraceMode.ENABLED) {
       registerQueryTracer(injector);
     }
@@ -1091,6 +1092,13 @@ public class WingsApplication extends Application<MainConfiguration> {
         && !configuration.getEventsMongo().getUri().equals(configuration.getMongoConnectionFactory().getUri())) {
       persistence.register(Store.builder().name("events").build(), configuration.getEventsMongo().getUri());
     }
+  }
+
+  private void registerDataStores(Injector injector) {
+    AdvancedDatastore analyticsDataStore =
+        injector.getInstance(Key.get(AdvancedDatastore.class, Names.named("analyticsDatabase")));
+    final HPersistence persistence = injector.getInstance(HPersistence.class);
+    persistence.registerDatastore("analytic", analyticsDataStore);
   }
 
   private void registerAuditResponseFilter(Environment environment, Injector injector) {

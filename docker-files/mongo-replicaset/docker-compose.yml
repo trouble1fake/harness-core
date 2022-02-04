@@ -3,7 +3,7 @@ services:
   mongo1:
     hostname: mongo1
     container_name: mongo1
-    image: mongo:3.6
+    image: mongo:4.2
     volumes:
       - ~/_mongodb1/db:/data/db
       - ~/_mongodb1/configdb:/data/configdb
@@ -18,7 +18,7 @@ services:
   mongo2:
     hostname: mongo2
     container_name: mongo2
-    image: mongo:3.6
+    image: mongo:4.2
     volumes:
       - ~/_mongodb2/db:/data/db
       - ~/_mongodb2/configdb:/data/configdb
@@ -33,7 +33,7 @@ services:
   mongo3:
     hostname: mongo3
     container_name: mongo3
-    image: mongo:3.6
+    image: mongo:4.2
     volumes:
       - ~/_mongodb3/db:/data/db
       - ~/_mongodb3/configdb:/data/configdb

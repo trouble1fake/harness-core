@@ -124,6 +124,8 @@ public interface WingsPersistence extends HPersistence {
    */
   <T extends PersistentEntity> Query<T> createAuthorizedQuery(Class<T> collectionClass);
 
+  <T extends PersistentEntity> Query<T> createAuthorizedQueryOnAnalyticNode(Class<T> collectionClass);
+
   /**
    * Creates a query and runs the authFilter to it.
    * This api is preferred over createQuery() api.
