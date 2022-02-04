@@ -23,6 +23,7 @@ import io.harness.logging.AutoLogContext;
 import io.harness.mongo.iterator.MongoPersistenceIterator;
 import io.harness.mongo.iterator.filter.MorphiaFilterExpander;
 import io.harness.mongo.iterator.provider.MorphiaPersistenceProvider;
+import io.harness.persistence.HPersistence;
 import io.harness.service.intfc.DelegateTaskService;
 
 import software.wings.beans.TaskType;
@@ -33,42 +34,46 @@ import java.time.Duration;
 import java.util.EnumSet;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.mongodb.morphia.query.Query;
 
 @Slf4j
-public class DelegateTaskValidationFailIterator implements MongoPersistenceIterator.Handler<DelegateTask> {
+public class DelegateTaskValidationFailCheckHandler implements MongoPersistenceIterator.Handler<DelegateTask> {
   @Inject private PersistenceIteratorFactory persistenceIteratorFactory;
   @Inject private MorphiaPersistenceProvider<DelegateTask> persistenceProvider;
   @Inject private AssignDelegateService assignDelegateService;
   @Inject private DelegateTaskService delegateTaskService;
+  @Inject private HPersistence persistence;
+
+  private static final long TASK_VALIDATION_FAIL_TIMEOUT = 10;
 
   public void registerIterators(int threadPoolSize) {
-    PersistenceIteratorFactory.PumpExecutorOptions options = PersistenceIteratorFactory.PumpExecutorOptions.builder()
-                                                                 .interval(Duration.ofMinutes(1))
-                                                                 .poolSize(threadPoolSize)
-                                                                 .name("DelegateTaskValidation")
-                                                                 .build();
+    PersistenceIteratorFactory.PumpExecutorOptions options =
+        PersistenceIteratorFactory.PumpExecutorOptions.builder()
+            .interval(Duration.ofSeconds(TASK_VALIDATION_FAIL_TIMEOUT))
+            .poolSize(threadPoolSize)
+            .name("DelegateTaskValidation")
+            .build();
     persistenceIteratorFactory.createPumpIteratorWithDedicatedThreadPool(options, DelegateTask.class,
         MongoPersistenceIterator.<DelegateTask, MorphiaFilterExpander<DelegateTask>>builder()
             .clazz(DelegateTask.class)
             .fieldName(DelegateTaskKeys.taskValidationFailureCheckIteration)
-            .targetInterval(ofSeconds(30))
+            .targetInterval(ofSeconds(TASK_VALIDATION_FAIL_TIMEOUT))
             .acceptableNoAlertDelay(ofSeconds(45))
             .acceptableExecutionTime(ofSeconds(30))
             .handler(this)
             .filterExpander(query
                 -> query.filter(DelegateTaskKeys.status, QUEUED)
-                       .field(DelegateTaskKeys.validatingDelegateIds)
-                       .doesNotExist()
                        .field(DelegateTaskKeys.validationCompleteDelegateIds)
                        .exists())
             .schedulingType(REGULAR)
-            .persistenceProvider(persistenceProvider));
+            .persistenceProvider(persistenceProvider)
+            .redistribute(true));
   }
   @Override
   public void handle(DelegateTask delegateTask) {
-    log.info("Check delegate Task {} with validation fail", delegateTask.getUuid());
     if (delegateTask.getValidationCompleteDelegateIds().containsAll(delegateTask.getEligibleToExecuteDelegateIds())) {
-      log.info("Found delegate task with all validation completed but not assigned");
+      log.info(
+          "Found delegate task {} with validation completed by all delegates but not assigned", delegateTask.getUuid());
       try (AutoLogContext ignore = new TaskLogContext(delegateTask.getUuid(), delegateTask.getData().getTaskType(),
                TaskType.valueOf(delegateTask.getData().getTaskType()).getTaskGroup().name(), OVERRIDE_ERROR)) {
         // Check whether a whitelisted delegate is connected
@@ -78,7 +83,7 @@ public class DelegateTaskValidationFailIterator implements MongoPersistenceItera
               whitelistedDelegates);
           return;
         }
-        log.info("Failing task {} due to validation failed ", delegateTask.getUuid());
+        log.info("Failing task {} due to validation failure ", delegateTask.getUuid());
         String errorMessage = generateCapabilitiesMessage(delegateTask);
         log.info(errorMessage);
         DelegateResponseData response;
@@ -91,7 +96,11 @@ public class DelegateTaskValidationFailIterator implements MongoPersistenceItera
           response =
               RemoteMethodReturnValueData.builder().exception(new InvalidRequestException(errorMessage, USER)).build();
         }
-        delegateTaskService.processDelegateResponse(delegateTask.getAccountId(), null, delegateTask.getAccountId(),
+        Query<DelegateTask> taskQuery = persistence.createQuery(DelegateTask.class)
+                                            .filter(DelegateTaskKeys.accountId, delegateTask.getAccountId())
+                                            .filter(DelegateTaskKeys.uuid, delegateTask.getUuid());
+
+        delegateTaskService.handleResponse(delegateTask, taskQuery,
             DelegateTaskResponse.builder()
                 .accountId(delegateTask.getAccountId())
                 .response(response)

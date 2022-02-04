@@ -520,18 +520,6 @@ public class DelegateAgentResourceTest extends CategoryTest {
     verify(wingsPersistence, atLeastOnce()).save(apiCallLogs);
   }
 
-  @Test
-  @Owner(developers = NIKOLA)
-  @Category(UnitTests.class)
-  public void shouldFailIfAllDelegatesFailed() {
-    String taskId = generateUuid();
-    RESOURCES.client()
-        .target(String.format("/agent/delegates/%s/tasks/%s/fail?accountId=%s&areClientToolsInstalled=%s", DELEGATE_ID,
-            taskId, ACCOUNT_ID, true))
-        .request()
-        .get(new GenericType<RestResponse<String>>() {});
-    verify(delegateTaskServiceClassic, atLeastOnce()).failIfAllDelegatesFailed(ACCOUNT_ID, DELEGATE_ID, taskId, true);
-  }
 
   @Test
   @Owner(developers = NIKOLA)

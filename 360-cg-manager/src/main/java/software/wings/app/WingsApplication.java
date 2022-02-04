@@ -88,7 +88,7 @@ import io.harness.health.HealthMonitor;
 import io.harness.health.HealthService;
 import io.harness.insights.DelegateInsightsSummaryJob;
 import io.harness.iterator.DelegateTaskExpiryCheckIterator;
-import io.harness.iterator.DelegateTaskValidationFailIterator;
+import io.harness.iterator.DelegateTaskValidationFailCheckHandler;
 import io.harness.lock.AcquiredLock;
 import io.harness.lock.DistributedLockImplementation;
 import io.harness.lock.PersistentLocker;
@@ -1408,9 +1408,9 @@ public class WingsApplication extends Application<MainConfiguration> {
             iteratorsConfig.getPerpetualTaskRebalanceIteratorConfig().getThreadPoolSize());
     injector.getInstance(DelegateTaskExpiryCheckIterator.class)
         .registerIterators(iteratorsConfig.getDelegateTaskExpiryCheckIteratorConfig().getThreadPoolSize());
-    /*injector.getInstance(DelegateTaskValidationFailIterator.class)
-            .registerIterators(iteratorsConfig.getDelegateTaskValidationFailIteratorConfig().getThreadPoolSize());*/
-    injector.getInstance(DelegateTaskValidationFailIterator.class).registerIterators(2);
+    injector.getInstance(DelegateTaskValidationFailCheckHandler.class)
+            .registerIterators(iteratorsConfig.getDelegateTaskValidationFailIteratorConfig().getThreadPoolSize());
+    //injector.getInstance(DelegateTaskValidationFailHandler.class).registerIterators(2);
     injector.getInstance(DelegateTelemetryPublisher.class).registerIterators();
   }
 

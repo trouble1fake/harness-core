@@ -17,7 +17,7 @@ import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.beans.TaskData.TaskDataKeys;
 import io.harness.delegate.beans.executioncapability.ExecutionCapability;
 import io.harness.delegate.task.HDelegateTask;
-import io.harness.iterator.PersistentIterable;
+import io.harness.iterator.PersistentRegularIterable;
 import io.harness.mongo.index.CompoundMongoIndex;
 import io.harness.mongo.index.FdIndex;
 import io.harness.mongo.index.FdTtlIndex;
@@ -59,7 +59,7 @@ import org.mongodb.morphia.annotations.Transient;
 @FieldNameConstants(innerTypeName = "DelegateTaskKeys")
 @TargetModule(HarnessModule._920_DELEGATE_SERVICE_BEANS)
 public class DelegateTask implements PersistentEntity, UuidAware, CreatedAtAware, UpdatedAtAware, AccountAccess,
-                                     HDelegateTask, PersistentIterable {
+                                     HDelegateTask, PersistentRegularIterable {
   public static List<MongoIndex> mongoIndexes() {
     return ImmutableList.<MongoIndex>builder()
         .add(CompoundMongoIndex.builder()
@@ -176,7 +176,7 @@ public class DelegateTask implements PersistentEntity, UuidAware, CreatedAtAware
 
   @FdTtlIndex @Default private Date validUntil = Date.from(OffsetDateTime.now().plusDays(2).toInstant());
 
-  @FdIndex private Long taskValidationFailureCheckIteration;
+  @FdIndex Long taskValidationFailureCheckIteration;
 
   public Long fetchExtraTimeoutForForceExecution() {
     if (forceExecute) {
@@ -192,6 +192,15 @@ public class DelegateTask implements PersistentEntity, UuidAware, CreatedAtAware
       return data.getTaskType();
     }
     return description;
+  }
+
+  @Override
+  public void updateNextIteration(String fieldName, long nextIteration) {
+    if (DelegateTaskKeys.taskValidationFailureCheckIteration.equals(fieldName)) {
+      this.taskValidationFailureCheckIteration = nextIteration;
+      return;
+    }
+    throw new IllegalArgumentException("Invalid fieldName " + fieldName);
   }
 
   @Override
