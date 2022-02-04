@@ -37,7 +37,7 @@ import java.util.Map;
 import java.util.Set;
 
 @OwnedBy(HarnessTeam.CDC)
-public class PipelineMigrationService implements NgMigration {
+public class PipelineMigrationService implements NgMigrationService {
   @Inject private PipelineService pipelineService;
   @Inject private WorkflowMigrationService workflowMigrationService;
 

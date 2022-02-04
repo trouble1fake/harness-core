@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public interface NgMigration {
+public interface NgMigrationService {
   DiscoveryNode discover(NGMigrationEntity entity);
 
   DiscoveryNode discover(String accountId, String appId, String entityId);

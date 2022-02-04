@@ -40,7 +40,6 @@ import software.wings.beans.entityinterface.ApplicationAccess;
 import software.wings.beans.entityinterface.KeywordsAware;
 import software.wings.beans.entityinterface.TagAware;
 import software.wings.ngmigration.NGMigrationEntity;
-import software.wings.ngmigration.NGMigrationEntityType;
 import software.wings.service.impl.workflow.WorkflowServiceTemplateHelper;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -417,12 +416,6 @@ public class Workflow
       keywords.addAll(services.stream().map(Service::getName).distinct().collect(toList()));
     }
     return keywords;
-  }
-
-  @JsonIgnore
-  @Override
-  public NGMigrationEntityType getMigrationEntityType() {
-    return NGMigrationEntityType.WORKFLOW;
   }
 
   @JsonIgnore

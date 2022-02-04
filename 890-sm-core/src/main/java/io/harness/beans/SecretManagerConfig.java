@@ -37,7 +37,6 @@ import io.harness.security.encryption.SecretManagerType;
 import io.harness.validation.Update;
 
 import software.wings.ngmigration.NGMigrationEntity;
-import software.wings.ngmigration.NGMigrationEntityType;
 import software.wings.security.ScopedEntity;
 import software.wings.security.UsageRestrictions;
 
@@ -151,12 +150,6 @@ public abstract class SecretManagerConfig
   @JsonIgnore public abstract SecretManagerType getType();
 
   @JsonIgnore public abstract List<SecretManagerCapabilities> getSecretManagerCapabilities();
-
-  @JsonIgnore
-  @Override
-  public NGMigrationEntityType getMigrationEntityType() {
-    return NGMigrationEntityType.SECRET_MANAGER;
-  }
 
   @JsonIgnore
   @Override

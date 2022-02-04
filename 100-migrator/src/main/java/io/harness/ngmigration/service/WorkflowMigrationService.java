@@ -7,8 +7,11 @@
 
 package io.harness.ngmigration.service;
 
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+
 import static software.wings.ngmigration.NGMigrationEntityType.ENVIRONMENT;
 import static software.wings.ngmigration.NGMigrationEntityType.INFRA;
+import static software.wings.ngmigration.NGMigrationEntityType.MANIFEST;
 import static software.wings.ngmigration.NGMigrationEntityType.SERVICE;
 import static software.wings.ngmigration.NGMigrationEntityType.WORKFLOW;
 
@@ -21,6 +24,7 @@ import io.harness.cdng.infra.InfrastructureDef;
 import io.harness.cdng.k8s.K8sRollingStepInfo;
 import io.harness.cdng.pipeline.PipelineInfrastructure;
 import io.harness.cdng.service.beans.ServiceConfig;
+import io.harness.data.structure.CollectionUtils;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.executions.steps.StepSpecTypeConstants;
 import io.harness.ngmigration.beans.MigrationInputDTO;
@@ -40,15 +44,19 @@ import io.harness.yaml.core.timeout.Timeout;
 import io.harness.yaml.utils.JsonPipelineUtils;
 
 import software.wings.beans.PhaseStep;
+import software.wings.beans.Service;
 import software.wings.beans.Workflow;
 import software.wings.beans.WorkflowPhase;
+import software.wings.beans.appmanifest.ApplicationManifest;
 import software.wings.ngmigration.CgEntityId;
 import software.wings.ngmigration.CgEntityNode;
 import software.wings.ngmigration.DiscoveryNode;
 import software.wings.ngmigration.NGMigrationEntity;
+import software.wings.ngmigration.NGMigrationEntityType;
 import software.wings.ngmigration.NGMigrationStatus;
 import software.wings.ngmigration.NGYamlFile;
 import software.wings.service.impl.yaml.handler.workflow.RollingWorkflowYamlHandler;
+import software.wings.service.intfc.ApplicationManifestService;
 import software.wings.service.intfc.WorkflowService;
 import software.wings.yaml.workflow.RollingWorkflowYaml;
 import software.wings.yaml.workflow.StepYaml;
@@ -64,12 +72,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @OwnedBy(HarnessTeam.CDC)
-public class WorkflowMigrationService implements NgMigration {
+public class WorkflowMigrationService implements NgMigrationService {
   @Inject private InfraMigrationService infraMigrationService;
   @Inject private EnvironmentMigrationService environmentMigrationService;
   @Inject private ServiceMigrationService serviceMigrationService;
   @Inject private WorkflowService workflowService;
   @Inject private RollingWorkflowYamlHandler rollingWorkflowYamlHandler;
+  @Inject private ApplicationManifestService applicationManifestService;
 
   @Override
   public DiscoveryNode discover(NGMigrationEntity entity) {
@@ -81,14 +90,39 @@ public class WorkflowMigrationService implements NgMigration {
 
     Set<CgEntityId> children = new HashSet<>();
     if (EmptyPredicate.isNotEmpty(workflow.getServices())) {
-      children.addAll(workflow.getServices()
-                          .stream()
-                          .map(service -> CgEntityId.builder().type(SERVICE).id(service.getUuid()).build())
-                          .collect(Collectors.toSet()));
+      Set<CgEntityId> set = new HashSet<>();
+      for (Service service : workflow.getServices()) {
+        CgEntityId build = CgEntityId.builder().type(SERVICE).id(service.getUuid()).build();
+        set.add(build);
+
+        List<ApplicationManifest> applicationManifests =
+            applicationManifestService.listAppManifests(workflow.getAppId(), service.getUuid());
+        if (isNotEmpty(applicationManifests)) {
+          applicationManifests.stream()
+              .map(applicationManifest -> CgEntityId.builder().id(applicationManifest.getUuid()).type(MANIFEST).build())
+              .forEach(children::add);
+        }
+      }
+      children.addAll(set);
     }
 
     if (EmptyPredicate.isNotEmpty(workflow.getEnvId())) {
       children.add(CgEntityId.builder().type(ENVIRONMENT).id(workflow.getEnvId()).build());
+
+      List<ApplicationManifest> applicationManifests =
+          applicationManifestService.getAllByEnvId(workflow.getAppId(), workflow.getEnvId());
+      if (isNotEmpty(applicationManifests)) {
+        for (ApplicationManifest applicationManifest : applicationManifests) {
+          Set<String> serviceIds = CollectionUtils.emptyIfNull(workflow.getServices())
+                                       .stream()
+                                       .map(Service::getUuid)
+                                       .collect(Collectors.toSet());
+          if (applicationManifest.getServiceId() == null || serviceIds.contains(applicationManifest.getServiceId())) {
+            CgEntityId build = CgEntityId.builder().id(applicationManifest.getUuid()).type(MANIFEST).build();
+            children.add(build);
+          }
+        }
+      }
     }
     if (EmptyPredicate.isNotEmpty(workflow.getInfraDefinitionId())) {
       children.add(CgEntityId.builder().type(INFRA).id(workflow.getInfraDefinitionId()).build());
@@ -158,8 +192,13 @@ public class WorkflowMigrationService implements NgMigration {
     ServiceConfig serviceConfig = null;
     if (EmptyPredicate.isNotEmpty(workflow.getOrchestration().getServiceIds())) {
       String serviceId = workflow.getOrchestration().getServiceIds().get(0);
-      serviceConfig = serviceMigrationService.getServiceConfig(
-          inputDTO, entities, graph, CgEntityId.builder().type(SERVICE).id(serviceId).build(), migratedEntities);
+
+      Set<CgEntityId> children = graph.get(entityId);
+      Set<CgEntityId> manifests =
+          children.stream().filter(cgEntityId -> cgEntityId.getType() == MANIFEST).collect(Collectors.toSet());
+
+      serviceConfig = serviceMigrationService.getServiceConfig(inputDTO, entities, graph,
+          CgEntityId.builder().type(SERVICE).id(serviceId).build(), migratedEntities, manifests);
     }
     EnvironmentYaml environmentYaml = environmentMigrationService.getEnvironmentYaml(
         inputDTO, entities, graph, CgEntityId.builder().type(ENVIRONMENT).id(workflow.getEnvId()).build());
@@ -217,6 +256,6 @@ public class WorkflowMigrationService implements NgMigration {
               Timeout.builder().timeoutString(properties.getOrDefault("stateTimeoutInMinutes", "10") + "m").build()))
           .build();
     }
-    throw new UnsupportedOperationException("Not supported");
+    throw new UnsupportedOperationException(String.format("Not supported step type: [%s]", step.getType()));
   }
 }

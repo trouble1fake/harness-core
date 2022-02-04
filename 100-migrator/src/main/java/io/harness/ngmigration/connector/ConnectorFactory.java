@@ -16,6 +16,7 @@ import static io.harness.k8s.model.KubernetesClusterAuthType.NONE;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.data.structure.CollectionUtils;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.beans.connector.ConnectorConfigDTO;
 import io.harness.delegate.beans.connector.ConnectorType;
@@ -33,11 +34,21 @@ import io.harness.delegate.beans.connector.k8Connector.KubernetesCredentialDTO;
 import io.harness.delegate.beans.connector.k8Connector.KubernetesOpenIdConnectDTO;
 import io.harness.delegate.beans.connector.k8Connector.KubernetesServiceAccountDTO;
 import io.harness.delegate.beans.connector.k8Connector.KubernetesUserNamePasswordDTO;
+import io.harness.delegate.beans.connector.scm.GitAuthType;
+import io.harness.delegate.beans.connector.scm.GitConnectionType;
+import io.harness.delegate.beans.connector.scm.genericgitconnector.GitAuthenticationDTO;
+import io.harness.delegate.beans.connector.scm.genericgitconnector.GitConfigDTO;
+import io.harness.delegate.beans.connector.scm.genericgitconnector.GitHTTPAuthenticationDTO;
+import io.harness.delegate.beans.connector.scm.genericgitconnector.GitSSHAuthenticationDTO;
 import io.harness.encryption.Scope;
 import io.harness.encryption.SecretRefData;
+import io.harness.exception.UnsupportedOperationException;
 import io.harness.k8s.model.KubernetesClusterAuthType;
+import io.harness.ngmigration.service.MigratorUtility;
+import io.harness.shell.AuthenticationScheme;
 
 import software.wings.beans.DockerConfig;
+import software.wings.beans.GitConfig;
 import software.wings.beans.KubernetesClusterConfig;
 import software.wings.beans.SettingAttribute;
 
@@ -55,20 +66,81 @@ public class ConnectorFactory {
     if (settingAttribute.getValue() instanceof KubernetesClusterConfig) {
       return ConnectorType.KUBERNETES_CLUSTER;
     }
+    if (settingAttribute.getValue() instanceof GitConfig) {
+      return ConnectorType.GIT;
+    }
     throw new UnsupportedOperationException("Only support few connector types.");
   }
 
   public static ConnectorConfigDTO getConfigDTO(SettingAttribute settingAttribute) {
+    // TODO: move to factory pattern
     if (settingAttribute.getValue() instanceof DockerConfig) {
       return fromDocker(settingAttribute);
     }
     if (settingAttribute.getValue() instanceof KubernetesClusterConfig) {
       return fromK8s(settingAttribute);
     }
+    if (settingAttribute.getValue() instanceof GitConfig) {
+      return fromGitConfig(settingAttribute);
+    }
     throw new UnsupportedOperationException("Connector Not Supported");
   }
 
+  private static ConnectorConfigDTO fromGitConfig(SettingAttribute settingAttribute) {
+    GitConfig gitConfig = (GitConfig) settingAttribute.getValue();
+
+    return GitConfigDTO.builder()
+        .branchName(gitConfig.getBranch())
+        .delegateSelectors(new HashSet<>(CollectionUtils.emptyIfNull(gitConfig.getDelegateSelectors())))
+        .executeOnDelegate(true)
+        .gitAuthType(getAuthType(gitConfig.getAuthenticationScheme()))
+        .gitAuth(getGitAuth(gitConfig))
+        .gitConnectionType(getGitConnectionType(gitConfig.getUrlType()))
+        .url(gitConfig.getRepoUrl())
+        .build();
+  }
+
+  private static GitAuthenticationDTO getGitAuth(GitConfig gitConfig) {
+    if (gitConfig.getAuthenticationScheme() == AuthenticationScheme.HTTP_PASSWORD) {
+      return GitHTTPAuthenticationDTO.builder()
+          .username(gitConfig.getUsername())
+          .passwordRef(
+              // TODO: scope will come from inputs
+              SecretRefData.builder().identifier(gitConfig.getEncryptedPassword()).scope(Scope.PROJECT).build())
+          .build();
+    } else if (gitConfig.getAuthenticationScheme() == AuthenticationScheme.SSH_KEY) {
+      return GitSSHAuthenticationDTO.builder()
+          .encryptedSshKey(
+              SecretRefData
+                  .builder()
+                  // TODO: identifier will come from inside ssh key ref setting attribute. It needs to be discovered and
+                  // mapped to a secret. Ref of that secret will be used here.
+                  .identifier(MigratorUtility.generateIdentifier(gitConfig.getSshSettingAttribute().getName()))
+                  .scope(Scope.PROJECT)
+                  .build())
+          .build();
+    } else {
+      throw new UnsupportedOperationException("Unsupported git auth type: " + gitConfig.getAuthenticationScheme());
+    }
+  }
+
+  private static GitConnectionType getGitConnectionType(GitConfig.UrlType urlType) {
+    return urlType == GitConfig.UrlType.REPO ? GitConnectionType.REPO : GitConnectionType.ACCOUNT;
+  }
+
+  private static GitAuthType getAuthType(AuthenticationScheme authenticationScheme) {
+    switch (authenticationScheme) {
+      case HTTP_PASSWORD:
+        return GitAuthType.HTTP;
+      case SSH_KEY:
+        return GitAuthType.SSH;
+      default:
+        throw new UnsupportedOperationException("Git auth Type not supported : " + authenticationScheme);
+    }
+  }
+
   public static String getSecretId(SettingAttribute settingAttribute) {
+    // TODO: Move if-else logic to factory pattern
     if (settingAttribute.getValue() instanceof DockerConfig) {
       DockerConfig dockerConfig = (DockerConfig) settingAttribute.getValue();
       return dockerConfig.getEncryptedPassword();
@@ -77,7 +149,10 @@ public class ConnectorFactory {
       KubernetesClusterConfig k8sConfig = (KubernetesClusterConfig) settingAttribute.getValue();
       return k8sConfig.getEncryptedPassword();
     }
-    throw new UnsupportedOperationException("Connector Not Supported");
+    if (settingAttribute.getValue() instanceof GitConfig) {
+      return ((GitConfig) settingAttribute.getValue()).getEncryptedPassword();
+    }
+    throw new UnsupportedOperationException("Connector Not Supported. Type: " + settingAttribute.getValue().getType());
   }
 
   private static Set<String> toSet(List<String> list) {

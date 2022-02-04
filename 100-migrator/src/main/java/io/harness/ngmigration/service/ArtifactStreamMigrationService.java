@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.Set;
 
 @OwnedBy(HarnessTeam.CDC)
-public class ArtifactStreamMigrationService implements NgMigration {
+public class ArtifactStreamMigrationService implements NgMigrationService {
   @Inject private ArtifactStreamService artifactStreamService;
 
   @Override

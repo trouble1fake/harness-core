@@ -89,7 +89,6 @@ import io.harness.yaml.BaseYaml;
 import software.wings.beans.artifact.ArtifactStreamSummary;
 import software.wings.beans.entityinterface.ApplicationAccess;
 import software.wings.ngmigration.NGMigrationEntity;
-import software.wings.ngmigration.NGMigrationEntityType;
 import software.wings.security.UsageRestrictions;
 import software.wings.settings.SettingValue;
 import software.wings.settings.SettingVariableTypes;
@@ -246,12 +245,6 @@ public class SettingAttribute
       return;
     }
     throw new IllegalArgumentException("Invalid fieldName " + fieldName);
-  }
-
-  @JsonIgnore
-  @Override
-  public NGMigrationEntityType getMigrationEntityType() {
-    return NGMigrationEntityType.CONNECTOR;
   }
 
   @JsonIgnore

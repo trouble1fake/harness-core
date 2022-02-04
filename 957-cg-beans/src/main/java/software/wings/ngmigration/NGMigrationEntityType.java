@@ -20,5 +20,6 @@ public enum NGMigrationEntityType {
   ENVIRONMENT,
   SECRET,
   INFRA,
-  SECRET_MANAGER
+  SECRET_MANAGER,
+  MANIFEST
 }

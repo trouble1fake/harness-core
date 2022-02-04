@@ -18,12 +18,14 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.artifact.bean.yaml.ArtifactListConfig;
 import io.harness.cdng.artifact.bean.yaml.DockerHubArtifactConfig;
 import io.harness.cdng.artifact.bean.yaml.PrimaryArtifact;
+import io.harness.cdng.manifest.yaml.ManifestConfigWrapper;
 import io.harness.cdng.service.beans.KubernetesServiceSpec;
 import io.harness.cdng.service.beans.ServiceConfig;
 import io.harness.cdng.service.beans.ServiceDefinition;
 import io.harness.cdng.service.beans.ServiceDefinitionType;
 import io.harness.cdng.service.beans.ServiceYaml;
 import io.harness.delegate.task.artifacts.ArtifactSourceType;
+import io.harness.exception.UnsupportedOperationException;
 import io.harness.ngmigration.beans.MigrationInputDTO;
 import io.harness.ngmigration.beans.NgEntityDetail;
 import io.harness.pms.yaml.ParameterField;
@@ -37,6 +39,7 @@ import software.wings.ngmigration.DiscoveryNode;
 import software.wings.ngmigration.NGMigrationEntity;
 import software.wings.ngmigration.NGMigrationStatus;
 import software.wings.ngmigration.NGYamlFile;
+import software.wings.service.intfc.ApplicationManifestService;
 import software.wings.service.intfc.ArtifactStreamService;
 import software.wings.service.intfc.ServiceResourceService;
 
@@ -49,9 +52,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @OwnedBy(HarnessTeam.CDC)
-public class ServiceMigrationService implements NgMigration {
+public class ServiceMigrationService implements NgMigrationService {
   @Inject private ServiceResourceService serviceResourceService;
   @Inject private ArtifactStreamService artifactStreamService;
+  @Inject private ManifestMigrationService manifestMigrationService;
 
   @Override
   public DiscoveryNode discover(NGMigrationEntity entity) {
@@ -96,7 +100,8 @@ public class ServiceMigrationService implements NgMigration {
   }
 
   public ServiceConfig getServiceConfig(MigrationInputDTO inputDTO, Map<CgEntityId, CgEntityNode> entities,
-      Map<CgEntityId, Set<CgEntityId>> graph, CgEntityId entityId, Map<CgEntityId, NgEntityDetail> migratedEntities) {
+      Map<CgEntityId, Set<CgEntityId>> graph, CgEntityId entityId, Map<CgEntityId, NgEntityDetail> migratedEntities,
+      Set<CgEntityId> manifests) {
     Service service = (Service) entities.get(entityId).getEntity();
     PrimaryArtifact primaryArtifact = null;
     if (isNotEmpty(graph.get(entityId)) && graph.get(entityId).stream().anyMatch(e -> e.getType() == ARTIFACT_STREAM)) {
@@ -109,12 +114,16 @@ public class ServiceMigrationService implements NgMigration {
       ArtifactStream artifactStream = (ArtifactStream) entities.get(artifactStreamId).getEntity();
       primaryArtifact = getPrimaryArtifact(artifactStream, migratedEntities);
     }
+
+    List<ManifestConfigWrapper> manifestConfigWrapperList =
+        manifestMigrationService.getManifests(manifests, entities, graph, migratedEntities);
     ServiceDefinition serviceDefinition =
         ServiceDefinition.builder()
             .type(ServiceDefinitionType.KUBERNETES)
             .serviceSpec(KubernetesServiceSpec.builder()
                              .variables(new ArrayList<>())
                              .artifacts(ArtifactListConfig.builder().primary(primaryArtifact).build())
+                             .manifests(manifestConfigWrapperList)
                              .build())
             .build();
 

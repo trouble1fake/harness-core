@@ -38,7 +38,7 @@ import java.util.Map;
 import java.util.Set;
 
 @OwnedBy(HarnessTeam.CDC)
-public class InfraMigrationService implements NgMigration {
+public class InfraMigrationService implements NgMigrationService {
   @Inject private InfrastructureDefinitionService infrastructureDefinitionService;
 
   @Override

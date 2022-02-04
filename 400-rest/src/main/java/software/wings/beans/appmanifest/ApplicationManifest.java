@@ -24,6 +24,7 @@ import software.wings.beans.GitFileConfig;
 import software.wings.beans.HelmChartConfig;
 import software.wings.beans.HelmCommandFlagConfig;
 import software.wings.helpers.ext.kustomize.KustomizeConfig;
+import software.wings.ngmigration.NGMigrationEntity;
 import software.wings.yaml.BaseEntityYaml;
 
 import com.google.common.collect.ImmutableList;
@@ -46,7 +47,7 @@ import org.mongodb.morphia.annotations.Transient;
 @HarnessEntity(exportable = true)
 @OwnedBy(CDP)
 @TargetModule(_957_CG_BEANS)
-public class ApplicationManifest extends Base implements AccountAccess {
+public class ApplicationManifest extends Base implements AccountAccess, NGMigrationEntity {
   public static List<MongoIndex> mongoIndexes() {
     return ImmutableList.<MongoIndex>builder()
         .add(CompoundMongoIndex.builder()
@@ -106,6 +107,11 @@ public class ApplicationManifest extends Base implements AccountAccess {
                                        .build();
     manifest.setAppId(this.appId);
     return manifest;
+  }
+
+  @Override
+  public String getMigrationEntityName() {
+    return getUuid();
   }
 
   public enum AppManifestSource { SERVICE, ENV, ENV_SERVICE }

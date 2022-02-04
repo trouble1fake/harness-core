@@ -33,7 +33,7 @@ import java.util.Map;
 import java.util.Set;
 
 @OwnedBy(HarnessTeam.CDC)
-public class SecretManagerMigrationService implements NgMigration {
+public class SecretManagerMigrationService implements NgMigrationService {
   @Inject private SecretManager secretManager;
 
   @Override

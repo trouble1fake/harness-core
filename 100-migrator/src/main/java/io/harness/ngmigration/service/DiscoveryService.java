@@ -73,9 +73,10 @@ public class DiscoveryService {
 
     // Discover the child nodes and add to graph
     if (isNotEmpty(chilldren)) {
+      // check if child already discovered, if yes, no need to rediscover. Just create a link in parent.
       chilldren.forEach(child -> {
-        NgMigration ngMigration = migrationFactory.getMethod(child.getType());
-        DiscoveryNode node = ngMigration.discover(accountId, appId, child.getId());
+        NgMigrationService ngMigrationService = migrationFactory.getMethod(child.getType());
+        DiscoveryNode node = ngMigrationService.discover(accountId, appId, child.getId());
         travel(accountId, appId, entities, graph, currentNode.getEntityId(), node);
       });
     }
@@ -85,8 +86,8 @@ public class DiscoveryService {
     Map<CgEntityId, CgEntityNode> entities = new HashMap<>();
     Map<CgEntityId, Set<CgEntityId>> graph = new HashMap<>();
 
-    NgMigration ngMigration = migrationFactory.getMethod(entityType);
-    DiscoveryNode node = ngMigration.discover(accountId, appId, entityId);
+    NgMigrationService ngMigrationService = migrationFactory.getMethod(entityType);
+    DiscoveryNode node = ngMigrationService.discover(accountId, appId, entityId);
     if (node == null) {
       throw new IllegalStateException("Root cannot be found!");
     }
@@ -112,7 +113,10 @@ public class DiscoveryService {
 
     // Write the files to ZIP folder
     try {
-      FileUtils.cleanDirectory(new File("/tmp/zip-output"));
+      File directory = new File("/tmp/zip-output");
+      if (directory.exists()) {
+        FileUtils.cleanDirectory(directory);
+      }
     } catch (IOException e) {
       log.warn("Failed to clean output directory");
     }
@@ -188,10 +192,10 @@ public class DiscoveryService {
 
     vizGraph.use((gr, ctx) -> {
       for (CgEntityId node : graph.keySet()) {
-        NGMigrationEntity entityNode = entities.get(node).getEntity();
+        CgEntityNode cgEntityNode = entities.get(node);
+        NGMigrationEntity entityNode = cgEntityNode.getEntity();
         MutableNode vizNode = Factory.mutNode(node.toString());
-        vizNode.setName(
-            Label.htmlLines(entityNode.getMigrationEntityName(), entityNode.getMigrationEntityType().name()));
+        vizNode.setName(Label.htmlLines(entityNode.getMigrationEntityName(), cgEntityNode.getType().name()));
         nodes.put(node, vizNode);
       }
       for (Map.Entry<CgEntityId, Set<CgEntityId>> entry : graph.entrySet()) {

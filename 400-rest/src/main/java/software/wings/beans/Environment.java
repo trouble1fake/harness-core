@@ -35,7 +35,6 @@ import software.wings.beans.entityinterface.KeywordsAware;
 import software.wings.beans.entityinterface.TagAware;
 import software.wings.infra.InfrastructureDefinition;
 import software.wings.ngmigration.NGMigrationEntity;
-import software.wings.ngmigration.NGMigrationEntityType;
 import software.wings.yaml.BaseEntityYaml;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -273,12 +272,6 @@ public class Environment
     Set<String> keywords = KeywordsAware.super.generateKeywords();
     keywords.addAll(asList(name, description, environmentType.name()));
     return keywords;
-  }
-
-  @JsonIgnore
-  @Override
-  public NGMigrationEntityType getMigrationEntityType() {
-    return NGMigrationEntityType.ENVIRONMENT;
   }
 
   @JsonIgnore

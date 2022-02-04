@@ -39,7 +39,6 @@ import io.harness.security.encryption.EncryptionType;
 import io.harness.validation.Update;
 
 import software.wings.ngmigration.NGMigrationEntity;
-import software.wings.ngmigration.NGMigrationEntityType;
 import software.wings.security.ScopedEntity;
 import software.wings.security.UsageRestrictions;
 import software.wings.settings.SettingVariableTypes;
@@ -402,12 +401,6 @@ public class EncryptedData implements EncryptedRecord, PersistentEntity, UuidAwa
   @Override
   public AdditionalMetadata getAdditionalMetadata() {
     return additionalMetadata;
-  }
-
-  @JsonIgnore
-  @Override
-  public NGMigrationEntityType getMigrationEntityType() {
-    return NGMigrationEntityType.SECRET;
   }
 
   @JsonIgnore

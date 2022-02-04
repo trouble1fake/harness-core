@@ -14,8 +14,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @OwnedBy(HarnessTeam.CDC)
 public interface NGMigrationEntity {
-  NGMigrationEntityType getMigrationEntityType();
-
   @JsonIgnore
   default String getMigrationEntityName() {
     return "";

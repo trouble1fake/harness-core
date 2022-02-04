@@ -21,8 +21,9 @@ public class NgMigrationFactory {
   @Inject SecretManagerMigrationService secretManagerMigrationService;
   @Inject EnvironmentMigrationService environmentMigrationService;
   @Inject InfraMigrationService infraMigrationService;
+  @Inject ManifestMigrationService manifestMigrationService;
 
-  public NgMigration getMethod(NGMigrationEntityType type) {
+  public NgMigrationService getMethod(NGMigrationEntityType type) {
     switch (type) {
       case PIPELINE:
         return pipelineMigrationService;
@@ -42,6 +43,8 @@ public class NgMigrationFactory {
         return environmentMigrationService;
       case INFRA:
         return infraMigrationService;
+      case MANIFEST:
+        return manifestMigrationService;
       default:
         throw new IllegalStateException();
     }

@@ -34,7 +34,7 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 
 @OwnedBy(HarnessTeam.CDC)
-public class ConnectorMigrationService implements NgMigration {
+public class ConnectorMigrationService implements NgMigrationService {
   @Inject private SettingsService settingsService;
 
   @Override

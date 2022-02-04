@@ -33,7 +33,6 @@ import software.wings.beans.entityinterface.ApplicationAccess;
 import software.wings.beans.entityinterface.KeywordsAware;
 import software.wings.beans.entityinterface.TagAware;
 import software.wings.ngmigration.NGMigrationEntity;
-import software.wings.ngmigration.NGMigrationEntityType;
 import software.wings.yaml.BaseEntityYaml;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -162,12 +161,6 @@ public class Pipeline
     Set<String> keywords = KeywordsAware.super.generateKeywords();
     keywords.addAll(asList(name, description, PIPELINE.name()));
     return keywords;
-  }
-
-  @JsonIgnore
-  @Override
-  public NGMigrationEntityType getMigrationEntityType() {
-    return NGMigrationEntityType.PIPELINE;
   }
 
   @JsonIgnore

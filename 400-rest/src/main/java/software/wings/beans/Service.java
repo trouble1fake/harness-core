@@ -34,7 +34,6 @@ import software.wings.beans.command.ServiceCommand;
 import software.wings.beans.entityinterface.KeywordsAware;
 import software.wings.beans.entityinterface.TagAware;
 import software.wings.ngmigration.NGMigrationEntity;
-import software.wings.ngmigration.NGMigrationEntityType;
 import software.wings.service.intfc.customdeployment.CustomDeploymentTypeAware;
 import software.wings.utils.ArtifactType;
 import software.wings.yaml.BaseEntityYaml;
@@ -215,12 +214,6 @@ public class Service extends Base
   @Override
   public void setDeploymentTypeName(String theCustomDeploymentName) {
     customDeploymentName = theCustomDeploymentName;
-  }
-
-  @JsonIgnore
-  @Override
-  public NGMigrationEntityType getMigrationEntityType() {
-    return NGMigrationEntityType.SERVICE;
   }
 
   @JsonIgnore
