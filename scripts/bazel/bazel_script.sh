@@ -195,7 +195,7 @@ BAZEL_MODULES="\
   //970-telemetry-beans:module \
   //970-watcher-beans:module \
   //980-commons:module \
-  //980-recaster:module \
+  //979-recaster:module \
   //990-commons-test:module \
   //999-annotations:module \
   //product/ci/engine/proto:all \
@@ -385,7 +385,7 @@ build_bazel_module 970-grpc
 build_bazel_module 970-ng-commons
 build_bazel_module 970-rbac-core
 build_bazel_module 970-watcher-beans
-build_bazel_module 980-recaster
+build_bazel_module 979-recaster
 build_bazel_module 980-commons
 build_bazel_module 990-commons-test
 build_bazel_module 999-annotations

@@ -28,10 +28,9 @@ import io.harness.rule.Owner;
 import io.harness.timescaledb.Tables;
 import io.harness.timescaledb.tables.pojos.CeRecommendations;
 
-import graphql.com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList;
 import java.util.Collections;
 import java.util.List;
-import org.assertj.core.api.Assertions;
 import org.assertj.core.data.Offset;
 import org.jooq.impl.DSL;
 import org.junit.Test;
@@ -49,7 +48,7 @@ public class RecommendationServiceTest extends CategoryTest {
   private static final Double MONTHLY_COST = 100D;
   private static final Double MONTHLY_SAVING = 40D;
   private static final String ID = "id0";
-  private static final Offset<Double> DOUBLE_OFFSET = offset(0.1);
+  private static final Offset<Double> DOUBLE_OFFSET = offset(0.001);
 
   @Mock K8sRecommendationDAO k8sRecommendationDAO;
   @InjectMocks RecommendationService recommendationService;
@@ -90,9 +89,9 @@ public class RecommendationServiceTest extends CategoryTest {
         .getDistinctStringValues(
             eq(ACCOUNT_ID), any(), eq(Tables.CE_RECOMMENDATIONS.RESOURCETYPE), eq(Tables.CE_RECOMMENDATIONS));
 
-    Assertions.assertThat(result).isNotEmpty();
-    Assertions.assertThat(result.get(0).getKey()).isEqualTo("resourceType");
-    Assertions.assertThat(result.get(0).getValues()).containsExactlyInAnyOrder("v1", "v2");
+    assertThat(result).isNotEmpty();
+    assertThat(result.get(0).getKey()).isEqualTo("resourceType");
+    assertThat(result.get(0).getValues()).containsExactlyInAnyOrder("v1", "v2");
   }
 
   @Test
@@ -125,7 +124,18 @@ public class RecommendationServiceTest extends CategoryTest {
         .thenReturn(expectedStats);
 
     final RecommendationOverviewStats stats = recommendationService.getStats(ACCOUNT_ID, DSL.noCondition());
-    Assertions.assertThat(stats.getTotalMonthlyCost()).isEqualTo(MONTHLY_COST);
-    Assertions.assertThat(stats.getTotalMonthlySaving()).isEqualTo(MONTHLY_SAVING);
+    assertThat(stats.getTotalMonthlyCost()).isEqualTo(MONTHLY_COST);
+    assertThat(stats.getTotalMonthlySaving()).isEqualTo(MONTHLY_SAVING);
+  }
+
+  @Test
+  @Owner(developers = UTSAV)
+  @Category(UnitTests.class)
+  public void testGetRecommendationsCount() throws Exception {
+    when(k8sRecommendationDAO.fetchRecommendationsCount(eq(ACCOUNT_ID), eq(DSL.noCondition()))).thenReturn(10);
+
+    assertThat(recommendationService.getRecommendationsCount(ACCOUNT_ID, DSL.noCondition())).isEqualTo(10);
+
+    verify(k8sRecommendationDAO, times(1)).fetchRecommendationsCount(any(), any());
   }
 }

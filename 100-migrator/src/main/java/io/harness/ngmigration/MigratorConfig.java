@@ -12,6 +12,7 @@ import static io.harness.annotations.dev.HarnessTeam.CDC;
 import static com.google.common.collect.ImmutableMap.of;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.remote.client.ServiceHttpClientConfig;
 
 import software.wings.app.MainConfiguration;
 
@@ -35,6 +36,8 @@ public class MigratorConfig extends Configuration implements AssetsBundleConfigu
           .build();
 
   private MainConfiguration cg;
+  @JsonProperty("ngClientConfig") private ServiceHttpClientConfig ngClientConfig;
+  @JsonProperty("pipelineServiceClientConfig") private ServiceHttpClientConfig pipelineServiceClientConfig;
 
   @Override
   public AssetsConfiguration getAssetsConfiguration() {

@@ -297,6 +297,10 @@ public class NgUserServiceImpl implements NgUserService {
     }
   }
 
+  public Optional<UserInfo> getUserInfoByEmailFromCG(String email) {
+    return RestClientUtils.getResponse(userClient.getUserByEmailId(email));
+  }
+
   @Override
   public List<UserInfo> listCurrentGenUsers(String accountId, UserFilterNG userFilter) {
     return RestClientUtils.getResponse(userClient.listUsers(

@@ -32,6 +32,8 @@ public enum VariableDisplayType {
   SS_SSH_CONNECTION_ATTRIBUTE("SSH Connection Attribute"),
   SS_WINRM_CONNECTION_ATTRIBUTE("WinRM Connection Attribute"),
   USER_GROUP("User Group"),
+  ARTIFACT_STREAM("Artifact Stream"),
+  APPLICATION_MANIFEST("Application Manifest"),
   HELM_GIT_CONFIG_ID("Helm Git Connector Id"),
   JENKINS_SERVER("Jenkins Server"),
   GCP_CONFIG("Google Cloud Provider"),

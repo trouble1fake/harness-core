@@ -78,8 +78,8 @@ public class CleanupStep implements TaskExecutable<CleanupStepInfo, K8sTaskExecu
     // It should always resolved to K8sDirectInfraYaml
     K8sDirectInfraYaml k8sDirectInfraYaml = (K8sDirectInfraYaml) infrastructure;
 
-    final String clusterName = k8sDirectInfraYaml.getSpec().getConnectorRef();
-    final String namespace = k8sDirectInfraYaml.getSpec().getNamespace();
+    final String clusterName = (String) k8sDirectInfraYaml.getSpec().getConnectorRef().fetchFinalValue();
+    final String namespace = (String) k8sDirectInfraYaml.getSpec().getNamespace().fetchFinalValue();
     final List<String> podNames = new ArrayList<>();
     podNames.add(stepParameters.getPodName());
 
