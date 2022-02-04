@@ -21,6 +21,7 @@ import static io.harness.delegate.configuration.InstallUtils.installKustomize;
 import static io.harness.delegate.configuration.InstallUtils.installOc;
 import static io.harness.delegate.configuration.InstallUtils.installScm;
 import static io.harness.delegate.configuration.InstallUtils.installTerraformConfigInspect;
+import static io.harness.delegate.configuration.InstallUtils.setupDefaultPaths;
 import static io.harness.delegate.configuration.InstallUtils.validateCfCliExists;
 import static io.harness.delegate.message.ManagerMessageConstants.JRE_VERSION;
 import static io.harness.delegate.message.ManagerMessageConstants.MIGRATE;
@@ -503,6 +504,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       if (!delegateConfiguration.isInstallClientToolsInBackground()) {
         log.info("Client tools will be installed synchronously, before delegate registers");
         if (delegateConfiguration.isClientToolsDownloadDisabled()) {
+          setupDefaultPaths(delegateConfiguration);
           kubectlInstalled = true;
           goTemplateInstalled = true;
           harnessPywinrmInstalled = true;
@@ -652,6 +654,9 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
 
       if (!delegateNg || isNotBlank(delegateProfile)) {
         startProfileCheck();
+      }
+      if (delegateConfiguration.isClientToolsDownloadDisabled()) {
+        setupDefaultPaths(delegateConfiguration);
       }
       if (!isClientToolsInstallationFinished()) {
         backgroundExecutor.submit(() -> {

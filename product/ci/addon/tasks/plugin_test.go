@@ -16,6 +16,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	mexec "github.com/wings-software/portal/commons/go/lib/exec"
+	"github.com/wings-software/portal/commons/go/lib/filesystem"
 	"github.com/wings-software/portal/commons/go/lib/logs"
 	pb "github.com/wings-software/portal/product/ci/engine/proto"
 	"go.uber.org/zap"
@@ -32,6 +33,8 @@ func TestPluginSuccess(t *testing.T) {
 	cmd := mexec.NewMockCommand(ctrl)
 	pstate := mexec.NewMockProcessState(ctrl)
 	log, _ := logs.GetObservedLogger(zap.InfoLevel)
+	fs := filesystem.NewMockFileSystem(ctrl)
+
 	e := pluginTask{
 		id:                "step1",
 		image:             "plugin/drone-git",
@@ -41,6 +44,7 @@ func TestPluginSuccess(t *testing.T) {
 		addonLogger:       log.Sugar(),
 		cmdContextFactory: cmdFactory,
 		procWriter:        &buf,
+		fs:                fs,
 	}
 
 	oldImgMetadata := getImgMetadata
@@ -57,6 +61,7 @@ func TestPluginSuccess(t *testing.T) {
 	cmd.EXPECT().ProcessState().Return(pstate)
 	pstate.EXPECT().SysUsageUnit().Return(&syscall.Rusage{Maxrss: 100}, nil)
 	cmd.EXPECT().Wait().Return(nil)
+	fs.EXPECT().Stat("step1.out").Return(nil, nil)
 
 	_, _, retries, err := e.Run(ctx)
 	assert.Nil(t, err)
@@ -71,6 +76,7 @@ func TestPluginNonZeroStatus(t *testing.T) {
 	var buf bytes.Buffer
 	commands := []string{"git"}
 	cmdFactory := mexec.NewMockCmdContextFactory(ctrl)
+	fs := filesystem.NewMockFileSystem(ctrl)
 	cmd := mexec.NewMockCommand(ctrl)
 	pstate := mexec.NewMockProcessState(ctrl)
 	log, _ := logs.GetObservedLogger(zap.InfoLevel)
@@ -83,6 +89,7 @@ func TestPluginNonZeroStatus(t *testing.T) {
 		addonLogger:       log.Sugar(),
 		cmdContextFactory: cmdFactory,
 		procWriter:        &buf,
+		fs:                fs,
 	}
 
 	oldImgMetadata := getImgMetadata
@@ -99,6 +106,7 @@ func TestPluginNonZeroStatus(t *testing.T) {
 	cmd.EXPECT().ProcessState().Return(pstate)
 	pstate.EXPECT().SysUsageUnit().Return(&syscall.Rusage{Maxrss: 100}, nil)
 	cmd.EXPECT().Wait().Return(&exec.ExitError{})
+	fs.EXPECT().Stat("step1.out").Return(nil, nil)
 
 	_, _, retries, err := e.Run(ctx)
 	assert.NotNil(t, err)

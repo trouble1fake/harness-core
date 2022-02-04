@@ -59,9 +59,22 @@ public class NGScimUserServiceImpl implements ScimUserService {
   public Response createUser(ScimUser userQuery, String accountId) {
     log.info("NGSCIM: Creating user call for accountId {} with query {}", accountId, userQuery);
     String primaryEmail = getPrimaryEmail(userQuery);
-    Optional<UserMetadataDTO> userOptional = ngUserService.getUserByEmail(primaryEmail, true);
+
+    Optional<UserInfo> userInfoOptional = ngUserService.getUserInfoByEmailFromCG(primaryEmail);
+    Optional<UserMetadataDTO> userOptional =
+        Optional.ofNullable(userInfoOptional
+                                .map(user
+                                    -> UserMetadataDTO.builder()
+                                           .uuid(user.getUuid())
+                                           .name(user.getName())
+                                           .email(user.getEmail())
+                                           .locked(user.isLocked())
+                                           .disabled(user.isDisabled())
+                                           .externallyManaged(user.isExternallyManaged())
+                                           .build())
+                                .orElse(null));
     UserMetadataDTO user;
-    if (userOptional.isPresent()) {
+    if (checkUserPartOfAccount(accountId, userInfoOptional) && userOptional.isPresent()) {
       user = userOptional.get();
       userQuery.setId(user.getUuid());
       userQuery.setActive(true);
@@ -97,6 +110,13 @@ public class NGScimUserServiceImpl implements ScimUserService {
         return Response.status(Response.Status.NOT_FOUND).build();
       }
     }
+  }
+
+  private boolean checkUserPartOfAccount(String accountId, Optional<UserInfo> userInfoOptional) {
+    if (userInfoOptional.isPresent() && userInfoOptional.get().getAccounts() != null) {
+      return userInfoOptional.get().getAccounts().stream().anyMatch(account -> accountId.equals(account.getUuid()));
+    }
+    return false;
   }
 
   @Override

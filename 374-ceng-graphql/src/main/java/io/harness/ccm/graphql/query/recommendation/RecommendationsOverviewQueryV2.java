@@ -77,8 +77,8 @@ public class RecommendationsOverviewQueryV2 {
 
   @GraphQLQuery(name = "recommendationsV2", description = "The list of all types of recommendations for overview page")
   public RecommendationsDTO recommendations(
-      @GraphQLArgument(name = "filter", defaultValue = "{\"offset\":0,\"limit\":10}") K8sRecommendationFilterDTO filter,
-      @GraphQLEnvironment final ResolutionEnvironment env) {
+      @GraphQLArgument(name = "filter", defaultValue = "{\"offset\":0,\"limit\":10, \"minSaving\":0}")
+      K8sRecommendationFilterDTO filter, @GraphQLEnvironment final ResolutionEnvironment env) {
     final String accountId = graphQLUtils.getAccountIdentifier(env);
 
     Condition condition = applyAllFilters(filter);
