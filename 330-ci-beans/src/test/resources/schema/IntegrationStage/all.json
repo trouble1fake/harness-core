@@ -3383,7 +3383,8 @@
               "enum": [
                 "Sh",
                 "Bash",
-                "Powershell"
+                "Powershell",
+                "Pwsh"
               ]
             }
           }
@@ -3508,7 +3509,8 @@
               "enum": [
                 "Sh",
                 "Bash",
-                "Powershell"
+                "Powershell",
+                "Pwsh"
               ]
             },
             "testAnnotations": {

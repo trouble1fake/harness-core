@@ -14,18 +14,22 @@ import static io.harness.exception.WingsException.USER_SRE;
 import static io.harness.ngtriggers.beans.source.NGTriggerType.ARTIFACT;
 import static io.harness.ngtriggers.beans.source.NGTriggerType.MANIFEST;
 import static io.harness.ngtriggers.beans.source.NGTriggerType.WEBHOOK;
+import static io.harness.pms.yaml.validation.RuntimeInputValuesValidator.validateStaticValues;
 
 import static java.util.Collections.emptyList;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.common.NGExpressionUtils;
 import io.harness.connector.ConnectorResourceClient;
 import io.harness.connector.ConnectorResponseDTO;
+import io.harness.data.structure.EmptyPredicate;
 import io.harness.dto.PollingResponseDTO;
 import io.harness.exception.DuplicateFieldException;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
+import io.harness.exception.InvalidYamlException;
 import io.harness.exception.TriggerException;
 import io.harness.network.SafeHttpCall;
 import io.harness.ng.core.dto.ResponseDTO;
@@ -49,9 +53,11 @@ import io.harness.ngtriggers.beans.source.NGTriggerSpecV2;
 import io.harness.ngtriggers.beans.source.artifact.BuildAware;
 import io.harness.ngtriggers.beans.source.scheduled.CronTriggerSpec;
 import io.harness.ngtriggers.beans.source.scheduled.ScheduledTriggerConfig;
+import io.harness.ngtriggers.buildtriggers.helpers.BuildTriggerHelper;
 import io.harness.ngtriggers.events.TriggerCreateEvent;
 import io.harness.ngtriggers.events.TriggerDeleteEvent;
 import io.harness.ngtriggers.events.TriggerUpdateEvent;
+import io.harness.ngtriggers.exceptions.InvalidTriggerYamlException;
 import io.harness.ngtriggers.helpers.TriggerHelper;
 import io.harness.ngtriggers.mapper.NGTriggerElementMapper;
 import io.harness.ngtriggers.mapper.TriggerFilterHelper;
@@ -61,6 +67,10 @@ import io.harness.ngtriggers.utils.PollingSubscriptionHelper;
 import io.harness.ngtriggers.validations.TriggerValidationHandler;
 import io.harness.ngtriggers.validations.ValidationResult;
 import io.harness.outbox.api.OutboxService;
+import io.harness.pms.merger.YamlConfig;
+import io.harness.pms.merger.fqn.FQN;
+import io.harness.pms.merger.helpers.YamlSubMapExtractor;
+import io.harness.pms.yaml.YamlUtils;
 import io.harness.polling.client.PollingResourceClient;
 import io.harness.polling.contracts.PollingItem;
 import io.harness.polling.contracts.service.PollingDocument;
@@ -74,12 +84,20 @@ import com.cronutils.model.CronType;
 import com.cronutils.model.definition.CronDefinitionBuilder;
 import com.cronutils.model.time.ExecutionTime;
 import com.cronutils.parser.CronParser;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.mongodb.client.result.UpdateResult;
+import java.io.IOException;
 import java.time.ZonedDateTime;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -111,6 +129,10 @@ public class NGTriggerServiceImpl implements NGTriggerService {
   private final PollingResourceClient pollingResourceClient;
   private final NGTriggerElementMapper ngTriggerElementMapper;
   private final OutboxService outboxService;
+  private final BuildTriggerHelper validationHelper;
+  private static final String PIPELINE = "pipeline";
+  private static final String TRIGGER = "trigger";
+  private static final String INPUT_YAML = "inputYaml";
 
   private static final String DUP_KEY_EXP_FORMAT_STRING = "Trigger [%s] already exists";
 
@@ -522,7 +544,6 @@ public class NGTriggerServiceImpl implements NGTriggerService {
 
   @Override
   public void validateTriggerConfig(TriggerDetails triggerDetails) {
-    // TODO: come up with a comprehensive list of back-end checks for the trigger details for which an error
     // will be returned if certain conditions are not met. Either use this as a gateway or spin off a specific class
     // for the validation.
 
@@ -534,6 +555,8 @@ public class NGTriggerServiceImpl implements NGTriggerService {
     if (isBlank(triggerDetails.getNgTriggerEntity().getName())) {
       throw new InvalidArgumentsException("Name can not be empty");
     }
+
+    validatePipelineRef(triggerDetails);
 
     NGTriggerSourceV2 triggerSource = triggerDetails.getNgTriggerConfigV2().getSource();
     NGTriggerSpecV2 spec = triggerSource.getSpec();
@@ -560,6 +583,101 @@ public class NGTriggerServiceImpl implements NGTriggerService {
       default:
         return; // not implemented
     }
+  }
+
+  private void validatePipelineRef(TriggerDetails triggerDetails) {
+    NGTriggerEntity ngTriggerEntity = triggerDetails.getNgTriggerEntity();
+    Optional<String> pipelineYmlOptional = validationHelper.fetchPipelineForTrigger(ngTriggerEntity);
+    if (pipelineYmlOptional.isPresent()) {
+      String pipelineYaml = pipelineYmlOptional.get();
+      String templateYaml = createRuntimeInputForm(pipelineYaml);
+      String triggerYaml = triggerDetails.getNgTriggerEntity().getYaml();
+      String triggerPipelineYml = getPipelineComponent(triggerYaml);
+      Map<FQN, String> invalidFQNs = getInvalidFQNsInTrigger(templateYaml, triggerPipelineYml);
+      if (EmptyPredicate.isEmpty(invalidFQNs)) {
+        return;
+      }
+      Map<String, Map<String, String>> errorMap = new HashMap<>();
+      for (Map.Entry<FQN, String> entry : invalidFQNs.entrySet()) {
+        Map<String, String> innerMap = new HashMap<>();
+        innerMap.put("fieldName", entry.getKey().getFieldName());
+        innerMap.put("message", entry.getValue());
+        errorMap.put(entry.getKey().getExpressionFqn(), innerMap);
+      }
+      throw new InvalidTriggerYamlException("Invalid Yaml", errorMap, triggerDetails, null);
+    }
+  }
+
+  private String getPipelineComponent(String triggerYml) {
+    try {
+      if (EmptyPredicate.isEmpty(triggerYml)) {
+        return triggerYml;
+      }
+      JsonNode node = YamlUtils.readTree(triggerYml).getNode().getCurrJsonNode();
+      ObjectNode innerMap = (ObjectNode) node.get(TRIGGER);
+      if (innerMap == null) {
+        throw new InvalidRequestException("Invalid Trigger Yaml.");
+      }
+      JsonNode inputYaml = innerMap.get(INPUT_YAML);
+      if (inputYaml == null) {
+        throw new InvalidRequestException("Invalid Trigger Yaml.");
+      }
+      JsonNode pipelineNode = YamlUtils.readTree(inputYaml.asText()).getNode().getCurrJsonNode();
+      return YamlUtils.write(pipelineNode).replace("---\n", "");
+    } catch (IOException e) {
+      throw new InvalidYamlException("Invalid Trigger Yaml", e);
+    }
+  }
+
+  public Map<FQN, String> getInvalidFQNsInTrigger(String templateYaml, String triggerPipelineCompYaml) {
+    Map<FQN, String> errorMap = new LinkedHashMap<>();
+    YamlConfig triggerConfig = new YamlConfig(triggerPipelineCompYaml);
+    Set<FQN> triggerFQNs = new LinkedHashSet<>(triggerConfig.getFqnToValueMap().keySet());
+    if (EmptyPredicate.isEmpty(templateYaml)) {
+      triggerFQNs.forEach(fqn -> errorMap.put(fqn, "Pipeline no longer contains any runtime input"));
+      return errorMap;
+    }
+    YamlConfig templateConfig = new YamlConfig(templateYaml);
+
+    // Make sure everything in trigger exist in pipeline
+    templateConfig.getFqnToValueMap().keySet().forEach(key -> {
+      if (triggerFQNs.contains(key)) {
+        Object templateValue = templateConfig.getFqnToValueMap().get(key);
+        Object value = triggerConfig.getFqnToValueMap().get(key);
+        if (key.isType() || key.isIdentifierOrVariableName()) {
+          if (!value.toString().equals(templateValue.toString())) {
+            errorMap.put(key,
+                "The value for " + key.getExpressionFqn() + " is " + templateValue.toString()
+                    + "in the pipeline yaml, but the trigger has it as " + value.toString());
+          }
+        } else {
+          String error = validateStaticValues(templateValue, value);
+          if (EmptyPredicate.isNotEmpty(error)) {
+            errorMap.put(key, error);
+          }
+        }
+
+        triggerFQNs.remove(key);
+      } else {
+        Map<FQN, Object> subMap = YamlSubMapExtractor.getFQNToObjectSubMap(triggerConfig.getFqnToValueMap(), key);
+        subMap.keySet().forEach(triggerFQNs::remove);
+      }
+    });
+    triggerFQNs.forEach(fqn -> errorMap.put(fqn, "Field either not present in pipeline or not a runtime input"));
+    return errorMap;
+  }
+
+  public String createRuntimeInputForm(String yaml) {
+    YamlConfig yamlConfig = new YamlConfig(yaml);
+    Map<FQN, Object> fullMap = yamlConfig.getFqnToValueMap();
+    Map<FQN, Object> templateMap = new LinkedHashMap<>();
+    fullMap.keySet().forEach(key -> {
+      String value = fullMap.get(key).toString().replace("\"", "");
+      if (NGExpressionUtils.matchesInputSetPattern(value)) {
+        templateMap.put(key, fullMap.get(key));
+      }
+    });
+    return (new YamlConfig(templateMap, yamlConfig.getYamlMap())).getYaml();
   }
 
   private void validateStageIdentifierAndBuildRef(BuildAware buildAware, String fieldName) {

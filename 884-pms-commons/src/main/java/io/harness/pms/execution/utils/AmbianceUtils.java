@@ -129,6 +129,9 @@ public class AmbianceUtils {
       logContext.put("setupId", level.getSetupId());
       logContext.put("stepType", level.getStepType().getType());
     }
+    if (ambiance.getMetadata() != null && ambiance.getMetadata().getPipelineIdentifier() != null) {
+      logContext.put("pipelineIdentifier", ambiance.getMetadata().getPipelineIdentifier());
+    }
     return logContext;
   }
 

@@ -50,11 +50,14 @@ import io.harness.perpetualtask.k8s.watch.Volume;
 
 import software.wings.service.intfc.instance.CloudToHarnessMappingService;
 
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.StepContribution;
@@ -82,6 +85,12 @@ public class K8sPodInfoTasklet implements Tasklet {
   private static final String POD = "Pod";
   private static final String KUBE_SYSTEM_NAMESPACE = "kube-system";
   private static final String KUBE_PROXY_POD_PREFIX = "kube-proxy";
+
+  private final LoadingCache<String, Boolean> clusterInfoCache = Caffeine.newBuilder()
+                                                                     .recordStats()
+                                                                     .expireAfterAccess(1, TimeUnit.DAYS)
+                                                                     .maximumSize(1_000)
+                                                                     .build(this::isCurrentGenCluster);
 
   @Override
   public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) {
@@ -131,7 +140,6 @@ public class K8sPodInfoTasklet implements Tasklet {
       return false;
     }
     clusterRecordCG = cloudToHarnessMappingService.getClusterRecord(clusterId);
-    log.info("clusterRecordCG: {}, clusterId: {}", clusterRecordCG, clusterId);
     return clusterRecordCG != null;
   }
 
@@ -141,7 +149,6 @@ public class K8sPodInfoTasklet implements Tasklet {
       return false;
     }
     clusterRecordNG = clusterRecordServiceNG.get(clusterId);
-    log.info("clusterRecordNG: {}, clusterId: {}", clusterRecordNG, clusterId);
     return clusterRecordNG != null;
   }
 
@@ -152,7 +159,6 @@ public class K8sPodInfoTasklet implements Tasklet {
     String clusterId = podInfo.getClusterId();
     HarnessServiceInfo harnessServiceInfo = null;
     HarnessServiceInfoNG harnessServiceInfoNG = null;
-    log.info("podinfo: {}, clusterId: {}", podInfo, clusterId);
     if (!clusterDataGenerationValidator.shouldGenerateClusterData(accountId, clusterId)) {
       return InstanceInfo.builder().metaData(Collections.emptyMap()).build();
     }
@@ -219,23 +225,23 @@ public class K8sPodInfoTasklet implements Tasklet {
     }
 
     Map<String, String> labelsMap = podInfo.getLabelsMap();
-    log.info("labelsMap: {}", labelsMap);
     // Check in events db clusterrecords table vs harness db clusterrecords table and then decide which one to call.
-    if (isCurrentGenCluster(clusterId)) {
-      harnessServiceInfo = harnessServiceInfoFetcher
-                               .fetchHarnessServiceInfo(accountId, podInfo.getCloudProviderId(), podInfo.getNamespace(),
-                                   podInfo.getPodName(), labelsMap)
-                               .orElse(null);
-    } else {
-      // NG Cluster
-      Optional<HarnessServiceInfoNG> harnessServiceInfoNG1;
-      log.info("accountId: {}, podInfo.getPodName(): {}, podInfo.getNamespace(): {}", accountId, podInfo.getPodName(),
-          podInfo.getNamespace());
-      harnessServiceInfoNG1 = harnessServiceInfoFetcherNG.fetchHarnessServiceInfoNG(
-          accountId, podInfo.getNamespace(), podInfo.getPodName(), labelsMap);
-      if (harnessServiceInfoNG1.isPresent()) {
-        harnessServiceInfoNG = harnessServiceInfoNG1.get();
-        log.info("harnessServiceInfoNG: {}", harnessServiceInfoNG);
+
+    if (featureFlagService.isNotEnabled(FeatureName.CE_HARNESS_ENTITY_MAPPING, accountId)) {
+      Boolean currentGenCluster = clusterInfoCache.get(clusterId);
+      if (null != currentGenCluster && currentGenCluster) {
+        harnessServiceInfo = harnessServiceInfoFetcher
+                                 .fetchHarnessServiceInfo(accountId, podInfo.getCloudProviderId(),
+                                     podInfo.getNamespace(), podInfo.getPodName(), labelsMap)
+                                 .orElse(null);
+      } else {
+        // NG Cluster
+        Optional<HarnessServiceInfoNG> harnessServiceInfoNG1;
+        harnessServiceInfoNG1 = harnessServiceInfoFetcherNG.fetchHarnessServiceInfoNG(
+            accountId, podInfo.getNamespace(), podInfo.getPodName(), labelsMap);
+        if (harnessServiceInfoNG1.isPresent()) {
+          harnessServiceInfoNG = harnessServiceInfoNG1.get();
+        }
       }
     }
 
