@@ -30,13 +30,18 @@ public class ManifestSummary {
   private String name;
   private String source;
   private String appManifestName;
+  private String appManifestId;
 
   public static ManifestSummary prepareSummaryFromHelmChart(HelmChart helmChart) {
     if (helmChart == null) {
       return null;
     }
-    ManifestSummaryBuilder manifestSummaryBuilder =
-        ManifestSummary.builder().uuid(helmChart.getUuid()).versionNo(helmChart.getVersion()).name(helmChart.getName());
+    ManifestSummaryBuilder manifestSummaryBuilder = ManifestSummary.builder()
+                                                        .uuid(helmChart.getUuid())
+                                                        .versionNo(helmChart.getVersion())
+                                                        .appManifestId(helmChart.getApplicationManifestId())
+                                                        .appManifestName(helmChart.getAppManifestName())
+                                                        .name(helmChart.getName());
     Map<String, String> metadata = helmChart.getMetadata();
     if (EmptyPredicate.isNotEmpty(helmChart.getMetadata())) {
       manifestSummaryBuilder.source(metadata.get(ApplicationManifestServiceImpl.CHART_URL));

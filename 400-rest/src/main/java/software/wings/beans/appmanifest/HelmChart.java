@@ -32,6 +32,7 @@ import lombok.Data;
 import lombok.experimental.FieldNameConstants;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
+import org.mongodb.morphia.annotations.Transient;
 
 @OwnedBy(HarnessTeam.CDC)
 @Data
@@ -64,6 +65,7 @@ public class HelmChart implements AccountAccess, NameAccess, PersistentEntity, U
   @Id private String uuid;
   @Trimmed private String version;
   @FdIndex private String applicationManifestId;
+  @Transient private String appManifestName;
   private String name;
   private String displayName;
   @FdIndex private String accountId;

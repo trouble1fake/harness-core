@@ -2585,6 +2585,7 @@ public class WorkflowServiceImpl implements WorkflowService, DataProvider {
     if (isEmpty(applicationManifests)) {
       return null;
     }
+
     List<ApplicationManifestSummary> applicationManifestSummaryList = new ArrayList<>();
     for (ApplicationManifest applicationManifest : applicationManifests) {
       if (applicationManifest == null || applicationManifest.getHelmChartConfig() == null) {
@@ -2598,7 +2599,19 @@ public class WorkflowServiceImpl implements WorkflowService, DataProvider {
                 .filter(chart -> serviceId.equals(chart.getServiceId()))
                 .findFirst()
           : Optional.empty();
-      applicationManifestSummaryList.add(
+
+      final String defaultAppManifestName;
+      if (helmChartOptional.isPresent()) {
+        defaultAppManifestName =
+            applicationManifests.stream()
+                .filter(appManifest -> appManifest.getUuid().equals(helmChart.getApplicationManifestId()))
+                .map(ApplicationManifest::getName)
+                .findFirst()
+                .orElse("");
+        helmChartOptional.get().setAppManifestName(defaultAppManifestName);
+      }
+
+      applicationManifests.stream().filter() applicationManifestSummaryList.add(
           ApplicationManifestSummary.builder()
               .appManifestId(applicationManifest.getUuid())
               .settingId(applicationManifest.getHelmChartConfig().getConnectorId())
