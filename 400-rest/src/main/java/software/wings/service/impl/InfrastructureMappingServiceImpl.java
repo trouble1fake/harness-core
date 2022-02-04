@@ -1213,12 +1213,9 @@ public class InfrastructureMappingServiceImpl implements InfrastructureMappingSe
 
     KubernetesHelperService.validateNamespace(namespace);
 
-    List<EncryptedDataDetail> encryptionDetails =
-        secretManager.getEncryptionDetails((EncryptableSetting) settingAttribute.getValue(), null, workflowExecutionId);
-
     try {
       RancherConfig rancherConfig = (RancherConfig) settingAttribute.getValue();
-      rancherHelperService.validateRancherConfig(rancherConfig, encryptionDetails);
+      rancherHelperService.validateRancherConfig(rancherConfig);
     } catch (Exception e) {
       log.warn(ExceptionUtils.getMessage(e), e);
       throw new InvalidRequestException(ExceptionUtils.getMessage(e), USER);

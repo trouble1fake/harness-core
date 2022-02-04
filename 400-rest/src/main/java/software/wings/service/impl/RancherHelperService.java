@@ -23,7 +23,6 @@ import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.task.http.HttpTaskParameters;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
-import io.harness.security.encryption.EncryptedDataDetail;
 
 import software.wings.beans.RancherConfig;
 import software.wings.beans.TaskType;
@@ -47,7 +46,7 @@ public class RancherHelperService {
   @Inject private DelegateService delegateService;
   @Inject private SecretManager secretManager;
 
-  public boolean validateRancherConfig(RancherConfig rancherConfig, List<EncryptedDataDetail> encryptedDataDetails) {
+  public boolean validateRancherConfig(RancherConfig rancherConfig) {
     StringBuffer urlBuffer = new StringBuffer(rancherConfig.getRancherUrl());
     urlBuffer.append("/v3/clusters");
     List<KeyValuePair> headers = new ArrayList<>();

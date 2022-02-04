@@ -333,7 +333,7 @@ public class SettingValidationService {
         validateKubernetesClusterConfig(settingAttribute, encryptedDataDetails);
       }
     } else if (settingValue instanceof RancherConfig) {
-      validateRancherConfig(settingAttribute, encryptedDataDetails);
+      validateRancherConfig(settingAttribute);
     } else if (settingValue instanceof JenkinsConfig || settingValue instanceof BambooConfig
         || settingValue instanceof NexusConfig || settingValue instanceof DockerConfig
         || settingValue instanceof SmbConfig || settingValue instanceof SftpConfig
@@ -492,8 +492,7 @@ public class SettingValidationService {
     }
   }
 
-  private boolean validateRancherConfig(
-      SettingAttribute settingAttribute, List<EncryptedDataDetail> encryptedDataDetails) {
+  private boolean validateRancherConfig(SettingAttribute settingAttribute) {
     RancherConfig rancherConfig = (RancherConfig) settingAttribute.getValue();
 
     if (isEmpty(rancherConfig.getRancherUrl())) {
@@ -505,7 +504,7 @@ public class SettingValidationService {
     }
 
     try {
-      rancherHelperService.validateRancherConfig(rancherConfig, encryptedDataDetails);
+      rancherHelperService.validateRancherConfig(rancherConfig);
     } catch (Exception e) {
       log.error("Exception while validating RancherConfig", e);
       throw new InvalidRequestException(ExceptionUtils.getMessage(e), USER);

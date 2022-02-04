@@ -576,8 +576,6 @@ public class InfrastructureDefinitionServiceImpl implements InfrastructureDefini
   @VisibleForTesting
   public void validateAndPrepareInfraDefinition(@Valid InfrastructureDefinition infraDefinition) {
     validateCloudProviderAndDeploymentType(infraDefinition.getCloudProviderType(), infraDefinition.getDeploymentType());
-    SettingAttribute settingAttribute = settingsService.getByAccountAndId(
-        infraDefinition.getAccountId(), infraDefinition.getInfrastructure().getCloudProviderId());
     if (infraDefinition.getCloudProviderType() != CloudProviderType.CUSTOM
         && settingsService.getByAccountAndId(
                infraDefinition.getAccountId(), infraDefinition.getInfrastructure().getCloudProviderId())

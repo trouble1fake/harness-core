@@ -29,7 +29,6 @@ public class RancherKubernetesInfrastructureYamlHandler
   public Yaml toYaml(RancherKubernetesInfrastructure bean, String appId) {
     SettingAttribute cloudProvider = settingsService.get(bean.getCloudProviderId());
     Yaml yaml = Yaml.builder()
-                    .clusterName(bean.getClusterName())
                     .namespace(bean.getNamespace())
                     .releaseName(bean.getReleaseName())
                     .cloudProviderName(cloudProvider.getName())
@@ -54,7 +53,6 @@ public class RancherKubernetesInfrastructureYamlHandler
     SettingAttribute cloudProvider = settingsService.getSettingAttributeByName(accountId, yaml.getCloudProviderName());
     notNullCheck(format("Cloud Provider with name %s does not exist", yaml.getCloudProviderName()), cloudProvider);
     bean.setCloudProviderId(cloudProvider.getUuid());
-    bean.setClusterName(yaml.getClusterName());
     bean.setNamespace(yaml.getNamespace());
     bean.setReleaseName(yaml.getReleaseName());
     bean.setClusterSelectionCriteria(yaml.getClusterSelectionCriteria());

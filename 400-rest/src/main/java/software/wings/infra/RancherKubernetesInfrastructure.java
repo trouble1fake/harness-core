@@ -38,7 +38,6 @@ import lombok.experimental.FieldNameConstants;
 public class RancherKubernetesInfrastructure
     implements InfraMappingInfrastructureProvider, KubernetesInfrastructure, FieldKeyValMapProvider {
   private String cloudProviderId;
-  @IncludeFieldMap private String clusterName; // todo: why cluster name field is here.?
   @IncludeFieldMap @Expression(DISALLOW_SECRETS) private String namespace;
   @Trimmed private String releaseName;
   private List<ClusterSelectionCriteriaEntry> clusterSelectionCriteria;
@@ -51,9 +50,14 @@ public class RancherKubernetesInfrastructure
   }
 
   @Override
+  public String getClusterName() {
+    // cluster id is null in rancher
+    return null;
+  }
+
+  @Override
   public InfrastructureMapping getInfraMapping() {
     return aRancherKubernetesInfrastructureMapping()
-        .withClusterName(clusterName)
         .withNamespace(namespace)
         .withReleaseName(releaseName)
         .withComputeProviderSettingId(cloudProviderId)
@@ -86,17 +90,15 @@ public class RancherKubernetesInfrastructure
   @JsonTypeName(RANCHER_KUBERNETES)
   public static final class Yaml extends CloudProviderInfrastructureYaml {
     private String cloudProviderName;
-    private String clusterName;
     private String namespace;
     private String releaseName;
     private List<ClusterSelectionCriteriaEntry> clusterSelectionCriteria;
 
     @Builder
-    public Yaml(String type, String cloudProviderName, String clusterName, String namespace, String releaseName,
+    public Yaml(String type, String cloudProviderName, String namespace, String releaseName,
         List<ClusterSelectionCriteriaEntry> clusterSelectionCriteria) {
       super(type);
       setCloudProviderName(cloudProviderName);
-      setClusterName(clusterName);
       setNamespace(namespace);
       setReleaseName(releaseName);
       setClusterSelectionCriteria(clusterSelectionCriteria);

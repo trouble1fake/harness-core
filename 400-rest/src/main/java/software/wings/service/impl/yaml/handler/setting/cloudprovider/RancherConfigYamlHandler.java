@@ -1,6 +1,14 @@
+/*
+ * Copyright 2022 Harness Inc. All rights reserved.
+ * Use of this source code is governed by the PolyForm Free Trial 1.0.0 license
+ * that can be found in the licenses directory at the root of this repository, also available at
+ * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
+ */
+
 package software.wings.service.impl.yaml.handler.setting.cloudprovider;
 
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+
 import static software.wings.beans.RancherConfig.Yaml;
 
 import io.harness.beans.EncryptedData;
@@ -11,7 +19,6 @@ import software.wings.beans.SettingAttribute;
 import software.wings.beans.yaml.ChangeContext;
 
 import java.util.List;
-import java.util.Optional;
 
 public class RancherConfigYamlHandler extends CloudProviderYamlHandler<Yaml, RancherConfig> {
   @Override
@@ -37,9 +44,8 @@ public class RancherConfigYamlHandler extends CloudProviderYamlHandler<Yaml, Ran
   @Override
   protected SettingAttribute toBean(SettingAttribute previous, ChangeContext<RancherConfig.Yaml> changeContext,
       List<ChangeContext> changeSetContext) throws HarnessException {
-    Optional<SettingAttribute> optionalPrevious = Optional.ofNullable(previous);
     String uuid = null;
-    if (optionalPrevious.isPresent()) {
+    if (previous != null) {
       uuid = previous.getUuid();
     }
 
