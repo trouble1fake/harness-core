@@ -101,7 +101,7 @@ if [[ "$EXECUTE_NEW_CODE" == "true" ]]; then
     # echo the new version number
     NEW_VERSION=${major}.${minor}.${build}
     echo "New version: major.minor.build: $NEW_VERSION"
-    git tag -a v${NEW_VERSION} ${SHA} -m "Release Tag: v${NEW_VERSION}"
+    git tag -a ${NEW_VERSION} ${SHA} -m "Release Tag: v${NEW_VERSION}"
     print_err "$?" "Tagging Failed"
     git push origin master
     print_err "$?" "Pushing Tag to master failed"
