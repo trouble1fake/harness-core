@@ -1,7 +1,7 @@
 def get_sonarqube_targets():
     return {
         "//999-annotations:sonarqube": "999-annotations",
-        "//980-recaster:sonarqube": "980-recaster",
+        "//979-recaster:sonarqube": "980-recaster",
         "//980-commons:sonarqube": "980-commons",
         "//970-watcher-beans:sonarqube": "970-watcher-beans",
         "//970-telemetry-beans:sonarqube": "970-telemetry-beans",

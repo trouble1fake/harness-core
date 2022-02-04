@@ -73,6 +73,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.utils.URIBuilder;
 import org.mongodb.morphia.query.FindOptions;
@@ -206,15 +207,18 @@ public class LogAnalysisServiceImpl implements LogAnalysisService {
   @Override
   public List<LogAnalysisCluster> getPreviousAnalysis(
       String verificationTaskId, Instant analysisStartTime, Instant analysisEndTime) {
-    return hPersistence.createQuery(LogAnalysisCluster.class, excludeAuthority)
-        .filter(LogAnalysisClusterKeys.verificationTaskId, verificationTaskId)
-        .filter(LogAnalysisClusterKeys.isEvicted, false)
-        .project(LogAnalysisClusterKeys.analysisMinute, true)
-        .project(LogAnalysisClusterKeys.label, true)
-        .project(LogAnalysisClusterKeys.text, true)
-        .project(LogAnalysisClusterKeys.frequencyTrend, true)
-        .project(LogAnalysisClusterKeys.firstSeenTime, true)
-        .asList(new FindOptions().maxTime(MONGO_QUERY_TIMEOUT_SEC, TimeUnit.SECONDS));
+    List<LogAnalysisCluster> logAnalysisClusters =
+        hPersistence.createQuery(LogAnalysisCluster.class, excludeAuthority)
+            .filter(LogAnalysisClusterKeys.verificationTaskId, verificationTaskId)
+            .filter(LogAnalysisClusterKeys.isEvicted, false)
+            .project(LogAnalysisClusterKeys.analysisMinute, true)
+            .project(LogAnalysisClusterKeys.label, true)
+            .project(LogAnalysisClusterKeys.text, true)
+            .project(LogAnalysisClusterKeys.compressedText, true)
+            .project(LogAnalysisClusterKeys.frequencyTrend, true)
+            .project(LogAnalysisClusterKeys.firstSeenTime, true)
+            .asList(new FindOptions().maxTime(MONGO_QUERY_TIMEOUT_SEC, TimeUnit.SECONDS));
+    return logAnalysisClusters.stream().peek(LogAnalysisCluster::deCompressText).collect(Collectors.toList());
   }
 
   @Override
