@@ -19,6 +19,7 @@ import io.harness.timescaledb.tables.NgInstanceStats;
 import io.harness.timescaledb.tables.NodeInfo;
 import io.harness.timescaledb.tables.NodePoolAggregated;
 import io.harness.timescaledb.tables.PipelineExecutionSummaryCd;
+import io.harness.timescaledb.tables.PipelineExecutionSummaryCi;
 import io.harness.timescaledb.tables.Pipelines;
 import io.harness.timescaledb.tables.PodInfo;
 import io.harness.timescaledb.tables.ServiceInfraInfo;
@@ -76,6 +77,12 @@ public class Tables {
    */
   public static final PipelineExecutionSummaryCd PIPELINE_EXECUTION_SUMMARY_CD =
       PipelineExecutionSummaryCd.PIPELINE_EXECUTION_SUMMARY_CD;
+
+  /**
+   * The table <code>public.pipeline_execution_summary_ci</code>.
+   */
+  public static final PipelineExecutionSummaryCi PIPELINE_EXECUTION_SUMMARY_CI =
+      PipelineExecutionSummaryCi.PIPELINE_EXECUTION_SUMMARY_CI;
 
   /**
    * The table <code>public.pipelines</code>.

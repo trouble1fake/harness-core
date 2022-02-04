@@ -14,12 +14,14 @@ import io.harness.timescaledb.tables.CeRecommendations;
 import io.harness.timescaledb.tables.NodeInfo;
 import io.harness.timescaledb.tables.NodePoolAggregated;
 import io.harness.timescaledb.tables.PipelineExecutionSummaryCd;
+import io.harness.timescaledb.tables.PipelineExecutionSummaryCi;
 import io.harness.timescaledb.tables.ServiceInfraInfo;
 import io.harness.timescaledb.tables.WorkloadInfo;
 import io.harness.timescaledb.tables.records.CeRecommendationsRecord;
 import io.harness.timescaledb.tables.records.NodeInfoRecord;
 import io.harness.timescaledb.tables.records.NodePoolAggregatedRecord;
 import io.harness.timescaledb.tables.records.PipelineExecutionSummaryCdRecord;
+import io.harness.timescaledb.tables.records.PipelineExecutionSummaryCiRecord;
 import io.harness.timescaledb.tables.records.ServiceInfraInfoRecord;
 import io.harness.timescaledb.tables.records.WorkloadInfoRecord;
 
@@ -55,10 +57,19 @@ public class Keys {
   public static final UniqueKey<PipelineExecutionSummaryCdRecord> PIPELINE_EXECUTION_SUMMARY_CD_PKEY =
       Internal.createUniqueKey(PipelineExecutionSummaryCd.PIPELINE_EXECUTION_SUMMARY_CD,
           DSL.name("pipeline_execution_summary_cd_pkey"),
-          new TableField[] {PipelineExecutionSummaryCd.PIPELINE_EXECUTION_SUMMARY_CD.ID}, true);
-  public static final UniqueKey<ServiceInfraInfoRecord> SERVICE_INFRA_INFO_PKEY =
-      Internal.createUniqueKey(ServiceInfraInfo.SERVICE_INFRA_INFO, DSL.name("service_infra_info_pkey"),
-          new TableField[] {ServiceInfraInfo.SERVICE_INFRA_INFO.ID}, true);
+          new TableField[] {PipelineExecutionSummaryCd.PIPELINE_EXECUTION_SUMMARY_CD.ID,
+              PipelineExecutionSummaryCd.PIPELINE_EXECUTION_SUMMARY_CD.STARTTS},
+          true);
+  public static final UniqueKey<PipelineExecutionSummaryCiRecord> PIPELINE_EXECUTION_SUMMARY_CI_PKEY =
+      Internal.createUniqueKey(PipelineExecutionSummaryCi.PIPELINE_EXECUTION_SUMMARY_CI,
+          DSL.name("pipeline_execution_summary_ci_pkey"),
+          new TableField[] {PipelineExecutionSummaryCi.PIPELINE_EXECUTION_SUMMARY_CI.ID,
+              PipelineExecutionSummaryCi.PIPELINE_EXECUTION_SUMMARY_CI.STARTTS},
+          true);
+  public static final UniqueKey<ServiceInfraInfoRecord> SERVICE_INFRA_INFO_PKEY = Internal.createUniqueKey(
+      ServiceInfraInfo.SERVICE_INFRA_INFO, DSL.name("service_infra_info_pkey"),
+      new TableField[] {ServiceInfraInfo.SERVICE_INFRA_INFO.ID, ServiceInfraInfo.SERVICE_INFRA_INFO.SERVICE_STARTTS},
+      true);
   public static final UniqueKey<WorkloadInfoRecord> WORKLOAD_INFO_UNIQUE_RECORD_INDEX =
       Internal.createUniqueKey(WorkloadInfo.WORKLOAD_INFO, DSL.name("workload_info_unique_record_index"),
           new TableField[] {WorkloadInfo.WORKLOAD_INFO.ACCOUNTID, WorkloadInfo.WORKLOAD_INFO.CLUSTERID,

@@ -16,8 +16,11 @@ import io.harness.timescaledb.tables.Environments;
 import io.harness.timescaledb.tables.KubernetesUtilizationData;
 import io.harness.timescaledb.tables.NgInstanceStats;
 import io.harness.timescaledb.tables.NodeInfo;
+import io.harness.timescaledb.tables.PipelineExecutionSummaryCd;
+import io.harness.timescaledb.tables.PipelineExecutionSummaryCi;
 import io.harness.timescaledb.tables.Pipelines;
 import io.harness.timescaledb.tables.PodInfo;
+import io.harness.timescaledb.tables.ServiceInfraInfo;
 import io.harness.timescaledb.tables.Services;
 
 import org.jooq.Index;
@@ -105,6 +108,8 @@ public class Indexes {
   public static final Index ENVIRONMENTS_ACCOUNT_ID_CREATED_AT_IDX =
       Internal.createIndex(DSL.name("environments_account_id_created_at_idx"), Environments.ENVIRONMENTS,
           new OrderField[] {Environments.ENVIRONMENTS.ACCOUNT_ID, Environments.ENVIRONMENTS.CREATED_AT}, false);
+  public static final Index ENVIRONMENTS_PKEY = Internal.createIndex(
+      DSL.name("environments_pkey"), Environments.ENVIRONMENTS, new OrderField[] {Environments.ENVIRONMENTS.ID}, true);
   public static final Index KUBERNETES_UTILIZATION_DATA_ACCID_CLUSTERID_ACINSTANCEID =
       Internal.createIndex(DSL.name("kubernetes_utilization_data_accid_clusterid_acinstanceid"),
           KubernetesUtilizationData.KUBERNETES_UTILIZATION_DATA,
@@ -170,9 +175,22 @@ public class Indexes {
       DSL.name("node_info_accid_clusterid_poolname"), NodeInfo.NODE_INFO,
       new OrderField[] {NodeInfo.NODE_INFO.ACCOUNTID, NodeInfo.NODE_INFO.CLUSTERID, NodeInfo.NODE_INFO.NODEPOOLNAME},
       false);
+  public static final Index PIPELINE_EXECUTION_SUMMARY_CD_STARTTS_IDX = Internal.createIndex(
+      DSL.name("pipeline_execution_summary_cd_startts_idx"), PipelineExecutionSummaryCd.PIPELINE_EXECUTION_SUMMARY_CD,
+      new OrderField[] {PipelineExecutionSummaryCd.PIPELINE_EXECUTION_SUMMARY_CD.STARTTS.desc()}, false);
+  public static final Index PIPELINE_EXECUTION_SUMMARY_CI_STARTTS_IDX = Internal.createIndex(
+      DSL.name("pipeline_execution_summary_ci_startts_idx"), PipelineExecutionSummaryCi.PIPELINE_EXECUTION_SUMMARY_CI,
+      new OrderField[] {PipelineExecutionSummaryCi.PIPELINE_EXECUTION_SUMMARY_CI.STARTTS.desc()}, false);
   public static final Index PIPELINES_ACCOUNT_ID_CREATED_AT_IDX =
       Internal.createIndex(DSL.name("pipelines_account_id_created_at_idx"), Pipelines.PIPELINES,
           new OrderField[] {Pipelines.PIPELINES.ACCOUNT_ID, Pipelines.PIPELINES.CREATED_AT}, false);
+  public static final Index PIPELINES_PKEY = Internal.createIndex(
+      DSL.name("pipelines_pkey"), Pipelines.PIPELINES, new OrderField[] {Pipelines.PIPELINES.ID}, true);
+  public static final Index POD_INFO_KUBESYSTEM_NAMESPACE_PINDEX =
+      Internal.createIndex(DSL.name("pod_info_kubesystem_namespace_pindex"), PodInfo.POD_INFO,
+          new OrderField[] {PodInfo.POD_INFO.ACCOUNTID, PodInfo.POD_INFO.CLUSTERID, PodInfo.POD_INFO.NAMESPACE,
+              PodInfo.POD_INFO.STARTTIME.desc()},
+          false);
   public static final Index POD_INFO_STARTTIME_IDX = Internal.createIndex(DSL.name("pod_info_starttime_idx"),
       PodInfo.POD_INFO, new OrderField[] {PodInfo.POD_INFO.STARTTIME.desc()}, false);
   public static final Index POD_INFO_STARTTIME_UNIQUE_RECORD_INDEX =
@@ -180,7 +198,12 @@ public class Indexes {
           new OrderField[] {PodInfo.POD_INFO.ACCOUNTID, PodInfo.POD_INFO.CLUSTERID, PodInfo.POD_INFO.INSTANCEID,
               PodInfo.POD_INFO.STARTTIME.desc()},
           true);
+  public static final Index SERVICE_INFRA_INFO_SERVICE_STARTTS_IDX =
+      Internal.createIndex(DSL.name("service_infra_info_service_startts_idx"), ServiceInfraInfo.SERVICE_INFRA_INFO,
+          new OrderField[] {ServiceInfraInfo.SERVICE_INFRA_INFO.SERVICE_STARTTS.desc()}, false);
   public static final Index SERVICES_ACCOUNT_ID_CREATED_AT_IDX =
       Internal.createIndex(DSL.name("services_account_id_created_at_idx"), Services.SERVICES,
           new OrderField[] {Services.SERVICES.ACCOUNT_ID, Services.SERVICES.CREATED_AT}, false);
+  public static final Index SERVICES_PKEY =
+      Internal.createIndex(DSL.name("services_pkey"), Services.SERVICES, new OrderField[] {Services.SERVICES.ID}, true);
 }
