@@ -76,4 +76,5 @@ public class ExecutionArgs {
   private List<HelmChart> helmCharts;
   private List<ManifestVariable> manifestVariables;
   private Map<String, String> helmChartIdNames;
+  @Transient private boolean continueRunningPipelinesDuringMigration;
 }

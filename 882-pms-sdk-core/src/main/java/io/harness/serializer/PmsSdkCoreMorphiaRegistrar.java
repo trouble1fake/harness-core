@@ -18,7 +18,6 @@ import io.harness.pms.sdk.core.data.StepTransput;
 import io.harness.pms.sdk.core.execution.AsyncSdkProgressCallback;
 import io.harness.pms.sdk.core.execution.AsyncSdkResumeCallback;
 import io.harness.pms.sdk.core.steps.io.PassThroughData;
-import io.harness.pms.sdk.core.steps.io.PipelineViewObject;
 
 import java.util.Set;
 
@@ -29,7 +28,6 @@ public class PmsSdkCoreMorphiaRegistrar implements MorphiaRegistrar {
     set.add(Outcome.class);
     set.add(StepTransput.class);
     set.add(PassThroughData.class);
-    set.add(PipelineViewObject.class);
     set.add(ExecutionSweepingOutput.class);
   }
 

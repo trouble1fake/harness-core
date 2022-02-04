@@ -1,0 +1,8 @@
+{
+  "serviceConfig": {
+    "serviceRef": "service"
+  },
+  "infrastructure": {
+  "environmentRef" : "env"
+  }
+}

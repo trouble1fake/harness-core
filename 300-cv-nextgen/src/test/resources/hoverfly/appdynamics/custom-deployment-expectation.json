@@ -1,0 +1,34 @@
+[
+  {
+    "hostname": "harness-test-appd-dummy-deployment-54f9dfcb84-pgpsg",
+    "txnName": "Calls Number",
+    "metricIdentifier": "calls_number",
+    "metricName": "Calls Number",
+    "metricValue": 0.0,
+    "timestamp": 1642966080000
+  },
+  {
+    "hostname": "harness-test-appd-dummy-deployment-canary-685c5d5588-4gx76",
+    "txnName": "Calls Number",
+    "metricIdentifier": "calls_number",
+    "metricName": "Calls Number",
+    "metricValue": 0.0,
+    "timestamp": 1642966080000
+  },
+  {
+    "hostname": "harness-test-appd-dummy-deployment-canary-685c5d5588-4gx76",
+    "txnName": "Stall Count",
+    "metricIdentifier": "stall_number",
+    "metricName": "Stall Count",
+    "metricValue": 0.0,
+    "timestamp": 1642966080000
+  },
+  {
+    "hostname": "harness-test-appd-dummy-deployment-54f9dfcb84-pgpsg",
+    "txnName": "Stall Count",
+    "metricIdentifier": "stall_number",
+    "metricName": "Stall Count",
+    "metricValue": 0.0,
+    "timestamp": 1642966080000
+  }
+]

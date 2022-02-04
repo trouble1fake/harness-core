@@ -34,6 +34,7 @@ import io.harness.ngtriggers.beans.dto.NGTriggerResponseDTO;
 import io.harness.ngtriggers.beans.dto.TriggerDetails;
 import io.harness.ngtriggers.beans.entity.NGTriggerEntity;
 import io.harness.ngtriggers.beans.entity.NGTriggerEntity.NGTriggerEntityKeys;
+import io.harness.ngtriggers.exceptions.InvalidTriggerYamlException;
 import io.harness.ngtriggers.mapper.NGTriggerElementMapper;
 import io.harness.ngtriggers.mapper.TriggerFilterHelper;
 import io.harness.ngtriggers.service.NGTriggerService;
@@ -137,6 +138,8 @@ public class NGTriggerResource {
       createdEntity = ngTriggerService.create(triggerDetails.getNgTriggerEntity());
       return ResponseDTO.newResponse(
           createdEntity.getVersion().toString(), ngTriggerElementMapper.toResponseDTO(createdEntity));
+    } catch (InvalidTriggerYamlException e) {
+      return ResponseDTO.newResponse(ngTriggerElementMapper.toErrorDTO(e));
     } catch (Exception e) {
       throw new InvalidRequestException("Failed while Saving Trigger: " + e.getMessage());
     }
@@ -207,6 +210,8 @@ public class NGTriggerResource {
       NGTriggerEntity updatedEntity = ngTriggerService.update(triggerDetails.getNgTriggerEntity());
       return ResponseDTO.newResponse(
           updatedEntity.getVersion().toString(), ngTriggerElementMapper.toResponseDTO(updatedEntity));
+    } catch (InvalidTriggerYamlException e) {
+      return ResponseDTO.newResponse(ngTriggerElementMapper.toErrorDTO(e));
     } catch (Exception e) {
       throw new InvalidRequestException("Failed while updating Trigger: " + e.getMessage());
     }
@@ -295,15 +300,17 @@ public class NGTriggerResource {
 
   @GET
   @Operation(operationId = "getTriggerDetails",
-      summary = "Gets the list of triggers for accountIdentifier, orgIdentifier, projectIdentifier, targetIdentifier.",
+      summary =
+          "Fetches Trigger details for a specific accountIdentifier, orgIdentifier, projectIdentifier, targetIdentifier, triggerIdentifier.",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "default",
             description =
-                "Returns the list of triggers for accountIdentifier, orgIdentifier, projectIdentifier, targetIdentifier.")
+                "Fetches Trigger details for a specific accountIdentifier, orgIdentifier, projectIdentifier, targetIdentifier, triggerIdentifier.")
       })
   @Path("{triggerIdentifier}/details")
-  @ApiOperation(value = "Gets Triggers list for target", nickname = "getTriggerDetails")
+  @ApiOperation(value = "Fetches Trigger details for a specific pipeline and trigger identifier, ",
+      nickname = "getTriggerDetails")
   @NGAccessControlCheck(resourceType = "PIPELINE", permission = PipelineRbacPermissions.PIPELINE_VIEW)
   public ResponseDTO<NGTriggerDetailsResponseDTO>
   getTriggerDetails(

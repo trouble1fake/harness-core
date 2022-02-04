@@ -29,7 +29,7 @@ import lombok.Singular;
 @Data
 @Builder
 public class PlanCreationResponse implements AsyncCreatorResponse {
-  @Singular Map<String, PlanNode> nodes;
+  @Singular @Deprecated Map<String, PlanNode> nodes;
   PlanNode planNode;
   Dependencies dependencies;
   YamlUpdates yamlUpdates;
@@ -49,25 +49,6 @@ public class PlanCreationResponse implements AsyncCreatorResponse {
     mergeContext(other.getContextMap());
     mergeLayoutNodeInfo(other.getGraphLayoutResponse());
     addYamlUpdates(other.getYamlUpdates());
-  }
-
-  public void mergeWithoutDependencies(PlanCreationResponse other) {
-    // adding PlanNode to map of nodes
-    addNode(other.getPlanNode());
-
-    addNodes(other.getNodes());
-    mergeStartingNodeId(other.getStartingNodeId());
-    mergeContext(other.getContextMap());
-    mergeLayoutNodeInfo(other.getGraphLayoutResponse());
-    addYamlUpdates(other.getYamlUpdates());
-  }
-
-  public void updateYamlInDependencies(String updatedYaml) {
-    if (dependencies == null) {
-      dependencies = Dependencies.newBuilder().setYaml(updatedYaml).build();
-      return;
-    }
-    dependencies = dependencies.toBuilder().setYaml(updatedYaml).build();
   }
 
   public void mergeContext(Map<String, PlanCreationContextValue> contextMap) {

@@ -14,7 +14,6 @@ import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.delegate.beans.DelegateTaskNotifyResponseData;
-import io.harness.pms.sdk.core.data.Outcome;
 
 import software.wings.sm.StateExecutionData;
 
@@ -31,7 +30,7 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = false)
 @JsonTypeName("scriptStateExecutionData")
 @TargetModule(HarnessModule._870_CG_ORCHESTRATION)
-public class ScriptStateExecutionData extends StateExecutionData implements DelegateTaskNotifyResponseData, Outcome {
+public class ScriptStateExecutionData extends StateExecutionData implements DelegateTaskNotifyResponseData {
   private String name;
   private String activityId;
   private Map<String, String> sweepingOutputEnvVariables;

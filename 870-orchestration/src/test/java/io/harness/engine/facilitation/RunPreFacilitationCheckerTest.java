@@ -22,16 +22,17 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.engine.ExecutionCheck;
 import io.harness.engine.OrchestrationEngine;
+import io.harness.engine.utils.PmsLevelUtils;
 import io.harness.exception.InvalidRequestException;
 import io.harness.execution.NodeExecution;
 import io.harness.expression.EngineExpressionEvaluator;
 import io.harness.expression.VariableResolverTracker;
+import io.harness.plan.PlanNode;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.ExecutionMode;
 import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.execution.run.ExpressionBlock;
 import io.harness.pms.contracts.execution.run.NodeRunInfo;
-import io.harness.pms.contracts.plan.PlanNodeProto;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.contracts.steps.io.StepResponseProto;
@@ -63,19 +64,26 @@ public class RunPreFacilitationCheckerTest extends OrchestrationTestBase {
   @Category(UnitTests.class)
   public void performCheckWhenConditionTrue() {
     String whenCondition = "<+pipeline.name>==\"name\"";
-    NodeExecution nodeExecution =
-        NodeExecution.builder()
-            .uuid(generateUuid())
-            .ambiance(Ambiance.newBuilder().setPlanExecutionId(generateUuid()).build())
-            .status(Status.QUEUED)
-            .mode(ExecutionMode.TASK)
-            .node(PlanNodeProto.newBuilder()
-                      .setUuid(generateUuid())
-                      .setStepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                      .setWhenCondition(whenCondition)
-                      .build())
-            .startTs(System.currentTimeMillis())
-            .build();
+    String nodeExecutionId = generateUuid();
+    PlanNode planNode = PlanNode.builder()
+                            .uuid(generateUuid())
+                            .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+                            .whenCondition(whenCondition)
+                            .identifier("DUMMY")
+                            .serviceName("CD")
+                            .build();
+    Ambiance ambiance = Ambiance.newBuilder()
+                            .setPlanExecutionId(generateUuid())
+                            .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecutionId, planNode))
+                            .build();
+    NodeExecution nodeExecution = NodeExecution.builder()
+                                      .uuid(nodeExecutionId)
+                                      .ambiance(ambiance)
+                                      .status(Status.QUEUED)
+                                      .mode(ExecutionMode.TASK)
+                                      .planNode(planNode)
+                                      .startTs(System.currentTimeMillis())
+                                      .build();
     mongoTemplate.save(nodeExecution);
 
     when(engineExpressionEvaluator.getVariableResolverTracker()).thenReturn(variableResolverTracker);
@@ -83,7 +91,7 @@ public class RunPreFacilitationCheckerTest extends OrchestrationTestBase {
     when(pmsEngineExpressionService.prepareExpressionEvaluator(nodeExecution.getAmbiance()))
         .thenReturn(engineExpressionEvaluator);
     when(engineExpressionEvaluator.evaluateExpression(whenCondition)).thenReturn(true);
-    ExecutionCheck check = checker.performCheck(nodeExecution);
+    ExecutionCheck check = checker.performCheck(ambiance, planNode);
     assertThat(check).isNotNull();
     assertThat(check.isProceed()).isTrue();
     verify(engine, times(0)).processStepResponse(any(), any());
@@ -94,20 +102,26 @@ public class RunPreFacilitationCheckerTest extends OrchestrationTestBase {
   @Category(UnitTests.class)
   public void performCheckWhenConditionFalse() {
     String whenCondition = "<+pipeline.name>==\"name\"";
-    Ambiance ambiance = Ambiance.newBuilder().setPlanExecutionId(generateUuid()).build();
-    NodeExecution nodeExecution =
-        NodeExecution.builder()
-            .uuid(generateUuid())
-            .ambiance(ambiance)
-            .status(Status.QUEUED)
-            .mode(ExecutionMode.TASK)
-            .node(PlanNodeProto.newBuilder()
-                      .setUuid(generateUuid())
-                      .setStepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                      .setWhenCondition(whenCondition)
-                      .build())
-            .startTs(System.currentTimeMillis())
-            .build();
+    String nodeExecutionId = generateUuid();
+    PlanNode planNode = PlanNode.builder()
+                            .uuid(generateUuid())
+                            .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+                            .whenCondition(whenCondition)
+                            .identifier("DUMMY")
+                            .serviceName("CD")
+                            .build();
+    Ambiance ambiance = Ambiance.newBuilder()
+                            .setPlanExecutionId(generateUuid())
+                            .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecutionId, planNode))
+                            .build();
+    NodeExecution nodeExecution = NodeExecution.builder()
+                                      .uuid(nodeExecutionId)
+                                      .ambiance(ambiance)
+                                      .status(Status.QUEUED)
+                                      .mode(ExecutionMode.TASK)
+                                      .planNode(planNode)
+                                      .startTs(System.currentTimeMillis())
+                                      .build();
     mongoTemplate.save(nodeExecution);
 
     when(engineExpressionEvaluator.getVariableResolverTracker()).thenReturn(variableResolverTracker);
@@ -115,7 +129,7 @@ public class RunPreFacilitationCheckerTest extends OrchestrationTestBase {
     when(pmsEngineExpressionService.prepareExpressionEvaluator(nodeExecution.getAmbiance()))
         .thenReturn(engineExpressionEvaluator);
     when(engineExpressionEvaluator.evaluateExpression(whenCondition)).thenReturn(false);
-    ExecutionCheck check = checker.performCheck(nodeExecution);
+    ExecutionCheck check = checker.performCheck(ambiance, planNode);
     assertThat(check).isNotNull();
     assertThat(check.isProceed()).isFalse();
     verify(engine, times(1))
@@ -132,19 +146,26 @@ public class RunPreFacilitationCheckerTest extends OrchestrationTestBase {
   @Category(UnitTests.class)
   public void performCheckWhenConditionException() {
     String whenCondition = "<+pipeline.name>==\"name\"";
-    NodeExecution nodeExecution =
-        NodeExecution.builder()
-            .uuid(generateUuid())
-            .ambiance(Ambiance.newBuilder().setPlanExecutionId(generateUuid()).build())
-            .status(Status.QUEUED)
-            .mode(ExecutionMode.TASK)
-            .node(PlanNodeProto.newBuilder()
-                      .setUuid(generateUuid())
-                      .setStepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                      .setWhenCondition(whenCondition)
-                      .build())
-            .startTs(System.currentTimeMillis())
-            .build();
+    String nodeExecutionId = generateUuid();
+    PlanNode planNode = PlanNode.builder()
+                            .uuid(generateUuid())
+                            .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+                            .whenCondition(whenCondition)
+                            .identifier("DUMMY")
+                            .serviceName("CD")
+                            .build();
+    Ambiance ambiance = Ambiance.newBuilder()
+                            .setPlanExecutionId(generateUuid())
+                            .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecutionId, planNode))
+                            .build();
+    NodeExecution nodeExecution = NodeExecution.builder()
+                                      .uuid(nodeExecutionId)
+                                      .ambiance(ambiance)
+                                      .status(Status.QUEUED)
+                                      .mode(ExecutionMode.TASK)
+                                      .planNode(planNode)
+                                      .startTs(System.currentTimeMillis())
+                                      .build();
     mongoTemplate.save(nodeExecution);
 
     when(engineExpressionEvaluator.getVariableResolverTracker()).thenReturn(variableResolverTracker);
@@ -153,7 +174,7 @@ public class RunPreFacilitationCheckerTest extends OrchestrationTestBase {
         .thenReturn(engineExpressionEvaluator);
     InvalidRequestException testException = new InvalidRequestException("TestException");
     when(engineExpressionEvaluator.evaluateExpression(whenCondition)).thenThrow(testException);
-    ExecutionCheck check = checker.performCheck(nodeExecution);
+    ExecutionCheck check = checker.performCheck(ambiance, planNode);
     assertThat(check).isNotNull();
     assertThat(check.isProceed()).isFalse();
     verify(engine, times(1)).handleError(nodeExecution.getAmbiance(), testException);

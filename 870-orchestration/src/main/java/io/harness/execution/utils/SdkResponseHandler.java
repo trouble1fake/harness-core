@@ -41,7 +41,7 @@ public class SdkResponseHandler extends PmsBaseEventHandler<SdkResponseEventProt
 
   @Override
   protected Ambiance extractAmbiance(SdkResponseEventProto event) {
-    return Ambiance.newBuilder().build();
+    return event.getAmbiance();
   }
 
   @Override

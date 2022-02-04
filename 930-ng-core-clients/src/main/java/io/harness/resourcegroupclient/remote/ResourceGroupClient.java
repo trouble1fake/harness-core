@@ -36,6 +36,8 @@ public interface ResourceGroupClient {
 
   @POST(RESOURCE_GROUP_API + "/filter")
   Call<ResponseDTO<PageResponse<ResourceGroupResponse>>> getFilteredResourceGroups(
-      @Body ResourceGroupFilterDTO resourceGroupFilter, @Query(value = NGResourceFilterConstants.PAGE_KEY) int page,
+      @Body ResourceGroupFilterDTO resourceGroupFilter,
+      @Query(value = NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier,
+      @Query(value = NGResourceFilterConstants.PAGE_KEY) int page,
       @Query(value = NGResourceFilterConstants.SIZE_KEY) int size);
 }

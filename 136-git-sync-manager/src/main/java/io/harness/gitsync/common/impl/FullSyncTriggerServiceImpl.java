@@ -61,7 +61,7 @@ public class FullSyncTriggerServiceImpl implements FullSyncTriggerService {
     Optional<GitFullSyncJob> fullSyncJob =
         fullSyncJobService.getRunningOrQueuedJob(accountIdentifier, orgIdentifier, projectIdentifier);
     if (fullSyncJob.isPresent()) {
-      throw new InvalidRequestException("Full Sync is in process");
+      throw new InvalidRequestException("Last Sync is in progress");
     }
     TriggerFullSyncRequestDTO triggerFullSyncRequestDTO =
         TriggerFullSyncRequestDTO.builder()

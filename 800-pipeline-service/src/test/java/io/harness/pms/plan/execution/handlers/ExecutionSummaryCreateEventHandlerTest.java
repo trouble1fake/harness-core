@@ -82,6 +82,7 @@ public class ExecutionSummaryCreateEventHandlerTest extends PipelineServiceTestB
             .inputSetYaml("some-yaml")
             .yaml("pipeline :\n  identifier: pipelineId")
             .stagesExecutionMetadata(StagesExecutionMetadata.builder().isStagesExecution(true).build())
+            .allowStagesExecution(true)
             .build();
     PlanExecution planExecution =
         PlanExecution.builder()
@@ -149,6 +150,7 @@ public class ExecutionSummaryCreateEventHandlerTest extends PipelineServiceTestB
     assertThat(capturedEntity.getLayoutNodeMap()).isNotEmpty();
     assertThat(capturedEntity.getLayoutNodeMap()).containsKeys("startId");
     assertThat(capturedEntity.getStagesExecutionMetadata().isStagesExecution()).isTrue();
+    assertThat(capturedEntity.isStagesExecutionAllowed()).isTrue();
   }
 
   private String getFormattedDate() {

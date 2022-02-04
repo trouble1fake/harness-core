@@ -35,6 +35,7 @@ import io.harness.pms.gitsync.PmsGitSyncBranchContextGuard;
 import io.harness.pms.gitsync.PmsGitSyncHelper;
 import io.harness.pms.sdk.core.pipeline.filters.FilterCreatorService;
 import io.harness.pms.sdk.core.plan.creation.PlanCreationResponseBlobHelper;
+import io.harness.pms.sdk.core.plan.creation.beans.MergePlanCreationResponse;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationContext;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationResponse;
 import io.harness.pms.sdk.core.variables.VariableCreatorService;
@@ -85,7 +86,7 @@ public class PlanCreatorService extends PlanCreationServiceImplBase {
       StreamObserver<io.harness.pms.contracts.plan.PlanCreationResponse> responseObserver) {
     io.harness.pms.contracts.plan.PlanCreationResponse planCreationResponse;
     try {
-      PlanCreationResponse finalResponse =
+      MergePlanCreationResponse finalResponse =
           createPlanForDependenciesRecursive(request.getDeps(), request.getContextMap());
       planCreationResponse = getPlanCreationResponseFromFinalResponse(finalResponse);
     } catch (Exception ex) {
@@ -102,10 +103,10 @@ public class PlanCreatorService extends PlanCreationServiceImplBase {
     responseObserver.onCompleted();
   }
 
-  private PlanCreationResponse createPlanForDependenciesRecursive(
+  private MergePlanCreationResponse createPlanForDependenciesRecursive(
       Dependencies initialDependencies, Map<String, PlanCreationContextValue> context) {
     // TODO: Add patch version before sending the response back
-    PlanCreationResponse finalResponse = PlanCreationResponse.builder().build();
+    MergePlanCreationResponse finalResponse = MergePlanCreationResponse.builder().build();
     if (EmptyPredicate.isEmpty(planCreators) || EmptyPredicate.isEmpty(initialDependencies.getDependenciesMap())) {
       return finalResponse;
     }
@@ -130,7 +131,7 @@ public class PlanCreatorService extends PlanCreationServiceImplBase {
   }
 
   public Dependencies createPlanForDependencies(
-      PlanCreationContext ctx, PlanCreationResponse finalResponse, Dependencies dependencies) {
+      PlanCreationContext ctx, MergePlanCreationResponse finalResponse, Dependencies dependencies) {
     if (EmptyPredicate.isEmpty(dependencies.getDependenciesMap())) {
       return dependencies;
     }
@@ -146,7 +147,6 @@ public class PlanCreatorService extends PlanCreationServiceImplBase {
       log.error(message, ex);
       throw new InvalidRequestException(message);
     }
-
     dependenciesList.forEach(key -> completableFutures.supplyAsync(() -> {
       try {
         return createPlanForDependencyInternal(currentYaml, fullField.fromYamlPath(key.getValue()), ctx,
@@ -206,7 +206,7 @@ public class PlanCreatorService extends PlanCreationServiceImplBase {
   }
 
   private io.harness.pms.contracts.plan.PlanCreationResponse getPlanCreationResponseFromFinalResponse(
-      PlanCreationResponse finalResponse) {
+      MergePlanCreationResponse finalResponse) {
     if (EmptyPredicate.isNotEmpty(finalResponse.getErrorMessages())) {
       return io.harness.pms.contracts.plan.PlanCreationResponse.newBuilder()
           .setErrorResponse(ErrorResponse.newBuilder().addAllMessages(finalResponse.getErrorMessages()).build())

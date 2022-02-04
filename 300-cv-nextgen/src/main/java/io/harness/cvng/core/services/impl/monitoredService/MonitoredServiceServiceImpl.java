@@ -143,7 +143,7 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
     if (monitoredServiceDTO.getSources() != null && isNotEmpty(monitoredServiceDTO.getSources().getHealthSources())) {
       healthSourceService.create(accountId, monitoredServiceDTO.getOrgIdentifier(),
           monitoredServiceDTO.getProjectIdentifier(), monitoredServiceDTO.getEnvironmentRef(),
-          monitoredServiceDTO.getServiceRef(), monitoredServiceDTO.getIdentifier(),
+          monitoredServiceDTO.getServiceRef(), monitoredServiceDTO.getIdentifier(), monitoredServiceDTO.getIdentifier(),
           monitoredServiceDTO.getSources().getHealthSources(), getMonitoredServiceEnableStatus());
     }
     if (isNotEmpty(monitoredServiceDTO.getDependencies())) {
@@ -296,11 +296,12 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
     });
     healthSourceService.create(monitoredService.getAccountId(), monitoredServiceDTO.getOrgIdentifier(),
         monitoredServiceDTO.getProjectIdentifier(), monitoredService.getEnvironmentIdentifier(),
-        monitoredService.getServiceIdentifier(), monitoredServiceDTO.getIdentifier(), toBeCreatedHealthSources,
-        monitoredService.isEnabled());
+        monitoredService.getServiceIdentifier(), monitoredService.getIdentifier(), monitoredServiceDTO.getIdentifier(),
+        toBeCreatedHealthSources, monitoredService.isEnabled());
     healthSourceService.update(monitoredService.getAccountId(), monitoredServiceDTO.getOrgIdentifier(),
         monitoredServiceDTO.getProjectIdentifier(), monitoredService.getEnvironmentIdentifier(),
-        monitoredService.getServiceIdentifier(), monitoredServiceDTO.getIdentifier(), toBeUpdatedHealthSources);
+        monitoredService.getServiceIdentifier(), monitoredService.getIdentifier(), monitoredServiceDTO.getIdentifier(),
+        toBeUpdatedHealthSources);
   }
 
   @Override
@@ -315,6 +316,9 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
                                                      .serviceIdentifier(monitoredService.getServiceIdentifier())
                                                      .environmentIdentifier(monitoredService.getEnvironmentIdentifier())
                                                      .build();
+    monitoredServiceHandlers.forEach(baseMonitoredServiceHandler
+        -> baseMonitoredServiceHandler.beforeDelete(environmentParams,
+            createMonitoredServiceDTOFromEntity(monitoredService, environmentParams).getMonitoredServiceDTO()));
     healthSourceService.delete(projectParams.getAccountIdentifier(), projectParams.getOrgIdentifier(),
         projectParams.getProjectIdentifier(), monitoredService.getIdentifier(),
         monitoredService.getHealthSourceIdentifiers());
@@ -374,6 +378,7 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
             .orgIdentifier(monitoredServiceEntity.getOrgIdentifier())
             .projectIdentifier(monitoredServiceEntity.getProjectIdentifier())
             .environmentRef(monitoredServiceEntity.getEnvironmentIdentifier())
+            .environmentRefList(monitoredServiceEntity.getEnvironmentIdentifierList())
             .serviceRef(monitoredServiceEntity.getServiceIdentifier())
             .type(monitoredServiceEntity.getType())
             .description(monitoredServiceEntity.getDesc())
@@ -439,6 +444,7 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
                       .orgIdentifier(monitoredServiceEntity.getOrgIdentifier())
                       .projectIdentifier(monitoredServiceEntity.getProjectIdentifier())
                       .environmentRef(monitoredServiceEntity.getEnvironmentIdentifier())
+                      .environmentRefList(monitoredServiceEntity.getEnvironmentIdentifierList())
                       .serviceRef(monitoredServiceEntity.getServiceIdentifier())
                       .type(monitoredServiceEntity.getType())
                       .description(monitoredServiceEntity.getDesc())
@@ -509,8 +515,8 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
       return monitoredServiceResponse.getMonitoredServiceDTO();
     }
   }
-
-  private MonitoredService getMonitoredService(ProjectParams projectParams, String identifier) {
+  @Override
+  public MonitoredService getMonitoredService(ProjectParams projectParams, String identifier) {
     return hPersistence.createQuery(MonitoredService.class)
         .filter(MonitoredServiceKeys.accountId, projectParams.getAccountIdentifier())
         .filter(MonitoredServiceKeys.orgIdentifier, projectParams.getOrgIdentifier())
@@ -597,19 +603,21 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
   }
 
   private void saveMonitoredServiceEntity(String accountId, MonitoredServiceDTO monitoredServiceDTO) {
-    MonitoredService monitoredServiceEntity = MonitoredService.builder()
-                                                  .name(monitoredServiceDTO.getName())
-                                                  .desc(monitoredServiceDTO.getDescription())
-                                                  .accountId(accountId)
-                                                  .orgIdentifier(monitoredServiceDTO.getOrgIdentifier())
-                                                  .projectIdentifier(monitoredServiceDTO.getProjectIdentifier())
-                                                  .environmentIdentifier(monitoredServiceDTO.getEnvironmentRef())
-                                                  .serviceIdentifier(monitoredServiceDTO.getServiceRef())
-                                                  .identifier(monitoredServiceDTO.getIdentifier())
-                                                  .type(monitoredServiceDTO.getType())
-                                                  .enabled(getMonitoredServiceEnableStatus())
-                                                  .tags(TagMapper.convertToList(monitoredServiceDTO.getTags()))
-                                                  .build();
+    MonitoredService monitoredServiceEntity =
+        MonitoredService.builder()
+            .name(monitoredServiceDTO.getName())
+            .desc(monitoredServiceDTO.getDescription())
+            .accountId(accountId)
+            .orgIdentifier(monitoredServiceDTO.getOrgIdentifier())
+            .projectIdentifier(monitoredServiceDTO.getProjectIdentifier())
+            .environmentIdentifier(monitoredServiceDTO.getEnvironmentRef())
+            .environmentIdentifierList(monitoredServiceDTO.getEnvironmentRefList())
+            .serviceIdentifier(monitoredServiceDTO.getServiceRef())
+            .identifier(monitoredServiceDTO.getIdentifier())
+            .type(monitoredServiceDTO.getType())
+            .enabled(getMonitoredServiceEnableStatus())
+            .tags(TagMapper.convertToList(monitoredServiceDTO.getTags()))
+            .build();
     if (monitoredServiceDTO.getSources() != null) {
       monitoredServiceEntity.setHealthSourceIdentifiers(monitoredServiceDTO.getSources()
                                                             .getHealthSources()
@@ -911,6 +919,7 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
         .identifier(monitoredService.getIdentifier())
         .serviceRef(monitoredService.getServiceIdentifier())
         .environmentRef(monitoredService.getEnvironmentIdentifier())
+        .environmentRefList(monitoredService.getEnvironmentIdentifierList())
         .healthMonitoringEnabled(monitoredService.isEnabled())
         .tags(TagMapper.convertToMap(monitoredService.getTags()))
         .type(monitoredService.getType());
@@ -1066,7 +1075,8 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
         logDashboardService
             .getAllLogsData(serviceEnvironmentParams, timeRangeParams, liveMonitoringLogAnalysisFilter, pageParams)
             .getTotalItems();
-    TimeSeriesAnalysisFilter timeSeriesAnalysisFilter = TimeSeriesAnalysisFilter.builder().anomalous(true).build();
+    TimeSeriesAnalysisFilter timeSeriesAnalysisFilter =
+        TimeSeriesAnalysisFilter.builder().anomalousMetricsOnly(true).build();
     long timeSeriesAnomalousCount =
         timeSeriesDashboardService
             .getTimeSeriesMetricData(serviceEnvironmentParams, timeRangeParams, timeSeriesAnalysisFilter, pageParams)

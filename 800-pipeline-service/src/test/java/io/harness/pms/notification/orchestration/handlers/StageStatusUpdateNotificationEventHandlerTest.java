@@ -7,6 +7,7 @@
 
 package io.harness.pms.notification.orchestration.handlers;
 
+import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.rule.OwnerRule.BRIJESH;
 
 import static junit.framework.TestCase.assertEquals;
@@ -23,10 +24,12 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.engine.observers.NodeUpdateInfo;
+import io.harness.engine.utils.PmsLevelUtils;
 import io.harness.execution.NodeExecution;
 import io.harness.notification.PipelineEventType;
+import io.harness.plan.PlanNode;
+import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.Status;
-import io.harness.pms.contracts.plan.PlanNodeProto;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.notification.NotificationHelper;
@@ -54,16 +57,22 @@ public class StageStatusUpdateNotificationEventHandlerTest extends CategoryTest 
   @Owner(developers = BRIJESH)
   @Category(UnitTests.class)
   public void testOnNodeStatusUpdate() {
-    PlanNodeProto stagePlanNodeProto =
-        PlanNodeProto.newBuilder()
-            .setStepType(StepType.newBuilder().setStepCategory(StepCategory.STAGE).build())
-            .setIdentifier("dummyIdentifier")
-            .build();
-    PlanNodeProto stepPlanNodeProto = PlanNodeProto.newBuilder()
-                                          .setStepType(StepType.newBuilder().setStepCategory(StepCategory.STEP).build())
-                                          .setIdentifier("dummyIdentifier")
-                                          .build();
-    NodeExecution nodeExecution = NodeExecution.builder().node(stagePlanNodeProto).status(Status.SUCCEEDED).build();
+    PlanNode stagePlanNode = PlanNode.builder()
+                                 .uuid(generateUuid())
+                                 .stepType(StepType.newBuilder().setStepCategory(StepCategory.STAGE).build())
+                                 .identifier("dummyIdentifier")
+                                 .build();
+    PlanNode stepPlanNode = PlanNode.builder()
+                                .uuid(generateUuid())
+                                .stepType(StepType.newBuilder().setStepCategory(StepCategory.STEP).build())
+                                .identifier("dummyIdentifier")
+                                .build();
+    String stageNodeExecutionId = generateUuid();
+    Ambiance stageAmbiance =
+        Ambiance.newBuilder().addLevels(PmsLevelUtils.buildLevelFromNode(stageNodeExecutionId, stagePlanNode)).build();
+
+    NodeExecution nodeExecution =
+        NodeExecution.builder().ambiance(stageAmbiance).planNode(stagePlanNode).status(Status.SUCCEEDED).build();
     NodeUpdateInfo nodeUpdateInfo = NodeUpdateInfo.builder().nodeExecution(nodeExecution).build();
     when(notificationHelper.getEventTypeForStage(nodeExecution))
         .thenReturn(Optional.of(PipelineEventType.STAGE_SUCCESS));
@@ -77,7 +86,12 @@ public class StageStatusUpdateNotificationEventHandlerTest extends CategoryTest 
     verify(notificationHelper, times(1))
         .sendNotification(any(), pipelineEventTypeArgumentCaptor.capture(), any(), any());
     assertEquals(pipelineEventTypeArgumentCaptor.getValue(), PipelineEventType.STAGE_SUCCESS);
-    nodeExecution = NodeExecution.builder().node(stepPlanNodeProto).status(Status.FAILED).build();
+
+    Ambiance stepAmbiance = Ambiance.newBuilder()
+                                .addLevels(PmsLevelUtils.buildLevelFromNode(stageNodeExecutionId, stagePlanNode))
+                                .addLevels(PmsLevelUtils.buildLevelFromNode(generateUuid(), stepPlanNode))
+                                .build();
+    nodeExecution = NodeExecution.builder().ambiance(stepAmbiance).planNode(stepPlanNode).status(Status.FAILED).build();
     nodeUpdateInfo = NodeUpdateInfo.builder().nodeExecution(nodeExecution).build();
     stageStatusUpdateNotificationEventHandler.onNodeStatusUpdate(nodeUpdateInfo);
     verify(notificationHelper, times(2))

@@ -21,4 +21,6 @@ import org.springframework.data.repository.CrudRepository;
 public interface GitFullSyncEntityRepository
     extends CrudRepository<GitFullSyncEntityInfo, String>, GitFullSyncEntityRepositoryCustom {
   List<GitFullSyncEntityInfo> findByAccountIdentifierAndMessageId(String accountIdentifier, String messageId);
+  GitFullSyncEntityInfo findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndFilePath(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, String filePath);
 }

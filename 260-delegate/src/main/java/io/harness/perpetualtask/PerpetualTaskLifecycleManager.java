@@ -17,15 +17,12 @@ import io.harness.grpc.utils.HTimestamps;
 import io.harness.logging.AutoLogContext;
 import io.harness.perpetualtask.grpc.PerpetualTaskServiceGrpcClient;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.util.concurrent.TimeLimiter;
 import com.google.common.util.concurrent.UncheckedTimeoutException;
 import com.google.protobuf.util.Durations;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -41,9 +38,6 @@ public class PerpetualTaskLifecycleManager {
   private final PerpetualTaskExecutor perpetualTaskExecutor;
   private final PerpetualTaskServiceGrpcClient perpetualTaskServiceGrpcClient;
   private final AtomicInteger currentlyExecutingPerpetualTasksCount;
-
-  private final Cache<String, PerpetualTaskResponse> perpetualTaskResponseCache =
-      Caffeine.newBuilder().expireAfterWrite(30, TimeUnit.MINUTES).build();
 
   PerpetualTaskLifecycleManager(PerpetualTaskId taskId, PerpetualTaskExecutionContext context,
       Map<String, PerpetualTaskExecutor> factoryMap, PerpetualTaskServiceGrpcClient perpetualTaskServiceGrpcClient,
@@ -98,13 +92,7 @@ public class PerpetualTaskLifecycleManager {
       log.error("Exception is ", ex);
       decrementTaskCounter();
     }
-
-    String perpetualTaskId = taskId.getId();
-    PerpetualTaskResponse cachedPerpetualTaskResponse = perpetualTaskResponseCache.getIfPresent(perpetualTaskId);
-    if (null == cachedPerpetualTaskResponse || !cachedPerpetualTaskResponse.equals(perpetualTaskResponse)) {
-      perpetualTaskServiceGrpcClient.heartbeat(taskId, taskStartTime, perpetualTaskResponse);
-      perpetualTaskResponseCache.put(perpetualTaskId, perpetualTaskResponse);
-    }
+    perpetualTaskServiceGrpcClient.heartbeat(taskId, taskStartTime, perpetualTaskResponse);
     return null;
   }
 

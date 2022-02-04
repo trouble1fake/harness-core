@@ -66,7 +66,12 @@ spec:
     metadata:
       labels:
         harness.io/name: harness-delegate
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3460"
+        prometheus.io/path: "/api/metrics"
     spec:
+      terminationGracePeriodSeconds: 600
       containers:
       - image: harness/delegate:latest
         imagePullPolicy: Always
@@ -79,17 +84,17 @@ spec:
             cpu: "0.5"
             memory: "2048Mi"
         readinessProbe:
-          exec:
-            command:
-              - echo
-              - 'Its ready'
+          httpGet:
+            path: /api/health
+            port: 3460
+            scheme: HTTP
           initialDelaySeconds: 20
           periodSeconds: 10
         livenessProbe:
-          exec:
-            command:
-              - echo
-              - 'Its alive'
+          httpGet:
+            path: /api/health
+            port: 3460
+            scheme: HTTP
           initialDelaySeconds: 240
           periodSeconds: 10
           failureThreshold: 2
@@ -156,6 +161,8 @@ spec:
           value: "true"
         - name: CLIENT_TOOLS_DOWNLOAD_DISABLED
           value: "true"
+        - name: LOG_STREAMING_SERVICE_URL
+          value: "http://localhost:8079"
       restartPolicy: Always
 
 

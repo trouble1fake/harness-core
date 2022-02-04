@@ -7,6 +7,9 @@
 
 package io.harness.engine.facilitation.facilitator.publisher;
 
+import io.harness.plan.PlanNode;
+import io.harness.pms.contracts.ambiance.Ambiance;
+
 public interface FacilitateEventPublisher {
-  String publishEvent(String nodeExecutionId);
+  String publishEvent(Ambiance ambiance, PlanNode node);
 }

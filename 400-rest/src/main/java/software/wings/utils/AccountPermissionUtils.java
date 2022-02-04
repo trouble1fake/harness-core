@@ -39,11 +39,14 @@ public class AccountPermissionUtils {
 
     RestResponse<T> errorResponse = null;
     if (!harnessUserGroupService.isHarnessSupportUser(existingUser.getUuid())) {
-      errorResponse =
-          Builder.aRestResponse()
-              .withResponseMessages(Lists.newArrayList(ResponseMessage.builder().message(errorMessage).build()))
-              .build();
+      errorResponse = getErrorResponse(errorMessage);
     }
     return errorResponse;
+  }
+
+  public <T> RestResponse<T> getErrorResponse(String errorMessage) {
+    return Builder.aRestResponse()
+        .withResponseMessages(Lists.newArrayList(ResponseMessage.builder().message(errorMessage).build()))
+        .build();
   }
 }

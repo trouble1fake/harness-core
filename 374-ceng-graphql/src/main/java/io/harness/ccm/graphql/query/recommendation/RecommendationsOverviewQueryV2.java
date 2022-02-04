@@ -11,7 +11,9 @@ import static io.harness.annotations.dev.HarnessTeam.CE;
 import static io.harness.ccm.commons.utils.TimeUtils.offsetDateTimeNow;
 import static io.harness.ccm.views.entities.ViewFieldIdentifier.CLUSTER;
 import static io.harness.ccm.views.graphql.ViewsQueryHelper.getPerspectiveIdFromMetadataFilter;
+import static io.harness.ccm.views.service.impl.ViewsBillingServiceImpl.convertIdFilterToViewCondition;
 import static io.harness.ccm.views.service.impl.ViewsBillingServiceImpl.convertQLCEViewRuleToViewRule;
+import static io.harness.ccm.views.service.impl.ViewsBillingServiceImpl.getIdFilters;
 import static io.harness.ccm.views.service.impl.ViewsBillingServiceImpl.getRuleFilters;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.timescaledb.Tables.CE_RECOMMENDATIONS;
@@ -32,6 +34,7 @@ import io.harness.ccm.views.entities.CEView;
 import io.harness.ccm.views.entities.ViewCondition;
 import io.harness.ccm.views.entities.ViewIdCondition;
 import io.harness.ccm.views.entities.ViewRule;
+import io.harness.ccm.views.graphql.QLCEViewFilter;
 import io.harness.ccm.views.graphql.QLCEViewFilterWrapper;
 import io.harness.ccm.views.graphql.QLCEViewRule;
 import io.harness.ccm.views.service.CEViewService;
@@ -70,11 +73,12 @@ public class RecommendationsOverviewQueryV2 {
   @Inject private RecommendationService recommendationService;
 
   private static final Gson GSON = new Gson();
+  private static final String RESOURCE_TYPE_WORKLOAD = "WORKLOAD";
 
   @GraphQLQuery(name = "recommendationsV2", description = "The list of all types of recommendations for overview page")
   public RecommendationsDTO recommendations(
-      @GraphQLArgument(name = "filter", defaultValue = "{\"offset\":0,\"limit\":10}") K8sRecommendationFilterDTO filter,
-      @GraphQLEnvironment final ResolutionEnvironment env) {
+      @GraphQLArgument(name = "filter", defaultValue = "{\"offset\":0,\"limit\":10, \"minSaving\":0}")
+      K8sRecommendationFilterDTO filter, @GraphQLEnvironment final ResolutionEnvironment env) {
     final String accountId = graphQLUtils.getAccountIdentifier(env);
 
     Condition condition = applyAllFilters(filter);
@@ -156,17 +160,26 @@ public class RecommendationsOverviewQueryV2 {
 
     final Condition perspectiveCondition =
         getPerspectiveCondition(firstNonNull(filter.getPerspectiveFilters(), emptyList()));
+
     return condition.and(perspectiveCondition);
   }
 
   @NotNull
   private Condition getPerspectiveCondition(@NotNull List<QLCEViewFilterWrapper> perspectiveFilters) {
     final List<QLCEViewRule> qlCeViewRules = getRuleFilters(perspectiveFilters);
-    final List<ViewRule> combinedViewRuleList = convertQLCEViewRuleToViewRule(qlCeViewRules);
 
+    final List<ViewRule> combinedViewRuleList = convertQLCEViewRuleToViewRule(qlCeViewRules);
     combinedViewRuleList.addAll(getPerspectiveRuleList(perspectiveFilters));
 
-    return constructViewRuleFilterCondition(combinedViewRuleList);
+    Condition ORConditions = constructViewRuleFilterCondition(combinedViewRuleList);
+
+    final List<QLCEViewFilter> qlceViewFilters = getIdFilters(perspectiveFilters);
+
+    final List<ViewCondition> viewIdConditions = convertIdFilterToViewCondition(qlceViewFilters);
+
+    Condition ANDConditions = constructViewFilterCondition(viewIdConditions);
+
+    return ORConditions.and(ANDConditions);
   }
 
   @NotNull
@@ -267,6 +280,13 @@ public class RecommendationsOverviewQueryV2 {
         .eq(true)
         // based on current-gen workload recommendation dataFetcher
         .and(CE_RECOMMENDATIONS.LASTPROCESSEDAT.greaterOrEqual(
-            offsetDateTimeNow().truncatedTo(ChronoUnit.DAYS).minusDays(2)));
+            offsetDateTimeNow().truncatedTo(ChronoUnit.DAYS).minusDays(2)))
+        .and(nonDelegate());
+  }
+
+  private static Condition nonDelegate() {
+    return CE_RECOMMENDATIONS.RESOURCETYPE.notEqual(RESOURCE_TYPE_WORKLOAD)
+        .or(CE_RECOMMENDATIONS.RESOURCETYPE.eq(RESOURCE_TYPE_WORKLOAD)
+                .and(CE_RECOMMENDATIONS.NAMESPACE.notIn("harness-delegate", "harness-delegate-ng")));
   }
 }

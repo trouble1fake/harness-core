@@ -12,3 +12,4 @@ DockerFile* diptiman.adak@harness.io udham.singh@harness.io guna.chandrasekaran@
 /125-cd-nextgen/src/main/java/io/harness/cdng/creator/CDNGPlanCreatorProvider.java prashant.sharma@harness.io vaibhav.si@harness.io;
 /800-pipeline-service/src/main/java/io/harness/pms/plan/creation/PipelineServiceInternalInfoProvider.java prashant.sharma@harness.io vaibhav.si@harness.io;
 /320-ci-execution/src/main/java/io/harness/ci/plan/creator/CIPipelineServiceInfoProvider.java prashant.sharma@harness.io vaibhav.si@harness.io;
+/300-cv-nextgen/src/main/java* praveen.sugavanam@harness.io kamal.joshi@harness.io abhijith.pradeep@harness.io deepak.chhikara@harness.io kanhaiya.rathi@harness.io;

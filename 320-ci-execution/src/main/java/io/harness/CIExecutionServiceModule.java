@@ -59,7 +59,6 @@ public class CIExecutionServiceModule extends AbstractModule {
         .annotatedWith(Names.named("ciEventHandlerExecutor"))
         .toInstance(ThreadPool.create(
             20, 300, 5, TimeUnit.SECONDS, new ThreadFactoryBuilder().setNameFormat("Event-Handler-%d").build()));
-    install(NGPipelineCommonsModule.getInstance());
     this.bind(CIExecutionServiceConfig.class).toInstance(this.ciExecutionServiceConfig);
     bind(InitializeStepInfoBuilder.class).to(K8InitializeStepInfoBuilder.class);
     bind(new TypeLiteral<ProtobufStepSerializer<RunStepInfo>>() {}).toInstance(new RunStepProtobufSerializer());

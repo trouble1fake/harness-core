@@ -46,12 +46,12 @@ public class ResumeMetadataTest extends CategoryTest {
 
     assertThat(ReflectionUtils.getAllDeclaredAndInheritedFields(ResumeMetadata.class).size())
         .isEqualTo(NodeProjectionUtils.fieldsForResume.size() - 1);
-    Mockito.verify(nodeExecution).getNode();
     Mockito.verify(nodeExecution).getMode();
     Mockito.verify(nodeExecution).getUuid();
     Mockito.verify(nodeExecution).getAmbiance();
     Mockito.verify(nodeExecution).getResolvedStepParametersBytes();
     Mockito.verify(nodeExecution).obtainLatestExecutableResponse();
+    Mockito.verify(nodeExecution).module();
     Mockito.verifyNoMoreInteractions(nodeExecution);
   }
 }

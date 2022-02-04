@@ -18,6 +18,8 @@ import io.harness.data.structure.EmptyPredicate;
 import io.harness.ng.core.environment.beans.EnvironmentType;
 import io.harness.ngmigration.beans.MigrationInputDTO;
 import io.harness.ngmigration.beans.NgEntityDetail;
+import io.harness.ngmigration.client.NGClient;
+import io.harness.ngmigration.client.PmsClient;
 
 import software.wings.beans.Environment;
 import software.wings.infra.InfrastructureDefinition;
@@ -32,6 +34,7 @@ import software.wings.service.intfc.EnvironmentService;
 import software.wings.service.intfc.InfrastructureDefinitionService;
 
 import com.google.inject.Inject;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -81,8 +84,8 @@ public class EnvironmentMigrationService implements NgMigration {
   }
 
   @Override
-  public void migrate(
-      Map<CgEntityId, CgEntityNode> entities, Map<CgEntityId, Set<CgEntityId>> graph, CgEntityId entityId) {}
+  public void migrate(String auth, NGClient ngClient, PmsClient pmsClient, MigrationInputDTO inputDTO,
+      NGYamlFile yamlFile) throws IOException {}
 
   @Override
   public List<NGYamlFile> getYamls(MigrationInputDTO inputDTO, Map<CgEntityId, CgEntityNode> entities,

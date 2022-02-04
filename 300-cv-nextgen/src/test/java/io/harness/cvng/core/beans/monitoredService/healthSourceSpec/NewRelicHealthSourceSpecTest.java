@@ -7,6 +7,7 @@
 
 package io.harness.cvng.core.beans.monitoredService.healthSourceSpec;
 
+import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.rule.OwnerRule.KANHAIYA;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -53,6 +54,7 @@ public class NewRelicHealthSourceSpecTest extends CvNextGenTestBase {
   String envIdentifier;
   String identifier;
   String name;
+  String monitoredServiceIdentifier;
   List<MetricPackDTO> metricPackDTOS;
   BuilderFactory builderFactory;
 
@@ -68,7 +70,7 @@ public class NewRelicHealthSourceSpecTest extends CvNextGenTestBase {
     applicationId = "1234";
     feature = "apm";
     connectorIdentifier = "connectorRef";
-
+    monitoredServiceIdentifier = generateUuid();
     identifier = "identifier";
     name = "some-name";
     metricPackDTOS =
@@ -88,9 +90,9 @@ public class NewRelicHealthSourceSpecTest extends CvNextGenTestBase {
   @Owner(developers = KANHAIYA)
   @Category(UnitTests.class)
   public void getCVConfigUpdateResult_whenNoConfigExist() {
-    CVConfigUpdateResult cvConfigUpdateResult =
-        newRelicHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier, envIdentifier,
-            serviceIdentifier, identifier, name, Collections.emptyList(), metricPackService);
+    CVConfigUpdateResult cvConfigUpdateResult = newRelicHealthSourceSpec.getCVConfigUpdateResult(accountId,
+        orgIdentifier, projectIdentifier, envIdentifier, serviceIdentifier, monitoredServiceIdentifier, identifier,
+        name, Collections.emptyList(), metricPackService);
     assertThat(cvConfigUpdateResult.getUpdated()).isEmpty();
     assertThat(cvConfigUpdateResult.getDeleted()).isEmpty();
     List<CVConfig> added = cvConfigUpdateResult.getAdded();
@@ -110,8 +112,9 @@ public class NewRelicHealthSourceSpecTest extends CvNextGenTestBase {
     List<CVConfig> cvConfigs = new ArrayList<>();
     cvConfigs.add(
         createCVConfig(MetricPack.builder().accountId(accountId).category(CVMonitoringCategory.ERRORS).build()));
-    CVConfigUpdateResult result = newRelicHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier,
-        projectIdentifier, envIdentifier, serviceIdentifier, identifier, name, cvConfigs, metricPackService);
+    CVConfigUpdateResult result =
+        newRelicHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier, envIdentifier,
+            serviceIdentifier, monitoredServiceIdentifier, identifier, name, cvConfigs, metricPackService);
     assertThat(result.getDeleted()).hasSize(1);
     NewRelicCVConfig newRelicCVConfig = (NewRelicCVConfig) result.getDeleted().get(0);
     assertThat(newRelicCVConfig.getMetricPack().getCategory()).isEqualTo(CVMonitoringCategory.ERRORS);
@@ -124,8 +127,9 @@ public class NewRelicHealthSourceSpecTest extends CvNextGenTestBase {
     List<CVConfig> cvConfigs = new ArrayList<>();
     cvConfigs.add(
         createCVConfig(MetricPack.builder().accountId(accountId).category(CVMonitoringCategory.ERRORS).build()));
-    CVConfigUpdateResult result = newRelicHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier,
-        projectIdentifier, envIdentifier, serviceIdentifier, identifier, name, cvConfigs, metricPackService);
+    CVConfigUpdateResult result =
+        newRelicHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier, envIdentifier,
+            serviceIdentifier, monitoredServiceIdentifier, identifier, name, cvConfigs, metricPackService);
     assertThat(result.getAdded()).hasSize(1);
     NewRelicCVConfig newRelicCVConfig = (NewRelicCVConfig) result.getAdded().get(0);
     assertCommon(newRelicCVConfig);
@@ -139,8 +143,9 @@ public class NewRelicHealthSourceSpecTest extends CvNextGenTestBase {
     List<CVConfig> cvConfigs = new ArrayList<>();
     cvConfigs.add(createCVConfig(metricPackService.getMetricPack(accountId, orgIdentifier, projectIdentifier,
         DataSourceType.NEW_RELIC, CVNextGenConstants.PERFORMANCE_PACK_IDENTIFIER)));
-    CVConfigUpdateResult result = newRelicHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier,
-        projectIdentifier, envIdentifier, serviceIdentifier, identifier, name, cvConfigs, metricPackService);
+    CVConfigUpdateResult result =
+        newRelicHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier, envIdentifier,
+            serviceIdentifier, monitoredServiceIdentifier, identifier, name, cvConfigs, metricPackService);
     assertThat(result.getUpdated()).hasSize(1);
     NewRelicCVConfig newRelicCVConfig = (NewRelicCVConfig) result.getUpdated().get(0);
     assertCommon(newRelicCVConfig);
@@ -162,6 +167,7 @@ public class NewRelicHealthSourceSpecTest extends CvNextGenTestBase {
     assertThat(cvConfig.getMetricPack().getAccountId()).isEqualTo(accountId);
     assertThat(cvConfig.getMetricPack().getOrgIdentifier()).isEqualTo(orgIdentifier);
     assertThat(cvConfig.getMetricPack().getDataSourceType()).isEqualTo(DataSourceType.NEW_RELIC);
+    assertThat(cvConfig.getMonitoredServiceIdentifier()).isEqualTo(monitoredServiceIdentifier);
   }
 
   private CVConfig createCVConfig(MetricPack metricPack) {
@@ -172,6 +178,7 @@ public class NewRelicHealthSourceSpecTest extends CvNextGenTestBase {
         .connectorIdentifier(connectorIdentifier)
         .monitoringSourceName(name)
         .productName(feature)
+        .monitoredServiceIdentifier(monitoredServiceIdentifier)
         .identifier(identifier)
         .build();
   }

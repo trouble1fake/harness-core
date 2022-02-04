@@ -23,14 +23,17 @@ import io.harness.engine.executions.node.NodeExecutionServiceImpl;
 import io.harness.engine.executions.plan.PlanExecutionMetadataService;
 import io.harness.engine.executions.plan.PlanExecutionService;
 import io.harness.engine.observers.NodeUpdateInfo;
+import io.harness.engine.utils.PmsLevelUtils;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.NodeExecution.NodeExecutionKeys;
 import io.harness.execution.PlanExecution;
 import io.harness.execution.PlanExecution.PlanExecutionKeys;
 import io.harness.execution.PlanExecutionMetadata;
+import io.harness.plan.PlanNode;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.Status;
-import io.harness.pms.contracts.plan.PlanNodeProto;
+import io.harness.pms.contracts.steps.StepCategory;
+import io.harness.pms.contracts.steps.StepType;
 import io.harness.rule.Owner;
 
 import com.google.inject.Inject;
@@ -85,47 +88,120 @@ public class PausedStepStatusUpdateTest extends OrchestrationTestBase {
         PlanExecutionMetadata.builder().planExecutionId(planExecutionId).build();
     planExecutionMetadataService.save(planExecutionMetadata);
 
-    Ambiance ambiance = Ambiance.newBuilder().setPlanExecutionId(planExecutionId).build();
-    PlanNodeProto planNode = PlanNodeProto.newBuilder().build();
+    Ambiance.Builder ambianceBuilder = Ambiance.newBuilder().setPlanExecutionId(planExecutionId);
 
+    PlanNode pipelinePlanNode =
+        PlanNode.builder()
+            .uuid(generateUuid())
+            .identifier("PIPELINE")
+            .stepType(StepType.newBuilder().setType("PIPELINE").setStepCategory(StepCategory.PIPELINE).build())
+            .serviceName("CD")
+            .build();
     NodeExecution pipelineNode =
-        NodeExecution.builder().uuid(pipelineNodeId).status(Status.RUNNING).node(planNode).ambiance(ambiance).build();
-    NodeExecution stageNode = NodeExecution.builder()
-                                  .uuid(stageNodeId)
-                                  .status(Status.RUNNING)
-                                  .parentId(pipelineNode.getUuid())
-                                  .ambiance(ambiance)
-                                  .node(planNode)
-                                  .build();
-    NodeExecution forkNode = NodeExecution.builder()
-                                 .uuid(forkNodeId)
-                                 .status(Status.RUNNING)
-                                 .parentId(stageNode.getUuid())
-                                 .ambiance(ambiance)
-                                 .node(planNode)
-                                 .build();
+        NodeExecution.builder()
+            .uuid(pipelineNodeId)
+            .status(Status.RUNNING)
+            .planNode(pipelinePlanNode)
+            .ambiance(
+                ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(pipelineNodeId, pipelinePlanNode)).build())
+            .build();
+
+    PlanNode stagePlanNode =
+        PlanNode.builder()
+            .uuid(generateUuid())
+            .identifier("STAGE")
+            .stepType(StepType.newBuilder().setType("STAGE").setStepCategory(StepCategory.STAGE).build())
+            .serviceName("CD")
+            .build();
+    NodeExecution stageNode =
+        NodeExecution.builder()
+            .uuid(stageNodeId)
+            .status(Status.RUNNING)
+            .parentId(pipelineNode.getUuid())
+            .ambiance(ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(pipelineNodeId, pipelinePlanNode))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(stageNodeId, stagePlanNode))
+                          .build())
+            .planNode(stagePlanNode)
+            .build();
+
+    PlanNode forkPlanNode =
+        PlanNode.builder()
+            .uuid(generateUuid())
+            .identifier("FORK")
+            .stepType(StepType.newBuilder().setType("FORK").setStepCategory(StepCategory.FORK).build())
+            .serviceName("CD")
+            .build();
+    NodeExecution forkNode =
+        NodeExecution.builder()
+            .uuid(forkNodeId)
+            .status(Status.RUNNING)
+            .parentId(stageNode.getUuid())
+            .ambiance(ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(pipelineNodeId, pipelinePlanNode))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(stageNodeId, stagePlanNode))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(forkNodeId, forkPlanNode))
+                          .build())
+            .planNode(forkPlanNode)
+            .build();
     // This node is getting transitioned to SUCCEEDED from MANUAL_INTERVENTION
-    NodeExecution child1 = NodeExecution.builder()
-                               .uuid(child1Id)
-                               .status(Status.PAUSED)
-                               .parentId(forkNode.getUuid())
-                               .ambiance(ambiance)
-                               .node(planNode)
-                               .build();
-    NodeExecution child2 = NodeExecution.builder()
-                               .uuid(child2Id)
-                               .status(Status.SUCCEEDED)
-                               .parentId(forkNode.getUuid())
-                               .ambiance(ambiance)
-                               .node(planNode)
-                               .build();
-    NodeExecution child3 = NodeExecution.builder()
-                               .uuid(child3Id)
-                               .status(Status.SUCCEEDED)
-                               .parentId(forkNode.getUuid())
-                               .ambiance(ambiance)
-                               .node(planNode)
-                               .build();
+    PlanNode child1Node =
+        PlanNode.builder()
+            .uuid(generateUuid())
+            .identifier("CHILD1")
+            .stepType(StepType.newBuilder().setType("Step").setStepCategory(StepCategory.STEP).build())
+            .serviceName("CD")
+            .build();
+    NodeExecution child1 =
+        NodeExecution.builder()
+            .uuid(child1Id)
+            .status(Status.PAUSED)
+            .parentId(forkNode.getUuid())
+            .ambiance(ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(pipelineNodeId, pipelinePlanNode))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(stageNodeId, stagePlanNode))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(forkNodeId, forkPlanNode))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(child1Id, child1Node))
+                          .build())
+            .planNode(child1Node)
+            .build();
+
+    PlanNode child2Node =
+        PlanNode.builder()
+            .uuid(generateUuid())
+            .identifier("CHILD2")
+            .stepType(StepType.newBuilder().setType("Step").setStepCategory(StepCategory.STEP).build())
+            .serviceName("CD")
+            .build();
+    NodeExecution child2 =
+        NodeExecution.builder()
+            .uuid(child2Id)
+            .status(Status.SUCCEEDED)
+            .parentId(forkNode.getUuid())
+            .ambiance(ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(pipelineNodeId, pipelinePlanNode))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(stageNodeId, stagePlanNode))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(forkNodeId, forkPlanNode))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(child2Id, child2Node))
+                          .build())
+            .planNode(child2Node)
+            .build();
+
+    PlanNode child3Node =
+        PlanNode.builder()
+            .uuid(generateUuid())
+            .identifier("CHILD3")
+            .stepType(StepType.newBuilder().setType("Step").setStepCategory(StepCategory.STEP).build())
+            .serviceName("CD")
+            .build();
+    NodeExecution child3 =
+        NodeExecution.builder()
+            .uuid(child3Id)
+            .status(Status.SUCCEEDED)
+            .parentId(forkNode.getUuid())
+            .ambiance(ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(pipelineNodeId, pipelinePlanNode))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(stageNodeId, stagePlanNode))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(forkNodeId, forkPlanNode))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(child3Id, child3Node))
+                          .build())
+            .planNode(child3Node)
+            .build();
 
     mongoTemplate.save(planExecution);
     mongoTemplate.save(pipelineNode);
@@ -193,63 +269,161 @@ public class PausedStepStatusUpdateTest extends OrchestrationTestBase {
         PlanExecutionMetadata.builder().planExecutionId(planExecutionId).build();
     planExecutionMetadataService.save(planExecutionMetadata);
     PlanExecution planExecution = PlanExecution.builder().uuid(planExecutionId).status(Status.RUNNING).build();
-    Ambiance ambiance = Ambiance.newBuilder().setPlanExecutionId(planExecutionId).build();
-    PlanNodeProto planNode = PlanNodeProto.newBuilder().build();
 
+    Ambiance.Builder ambianceBuilder = Ambiance.newBuilder().setPlanExecutionId(planExecutionId);
+
+    PlanNode pipelinePlanNode =
+        PlanNode.builder()
+            .uuid(generateUuid())
+            .identifier("PIPELINE")
+            .stepType(StepType.newBuilder().setType("PIPELINE").setStepCategory(StepCategory.PIPELINE).build())
+            .serviceName("CD")
+            .build();
     NodeExecution pipelineNode =
-        NodeExecution.builder().uuid(pipelineNodeId).status(Status.RUNNING).ambiance(ambiance).node(planNode).build();
-    NodeExecution stageNode = NodeExecution.builder()
-                                  .uuid(stageNodeId)
-                                  .status(Status.RUNNING)
-                                  .parentId(pipelineNode.getUuid())
-                                  .ambiance(ambiance)
-                                  .node(planNode)
-                                  .build();
-    NodeExecution forkNode = NodeExecution.builder()
-                                 .uuid(forkNodeId)
-                                 .status(Status.RUNNING)
-                                 .parentId(stageNode.getUuid())
-                                 .ambiance(ambiance)
-                                 .node(planNode)
-                                 .build();
+        NodeExecution.builder()
+            .uuid(pipelineNodeId)
+            .status(Status.RUNNING)
+            .ambiance(
+                ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(pipelineNodeId, pipelinePlanNode)).build())
+            .planNode(pipelinePlanNode)
+            .build();
+
+    PlanNode stagePlanNode =
+        PlanNode.builder()
+            .uuid(generateUuid())
+            .identifier("STAGE")
+            .stepType(StepType.newBuilder().setType("STAGE").setStepCategory(StepCategory.STAGE).build())
+            .serviceName("CD")
+            .build();
+
+    NodeExecution stageNode =
+        NodeExecution.builder()
+            .uuid(stageNodeId)
+            .status(Status.RUNNING)
+            .parentId(pipelineNode.getUuid())
+            .ambiance(ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(pipelineNodeId, pipelinePlanNode))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(stageNodeId, stagePlanNode))
+                          .build())
+            .planNode(stagePlanNode)
+            .build();
+
+    PlanNode forkPlanNode =
+        PlanNode.builder()
+            .uuid(generateUuid())
+            .identifier("FORK")
+            .stepType(StepType.newBuilder().setType("FORK").setStepCategory(StepCategory.FORK).build())
+            .serviceName("CD")
+            .build();
+    NodeExecution forkNode =
+        NodeExecution.builder()
+            .uuid(forkNodeId)
+            .status(Status.RUNNING)
+            .parentId(stageNode.getUuid())
+            .ambiance(ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(pipelineNodeId, pipelinePlanNode))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(stageNodeId, stagePlanNode))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(forkNodeId, forkPlanNode))
+                          .build())
+            .planNode(forkPlanNode)
+            .build();
     // This node is getting transitioned to SUCCEEDED from MANUAL_INTERVENTION
-    NodeExecution child1 = NodeExecution.builder()
-                               .uuid(child1Id)
-                               .status(Status.PAUSED)
-                               .parentId(forkNode.getUuid())
-                               .ambiance(ambiance)
-                               .node(planNode)
-                               .build();
-    NodeExecution child2 = NodeExecution.builder()
-                               .uuid(child2Id)
-                               .status(Status.SUCCEEDED)
-                               .parentId(forkNode.getUuid())
-                               .ambiance(ambiance)
-                               .node(planNode)
-                               .build();
-    NodeExecution child3 = NodeExecution.builder()
-                               .uuid(child3Id)
-                               .status(Status.SUCCEEDED)
-                               .parentId(forkNode.getUuid())
-                               .ambiance(ambiance)
-                               .node(planNode)
-                               .build();
+    PlanNode child1Node =
+        PlanNode.builder()
+            .uuid(generateUuid())
+            .identifier("CHILD1")
+            .stepType(StepType.newBuilder().setType("Step").setStepCategory(StepCategory.STEP).build())
+            .serviceName("CD")
+            .build();
+    NodeExecution child1 =
+        NodeExecution.builder()
+            .uuid(child1Id)
+            .status(Status.PAUSED)
+            .parentId(forkNode.getUuid())
+            .ambiance(ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(pipelineNodeId, pipelinePlanNode))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(stageNodeId, stagePlanNode))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(forkNodeId, forkPlanNode))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(child1Id, child1Node))
+                          .build())
+            .planNode(child1Node)
+            .build();
 
-    NodeExecution fork2Node = NodeExecution.builder()
-                                  .uuid(fork2Id)
-                                  .status(Status.RUNNING)
-                                  .parentId(stageNode.getUuid())
-                                  .ambiance(ambiance)
-                                  .node(planNode)
-                                  .build();
+    PlanNode child2Node =
+        PlanNode.builder()
+            .uuid(generateUuid())
+            .identifier("CHILD2")
+            .stepType(StepType.newBuilder().setType("Step").setStepCategory(StepCategory.STEP).build())
+            .serviceName("CD")
+            .build();
+    NodeExecution child2 =
+        NodeExecution.builder()
+            .uuid(child2Id)
+            .status(Status.SUCCEEDED)
+            .parentId(forkNode.getUuid())
+            .ambiance(ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(pipelineNodeId, pipelinePlanNode))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(stageNodeId, stagePlanNode))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(forkNodeId, forkPlanNode))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(child2Id, child2Node))
+                          .build())
+            .planNode(child2Node)
+            .build();
 
-    NodeExecution child4 = NodeExecution.builder()
-                               .uuid(child4Id)
-                               .status(Status.RUNNING)
-                               .parentId(fork2Node.getUuid())
-                               .ambiance(ambiance)
-                               .node(planNode)
-                               .build();
+    PlanNode child3Node =
+        PlanNode.builder()
+            .uuid(generateUuid())
+            .identifier("CHILD3")
+            .stepType(StepType.newBuilder().setType("Step").setStepCategory(StepCategory.STEP).build())
+            .serviceName("CD")
+            .build();
+    NodeExecution child3 =
+        NodeExecution.builder()
+            .uuid(child3Id)
+            .status(Status.SUCCEEDED)
+            .parentId(forkNode.getUuid())
+            .ambiance(ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(pipelineNodeId, pipelinePlanNode))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(stageNodeId, stagePlanNode))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(forkNodeId, forkPlanNode))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(child3Id, child3Node))
+                          .build())
+            .planNode(child3Node)
+            .build();
+
+    PlanNode fork2PlanNode =
+        PlanNode.builder()
+            .uuid(generateUuid())
+            .identifier("FORK")
+            .stepType(StepType.newBuilder().setType("FORK").setStepCategory(StepCategory.FORK).build())
+            .serviceName("CD")
+            .build();
+    NodeExecution fork2Node =
+        NodeExecution.builder()
+            .uuid(fork2Id)
+            .status(Status.RUNNING)
+            .parentId(stageNode.getUuid())
+            .ambiance(ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(pipelineNodeId, pipelinePlanNode))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(stageNodeId, stagePlanNode))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(fork2Id, fork2PlanNode))
+                          .build())
+            .planNode(forkPlanNode)
+            .build();
+
+    PlanNode child4Node =
+        PlanNode.builder()
+            .uuid(generateUuid())
+            .identifier("CHILD3")
+            .stepType(StepType.newBuilder().setType("Step").setStepCategory(StepCategory.STEP).build())
+            .serviceName("CD")
+            .build();
+    NodeExecution child4 =
+        NodeExecution.builder()
+            .uuid(child4Id)
+            .status(Status.RUNNING)
+            .parentId(fork2Node.getUuid())
+            .ambiance(ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(pipelineNodeId, pipelinePlanNode))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(stageNodeId, stagePlanNode))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(fork2Id, fork2PlanNode))
+                          .addLevels(PmsLevelUtils.buildLevelFromNode(child4Id, child4Node))
+                          .build())
+            .planNode(child3Node)
+            .build();
 
     mongoTemplate.save(planExecution);
     mongoTemplate.save(pipelineNode);

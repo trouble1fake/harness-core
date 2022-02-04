@@ -13,7 +13,10 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 import io.harness.delegate.app.modules.DelegateAgentModule;
+import io.harness.delegate.app.resource.HealthResource;
 import io.harness.delegate.configuration.DelegateConfiguration;
+import io.harness.delegate.metrics.DelegateAgentMetricResource;
+import io.harness.delegate.metrics.DelegateAgentMetrics;
 import io.harness.delegate.service.DelegateAgentService;
 import io.harness.event.client.EventPublisher;
 import io.harness.grpc.pingpong.PingPongClient;
@@ -24,6 +27,7 @@ import io.harness.threading.ExecutorModule;
 import io.harness.threading.ThreadPool;
 
 import ch.qos.logback.classic.LoggerContext;
+import com.codahale.metrics.MetricRegistry;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -79,20 +83,21 @@ public class DelegateAgentApplication extends Application<DelegateAgentConfig> {
   @Override
   public void run(final DelegateAgentConfig delegateAgentConfig, final Environment environment) throws Exception {
     ExecutorModule.getInstance().setExecutorService(ThreadPool.create(10, 40, 1, TimeUnit.SECONDS,
-        new ThreadFactoryBuilder().setNameFormat("sync-task-%d").setPriority(Thread.NORM_PRIORITY).build()));
+        new ThreadFactoryBuilder().setNameFormat("other-%d").setPriority(Thread.NORM_PRIORITY).build()));
 
     final Injector injector = Guice.createInjector(new DelegateAgentModule(configuration));
 
     addShutdownHook(injector);
 
     registerHealthChecks(environment, injector);
-
+    registerResources(environment, injector);
+    initializeMetrics(environment, injector);
     injector.getInstance(PingPongClient.class).startAsync();
 
     log.info("Starting Delegate");
     log.info("Process: {}", ManagementFactory.getRuntimeMXBean().getName());
 
-    injector.getInstance(DelegateAgentService.class).run(false);
+    injector.getInstance(DelegateAgentService.class).run(false, true);
   }
 
   @Override
@@ -109,16 +114,28 @@ public class DelegateAgentApplication extends Application<DelegateAgentConfig> {
     java.util.logging.LogManager.getLogManager().getLogger("").setLevel(Level.INFO);
 
     initializeLogging();
+
+    bootstrap.setMetricRegistry(new MetricRegistry());
   }
 
   private void addShutdownHook(final Injector injector) {
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+      try {
+        injector.getInstance(DelegateAgentService.class).shutdown(true);
+      } catch (final InterruptedException e) {
+        log.error("Delegate shutdown interrupted", e);
+        Thread.currentThread().interrupt();
+      }
+
       injector.getInstance(ExecutorService.class).shutdown();
       injector.getInstance(EventPublisher.class).shutdown();
       log.info("Executor services have been shut down.");
 
-      injector.getInstance(PingPongClient.class).stopAsync();
-      log.info("PingPong client have been shut down.");
+      final PingPongClient pingPongClient = injector.getInstance(PingPongClient.class);
+      if (pingPongClient != null) {
+        pingPongClient.stopAsync();
+        log.info("PingPong client have been shut down.");
+      }
 
       injector.getInstance(AsyncHttpClient.class).close();
       log.info("Async HTTP client has been closed.");
@@ -130,6 +147,7 @@ public class DelegateAgentApplication extends Application<DelegateAgentConfig> {
       }
       log.info("Log manager has been shutdown and logs have been flushed.");
     }));
+    log.info("Delegate agent shutdown hooks registered");
   }
 
   private void registerHealthChecks(final Environment environment, final Injector injector) {
@@ -137,5 +155,17 @@ public class DelegateAgentApplication extends Application<DelegateAgentConfig> {
 
     healthService.registerMonitor(injector.getInstance(HealthMonitor.class));
     environment.healthChecks().register("DelegateAgentApp", healthService);
+  }
+
+  private void initializeMetrics(Environment environment, Injector injector) {
+    log.info("Initializing metrics for Delegate agent.");
+    DelegateAgentMetrics delegateAgentMetrics = injector.getInstance(DelegateAgentMetrics.class);
+    delegateAgentMetrics.scheduleDelegateAgentMetricsPoll();
+    delegateAgentMetrics.registerDelegateMetrics();
+  }
+
+  private void registerResources(final Environment environment, final Injector injector) {
+    environment.jersey().register(injector.getInstance(HealthResource.class));
+    environment.jersey().register(injector.getInstance(DelegateAgentMetricResource.class));
   }
 }

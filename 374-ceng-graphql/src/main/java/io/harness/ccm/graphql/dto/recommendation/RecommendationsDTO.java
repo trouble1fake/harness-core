@@ -7,12 +7,14 @@
 
 package io.harness.ccm.graphql.dto.recommendation;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 import lombok.Builder;
 import lombok.Value;
 
 @Value
 @Builder
+@Schema(name = "Recommendations", description = "The Cloud Cost Recommendations list response")
 public class RecommendationsDTO {
   List<RecommendationItemDTO> items;
 

@@ -17,6 +17,8 @@ import io.harness.govern.ProviderModule;
 import io.harness.govern.ServersModule;
 import io.harness.morphia.MorphiaModule;
 import io.harness.morphia.MorphiaRegistrar;
+import io.harness.notification.NotificationResourceClasses;
+import io.harness.oas.OASModule;
 import io.harness.rule.InjectorRuleMixin;
 import io.harness.serializer.KryoModule;
 import io.harness.serializer.KryoRegistrar;
@@ -38,6 +40,7 @@ import io.grpc.inprocess.InProcessChannelBuilder;
 import java.io.Closeable;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -130,6 +133,12 @@ public class NotificationServiceRule implements MethodRule, InjectorRuleMixin, M
       @Singleton
       public boolean getSerializationForDelegate() {
         return false;
+      }
+    });
+    modules.add(new OASModule() {
+      @Override
+      public Collection<Class<?>> getResourceClasses() {
+        return NotificationResourceClasses.getResourceClasses();
       }
     });
     return modules;

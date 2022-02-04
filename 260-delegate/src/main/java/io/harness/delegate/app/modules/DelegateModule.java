@@ -7,6 +7,8 @@
 
 package io.harness.delegate.app.modules;
 
+import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
+
 import io.harness.annotations.dev.BreakDependencyOn;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.HarnessTeam;
@@ -617,74 +619,76 @@ import lombok.RequiredArgsConstructor;
 public class DelegateModule extends AbstractModule {
   private final DelegateConfiguration configuration;
 
+  /*
+   * Creates and return ScheduledExecutorService object, which can be used for health monitoring purpose
+   * Currently this executor has been used for sending heartbeat to manager and watcher. This is also being
+   * used to send KeepAlive packet to manager.
+   */
   @Provides
   @Singleton
-  @Named("heartbeatExecutor")
-  public ScheduledExecutorService heartbeatExecutor() {
-    ScheduledExecutorService heartbeatExecutor = new ScheduledThreadPoolExecutor(
-        1, new ThreadFactoryBuilder().setNameFormat("heartbeat-%d").setPriority(Thread.MAX_PRIORITY).build());
-    Runtime.getRuntime().addShutdownHook(new Thread(heartbeatExecutor::shutdownNow));
-    return heartbeatExecutor;
+  @Named("healthMonitorExecutor")
+  public ScheduledExecutorService healthMonitorExecutor() {
+    return new ScheduledThreadPoolExecutor(
+        1, new ThreadFactoryBuilder().setNameFormat("healthMonitor-%d").setPriority(Thread.MAX_PRIORITY).build());
   }
 
+  /*
+   * Creates and return ScheduledExecutorService object, which can be used for monitoring watcher.
+   * Note that, this will only be used for monitoring, any action taken will be than executed by some
+   * another threadpool.
+   */
   @Provides
   @Singleton
-  @Named("localHeartbeatExecutor")
-  public ScheduledExecutorService localHeartbeatExecutor() {
-    ScheduledExecutorService localHeartbeatExecutor = new ScheduledThreadPoolExecutor(
-        1, new ThreadFactoryBuilder().setNameFormat("localHeartbeat-%d").setPriority(Thread.MAX_PRIORITY).build());
-    Runtime.getRuntime().addShutdownHook(new Thread(localHeartbeatExecutor::shutdownNow));
-    return localHeartbeatExecutor;
+  @Named("watcherMonitorExecutor")
+  public ScheduledExecutorService watcherMonitorExecutor() {
+    return new ScheduledThreadPoolExecutor(
+        1, new ThreadFactoryBuilder().setNameFormat("watcherMonitor-%d").setPriority(Thread.MAX_PRIORITY).build());
   }
 
-  @Provides
-  @Singleton
-  @Named("watcherUpgradeExecutor")
-  public ScheduledExecutorService watcherUpgradeExecutor() {
-    ScheduledExecutorService watcherUpgradeExecutor = new ScheduledThreadPoolExecutor(
-        1, new ThreadFactoryBuilder().setNameFormat("watcherUpgrade-%d").setPriority(Thread.MAX_PRIORITY).build());
-    Runtime.getRuntime().addShutdownHook(new Thread(watcherUpgradeExecutor::shutdownNow));
-    return watcherUpgradeExecutor;
-  }
-
+  /*
+   * Creates and return ScheduledExecutorService object, which can be used for scheduling self upgrade check.
+   */
   @Provides
   @Singleton
   @Named("upgradeExecutor")
   public ScheduledExecutorService upgradeExecutor() {
-    ScheduledExecutorService upgradeExecutor = new ScheduledThreadPoolExecutor(
+    return new ScheduledThreadPoolExecutor(
         1, new ThreadFactoryBuilder().setNameFormat("upgrade-%d").setPriority(Thread.MAX_PRIORITY).build());
-    Runtime.getRuntime().addShutdownHook(new Thread(upgradeExecutor::shutdownNow));
-    return upgradeExecutor;
   }
 
+  /*
+   * Creates and return ScheduledExecutorService object, which can be used for reading message from
+   * watcher and take appropriate action.
+   */
   @Provides
   @Singleton
   @Named("inputExecutor")
   public ScheduledExecutorService inputExecutor() {
-    ScheduledThreadPoolExecutor inputExecutor = new ScheduledThreadPoolExecutor(
+    return new ScheduledThreadPoolExecutor(
         1, new ThreadFactoryBuilder().setNameFormat("input-%d").setPriority(Thread.NORM_PRIORITY).build());
-    Runtime.getRuntime().addShutdownHook(new Thread(inputExecutor::shutdownNow));
-    return inputExecutor;
   }
 
+  /*
+   * Creates and return ScheduledExecutorService object, which can be used for tracking delegate profile
+   * and execute it in case of any changes.
+   */
   @Provides
   @Singleton
-  @Named("installCheckExecutor")
-  public ScheduledExecutorService installCheckExecutor() {
-    ScheduledExecutorService installCheckExecutor = new ScheduledThreadPoolExecutor(
-        1, new ThreadFactoryBuilder().setNameFormat("installCheck-%d").setPriority(Thread.NORM_PRIORITY).build());
-    Runtime.getRuntime().addShutdownHook(new Thread(installCheckExecutor::shutdownNow));
-    return installCheckExecutor;
+  @Named("profileExecutor")
+  public ScheduledExecutorService profileExecutor() {
+    return new ScheduledThreadPoolExecutor(
+        1, new ThreadFactoryBuilder().setNameFormat("profile-%d").setPriority(Thread.NORM_PRIORITY).build());
   }
 
+  /*
+   * Creates and return ScheduledExecutorService object, which can be used for fetching task in case of polling.
+   */
   @Provides
   @Singleton
   @Named("rescheduleExecutor")
   public ScheduledExecutorService rescheduleExecutor() {
-    ScheduledExecutorService rescheduleExecutor = new ScheduledThreadPoolExecutor(
+    return new ScheduledThreadPoolExecutor(
         1, new ThreadFactoryBuilder().setNameFormat("reschedule-%d").setPriority(Thread.MAX_PRIORITY).build());
-    Runtime.getRuntime().addShutdownHook(new Thread(rescheduleExecutor::shutdown));
-    return rescheduleExecutor;
   }
 
   @Provides
@@ -697,161 +701,171 @@ public class DelegateModule extends AbstractModule {
     return verificationExecutor;
   }
 
+  /*
+   * Creates and return ExecutorService object, which can be used for performing low priority activities.
+   * Currently, this is being used for performing graceful stop.
+   */
+  @Provides
+  @Singleton
+  @Named("backgroundExecutor")
+  public ExecutorService backgroundExecutor() {
+    return ThreadPool.create(1, 1, 5, TimeUnit.SECONDS,
+        new ThreadFactoryBuilder().setNameFormat("background-%d").setPriority(Thread.MIN_PRIORITY).build());
+  }
+
+  /*
+   * Creates and return ExecutorService object, which can be used for performing watcher upgrade.
+   */
+  @Provides
+  @Singleton
+  @Named("watcherUpgradeExecutor")
+  public ExecutorService watcherUpgradeExecutor() {
+    return ThreadPool.create(1, 1, 5, TimeUnit.SECONDS,
+        new ThreadFactoryBuilder().setNameFormat("watcherUpgrade-%d").setPriority(Thread.MAX_PRIORITY).build());
+  }
+
   @Provides
   @Singleton
   @Named("verificationDataCollectorExecutor")
   public ExecutorService verificationDataCollectorExecutor() {
-    ExecutorService verificationDataCollectorExecutor = ThreadPool.create(4, 20, 5, TimeUnit.SECONDS,
+    return ThreadPool.create(4, 20, 5, TimeUnit.SECONDS,
         new ThreadFactoryBuilder()
             .setNameFormat("verificationDataCollector-%d")
             .setPriority(Thread.MIN_PRIORITY)
             .build());
-    Runtime.getRuntime().addShutdownHook(new Thread(verificationDataCollectorExecutor::shutdownNow));
-    return verificationDataCollectorExecutor;
   }
 
   @Provides
   @Singleton
   @Named("cvngParallelExecutor")
   public ExecutorService cvngParallelExecutor() {
-    ExecutorService cvngParallelExecutor = ThreadPool.create(1, CVNextGenConstants.CVNG_MAX_PARALLEL_THREADS, 5,
-        TimeUnit.SECONDS,
+    return ThreadPool.create(1, CVNextGenConstants.CVNG_MAX_PARALLEL_THREADS, 5, TimeUnit.SECONDS,
         new ThreadFactoryBuilder().setNameFormat("cvngParallelExecutor-%d").setPriority(Thread.MIN_PRIORITY).build());
-    Runtime.getRuntime().addShutdownHook(new Thread(cvngParallelExecutor::shutdownNow));
-    return cvngParallelExecutor;
   }
 
   @Provides
   @Singleton
   @Named("cvngSyncCallExecutor")
   public ExecutorService cvngSyncCallExecutor() {
-    ExecutorService cvngSyncCallExecutor = ThreadPool.create(1, 5, 5, TimeUnit.SECONDS,
+    return ThreadPool.create(1, 5, 5, TimeUnit.SECONDS,
         new ThreadFactoryBuilder().setNameFormat("cvngSyncCallExecutor-%d").setPriority(Thread.MIN_PRIORITY).build());
-    Runtime.getRuntime().addShutdownHook(new Thread(cvngSyncCallExecutor::shutdownNow));
-    return cvngSyncCallExecutor;
   }
 
   @Provides
   @Singleton
   @Named("alternativeExecutor")
   public ExecutorService alternativeExecutor() {
-    ExecutorService alternativeExecutor = ThreadPool.create(10, 40, 1, TimeUnit.SECONDS,
+    return ThreadPool.create(10, 40, 1, TimeUnit.SECONDS,
         new ThreadFactoryBuilder().setNameFormat("alternative-%d").setPriority(Thread.MIN_PRIORITY).build());
-    Runtime.getRuntime().addShutdownHook(new Thread(alternativeExecutor::shutdownNow));
-    return alternativeExecutor;
   }
 
   @Provides
   @Singleton
   @Named("systemExecutor")
   public ExecutorService systemExecutor() {
-    ExecutorService systemExecutor = ThreadPool.create(4, 9, 1, TimeUnit.SECONDS,
+    return ThreadPool.create(4, 9, 1, TimeUnit.SECONDS,
         new ThreadFactoryBuilder().setNameFormat("system-%d").setPriority(Thread.MAX_PRIORITY).build());
-    Runtime.getRuntime().addShutdownHook(new Thread(systemExecutor::shutdownNow));
-    return systemExecutor;
   }
 
   @Provides
   @Singleton
   @Named("grpcServiceExecutor")
   public ExecutorService grpcServiceExecutor() {
-    ExecutorService grpcServiceExecutor = Executors.newFixedThreadPool(
+    return Executors.newFixedThreadPool(
         1, new ThreadFactoryBuilder().setNameFormat("grpc-%d").setPriority(Thread.MAX_PRIORITY).build());
-    Runtime.getRuntime().addShutdownHook(new Thread(grpcServiceExecutor::shutdownNow));
-    return grpcServiceExecutor;
   }
 
   @Provides
   @Singleton
   @Named("taskProgressExecutor")
   public ExecutorService taskProgressExecutor() {
-    ExecutorService taskProgressExecutor = Executors.newFixedThreadPool(
+    return Executors.newFixedThreadPool(
         10, new ThreadFactoryBuilder().setNameFormat("taskProgress-%d").setPriority(Thread.MAX_PRIORITY).build());
-    Runtime.getRuntime().addShutdownHook(new Thread(taskProgressExecutor::shutdownNow));
-    return taskProgressExecutor;
+  }
+
+  @Provides
+  @Singleton
+  @Named("taskExecutor")
+  public ExecutorService taskExecutor() {
+    return ThreadPool.create(10, 400, 1, TimeUnit.SECONDS,
+        new ThreadFactoryBuilder().setNameFormat("task-exec-%d").setPriority(Thread.MIN_PRIORITY).build());
   }
 
   @Provides
   @Singleton
   @Named("asyncExecutor")
   public ExecutorService asyncExecutor() {
-    ExecutorService asyncExecutor = ThreadPool.create(10, 400, 1, TimeUnit.SECONDS,
+    return ThreadPool.create(10, 400, 1, TimeUnit.SECONDS,
         new ThreadFactoryBuilder().setNameFormat("async-%d").setPriority(Thread.MIN_PRIORITY).build());
-    Runtime.getRuntime().addShutdownHook(new Thread(asyncExecutor::shutdownNow));
-    return asyncExecutor;
+  }
+
+  @Provides
+  @Singleton
+  @Named("syncExecutor")
+  public ExecutorService syncExecutor() {
+    return ThreadPool.create(10, 40, 1, TimeUnit.SECONDS,
+        new ThreadFactoryBuilder().setNameFormat("sync-task-%d").setPriority(Thread.NORM_PRIORITY).build());
   }
 
   @Provides
   @Singleton
   @Named("artifactExecutor")
   public ExecutorService artifactExecutor() {
-    ExecutorService artifactExecutor = ThreadPool.create(10, 40, 1, TimeUnit.SECONDS,
+    return ThreadPool.create(10, 40, 1, TimeUnit.SECONDS,
         new ThreadFactoryBuilder().setNameFormat("artifact-%d").setPriority(Thread.MIN_PRIORITY).build());
-    Runtime.getRuntime().addShutdownHook(new Thread(artifactExecutor::shutdownNow));
-    return artifactExecutor;
   }
 
   @Provides
   @Singleton
   @Named("timeoutExecutor")
   public ExecutorService timeoutExecutor() {
-    ExecutorService timeoutExecutor = ThreadPool.create(10, 40, 7, TimeUnit.SECONDS,
+    return ThreadPool.create(10, 40, 7, TimeUnit.SECONDS,
         new ThreadFactoryBuilder().setNameFormat("timeout-%d").setPriority(Thread.NORM_PRIORITY).build());
-    Runtime.getRuntime().addShutdownHook(new Thread(timeoutExecutor::shutdownNow));
-    return timeoutExecutor;
   }
 
   @Provides
   @Singleton
   @Named("taskPollExecutor")
   public ExecutorService taskPollExecutor() {
-    ExecutorService taskPollExecutorService = ThreadPool.create(4, 10, 3, TimeUnit.SECONDS,
+    return ThreadPool.create(4, 10, 3, TimeUnit.SECONDS,
         new ThreadFactoryBuilder().setNameFormat("task-poll-%d").setPriority(Thread.MAX_PRIORITY).build());
-    Runtime.getRuntime().addShutdownHook(new Thread(taskPollExecutorService::shutdownNow));
-    return taskPollExecutorService;
-  }
-
-  @Provides
-  @Singleton
-  @Named("asyncTaskDispatchExecutor")
-  public ExecutorService asyncTaskDispatchExecutor() {
-    ExecutorService asyncTaskDispatchExecutor = ThreadPool.create(10, 10, 3, TimeUnit.SECONDS,
-        new ThreadFactoryBuilder().setNameFormat("async-task-dispatch-%d").setPriority(Thread.MAX_PRIORITY).build());
-    Runtime.getRuntime().addShutdownHook(new Thread(asyncTaskDispatchExecutor::shutdownNow));
-    return asyncTaskDispatchExecutor;
   }
 
   @Provides
   @Singleton
   @Named("jenkinsExecutor")
   public ExecutorService jenkinsExecutor() {
-    ExecutorService jenkinsExecutor = ThreadPool.create(1, 40, 1, TimeUnit.SECONDS,
+    return ThreadPool.create(1, 40, 1, TimeUnit.SECONDS,
         new ThreadFactoryBuilder().setNameFormat("jenkins-%d").setPriority(Thread.NORM_PRIORITY).build());
-    Runtime.getRuntime().addShutdownHook(new Thread(jenkinsExecutor::shutdownNow));
-    return jenkinsExecutor;
   }
 
   @Provides
   @Singleton
   @Named("perpetualTaskExecutor")
   public ExecutorService perpetualTaskExecutor() {
-    ExecutorService perpetualTaskExecutor = ThreadPool.create(10, 40, 1, TimeUnit.SECONDS,
+    return ThreadPool.create(10, 40, 1, TimeUnit.SECONDS,
         new ThreadFactoryBuilder().setNameFormat("perpetual-task-%d").setPriority(Thread.NORM_PRIORITY).build());
-    Runtime.getRuntime().addShutdownHook(new Thread(perpetualTaskExecutor::shutdownNow));
-    return perpetualTaskExecutor;
   }
 
   @Provides
   @Singleton
   @Named("perpetualTaskTimeoutExecutor")
   public ScheduledExecutorService perpetualTaskTimeoutExecutor() {
-    ScheduledExecutorService perpetualTaskTimeoutExecutor = new ScheduledThreadPoolExecutor(40,
+    return new ScheduledThreadPoolExecutor(40,
         new ThreadFactoryBuilder()
             .setNameFormat("perpetual-task-timeout-%d")
             .setPriority(Thread.NORM_PRIORITY)
             .build());
-    Runtime.getRuntime().addShutdownHook(new Thread(perpetualTaskTimeoutExecutor::shutdownNow));
-    return perpetualTaskTimeoutExecutor;
+  }
+
+  @Provides
+  @Singleton
+  @Named("delegateAgentMetricsExecutor")
+  public ScheduledExecutorService delegateAgentMetricsExecutor() {
+    return newSingleThreadScheduledExecutor(new ThreadFactoryBuilder()
+                                                .setNameFormat("delegate-agent-metrics-executor-%d")
+                                                .setPriority(Thread.NORM_PRIORITY)
+                                                .build());
   }
 
   @Override
@@ -1638,6 +1652,8 @@ public class DelegateModule extends AbstractModule {
         .to(JiraValidationHandler.class);
     connectorTypeToConnectorValidationHandlerMap.addBinding(ConnectorType.SERVICENOW.getDisplayName())
         .to(ServiceNowValidationHandler.class);
+    connectorTypeToConnectorValidationHandlerMap.addBinding(ConnectorType.ERROR_TRACKING.getDisplayName())
+        .to(CVConnectorValidationHandler.class);
   }
 
   private void bindExceptionHandlers() {

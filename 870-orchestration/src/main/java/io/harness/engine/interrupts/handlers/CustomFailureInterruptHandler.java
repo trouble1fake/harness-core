@@ -12,13 +12,16 @@ import static io.harness.interrupts.Interrupt.State.PROCESSED_UNSUCCESSFULLY;
 
 import io.harness.OrchestrationPublisherName;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.executions.node.NodeExecutionUpdateFailedException;
 import io.harness.engine.interrupts.InterruptProcessingFailedException;
 import io.harness.engine.interrupts.callback.FailureInterruptCallback;
 import io.harness.engine.interrupts.handlers.publisher.InterruptEventPublisher;
 import io.harness.exception.InvalidRequestException;
+import io.harness.execution.NodeExecution;
 import io.harness.interrupts.Interrupt;
 import io.harness.pms.contracts.interrupts.InterruptType;
+import io.harness.pms.execution.utils.NodeProjectionUtils;
 import io.harness.waiter.WaitNotifyEngine;
 
 import com.google.inject.Inject;
@@ -31,11 +34,14 @@ import lombok.extern.slf4j.Slf4j;
 public class CustomFailureInterruptHandler extends MarkStatusInterruptHandler {
   @Inject private InterruptEventPublisher interruptEventPublisher;
   @Inject private WaitNotifyEngine waitNotifyEngine;
+  @Inject private NodeExecutionService nodeExecutionService;
   @Inject @Named(OrchestrationPublisherName.PUBLISHER_NAME) String publisherName;
 
   @Override
   public Interrupt handleInterruptForNodeExecution(Interrupt interrupt, String nodeExecutionId) {
     try {
+      NodeExecution nodeExecution =
+          nodeExecutionService.getWithFieldsIncluded(nodeExecutionId, NodeProjectionUtils.withStatusAndMode);
       String notifyId = interruptEventPublisher.publishEvent(nodeExecutionId, interrupt, InterruptType.CUSTOM_FAILURE);
       waitNotifyEngine.waitForAllOn(publisherName,
           FailureInterruptCallback.builder()
@@ -43,6 +49,7 @@ public class CustomFailureInterruptHandler extends MarkStatusInterruptHandler {
               .interruptId(interrupt.getUuid())
               .interruptType(interrupt.getType())
               .interruptConfig(interrupt.getInterruptConfig())
+              .originalStatus(nodeExecution.getStatus())
               .build(),
           notifyId);
       return interruptService.markProcessing(interrupt.getUuid());

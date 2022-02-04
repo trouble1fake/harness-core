@@ -38,8 +38,8 @@ write_mongo_params() {
   done
 }
 
-yq delete -i $CONFIG_FILE server.applicationConnectors[0]
-yq delete -i $CONFIG_FILE grpcServerConfig.connectors[0]
+yq delete -i $CONFIG_FILE 'server.applicationConnectors.(type==h2)'
+yq delete -i $CONFIG_FILE 'grpcServerConfig.connectors.(secure==true)'
 
 yq write -i $CONFIG_FILE server.adminConnectors "[]"
 
@@ -101,7 +101,6 @@ fi
 if [[ "" != "$MONGO_URI" ]]; then
   yq write -i $CONFIG_FILE mongo.uri "${MONGO_URI//\\&/&}"
 fi
-
 
 if [[ "" != "$MONGO_HOSTS_AND_PORTS" ]]; then
   yq delete -i $CONFIG_FILE mongo.uri
@@ -248,17 +247,17 @@ fi
 yq write -i $CONFIG_FILE server.requestLog.appenders[0].threshold "TRACE"
 
 if [[ "$STACK_DRIVER_LOGGING_ENABLED" == "true" ]]; then
-  yq delete -i $CONFIG_FILE logging.appenders[2]
-  yq delete -i $CONFIG_FILE logging.appenders[0]
-  yq write -i $CONFIG_FILE logging.appenders[0].stackdriverLogEnabled "true"
+  yq delete -i $CONFIG_FILE 'logging.appenders.(type==file)'
+  yq delete -i $CONFIG_FILE 'logging.appenders.(type==console)'
+  yq write -i $CONFIG_FILE 'logging.appenders.(type==gke-console).stackdriverLogEnabled' "true"
 else
   if [[ "$ROLLING_FILE_LOGGING_ENABLED" == "true" ]]; then
-    yq delete -i $CONFIG_FILE logging.appenders[1]
-    yq write -i $CONFIG_FILE logging.appenders[1].currentLogFilename "/opt/harness/logs/portal.log"
-    yq write -i $CONFIG_FILE logging.appenders[1].archivedLogFilenamePattern "/opt/harness/logs/portal.%d.%i.log"
+    yq delete -i $CONFIG_FILE 'logging.appenders.(type==gke-console)'
+    yq write -i $CONFIG_FILE 'logging.appenders.(type==file).currentLogFilename' "/opt/harness/logs/portal.log"
+    yq write -i $CONFIG_FILE 'logging.appenders.(type==file).archivedLogFilenamePattern' "/opt/harness/logs/portal.%d.%i.log"
   else
-    yq delete -i $CONFIG_FILE logging.appenders[2]
-    yq delete -i $CONFIG_FILE logging.appenders[1]
+    yq delete -i $CONFIG_FILE 'logging.appenders.(type==file)'
+    yq delete -i $CONFIG_FILE 'logging.appenders.(type==gke-console)'
   fi
 fi
 
@@ -280,10 +279,6 @@ fi
 
 if [[ "" != "$DEPLOY_MODE" ]]; then
   yq write -i $CONFIG_FILE deployMode "$DEPLOY_MODE"
-fi
-
-if [[ "" != "$KUBECTL_VERSION" ]]; then
-  yq write -i $CONFIG_FILE kubectlVersion "$KUBECTL_VERSION"
 fi
 
 yq write -i $NEWRELIC_FILE common.license_key "$NEWRELIC_LICENSE_KEY"
@@ -391,23 +386,6 @@ fi
 
 if [[ "" != "$SEGMENT_APIKEY" ]]; then
   yq write -i $CONFIG_FILE segmentConfig.apiKey "$SEGMENT_APIKEY"
-fi
-
-#segmentConfiguration is for telemetry framework
-if [[ "" != "$SEGMENT_ENABLED_NG" ]]; then
-  yq write -i $CONFIG_FILE segmentConfiguration.enabled "$SEGMENT_ENABLED_NG"
-fi
-
-if [[ "" != "$SEGMENT_URL_NG" ]]; then
-  yq write -i $CONFIG_FILE segmentConfiguration.url "$SEGMENT_URL_NG"
-fi
-
-if [[ "" != "$SEGMENT_APIKEY_NG" ]]; then
-  yq write -i $CONFIG_FILE segmentConfiguration.apiKey "$SEGMENT_APIKEY_NG"
-fi
-
-if [[ "" != "$SEGMENT_VERIFY_CERT_NG" ]]; then
-  yq write -i $CONFIG_FILE segmentConfiguration.certValidationRequired "$SEGMENT_VERIFY_CERT_NG"
 fi
 
 if [[ "" != "$SALESFORCE_USERNAME" ]]; then
@@ -739,7 +717,7 @@ if [[ "" != "$REDIS_SENTINELS" ]]; then
   for REDIS_SENTINEL_URL in "${REDIS_SENTINEL_URLS[@]}"; do
     yq write -i $CONFIG_FILE redisLockConfig.sentinelUrls.[$INDEX] "${REDIS_SENTINEL_URL}"
     yq write -i $CONFIG_FILE redisAtmosphereConfig.sentinelUrls.[$INDEX] "${REDIS_SENTINEL_URL}"
-    yq write -i $REDISSON_CACHE_FILE sentinelServersConfig.sentinelAddresses.[+] "${REDIS_SENTINEL_URL}"
+    yq write -i $REDISSON_CACHE_FILE sentinelServersConfig.sentinelAddresses.[$INDEX] "${REDIS_SENTINEL_URL}"
     INDEX=$(expr $INDEX + 1)
   done
 fi
@@ -926,6 +904,10 @@ if [[ "" != "$ENABLE_AUDIT" ]]; then
   yq write -i $CONFIG_FILE enableAudit $ENABLE_AUDIT
 fi
 
+if [[ "" != "$AUDIT_CLIENT_BASEURL" ]]; then
+  yq write -i $CONFIG_FILE auditClientConfig.baseUrl "$AUDIT_CLIENT_BASEURL"
+fi
+
 if [[ "" != "$EVENTS_FRAMEWORK_REDIS_SENTINELS" ]]; then
   IFS=',' read -ra SENTINEL_URLS <<< "$EVENTS_FRAMEWORK_REDIS_SENTINELS"
   INDEX=0
@@ -946,9 +928,12 @@ replace_key_value eventsFramework.redis.sslConfig.enabled $EVENTS_FRAMEWORK_REDI
 replace_key_value eventsFramework.redis.sslConfig.CATrustStorePath $EVENTS_FRAMEWORK_REDIS_SSL_CA_TRUST_STORE_PATH
 replace_key_value eventsFramework.redis.sslConfig.CATrustStorePassword $EVENTS_FRAMEWORK_REDIS_SSL_CA_TRUST_STORE_PASSWORD
 replace_key_value ngAuthUIEnabled "$HARNESS_ENABLE_NG_AUTH_UI_PLACEHOLDER"
-replace_key_value portal.gatewayPathPrefix "$GATEWAY_PATH_PREFIX"
 replace_key_value portal.zendeskBaseUrl "$ZENDESK_BASE_URL"
 replace_key_value deployVariant "$DEPLOY_VERSION"
+
+if [[ "" != ${GATEWAY_PATH_PREFIX+x} ]]; then
+  yq write -i $CONFIG_FILE portal.gatewayPathPrefix "$GATEWAY_PATH_PREFIX"
+fi
 
 if [[ "" != "$NG_MANAGER_BASE_URL" ]]; then
   yq write -i $CONFIG_FILE ngManagerServiceHttpClientConfig.baseUrl "$NG_MANAGER_BASE_URL"
@@ -984,6 +969,22 @@ fi
 
 if [[ "" != "$USE_GLOBAL_KMS_AS_BASE_ALGO" ]]; then
   yq write -i $CONFIG_FILE useGlobalKMSAsBaseAlgo "$USE_GLOBAL_KMS_AS_BASE_ALGO"
+fi
+
+if [[ "" != "$SEGMENT_ENABLED_NG" ]]; then
+  yq write -i $CONFIG_FILE segmentConfiguration.enabled "$SEGMENT_ENABLED_NG"
+fi
+
+if [[ "" != "$SEGMENT_URL_NG" ]]; then
+  yq write -i $CONFIG_FILE segmentConfiguration.url "$SEGMENT_URL_NG"
+fi
+
+if [[ "" != "$SEGMENT_APIKEY_NG" ]]; then
+  yq write -i $CONFIG_FILE segmentConfiguration.apiKey "$SEGMENT_APIKEY_NG"
+fi
+
+if [[ "" != "$SEGMENT_VERIFY_CERT_NG" ]]; then
+  yq write -i $CONFIG_FILE segmentConfiguration.certValidationRequired "$SEGMENT_VERIFY_CERT_NG"
 fi
 
 if [[ "" != "$SECOPS_EMAIL" ]]; then

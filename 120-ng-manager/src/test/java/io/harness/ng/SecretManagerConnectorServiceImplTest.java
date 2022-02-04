@@ -155,7 +155,7 @@ public class SecretManagerConnectorServiceImplTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testDeleteSecretManager() {
     when(ngSecretManagerService.getSecretManager(any(), any(), any(), any(), eq(true))).thenReturn(null);
-    when(defaultConnectorService.delete(any(), any(), any(), any())).thenReturn(true);
+    when(defaultConnectorService.delete(any(), any(), any(), any(), any())).thenReturn(true);
     boolean success = secretManagerConnectorService.delete(ACCOUNT, null, null, "identifier");
     assertThat(success).isEqualTo(true);
   }

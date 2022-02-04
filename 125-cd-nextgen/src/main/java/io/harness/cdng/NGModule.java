@@ -10,7 +10,6 @@ package io.harness.cdng;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 import io.harness.NGBeanModule;
-import io.harness.NGPipelineCommonsModule;
 import io.harness.WalkTreeModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.artifact.resources.docker.service.DockerResourceService;
@@ -63,7 +62,6 @@ public class NGModule extends AbstractModule {
   protected void configure() {
     install(NGCoreModule.getInstance());
     install(WalkTreeModule.getInstance());
-    install(NGPipelineCommonsModule.getInstance());
     install(NGBeanModule.getInstance());
 
     bind(ArtifactSourceService.class).to(ArtifactSourceServiceImpl.class);

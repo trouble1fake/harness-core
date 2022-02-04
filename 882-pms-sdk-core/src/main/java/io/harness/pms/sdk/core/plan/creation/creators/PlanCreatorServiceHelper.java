@@ -14,6 +14,7 @@ import io.harness.pms.contracts.plan.Dependencies;
 import io.harness.pms.contracts.plan.Dependency;
 import io.harness.pms.plan.creation.PlanCreationBlobResponseUtils;
 import io.harness.pms.plan.creation.PlanCreatorUtils;
+import io.harness.pms.sdk.core.plan.creation.beans.MergePlanCreationResponse;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationResponse;
 import io.harness.pms.yaml.YamlField;
 import io.harness.pms.yaml.YamlUtils;
@@ -39,7 +40,7 @@ public class PlanCreatorServiceHelper {
   }
 
   public Dependencies handlePlanCreationResponses(List<PlanCreationResponse> planCreationResponses,
-      PlanCreationResponse finalResponse, String currentYaml, Dependencies dependencies,
+      MergePlanCreationResponse finalResponse, String currentYaml, Dependencies dependencies,
       List<Map.Entry<String, String>> dependenciesList) {
     String updatedYaml = currentYaml;
     List<String> errorMessages = planCreationResponses.stream()

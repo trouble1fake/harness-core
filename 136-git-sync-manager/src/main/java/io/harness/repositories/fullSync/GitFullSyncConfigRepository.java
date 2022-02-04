@@ -17,7 +17,8 @@ import org.springframework.data.repository.CrudRepository;
 
 @HarnessRepo
 @OwnedBy(HarnessTeam.PL)
-public interface GitFullSyncConfigRepository extends CrudRepository<GitFullSyncConfig, String> {
+public interface GitFullSyncConfigRepository
+    extends CrudRepository<GitFullSyncConfig, String>, GitFullSyncConfigRepositoryCustom {
   Optional<GitFullSyncConfig> findByAccountIdentifierAndOrgIdentifierAndProjectIdentifier(
       String accountIdentifier, String orgIdentifier, String projectIdentifier);
 }

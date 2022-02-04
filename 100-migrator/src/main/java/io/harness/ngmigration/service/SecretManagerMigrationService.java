@@ -14,6 +14,8 @@ import io.harness.connector.ConnectorDTO;
 import io.harness.connector.ConnectorInfoDTO;
 import io.harness.ngmigration.beans.MigrationInputDTO;
 import io.harness.ngmigration.beans.NgEntityDetail;
+import io.harness.ngmigration.client.NGClient;
+import io.harness.ngmigration.client.PmsClient;
 import io.harness.ngmigration.connector.SecretFactory;
 
 import software.wings.ngmigration.CgEntityId;
@@ -26,6 +28,7 @@ import software.wings.ngmigration.NGYamlFile;
 import software.wings.service.intfc.security.SecretManager;
 
 import com.google.inject.Inject;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -63,8 +66,8 @@ public class SecretManagerMigrationService implements NgMigration {
   }
 
   @Override
-  public void migrate(
-      Map<CgEntityId, CgEntityNode> entities, Map<CgEntityId, Set<CgEntityId>> graph, CgEntityId entityId) {}
+  public void migrate(String auth, NGClient ngClient, PmsClient pmsClient, MigrationInputDTO inputDTO,
+      NGYamlFile yamlFile) throws IOException {}
 
   @Override
   public List<NGYamlFile> getYamls(MigrationInputDTO inputDTO, Map<CgEntityId, CgEntityNode> entities,

@@ -60,6 +60,8 @@ import io.harness.cvng.core.entities.DatadogLogCVConfig;
 import io.harness.cvng.core.entities.DatadogLogCVConfig.DatadogLogCVConfigBuilder;
 import io.harness.cvng.core.entities.DatadogMetricCVConfig;
 import io.harness.cvng.core.entities.DatadogMetricCVConfig.DatadogMetricCVConfigBuilder;
+import io.harness.cvng.core.entities.ErrorTrackingCVConfig;
+import io.harness.cvng.core.entities.ErrorTrackingCVConfig.ErrorTrackingCVConfigBuilder;
 import io.harness.cvng.core.entities.MetricPack;
 import io.harness.cvng.core.entities.NewRelicCVConfig;
 import io.harness.cvng.core.entities.NewRelicCVConfig.NewRelicCVConfigBuilder;
@@ -87,6 +89,8 @@ import io.harness.cvng.dashboard.entities.HeatMap.HeatMapRisk;
 import io.harness.cvng.servicelevelobjective.beans.ErrorBudgetRisk;
 import io.harness.cvng.servicelevelobjective.beans.SLIMetricType;
 import io.harness.cvng.servicelevelobjective.beans.SLIMissingDataType;
+import io.harness.cvng.servicelevelobjective.beans.SLOErrorBudgetResetDTO;
+import io.harness.cvng.servicelevelobjective.beans.SLOErrorBudgetResetDTO.SLOErrorBudgetResetDTOBuilder;
 import io.harness.cvng.servicelevelobjective.beans.SLOTarget;
 import io.harness.cvng.servicelevelobjective.beans.SLOTargetType;
 import io.harness.cvng.servicelevelobjective.beans.ServiceLevelIndicatorDTO;
@@ -380,6 +384,22 @@ public class BuilderFactory {
 
     cvConfig.setMetricInfoList(Arrays.asList(metricInfo));
     return cvConfig;
+  }
+
+  public ErrorTrackingCVConfigBuilder errorTrackingCVConfigBuilder() {
+    return ErrorTrackingCVConfig.builder()
+        .accountId(context.getAccountId())
+        .orgIdentifier(context.getOrgIdentifier())
+        .projectIdentifier(context.getProjectIdentifier())
+        .serviceIdentifier(context.getServiceIdentifier())
+        .envIdentifier(context.getEnvIdentifier())
+        .queryName(randomAlphabetic(10))
+        .query(randomAlphabetic(10))
+        .identifier(generateUuid())
+        .monitoringSourceName(generateUuid())
+        .connectorIdentifier("Error Tracking Connector")
+        .category(CVMonitoringCategory.ERRORS)
+        .productName(generateUuid());
   }
 
   public StackdriverCVConfigBuilder stackdriverMetricCVConfigBuilder() {
@@ -684,6 +704,13 @@ public class BuilderFactory {
         .healthSourceRef("healthSourceIdentifier")
         .monitoredServiceRef(context.serviceIdentifier + "_" + context.getEnvIdentifier())
         .userJourneyRef("userJourney");
+  }
+
+  public SLOErrorBudgetResetDTOBuilder getSLOErrorBudgetResetDTOBuilder() {
+    return SLOErrorBudgetResetDTO.builder()
+        .serviceLevelObjectiveIdentifier("slo")
+        .errorBudgetIncrementPercentage(10.0)
+        .reason("reason");
   }
 
   public ServiceLevelObjectiveBuilder getServiceLevelObjectiveBuilder() {

@@ -50,6 +50,8 @@ public interface MonitoredServiceService extends DeleteEntityByHandler<Monitored
 
   MonitoredServiceDTO getMonitoredServiceDTO(ServiceEnvironmentParams serviceEnvironmentParams);
 
+  MonitoredService getMonitoredService(ProjectParams projectParams, String identifier);
+
   List<MonitoredService> list(
       @NonNull ProjectParams projectParams, @Nullable String serviceIdentifier, @Nullable String environmentIdentifier);
 

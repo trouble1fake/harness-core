@@ -164,6 +164,7 @@ import software.wings.service.intfc.ServiceResourceService;
 import software.wings.sm.StateType;
 import software.wings.sm.states.AwsCodeDeployState;
 import software.wings.sm.states.customdeployment.InstanceFetchState.InstanceFetchStateKeys;
+import software.wings.utils.ArtifactType;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
@@ -982,7 +983,7 @@ public class WorkflowServiceHelper {
 
   public void generateNewWorkflowPhaseStepsForAzureWebApp(String appId, String accountId, WorkflowPhase workflowPhase,
       OrchestrationWorkflowType orchestrationWorkflowType, boolean isDynamicInfrastructure, boolean isFirstPhase) {
-    validateWebAppWorkflowCreation(accountId, orchestrationWorkflowType);
+    validateWebAppWorkflowCreation(appId, accountId, orchestrationWorkflowType, workflowPhase);
     Service service = serviceResourceService.getWithDetails(appId, workflowPhase.getServiceId());
     Map<CommandType, List<Command>> commandMap = getCommandTypeListMap(service);
     List<PhaseStep> phaseSteps = workflowPhase.getPhaseSteps();
@@ -1059,7 +1060,8 @@ public class WorkflowServiceHelper {
     phaseSteps.add(aPhaseStep(PhaseStepType.WRAP_UP, WRAP_UP).build());
   }
 
-  private void validateWebAppWorkflowCreation(String accountId, OrchestrationWorkflowType orchestrationWorkflowType) {
+  private void validateWebAppWorkflowCreation(String appId, String accountId,
+      OrchestrationWorkflowType orchestrationWorkflowType, WorkflowPhase workflowPhase) {
     if (!featureFlagService.isEnabled(FeatureName.AZURE_WEBAPP, accountId)) {
       throw new InvalidRequestException(
           format("Azure WebApp deployment is disabled by feature flag for account id : %s", accountId), USER);
@@ -1071,6 +1073,19 @@ public class WorkflowServiceHelper {
               orchestrationWorkflowType != null ? orchestrationWorkflowType.name() : ""),
           USER);
     }
+    if (!featureFlagService.isEnabled(FeatureName.AZURE_WEBAPP_NON_CONTAINER, accountId)
+        && isAzureWebappNonContainerDeployment(appId, workflowPhase)) {
+      throw new InvalidRequestException(
+          format("Azure WebApp non-container deployment is disabled by feature flag for account id : %s", accountId),
+          USER);
+    }
+  }
+
+  private boolean isAzureWebappNonContainerDeployment(String appId, WorkflowPhase workflowPhase) {
+    Service service = serviceResourceService.getWithDetails(appId, workflowPhase.getServiceId());
+    ArtifactType artifactType = service.getArtifactType();
+    return ArtifactType.WAR.equals(artifactType) || ArtifactType.ZIP.equals(artifactType)
+        || ArtifactType.NUGET.equals(artifactType);
   }
 
   private boolean isAzureWebAppSupportedWorkflowType(OrchestrationWorkflowType workflowType) {
@@ -3274,17 +3289,28 @@ public class WorkflowServiceHelper {
     validateWaitInterval(orchestrationWorkflow.getRollbackWorkflowPhaseIdMap());
   }
 
+  private void validateWaitIntervalValue(Integer value) {
+    if (value != null) {
+      if (value < 0) {
+        throw new InvalidRequestException("Negative values for wait interval not allowed.");
+      }
+      // We use DelayEventHelper. Queueable.java has a FdTtlIndex limited to a day.
+      // Refer to CDC-16519
+      if (value > 24 * 60 * 60) {
+        throw new InvalidRequestException("Wait Interval cannot be more than one day.");
+      }
+    }
+  }
+
   private void validateWaitInterval(WorkflowPhase workflowPhase) {
-    if (workflowPhase != null && workflowPhase.getPhaseSteps() != null
-        && workflowPhase.getPhaseSteps().stream().anyMatch(
-            phaseStep -> phaseStep.getWaitInterval() != null && phaseStep.getWaitInterval() < 0)) {
-      throw new InvalidRequestException("Negative values for waitInterval not allowed.");
+    if (workflowPhase != null && workflowPhase.getPhaseSteps() != null) {
+      workflowPhase.getPhaseSteps().forEach(phaseStep -> validateWaitIntervalValue(phaseStep.getWaitInterval()));
     }
   }
 
   public void validateWaitInterval(PhaseStep phaseStep) {
-    if (phaseStep != null && phaseStep.getWaitInterval() != null && phaseStep.getWaitInterval() < 0) {
-      throw new InvalidRequestException("Negative values for wait interval not allowed.");
+    if (phaseStep != null) {
+      validateWaitIntervalValue(phaseStep.getWaitInterval());
     }
   }
 

@@ -189,6 +189,18 @@ if [[ "" != "$NG_MANAGER_CLIENT_BASEURL" ]]; then
   yq write -i $CONFIG_FILE ngManagerClientConfig.baseUrl "$NG_MANAGER_CLIENT_BASEURL"
 fi
 
+if [[ "" != "$CENG_CLIENT_BASEURL" ]]; then
+  yq write -i $CONFIG_FILE ceNextGenClientConfig.baseUrl "$CENG_CLIENT_BASEURL"
+fi
+
+if [[ "" != "$CENG_CLIENT_READ_TIMEOUT" ]]; then
+  yq write -i $CONFIG_FILE ceNextGenClientConfig.readTimeOutSeconds "$CENG_CLIENT_READ_TIMEOUT"
+fi
+
+if [[ "" != "$CENG_CLIENT_CONNECT_TIMEOUT" ]]; then
+  yq write -i $CONFIG_FILE ceNextGenClientConfig.connectTimeOutSeconds "$CENG_CLIENT_CONNECT_TIMEOUT"
+fi
+
 if [[ "" != "$JWT_AUTH_SECRET" ]]; then
   yq write -i $CONFIG_FILE nextGen.jwtAuthSecret "$JWT_AUTH_SECRET"
 fi
@@ -427,6 +439,9 @@ replace_key_value gitGrpcClientConfigs.templateservice.authority "$TEMPLATE_GITS
 
 replace_key_value gitGrpcClientConfigs.cf.target "$CF_GITSYNC_TARGET"
 replace_key_value gitGrpcClientConfigs.cf.authority "$CF_GITSYNC_AUTHORITY"
+
+replace_key_value gitGrpcClientConfigs.policymgmt.target "$POLICYMGMT_GITSYNC_TARGET"
+replace_key_value gitGrpcClientConfigs.policymgmt.authority "$POLICYMGMT_GITSYNC_AUTHORITY"
 
 replace_key_value cfClientConfig.apiKey "$CF_CLIENT_API_KEY"
 replace_key_value cfClientConfig.configUrl "$CF_CLIENT_CONFIG_URL"

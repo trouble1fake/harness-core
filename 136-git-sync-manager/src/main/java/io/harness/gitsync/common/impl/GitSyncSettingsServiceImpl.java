@@ -55,7 +55,7 @@ public class GitSyncSettingsServiceImpl implements GitSyncSettingsService {
     Criteria criteria = Criteria.where(GitSyncSettingsKeys.accountIdentifier)
                             .is(request.getAccountIdentifier())
                             .and(GitSyncSettingsKeys.orgIdentifier)
-                            .is(request.getOrganizationIdentifier())
+                            .is(request.getOrgIdentifier())
                             .and(GitSyncSettingsKeys.projectIdentifier)
                             .is(request.getProjectIdentifier());
     Map<String, String> settings = new HashMap<>();
@@ -64,5 +64,11 @@ public class GitSyncSettingsServiceImpl implements GitSyncSettingsService {
     Update update = new Update().set(GitSyncSettingsKeys.settings, settings);
     final GitSyncSettings updatedGitSyncSettings = gitSyncSettingsRepository.update(criteria, update);
     return GitSyncSettingsMapper.getDTOFromGitSyncSettings(updatedGitSyncSettings);
+  }
+
+  @Override
+  public void delete(String accountIdentifier, String orgIdentifier, String projectIdentifier) {
+    gitSyncSettingsRepository.deleteByAccountIdentifierAndOrgIdentifierAndProjectIdentifier(
+        accountIdentifier, orgIdentifier, projectIdentifier);
   }
 }

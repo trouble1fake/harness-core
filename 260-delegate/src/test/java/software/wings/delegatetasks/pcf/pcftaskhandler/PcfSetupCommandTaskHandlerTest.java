@@ -418,7 +418,7 @@ public class PcfSetupCommandTaskHandlerTest extends WingsBaseTest {
     // since version changed did not happen so resetState() should not be called
     verify(pcfCommandTaskBaseHelper, times(0))
         .resetState(eq(previousReleases), any(ApplicationSummary.class), any(ApplicationSummary.class), anyString(),
-            any(CfRequestConfig.class), anyBoolean(), any(Deque.class), anyInt(), any(LogCallback.class));
+            any(CfRequestConfig.class), anyBoolean(), any(Deque.class), anyInt(), any(LogCallback.class), any());
 
     // since we are in version -> version deployment mode, renameApp() should not be called
     verify(pcfCommandTaskBaseHelper, times(0))
@@ -496,7 +496,7 @@ public class PcfSetupCommandTaskHandlerTest extends WingsBaseTest {
     verify(pcfCommandTaskBaseHelper, times(1))
         .resetState(eq(previousReleases), activeApplicationCaptor.capture(), inActiveApplicationCaptor.capture(),
             releaseNamePrefix.capture(), any(CfRequestConfig.class), nonVersion.capture(), any(Deque.class),
-            activeAppVersion.capture(), any());
+            activeAppVersion.capture(), any(), any());
 
     assertThat(activeApplicationCaptor.getValue().getName()).isEqualTo(activeAppName);
     assertThat(inActiveApplicationCaptor.getValue().getName()).isEqualTo(inActiveAppName);
@@ -558,7 +558,7 @@ public class PcfSetupCommandTaskHandlerTest extends WingsBaseTest {
     // since version changed did not happen so resetState() should not be called
     verify(pcfCommandTaskBaseHelper, times(0))
         .resetState(eq(previousReleases), any(ApplicationSummary.class), any(ApplicationSummary.class), anyString(),
-            any(CfRequestConfig.class), anyBoolean(), any(Deque.class), anyInt(), any(LogCallback.class));
+            any(CfRequestConfig.class), anyBoolean(), any(Deque.class), anyInt(), any(LogCallback.class), any());
 
     ArgumentCaptor<ApplicationSummary> renamedAppCaptor = ArgumentCaptor.forClass(ApplicationSummary.class);
     ArgumentCaptor<String> newNameCaptor = ArgumentCaptor.forClass(String.class);
@@ -653,7 +653,7 @@ public class PcfSetupCommandTaskHandlerTest extends WingsBaseTest {
     verify(pcfCommandTaskBaseHelper, times(1))
         .resetState(eq(previousReleases), activeApplicationCaptor.capture(), inActiveApplicationCaptor.capture(),
             releaseNamePrefix.capture(), any(CfRequestConfig.class), nonVersion.capture(), any(Deque.class),
-            activeAppVersion.capture(), any());
+            activeAppVersion.capture(), any(), any());
 
     assertThat(activeApplicationCaptor.getValue().getName()).isEqualTo(releaseName);
     assertThat(inActiveApplicationCaptor.getValue().getName()).isEqualTo(inActiveAppCurrentName);
@@ -739,7 +739,7 @@ public class PcfSetupCommandTaskHandlerTest extends WingsBaseTest {
     // since its blue green resetState() should not be called
     verify(pcfCommandTaskBaseHelper, times(0))
         .resetState(eq(previousReleases), any(ApplicationSummary.class), any(ApplicationSummary.class), anyString(),
-            any(CfRequestConfig.class), anyBoolean(), any(Deque.class), anyInt(), any(LogCallback.class));
+            any(CfRequestConfig.class), anyBoolean(), any(Deque.class), anyInt(), any(LogCallback.class), any());
 
     verify(pcfCommandTaskBaseHelper, times(1))
         .renameInActiveAppDuringBGDeployment(eq(previousReleases), any(CfRequestConfig.class), eq(releaseName),
@@ -813,7 +813,7 @@ public class PcfSetupCommandTaskHandlerTest extends WingsBaseTest {
     // since its blue green resetState() should not be called
     verify(pcfCommandTaskBaseHelper, times(0))
         .resetState(eq(previousReleases), any(ApplicationSummary.class), any(ApplicationSummary.class), anyString(),
-            any(CfRequestConfig.class), anyBoolean(), any(Deque.class), anyInt(), any(LogCallback.class));
+            any(CfRequestConfig.class), anyBoolean(), any(Deque.class), anyInt(), any(LogCallback.class), any());
 
     verify(pcfCommandTaskBaseHelper, times(1))
         .renameInActiveAppDuringBGDeployment(eq(previousReleases), any(CfRequestConfig.class), eq(releaseName),
@@ -888,7 +888,7 @@ public class PcfSetupCommandTaskHandlerTest extends WingsBaseTest {
     // since its blue green resetState() should not be called
     verify(pcfCommandTaskBaseHelper, times(0))
         .resetState(eq(previousReleases), any(ApplicationSummary.class), any(ApplicationSummary.class), anyString(),
-            any(CfRequestConfig.class), anyBoolean(), any(Deque.class), anyInt(), any(LogCallback.class));
+            any(CfRequestConfig.class), anyBoolean(), any(Deque.class), anyInt(), any(LogCallback.class), any());
 
     verify(pcfCommandTaskBaseHelper, times(1))
         .renameInActiveAppDuringBGDeployment(eq(previousReleases), any(CfRequestConfig.class), eq(releaseName),
@@ -963,7 +963,7 @@ public class PcfSetupCommandTaskHandlerTest extends WingsBaseTest {
     // since its blue green resetState() should not be called
     verify(pcfCommandTaskBaseHelper, times(0))
         .resetState(eq(previousReleases), any(ApplicationSummary.class), any(ApplicationSummary.class), anyString(),
-            any(CfRequestConfig.class), anyBoolean(), any(Deque.class), anyInt(), any(LogCallback.class));
+            any(CfRequestConfig.class), anyBoolean(), any(Deque.class), anyInt(), any(LogCallback.class), any());
 
     verify(pcfCommandTaskBaseHelper, times(1))
         .renameInActiveAppDuringBGDeployment(eq(previousReleases), any(CfRequestConfig.class), eq(releaseName),

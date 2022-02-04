@@ -8,6 +8,8 @@
 package io.harness.pms.governance;
 
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
+import static io.harness.pms.contracts.plan.ExpansionRequestType.KEY;
+import static io.harness.pms.contracts.plan.ExpansionRequestType.LOCAL_FQN;
 import static io.harness.rule.OwnerRule.NAMAN;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -17,6 +19,9 @@ import io.harness.CategoryTest;
 import io.harness.ModuleType;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
+import io.harness.pms.contracts.plan.JsonExpansionInfo;
+import io.harness.pms.contracts.steps.StepCategory;
+import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.sdk.PmsSdkInstance;
 import io.harness.pms.sdk.PmsSdkInstanceService;
 import io.harness.rule.Owner;
@@ -47,21 +52,40 @@ public class ExpansionRequestsHelperTest extends CategoryTest {
     Map<String, Set<String>> cdSupportedTypes = new HashMap<>();
     cdSupportedTypes.put("stage", Collections.singleton("Deployment"));
     cdSupportedTypes.put("step", Collections.singleton("K8sApply"));
-    PmsSdkInstance cdInstance = PmsSdkInstance.builder()
-                                    .name("cd")
-                                    .expandableFields(Arrays.asList("connectorRef", "serviceRef", "environmentRef"))
-                                    .supportedTypes(cdSupportedTypes)
-                                    .build();
+    PmsSdkInstance cdInstance =
+        PmsSdkInstance.builder()
+            .name("cd")
+            .jsonExpansionInfo(
+                Arrays.asList(JsonExpansionInfo.newBuilder().setKey("connectorRef").setExpansionType(KEY).build(),
+                    JsonExpansionInfo.newBuilder().setKey("serviceRef").setExpansionType(KEY).build(),
+                    JsonExpansionInfo.newBuilder().setKey("environmentRef").setExpansionType(KEY).build()))
+            .supportedTypes(cdSupportedTypes)
+            .build();
 
     Map<String, Set<String>> pmsSupportedTypes = new HashMap<>();
     pmsSupportedTypes.put("stage", Collections.singleton("Approval"));
     pmsSupportedTypes.put("step", Collections.singleton("ShellScript"));
-    PmsSdkInstance pmsInstance = PmsSdkInstance.builder()
-                                     .name("pms")
-                                     .expandableFields(Collections.singletonList("connectorRef"))
-                                     .supportedTypes(pmsSupportedTypes)
-                                     .build();
-    activeInstances = Arrays.asList(cdInstance, pmsInstance);
+    PmsSdkInstance pmsInstance =
+        PmsSdkInstance.builder()
+            .name("pms")
+            .jsonExpansionInfo(Collections.singletonList(
+                JsonExpansionInfo.newBuilder().setKey("connectorRef").setExpansionType(KEY).build()))
+            .supportedTypes(pmsSupportedTypes)
+            .build();
+
+    PmsSdkInstance arbitrary =
+        PmsSdkInstance.builder()
+            .name("cf")
+            .jsonExpansionInfo(Collections.singletonList(
+                JsonExpansionInfo.newBuilder()
+                    .setKey("stage/spec")
+                    .setExpansionType(LOCAL_FQN)
+                    .setStageType(
+                        StepType.newBuilder().setStepCategory(StepCategory.STAGE).setType("Deployment").build())
+                    .build()))
+            .supportedTypes(Collections.emptyMap())
+            .build();
+    activeInstances = Arrays.asList(cdInstance, pmsInstance, arbitrary);
     doReturn(activeInstances).when(pmsSdkInstanceService).getActiveInstances();
   }
 
@@ -89,5 +113,17 @@ public class ExpansionRequestsHelperTest extends CategoryTest {
     assertThat(typeToService.get("ShellScript")).isEqualTo(ModuleType.PMS);
     assertThat(typeToService.get("Deployment")).isEqualTo(ModuleType.CD);
     assertThat(typeToService.get("K8sApply")).isEqualTo(ModuleType.CD);
+  }
+
+  @Test
+  @Owner(developers = NAMAN)
+  @Category(UnitTests.class)
+  public void testGetLocalFQNRequestMetadata() {
+    List<LocalFQNExpansionInfo> localFQNRequestMetadata = expansionRequestsHelper.getLocalFQNRequestMetadata();
+    assertThat(localFQNRequestMetadata).hasSize(1);
+    LocalFQNExpansionInfo localFQNExpansionInfo = localFQNRequestMetadata.get(0);
+    assertThat(localFQNExpansionInfo.getLocalFQN()).isEqualTo("stage/spec");
+    assertThat(localFQNExpansionInfo.getStageType()).isEqualTo("Deployment");
+    assertThat(localFQNExpansionInfo.getModule()).isEqualTo(ModuleType.CF);
   }
 }

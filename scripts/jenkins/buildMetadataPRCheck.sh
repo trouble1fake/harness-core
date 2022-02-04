@@ -28,13 +28,7 @@ echo "INFO: $?: VERSION_DIFF=$VERSION_DIFF"
 PATCH_DIFF=$(git diff temp246_test..${ghprbTargetBranch} -- ${VERSION_FILE} | { grep  "+build.patch=$PATCH" || true;})
 echo "INFO: $?: PATCH_DIFF=$PATCH_DIFF"
 
-if [ "${BRANCH_PREFIX}" = "release/" ] && [ $VERSION_DIFF ] && [ $PATCH_DIFF ]
-then
-
-  echo "ERROR: Both build.number and build.patch cannot be modified."
-  exit 1
-
-elif [ "${BRANCH_PREFIX}" = "release/" ] && [ ! $VERSION_DIFF ] && [ ! $PATCH_DIFF ]
+if [ "${BRANCH_PREFIX}" = "release/" ] && [ ! $VERSION_DIFF ] && [ ! $PATCH_DIFF ]
 then
 
   echo "ERROR:  Either build.number or build.patch must be incremented."
@@ -56,7 +50,7 @@ then
 
 fi
 
-if [ "${ghprbTargetBranch}" = "master" ]
+if [ "${ghprbTargetBranch}" = "develop" ]
 then
   git show ${VERSION_FILE} | grep "build.number" || exit 0 && exit 1
   git show ${VERSION_FILE} | grep "build.patch" || exit 0 && exit 1

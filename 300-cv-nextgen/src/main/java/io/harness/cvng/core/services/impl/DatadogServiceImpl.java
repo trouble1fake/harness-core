@@ -47,7 +47,8 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class DatadogServiceImpl implements DatadogService {
-  public static final int MAX_ACTIVE_METRICS_COUNT = 500;
+  public static final int MAX_ACTIVE_METRICS_COUNT = 1000;
+  public static final int MAX_METRIC_TAGS_COUNT = 1000;
 
   @Inject private OnboardingService onboardingService;
 
@@ -93,7 +94,10 @@ public class DatadogServiceImpl implements DatadogService {
                                                              .build();
 
     Type type = new TypeToken<List<String>>() {}.getType();
-    return performRequestAndGetDataResult(request, type, projectParams, connectorIdentifier, tracingId);
+    List<String> metricTagsList =
+        performRequestAndGetDataResult(request, type, projectParams, connectorIdentifier, tracingId);
+    // limit to 1000 items (datadog api doesn't provide additional filtering)
+    return metricTagsList.stream().limit(MAX_METRIC_TAGS_COUNT).collect(Collectors.toList());
   }
 
   @Override
@@ -106,7 +110,7 @@ public class DatadogServiceImpl implements DatadogService {
     List<String> activeMetricsList =
         performRequestAndGetDataResult(request, type, projectParams, connectorIdentifier, tracingId);
 
-    // limit to 500 items (datadog api doesn't provide additional filtering)
+    // limit to 1000 items (datadog api doesn't provide additional filtering)
     return activeMetricsList.stream().limit(MAX_ACTIVE_METRICS_COUNT).collect(Collectors.toList());
   }
 

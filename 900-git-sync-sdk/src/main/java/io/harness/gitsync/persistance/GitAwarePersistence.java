@@ -55,4 +55,7 @@ public interface GitAwarePersistence {
 
   // added as a stop gap fix for PMS.
   Criteria getCriteriaWithGitSync(String projectIdentifier, String orgIdentifier, String accountId, Class entityClass);
+
+  Criteria makeCriteriaGitAware(
+      String accountId, String orgIdentifier, String projectIdentifier, Class entityClass, Criteria criteria);
 }

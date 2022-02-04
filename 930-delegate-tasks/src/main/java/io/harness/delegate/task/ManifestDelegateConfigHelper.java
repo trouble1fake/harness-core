@@ -21,6 +21,8 @@ import io.harness.delegate.beans.storeconfig.StoreDelegateConfig;
 import io.harness.delegate.task.k8s.ManifestDelegateConfig;
 import io.harness.security.encryption.SecretDecryptionService;
 
+import software.wings.delegatetasks.ExceptionMessageSanitizer;
+
 import com.google.inject.Inject;
 import java.util.List;
 
@@ -39,12 +41,15 @@ public class ManifestDelegateConfigHelper {
         GitStoreDelegateConfig gitStoreDelegateConfig = (GitStoreDelegateConfig) storeDelegateConfig;
         GitConfigDTO gitConfigDTO = ScmConnectorMapper.toGitConfigDTO(gitStoreDelegateConfig.getGitConfigDTO());
         gitDecryptionHelper.decryptGitConfig(gitConfigDTO, gitStoreDelegateConfig.getEncryptedDataDetails());
+        ExceptionMessageSanitizer.storeAllSecretsForSanitizing(
+            gitConfigDTO, gitStoreDelegateConfig.getEncryptedDataDetails());
         break;
 
       case HTTP_HELM:
         HttpHelmStoreDelegateConfig httpHelmStoreConfig = (HttpHelmStoreDelegateConfig) storeDelegateConfig;
         for (DecryptableEntity entity : httpHelmStoreConfig.getHttpHelmConnector().getDecryptableEntities()) {
           decryptionService.decrypt(entity, httpHelmStoreConfig.getEncryptedDataDetails());
+          ExceptionMessageSanitizer.storeAllSecretsForSanitizing(entity, httpHelmStoreConfig.getEncryptedDataDetails());
         }
         break;
 
@@ -54,6 +59,8 @@ public class ManifestDelegateConfigHelper {
         if (isNotEmpty(s3DecryptableEntityList)) {
           for (DecryptableEntity decryptableEntity : s3DecryptableEntityList) {
             decryptionService.decrypt(decryptableEntity, s3HelmStoreConfig.getEncryptedDataDetails());
+            ExceptionMessageSanitizer.storeAllSecretsForSanitizing(
+                decryptableEntity, s3HelmStoreConfig.getEncryptedDataDetails());
           }
         }
         break;
@@ -65,6 +72,8 @@ public class ManifestDelegateConfigHelper {
         if (isNotEmpty(gcsDecryptableEntityList)) {
           for (DecryptableEntity decryptableEntity : gcsDecryptableEntityList) {
             decryptionService.decrypt(decryptableEntity, gcsHelmStoreDelegateConfig.getEncryptedDataDetails());
+            ExceptionMessageSanitizer.storeAllSecretsForSanitizing(
+                decryptableEntity, gcsHelmStoreDelegateConfig.getEncryptedDataDetails());
           }
         }
         break;

@@ -20,6 +20,7 @@ import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.pipeline.service.yamlschema.PmsYamlSchemaHelper;
 import io.harness.pms.yaml.YAMLFieldNameConstants;
 import io.harness.steps.approval.stage.ApprovalStageConfig;
+import io.harness.steps.approval.stage.ApprovalStageNode;
 import io.harness.utils.FeatureRestrictionsGetter;
 import io.harness.yaml.schema.SchemaGeneratorUtils;
 import io.harness.yaml.schema.YamlSchemaGenerator;
@@ -42,7 +43,7 @@ import java.util.Set;
 @OwnedBy(HarnessTeam.PIPELINE)
 public class ApprovalYamlSchemaServiceImpl implements ApprovalYamlSchemaService {
   private static final String APPROVAL_NAMESPACE = "approval";
-  private static final String APPROVAL_STAGE_CONFIG = YamlSchemaUtils.getSwaggerName(ApprovalStageConfig.class);
+  private static final String APPROVAL_STAGE_NODE = YamlSchemaUtils.getSwaggerName(ApprovalStageNode.class);
 
   @Inject private YamlSchemaProvider yamlSchemaProvider;
   @Inject private PmsYamlSchemaHelper pmsYamlSchemaHelper;
@@ -86,10 +87,11 @@ public class ApprovalYamlSchemaServiceImpl implements ApprovalYamlSchemaService 
 
     return PartialSchemaDTO.builder()
         .namespace(APPROVAL_NAMESPACE)
-        .nodeName(APPROVAL_STAGE_CONFIG)
+        .nodeName(APPROVAL_STAGE_NODE)
         .schema(partialApprovalSchema)
         .nodeType(getApprovalStageTypeName())
         .moduleType(ModuleType.PMS)
+        .skipStageSchema(false)
         .build();
   }
 

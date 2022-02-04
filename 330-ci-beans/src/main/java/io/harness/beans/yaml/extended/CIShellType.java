@@ -14,7 +14,8 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum CIShellType {
   @JsonProperty("Sh") SH("Sh"),
   @JsonProperty("Bash") BASH("Bash"),
-  @JsonProperty("Powershell") POWERSHELL("Powershell");
+  @JsonProperty("Powershell") POWERSHELL("Powershell"),
+  @JsonProperty("Pwsh") PWSH("Pwsh");
   private final String yamlName;
 
   @JsonCreator

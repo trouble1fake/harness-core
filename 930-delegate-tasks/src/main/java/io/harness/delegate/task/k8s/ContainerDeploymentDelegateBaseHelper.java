@@ -35,6 +35,9 @@ import io.harness.logging.LogCallback;
 import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.security.encryption.SecretDecryptionService;
 
+import software.wings.delegatetasks.ExceptionMessageSanitizer;
+import software.wings.service.intfc.security.EncryptionService;
+
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -60,6 +63,7 @@ public class ContainerDeploymentDelegateBaseHelper {
   @Inject private K8sYamlToDelegateDTOMapper k8sYamlToDelegateDTOMapper;
   @Inject private SecretDecryptionService secretDecryptionService;
   @Inject private GkeClusterHelper gkeClusterHelper;
+  @Inject private EncryptionService encryptionService;
 
   public static final LoadingCache<String, Object> lockObjects =
       CacheBuilder.newBuilder().expireAfterAccess(30, TimeUnit.MINUTES).build(CacheLoader.from(Object::new));
@@ -156,6 +160,7 @@ public class ContainerDeploymentDelegateBaseHelper {
           (KubernetesClusterDetailsDTO) clusterConfigDTO.getCredential().getConfig();
       KubernetesAuthCredentialDTO authCredentialDTO = clusterDetailsDTO.getAuth().getCredentials();
       secretDecryptionService.decrypt(authCredentialDTO, encryptedDataDetails);
+      ExceptionMessageSanitizer.storeAllSecretsForSanitizing(authCredentialDTO, encryptedDataDetails);
     }
   }
 
@@ -163,6 +168,7 @@ public class ContainerDeploymentDelegateBaseHelper {
     if (gcpConnectorDTO.getCredential().getGcpCredentialType() == MANUAL_CREDENTIALS) {
       GcpManualDetailsDTO gcpCredentialSpecDTO = (GcpManualDetailsDTO) gcpConnectorDTO.getCredential().getConfig();
       secretDecryptionService.decrypt(gcpCredentialSpecDTO, encryptedDataDetails);
+      ExceptionMessageSanitizer.storeAllSecretsForSanitizing(gcpCredentialSpecDTO, encryptedDataDetails);
     }
   }
 

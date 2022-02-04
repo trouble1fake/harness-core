@@ -23,15 +23,16 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.delegate.beans.logstreaming.ILogStreamingTaskClient;
 import io.harness.delegate.beans.pcf.CfAppSetupTimeDetails;
+import io.harness.delegate.beans.pcf.CfInBuiltVariablesUpdateValues;
 import io.harness.delegate.beans.pcf.CfInternalConfig;
 import io.harness.delegate.beans.pcf.CfRouteUpdateRequestConfigData;
 import io.harness.delegate.cf.apprenaming.AppNamingStrategy;
 import io.harness.delegate.cf.apprenaming.AppRenamingOperator;
 import io.harness.delegate.cf.apprenaming.AppRenamingOperator.NamingTransition;
 import io.harness.delegate.task.pcf.CfCommandRequest;
-import io.harness.delegate.task.pcf.CfCommandResponse;
 import io.harness.delegate.task.pcf.request.CfCommandRouteUpdateRequest;
 import io.harness.delegate.task.pcf.response.CfCommandExecutionResponse;
+import io.harness.delegate.task.pcf.response.CfRouteUpdateCommandResponse;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.filesystem.FileIo;
 import io.harness.logging.CommandExecutionStatus;
@@ -77,8 +78,10 @@ public class PcfRouteUpdateCommandTaskHandler extends PcfCommandTaskHandler {
       throw new InvalidArgumentsException(
           Pair.of("cfCommandRequest", "Must be instance of CfCommandRouteUpdateRequest"));
     }
+    CfInBuiltVariablesUpdateValues updateValues = CfInBuiltVariablesUpdateValues.builder().build();
     LogCallback executionLogCallback = logStreamingTaskClient.obtainLogCallback(cfCommandRequest.getCommandName());
-    CfCommandResponse cfCommandResponse = new CfCommandResponse();
+    CfRouteUpdateCommandResponse cfCommandResponse =
+        CfRouteUpdateCommandResponse.builder().updateValues(updateValues).build();
     CfCommandExecutionResponse cfCommandExecutionResponse =
         CfCommandExecutionResponse.builder().pcfCommandResponse(cfCommandResponse).build();
 
@@ -114,21 +117,24 @@ public class PcfRouteUpdateCommandTaskHandler extends PcfCommandTaskHandler {
       if (pcfRouteUpdateConfigData.isStandardBlueGreen()) {
         if (swapRouteExecutionNeeded(pcfRouteUpdateConfigData)) {
           // If rollback and active & in-active app was downsized or renamed, then restore it
-          restoreAppsDuringRollback(executionLogCallback, cfCommandRouteUpdateRequest, cfRequestConfig,
+          updateValues = restoreAppsDuringRollback(executionLogCallback, cfCommandRouteUpdateRequest, cfRequestConfig,
               pcfRouteUpdateConfigData, workingDirectory.getAbsolutePath());
           // Swap routes
           performRouteUpdateForStandardBlueGreen(cfCommandRouteUpdateRequest, cfRequestConfig, executionLogCallback);
           // if deploy and downsizeOld is true
-          downsizeOldAppDuringDeployAndRenameApps(executionLogCallback, cfCommandRouteUpdateRequest, cfRequestConfig,
-              pcfRouteUpdateConfigData, workingDirectory.getAbsolutePath());
+          if (!pcfRouteUpdateConfigData.isRollback()) {
+            updateValues = downsizeOldAppDuringDeployAndRenameApps(executionLogCallback, cfCommandRouteUpdateRequest,
+                cfRequestConfig, pcfRouteUpdateConfigData, workingDirectory.getAbsolutePath());
+          }
         } else {
-          handleFailureHappenedBeforeSwapRoute(
+          updateValues = handleFailureHappenedBeforeSwapRoute(
               executionLogCallback, workingDirectory, cfCommandRouteUpdateRequest, cfRequestConfig);
         }
       } else {
         performRouteUpdateForSimulatedBlueGreen(cfCommandRouteUpdateRequest, cfRequestConfig, executionLogCallback);
       }
 
+      cfCommandResponse.setUpdatedValues(updateValues);
       executionLogCallback.saveExecutionLog(
           "\n--------- PCF Route Update completed successfully", LogLevel.INFO, CommandExecutionStatus.SUCCESS);
       cfCommandResponse.setOutput(StringUtils.EMPTY);
@@ -154,14 +160,15 @@ public class PcfRouteUpdateCommandTaskHandler extends PcfCommandTaskHandler {
     return cfCommandExecutionResponse;
   }
 
-  private void handleFailureHappenedBeforeSwapRoute(LogCallback executionLogCallback, File workingDirectory,
-      CfCommandRouteUpdateRequest cfCommandRouteUpdateRequest, CfRequestConfig cfRequestConfig)
+  private CfInBuiltVariablesUpdateValues handleFailureHappenedBeforeSwapRoute(LogCallback executionLogCallback,
+      File workingDirectory, CfCommandRouteUpdateRequest cfCommandRouteUpdateRequest, CfRequestConfig cfRequestConfig)
       throws PivotalClientApiException {
-    performAppRenaming(ROLLBACK_OPERATOR, cfCommandRouteUpdateRequest.getPcfRouteUpdateConfigData(), cfRequestConfig,
-        executionLogCallback);
+    CfInBuiltVariablesUpdateValues updateValues = performAppRenaming(ROLLBACK_OPERATOR,
+        cfCommandRouteUpdateRequest.getPcfRouteUpdateConfigData(), cfRequestConfig, executionLogCallback);
     executionLogCallback.saveExecutionLog(color("# No Route Update Required for Active app", White, Bold));
     restoreInActiveAppForFailureBeforeSwapRouteStep(
         executionLogCallback, cfCommandRouteUpdateRequest, cfRequestConfig, workingDirectory.getAbsolutePath());
+    return updateValues;
   }
 
   private void restoreInActiveAppForFailureBeforeSwapRouteStep(LogCallback executionLogCallback,
@@ -198,14 +205,14 @@ public class PcfRouteUpdateCommandTaskHandler extends PcfCommandTaskHandler {
   }
 
   @VisibleForTesting
-  void restoreAppsDuringRollback(LogCallback executionLogCallback,
+  CfInBuiltVariablesUpdateValues restoreAppsDuringRollback(LogCallback executionLogCallback,
       CfCommandRouteUpdateRequest cfCommandRouteUpdateRequest, CfRequestConfig cfRequestConfig,
       CfRouteUpdateRequestConfigData pcfRouteUpdateConfigData, String configVarPath) throws PivotalClientApiException {
     if (!pcfRouteUpdateConfigData.isRollback()) {
-      return;
+      return CfInBuiltVariablesUpdateValues.builder().build();
     }
-    performAppRenaming(ROLLBACK_OPERATOR, cfCommandRouteUpdateRequest.getPcfRouteUpdateConfigData(), cfRequestConfig,
-        executionLogCallback);
+    CfInBuiltVariablesUpdateValues updateValues = performAppRenaming(ROLLBACK_OPERATOR,
+        cfCommandRouteUpdateRequest.getPcfRouteUpdateConfigData(), cfRequestConfig, executionLogCallback);
 
     if (pcfRouteUpdateConfigData.isDownsizeOldApplication()) {
       resizeOldApplications(cfCommandRouteUpdateRequest, cfRequestConfig, executionLogCallback, true, configVarPath);
@@ -213,6 +220,7 @@ public class PcfRouteUpdateCommandTaskHandler extends PcfCommandTaskHandler {
     if (pcfRouteUpdateConfigData.isUpSizeInActiveApp()) {
       upSizeInActiveApp(cfCommandRouteUpdateRequest, cfRequestConfig, executionLogCallback, configVarPath);
     }
+    return updateValues;
   }
 
   private void upSizeInActiveApp(CfCommandRouteUpdateRequest cfCommandRouteUpdateRequest,
@@ -363,16 +371,13 @@ public class PcfRouteUpdateCommandTaskHandler extends PcfCommandTaskHandler {
   }
 
   @VisibleForTesting
-  void downsizeOldAppDuringDeployAndRenameApps(LogCallback executionLogCallback,
+  CfInBuiltVariablesUpdateValues downsizeOldAppDuringDeployAndRenameApps(LogCallback executionLogCallback,
       CfCommandRouteUpdateRequest cfCommandRouteUpdateRequest, CfRequestConfig cfRequestConfig,
       CfRouteUpdateRequestConfigData pcfRouteUpdateConfigData, String configVarPath) throws PivotalClientApiException {
-    if (pcfRouteUpdateConfigData.isRollback()) {
-      return;
-    }
     if (pcfRouteUpdateConfigData.isDownsizeOldApplication()) {
       resizeOldApplications(cfCommandRouteUpdateRequest, cfRequestConfig, executionLogCallback, false, configVarPath);
     }
-    renameApps(cfCommandRouteUpdateRequest, cfRequestConfig, executionLogCallback);
+    return renameApps(cfCommandRouteUpdateRequest, cfRequestConfig, executionLogCallback);
   }
 
   private void performRouteUpdateForSimulatedBlueGreen(CfCommandRouteUpdateRequest cfCommandRouteUpdateRequest,
@@ -485,41 +490,45 @@ public class PcfRouteUpdateCommandTaskHandler extends PcfCommandTaskHandler {
         cfRequestConfig, executionLogCallback, data.getNewApplicationName(), !data.isRollback());
   }
 
-  private void renameApps(CfCommandRouteUpdateRequest cfCommandRouteUpdateRequest, CfRequestConfig cfRequestConfig,
-      LogCallback executionLogCallback) throws PivotalClientApiException {
+  private CfInBuiltVariablesUpdateValues renameApps(CfCommandRouteUpdateRequest cfCommandRouteUpdateRequest,
+      CfRequestConfig cfRequestConfig, LogCallback executionLogCallback) throws PivotalClientApiException {
     CfRouteUpdateRequestConfigData pcfRouteUpdateConfigData = cfCommandRouteUpdateRequest.getPcfRouteUpdateConfigData();
     AppNamingStrategy existingStrategy = AppNamingStrategy.get(pcfRouteUpdateConfigData.getExistingAppNamingStrategy());
     if (AppNamingStrategy.VERSIONING == existingStrategy) {
-      performRenamingWhenExistingStrategyWasVersioning(pcfRouteUpdateConfigData, cfRequestConfig, executionLogCallback);
+      return performRenamingWhenExistingStrategyWasVersioning(
+          pcfRouteUpdateConfigData, cfRequestConfig, executionLogCallback);
     } else if (AppNamingStrategy.APP_NAME_WITH_VERSIONING == existingStrategy) {
-      performRenamingWhenExistingStrategyWasNonVersioning(
+      return performRenamingWhenExistingStrategyWasNonVersioning(
           pcfRouteUpdateConfigData, cfRequestConfig, executionLogCallback);
     }
+    return CfInBuiltVariablesUpdateValues.builder().build();
   }
 
-  private void performRenamingWhenExistingStrategyWasVersioning(CfRouteUpdateRequestConfigData cfRouteUpdateConfigData,
-      CfRequestConfig cfRequestConfig, LogCallback executionLogCallback) throws PivotalClientApiException {
+  private CfInBuiltVariablesUpdateValues performRenamingWhenExistingStrategyWasVersioning(
+      CfRouteUpdateRequestConfigData cfRouteUpdateConfigData, CfRequestConfig cfRequestConfig,
+      LogCallback executionLogCallback) throws PivotalClientApiException {
     if (!cfRouteUpdateConfigData.isNonVersioning()) {
       // this indicates versioning to versioning deployment, hence no renaming is required
-      return;
+      return CfInBuiltVariablesUpdateValues.builder().build();
     }
     executionLogCallback.saveExecutionLog(color("\n# Starting Renaming apps", White, Bold));
-    performAppRenaming(VERSION_TO_NON_VERSION, cfRouteUpdateConfigData, cfRequestConfig, executionLogCallback);
+    return performAppRenaming(VERSION_TO_NON_VERSION, cfRouteUpdateConfigData, cfRequestConfig, executionLogCallback);
   }
 
-  private void performRenamingWhenExistingStrategyWasNonVersioning(
+  private CfInBuiltVariablesUpdateValues performRenamingWhenExistingStrategyWasNonVersioning(
       CfRouteUpdateRequestConfigData cfRouteUpdateConfigData, CfRequestConfig cfRequestConfig,
       LogCallback executionLogCallback) throws PivotalClientApiException {
     executionLogCallback.saveExecutionLog(color("\n# Starting Renaming apps", White, Bold));
     boolean nonVersioning = cfRouteUpdateConfigData.isNonVersioning();
     NamingTransition transition = nonVersioning ? NON_VERSION_TO_NON_VERSION : NON_VERSION_TO_VERSION;
-    performAppRenaming(transition, cfRouteUpdateConfigData, cfRequestConfig, executionLogCallback);
+    return performAppRenaming(transition, cfRouteUpdateConfigData, cfRequestConfig, executionLogCallback);
   }
 
-  private void performAppRenaming(NamingTransition transition, CfRouteUpdateRequestConfigData cfRouteUpdateConfigData,
-      CfRequestConfig cfRequestConfig, LogCallback executionLogCallback) throws PivotalClientApiException {
+  private CfInBuiltVariablesUpdateValues performAppRenaming(NamingTransition transition,
+      CfRouteUpdateRequestConfigData cfRouteUpdateConfigData, CfRequestConfig cfRequestConfig,
+      LogCallback executionLogCallback) throws PivotalClientApiException {
     AppRenamingOperator renamingOperator = AppRenamingOperator.of(transition);
-    renamingOperator.renameApp(
+    return renamingOperator.renameApp(
         cfRouteUpdateConfigData, cfRequestConfig, executionLogCallback, pcfDeploymentManager, pcfCommandTaskBaseHelper);
   }
 }

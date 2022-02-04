@@ -58,6 +58,8 @@ public class GcrBuildServiceImpl implements GcrBuildService {
   public List<BuildDetails> getBuilds(String appId, ArtifactStreamAttributes artifactStreamAttributes,
       GcpConfig gcpConfig, List<EncryptedDataDetail> encryptionDetails) {
     equalCheck(artifactStreamAttributes.getArtifactStreamType(), ArtifactStreamType.GCR.name());
+    log.info("[GCR Delegate Selection] Get builds for image " + artifactStreamAttributes.getImageName()
+        + " with selectors " + gcpConfig.getDelegateSelectors());
     try {
       // Decrypt gcpConfig
       encryptionService.decrypt(gcpConfig, encryptionDetails, false);
@@ -97,6 +99,7 @@ public class GcrBuildServiceImpl implements GcrBuildService {
 
   @Override
   public Map<String, String> getPlans(GcpConfig config, List<EncryptedDataDetail> encryptionDetails) {
+    log.info("[GCR Delegate Selection] Get Plans with selectors " + config.getDelegateSelectors());
     return getJobs(config, encryptionDetails, Optional.empty())
         .stream()
         .collect(Collectors.toMap(JobDetails::getJobName, JobDetails::getJobName));
@@ -116,6 +119,8 @@ public class GcrBuildServiceImpl implements GcrBuildService {
   @Override
   public boolean validateArtifactSource(GcpConfig config, List<EncryptedDataDetail> encryptionDetails,
       ArtifactStreamAttributes artifactStreamAttributes) {
+    log.info("[GCR Delegate Selection] Validate artifact source for image " + artifactStreamAttributes.getImageName()
+        + " with selectors " + config.getDelegateSelectors());
     try {
       // Decrypt gcpConfig
       encryptionService.decrypt(config, encryptionDetails, false);

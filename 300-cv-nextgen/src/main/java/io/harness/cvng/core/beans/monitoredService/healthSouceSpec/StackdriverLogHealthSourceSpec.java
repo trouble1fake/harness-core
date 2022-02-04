@@ -69,11 +69,11 @@ public class StackdriverLogHealthSourceSpec extends HealthSourceSpec {
 
   @Override
   public CVConfigUpdateResult getCVConfigUpdateResult(String accountId, String orgIdentifier, String projectIdentifier,
-      String environmentRef, String serviceRef, String identifier, String name, List<CVConfig> existingCVConfigs,
-      MetricPackService metricPackService) {
+      String environmentRef, String serviceRef, String monitoredServiceIdentifier, String identifier, String name,
+      List<CVConfig> existingCVConfigs, MetricPackService metricPackService) {
     Map<Key, StackdriverLogCVConfig> existingConfigMap = getExistingCVConfigMap(existingCVConfigs);
-    Map<Key, StackdriverLogCVConfig> currentConfigMap = getCurrentCVConfigMap(
-        accountId, orgIdentifier, projectIdentifier, environmentRef, serviceRef, identifier, name);
+    Map<Key, StackdriverLogCVConfig> currentConfigMap = getCurrentCVConfigMap(accountId, orgIdentifier,
+        projectIdentifier, environmentRef, serviceRef, monitoredServiceIdentifier, identifier, name);
 
     Set<Key> deleted = Sets.difference(existingConfigMap.keySet(), currentConfigMap.keySet());
     Set<Key> added = Sets.difference(currentConfigMap.keySet(), existingConfigMap.keySet());
@@ -111,9 +111,10 @@ public class StackdriverLogHealthSourceSpec extends HealthSourceSpec {
   }
 
   private Map<Key, StackdriverLogCVConfig> getCurrentCVConfigMap(String accountId, String orgIdentifier,
-      String projectIdentifier, String environmentRef, String serviceRef, String identifier, String name) {
-    List<StackdriverLogCVConfig> cvConfigsFromThisObj =
-        toCVConfigs(accountId, orgIdentifier, projectIdentifier, environmentRef, serviceRef, identifier, name);
+      String projectIdentifier, String environmentRef, String serviceRef, String monitoredServiceIdentifier,
+      String identifier, String name) {
+    List<StackdriverLogCVConfig> cvConfigsFromThisObj = toCVConfigs(accountId, orgIdentifier, projectIdentifier,
+        environmentRef, serviceRef, monitoredServiceIdentifier, identifier, name);
     Map<Key, StackdriverLogCVConfig> currentCVConfigsMap = new HashMap<>();
     for (StackdriverLogCVConfig stackdriverLogCVConfig : cvConfigsFromThisObj) {
       currentCVConfigsMap.put(getKeyFromCVConfig(stackdriverLogCVConfig), stackdriverLogCVConfig);
@@ -130,7 +131,7 @@ public class StackdriverLogHealthSourceSpec extends HealthSourceSpec {
   }
 
   private List<StackdriverLogCVConfig> toCVConfigs(String accountId, String orgIdentifier, String projectIdentifier,
-      String environmentRef, String serviceRef, String identifier, String name) {
+      String environmentRef, String serviceRef, String monitoredServiceIdentifier, String identifier, String name) {
     List<StackdriverLogCVConfig> cvConfigs = new ArrayList<>();
     queries.forEach(queryDTO -> {
       StackdriverLogCVConfig stackdriverLogCVConfig =
@@ -149,6 +150,7 @@ public class StackdriverLogHealthSourceSpec extends HealthSourceSpec {
               .serviceInstanceIdentifier(queryDTO.getServiceInstanceIdentifier())
               .messageIdentifier(queryDTO.getMessageIdentifier())
               .category(CVMonitoringCategory.ERRORS)
+              .monitoredServiceIdentifier(monitoredServiceIdentifier)
               .build();
       cvConfigs.add(stackdriverLogCVConfig);
     });

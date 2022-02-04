@@ -39,6 +39,7 @@ import io.harness.delegate.task.k8s.K8sDeployResponse;
 import io.harness.delegate.task.k8s.K8sInfraDelegateConfig;
 import io.harness.delegate.task.k8s.K8sRollingDeployRequest;
 import io.harness.delegate.task.k8s.K8sTaskHelperBase;
+import io.harness.delegate.task.k8s.KustomizeManifestDelegateConfig;
 import io.harness.exception.InvalidRequestException;
 import io.harness.k8s.KubernetesContainerService;
 import io.harness.k8s.kubectl.Kubectl;
@@ -90,7 +91,11 @@ public class K8sRollingRequestHandlerTest extends CategoryTest {
   @Owner(developers = ABOSII)
   @Category(UnitTests.class)
   public void testExecuteTask() throws Exception {
-    K8sRollingDeployRequest rollingDeployRequest = K8sRollingDeployRequest.builder().releaseName("releaseName").build();
+    K8sRollingDeployRequest rollingDeployRequest =
+        K8sRollingDeployRequest.builder()
+            .releaseName("releaseName")
+            .manifestDelegateConfig(KustomizeManifestDelegateConfig.builder().build())
+            .build();
     K8sDelegateTaskParams delegateTaskParams = K8sDelegateTaskParams.builder().build();
 
     doReturn(singletonList(deployment()))
@@ -111,7 +116,11 @@ public class K8sRollingRequestHandlerTest extends CategoryTest {
   @Owner(developers = ABOSII)
   @Category(UnitTests.class)
   public void testExecuteTaskInternalGetPodsFailed() throws Exception {
-    K8sRollingDeployRequest rollingDeployRequest = K8sRollingDeployRequest.builder().releaseName("releaseName").build();
+    K8sRollingDeployRequest rollingDeployRequest =
+        K8sRollingDeployRequest.builder()
+            .manifestDelegateConfig(KustomizeManifestDelegateConfig.builder().build())
+            .releaseName("releaseName")
+            .build();
     K8sDelegateTaskParams delegateTaskParams = K8sDelegateTaskParams.builder().build();
     InvalidRequestException thrownException = new InvalidRequestException("Failed to get pods");
 

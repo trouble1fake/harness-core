@@ -8,6 +8,7 @@
 package io.harness.pms.governance;
 
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
+import static io.harness.pms.contracts.governance.ExpansionPlacementStrategy.APPEND;
 import static io.harness.pms.contracts.governance.ExpansionPlacementStrategy.MOVE_UP;
 import static io.harness.pms.contracts.governance.ExpansionPlacementStrategy.PARALLEL;
 import static io.harness.pms.contracts.governance.ExpansionPlacementStrategy.REPLACE;
@@ -106,5 +107,8 @@ public class ExpansionsMergerTest extends CategoryTest {
     assertThat(newFQN2).isEqualTo("pipeline/stages/[0]/stage/spec/execution/steps/[0]/step/spec/connector");
     String newFQN3 = ExpansionsMerger.getNewFQN(fqn, key, MOVE_UP);
     assertThat(newFQN3).isEqualTo("pipeline/stages/[0]/stage/spec/execution/steps/[0]/step/connector");
+    String newFQN4 = ExpansionsMerger.getNewFQN(fqn, key, APPEND);
+    assertThat(newFQN4).isEqualTo(
+        "pipeline/stages/[0]/stage/spec/execution/steps/[0]/step/spec/connectorRef/connector");
   }
 }

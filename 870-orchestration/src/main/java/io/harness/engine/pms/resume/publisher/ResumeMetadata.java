@@ -10,7 +10,6 @@ package io.harness.engine.pms.resume.publisher;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.execution.NodeExecution;
-import io.harness.plan.Node;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.ExecutableResponse;
 import io.harness.pms.contracts.execution.ExecutionMode;
@@ -27,20 +26,20 @@ import lombok.Data;
 @OwnedBy(HarnessTeam.PIPELINE)
 public class ResumeMetadata {
   String nodeExecutionUuid;
-  Node planNode;
   Ambiance ambiance;
   ExecutionMode mode;
   ByteString resolvedStepParameters;
   ExecutableResponse latestExecutableResponse;
+  String module;
 
   public static ResumeMetadata fromNodeExecution(NodeExecution nodeExecution) {
     return ResumeMetadata.builder()
         .nodeExecutionUuid(nodeExecution.getUuid())
-        .planNode(nodeExecution.getNode())
         .ambiance(nodeExecution.getAmbiance())
         .mode(nodeExecution.getMode())
         .resolvedStepParameters(nodeExecution.getResolvedStepParametersBytes())
         .latestExecutableResponse(nodeExecution.obtainLatestExecutableResponse())
+        .module(nodeExecution.module())
         .build();
   }
 }

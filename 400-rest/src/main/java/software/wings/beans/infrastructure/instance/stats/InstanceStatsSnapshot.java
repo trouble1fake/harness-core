@@ -35,7 +35,7 @@ import org.mongodb.morphia.annotations.Entity;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @EqualsAndHashCode(callSuper = false)
 @Entity(value = "instanceStats", noClassnameStored = true)
-@HarnessEntity(exportable = false)
+@HarnessEntity(exportable = true)
 @FieldNameConstants(innerTypeName = "InstanceStatsSnapshotKeys")
 public class InstanceStatsSnapshot extends Base implements AccountAccess {
   public static List<MongoIndex> mongoIndexes() {

@@ -8,7 +8,7 @@
 package io.harness.delegate.service;
 
 public interface DelegateAgentService {
-  void run(boolean watched);
+  void run(boolean watched, boolean isServer);
 
   void pause();
 
@@ -21,4 +21,8 @@ public interface DelegateAgentService {
   boolean isHeartbeatHealthy();
 
   boolean isSocketHealthy();
+
+  void shutdown(boolean shouldUnregister) throws InterruptedException;
+
+  void recordMetrics();
 }

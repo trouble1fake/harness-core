@@ -32,9 +32,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 import org.mongodb.morphia.query.Query;
 import org.mongodb.morphia.query.UpdateOperations;
 
+@Slf4j
 public class MonitoringSourcePerpetualTaskServiceImpl
     implements MonitoringSourcePerpetualTaskService, DeleteEntityByHandler<MonitoringSourcePerpetualTask> {
   private static final String WORKER_ID_SEPARATOR = ":";
@@ -87,6 +89,9 @@ public class MonitoringSourcePerpetualTaskServiceImpl
                                            .build());
 
     hPersistence.saveIgnoringDuplicateKeys(monitoringSourcePerpetualTasks);
+    log.info(String.format(
+        "Saved Monitoring Source perpetual task for monitored service identifier %s, accountIdentifier %s, orgIdentifier %s, projectIdentifier: %s",
+        monitoringSourceIdentifier, accountId, orgIdentifier, projectIdentifier));
   }
 
   @Override
@@ -107,6 +112,9 @@ public class MonitoringSourcePerpetualTaskServiceImpl
       }
       hPersistence.delete(monitoringSourcePerpetualTask);
     });
+    log.info(String.format(
+        "Deleted Monitoring Source perpetual task for monitored service identifier %s, accountIdentifier %s, orgIdentifier %s, projectIdentifier: %s",
+        monitoringSourceIdentifier, accountId, orgIdentifier, projectIdentifier));
   }
 
   @Override

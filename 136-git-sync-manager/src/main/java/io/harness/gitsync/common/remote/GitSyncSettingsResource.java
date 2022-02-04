@@ -7,6 +7,7 @@
 
 package io.harness.gitsync.common.remote;
 
+import static io.harness.NGCommonEntityConstants.ACCOUNT_KEY;
 import static io.harness.NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE;
 import static io.harness.NGCommonEntityConstants.APPLICATION_JSON_MEDIA_TYPE;
 import static io.harness.NGCommonEntityConstants.APPLICATION_YAML_MEDIA_TYPE;
@@ -20,6 +21,7 @@ import static io.harness.annotations.dev.HarnessTeam.DX;
 import static io.harness.ng.core.rbac.ProjectPermissions.EDIT_PROJECT_PERMISSION;
 
 import io.harness.NGCommonEntityConstants;
+import io.harness.accesscontrol.AccountIdentifier;
 import io.harness.accesscontrol.clients.AccessControlClient;
 import io.harness.accesscontrol.clients.Resource;
 import io.harness.accesscontrol.clients.ResourceScope;
@@ -85,15 +87,17 @@ public class GitSyncSettingsResource {
       responses =
       { @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Successfully created Git Sync Setting") })
   public ResponseDTO<GitSyncSettingsDTO>
-  create(@RequestBody(
-      required = true, description = "This contains details of Git Sync settings like - (scope, executionOnDelegate)")
-      @NotNull @Valid GitSyncSettingsDTO gitSyncSettings) {
+  create(@Parameter(description = ACCOUNT_PARAM_MESSAGE, required = true) @NotEmpty @QueryParam(
+             ACCOUNT_KEY) @AccountIdentifier String accountIdentifier,
+      @RequestBody(required = true,
+          description = "This contains details of Git Sync settings like - (scope, executionOnDelegate)") @NotNull
+      @Valid GitSyncSettingsDTO gitSyncSettings) {
     // todo(abhinav): when git sync comes at other level see for new permission
     accessControlClient.checkForAccessOrThrow(
-        ResourceScope.of(gitSyncSettings.getAccountIdentifier(), gitSyncSettings.getOrganizationIdentifier(),
-            gitSyncSettings.getProjectIdentifier()),
+        ResourceScope.of(accountIdentifier, gitSyncSettings.getOrgIdentifier(), gitSyncSettings.getProjectIdentifier()),
         Resource.of(ResourceTypes.PROJECT, gitSyncSettings.getProjectIdentifier()), EDIT_PROJECT_PERMISSION);
 
+    gitSyncSettings.setAccountIdentifier(accountIdentifier);
     return ResponseDTO.newResponse(gitSyncSettingsService.save(gitSyncSettings));
   }
 
@@ -107,15 +111,14 @@ public class GitSyncSettingsResource {
           NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
       @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(
           NGCommonEntityConstants.ORG_KEY) String organizationIdentifier,
-      @Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
-          NGCommonEntityConstants.ACCOUNT_KEY) @NotEmpty String accountIdentifier) {
+      @Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(ACCOUNT_KEY) @NotEmpty String accountIdentifier) {
     final Optional<GitSyncSettingsDTO> gitSyncSettingsDTO =
         gitSyncSettingsService.get(accountIdentifier, organizationIdentifier, projectIdentifier);
     return gitSyncSettingsDTO.map(ResponseDTO::newResponse)
         .orElseThrow(
             ()
                 -> new InvalidRequestException(String.format(
-                    "No Git Sync Setting found for accountIdentifier %s, organizationIdentifier %s and projectIdentifier %s",
+                    "No Git Sync Setting found for accountIdentifier %s, orgIdentifier %s and projectIdentifier %s",
                     accountIdentifier, organizationIdentifier, projectIdentifier)));
   }
 
@@ -126,13 +129,15 @@ public class GitSyncSettingsResource {
           "This updates the existing Git Sync settings within the scope. Only changing Connectivity Mode is allowed",
       responses = { @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Updated Git Sync Setting") })
   public ResponseDTO<GitSyncSettingsDTO>
-  update(@RequestBody(required = true,
-      description = "This contains details of Git Sync Settings") @NotNull @Valid GitSyncSettingsDTO gitSyncSettings) {
+  update(@Parameter(description = ACCOUNT_PARAM_MESSAGE, required = true) @NotEmpty @QueryParam(
+             ACCOUNT_KEY) @AccountIdentifier String accountIdentifier,
+      @RequestBody(required = true, description = "This contains details of Git Sync Settings") @NotNull
+      @Valid GitSyncSettingsDTO gitSyncSettings) {
     accessControlClient.checkForAccessOrThrow(
-        ResourceScope.of(gitSyncSettings.getAccountIdentifier(), gitSyncSettings.getOrganizationIdentifier(),
-            gitSyncSettings.getProjectIdentifier()),
+        ResourceScope.of(accountIdentifier, gitSyncSettings.getOrgIdentifier(), gitSyncSettings.getProjectIdentifier()),
         Resource.of(ResourceTypes.PROJECT, gitSyncSettings.getProjectIdentifier()), EDIT_PROJECT_PERMISSION);
 
+    gitSyncSettings.setAccountIdentifier(accountIdentifier);
     return ResponseDTO.newResponse(gitSyncSettingsService.update(gitSyncSettings));
   }
 }
