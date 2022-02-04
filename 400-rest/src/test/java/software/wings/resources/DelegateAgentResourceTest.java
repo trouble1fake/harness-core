@@ -520,7 +520,6 @@ public class DelegateAgentResourceTest extends CategoryTest {
     verify(wingsPersistence, atLeastOnce()).save(apiCallLogs);
   }
 
-
   @Test
   @Owner(developers = NIKOLA)
   @Category(UnitTests.class)

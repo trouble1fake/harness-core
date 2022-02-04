@@ -1409,8 +1409,7 @@ public class WingsApplication extends Application<MainConfiguration> {
     injector.getInstance(DelegateTaskExpiryCheckIterator.class)
         .registerIterators(iteratorsConfig.getDelegateTaskExpiryCheckIteratorConfig().getThreadPoolSize());
     injector.getInstance(DelegateTaskValidationFailCheckHandler.class)
-            .registerIterators(iteratorsConfig.getDelegateTaskValidationFailIteratorConfig().getThreadPoolSize());
-    //injector.getInstance(DelegateTaskValidationFailHandler.class).registerIterators(2);
+        .registerIterators(iteratorsConfig.getDelegateTaskValidationFailIteratorConfig().getThreadPoolSize());
     injector.getInstance(DelegateTelemetryPublisher.class).registerIterators();
   }
 
