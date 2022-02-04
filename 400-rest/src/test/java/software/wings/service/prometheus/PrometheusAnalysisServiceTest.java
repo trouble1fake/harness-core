@@ -45,7 +45,6 @@ import software.wings.service.impl.prometheus.PrometheusSetupTestNodeData;
 import software.wings.service.intfc.SettingsService;
 import software.wings.service.intfc.security.SecretManager;
 
-import com.google.inject.Inject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import org.junit.Before;
