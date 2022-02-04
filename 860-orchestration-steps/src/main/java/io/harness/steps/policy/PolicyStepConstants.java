@@ -7,7 +7,6 @@ import io.harness.annotations.dev.OwnedBy;
 @OwnedBy(PIPELINE)
 public interface PolicyStepConstants {
   String POLICY_STEP_NAME = "Policy";
-  String POLICY_STEP_TYPE = "Policy";
   String POLICY_STEP_CATEGORY = "Governance";
   String POLICY_STEP_FOLDER_PATH = "Governance";
 
