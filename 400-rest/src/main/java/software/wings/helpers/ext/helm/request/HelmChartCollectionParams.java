@@ -12,9 +12,12 @@ import static io.harness.annotations.dev.HarnessTeam.CDC;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
+import io.harness.delegate.beans.executioncapability.CapabilityType;
 import io.harness.delegate.beans.executioncapability.ExecutionCapability;
 import io.harness.delegate.task.manifests.request.ManifestCollectionParams;
 import io.harness.expression.ExpressionEvaluator;
+
+import software.wings.beans.settings.helm.HttpHelmRepoConfig;
 
 import java.util.List;
 import java.util.Set;
@@ -40,6 +43,14 @@ public class HelmChartCollectionParams implements ManifestCollectionParams {
 
   @Override
   public List<ExecutionCapability> fetchRequiredExecutionCapabilities(ExpressionEvaluator maskingEvaluator) {
-    return helmChartConfigParams.fetchRequiredExecutionCapabilities(maskingEvaluator);
+    List<ExecutionCapability> executionCapabilities =
+        helmChartConfigParams.fetchRequiredExecutionCapabilities(maskingEvaluator);
+    if (bypassHelmFetch && helmChartConfigParams.getHelmRepoConfig() instanceof HttpHelmRepoConfig
+        && ((HttpHelmRepoConfig) helmChartConfigParams.getHelmRepoConfig())
+               .getChartRepoUrl()
+               .contains("/artifactory/")) {
+      executionCapabilities.removeIf(capability -> CapabilityType.HELM_INSTALL.equals(capability.getCapabilityType()));
+    }
+    return executionCapabilities;
   }
 }

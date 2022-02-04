@@ -2604,14 +2604,14 @@ public class WorkflowServiceImpl implements WorkflowService, DataProvider {
       if (helmChartOptional.isPresent()) {
         defaultAppManifestName =
             applicationManifests.stream()
-                .filter(appManifest -> appManifest.getUuid().equals(helmChart.getApplicationManifestId()))
+                .filter(appManifest -> appManifest.getUuid().equals(helmChartOptional.get().getApplicationManifestId()))
                 .map(ApplicationManifest::getName)
                 .findFirst()
                 .orElse("");
         helmChartOptional.get().setAppManifestName(defaultAppManifestName);
       }
 
-      applicationManifests.stream().filter() applicationManifestSummaryList.add(
+      applicationManifestSummaryList.add(
           ApplicationManifestSummary.builder()
               .appManifestId(applicationManifest.getUuid())
               .settingId(applicationManifest.getHelmChartConfig().getConnectorId())
