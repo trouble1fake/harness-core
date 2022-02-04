@@ -43,7 +43,10 @@ import software.wings.service.impl.prometheus.PrometheusMetricDataResponse.Prome
 import software.wings.service.impl.prometheus.PrometheusMetricDataResponse.PrometheusMetricDataResult;
 import software.wings.service.impl.prometheus.PrometheusSetupTestNodeData;
 import software.wings.service.intfc.SettingsService;
+import software.wings.service.intfc.security.SecretManager;
 
+import com.google.inject.Inject;
+import java.util.ArrayList;
 import java.util.Arrays;
 import org.junit.Before;
 import org.junit.Test;
@@ -57,6 +60,7 @@ public class PrometheusAnalysisServiceTest extends WingsBaseTest {
   @Mock private DelegateProxyFactory delegateProxyFactory;
   @Mock private APMDelegateService apmDelegateService;
   @Mock private MLServiceUtils mlServiceUtils;
+  @Mock private SecretManager secretManager;
   @InjectMocks private PrometheusAnalysisServiceImpl prometheusAnalysisService;
 
   String settingId;
@@ -71,6 +75,7 @@ public class PrometheusAnalysisServiceTest extends WingsBaseTest {
     PrometheusConfig config = PrometheusConfig.builder().url("http://34.68.138.55:8080/").build();
     when(settingsService.get(settingId))
         .thenReturn(SettingAttribute.Builder.aSettingAttribute().withValue(config).build());
+    when(secretManager.getEncryptionDetails(any())).thenReturn(new ArrayList());
   }
 
   @Test
