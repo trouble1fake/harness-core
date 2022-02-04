@@ -6,15 +6,18 @@
  */
 
 package io.harness.ng.core.accountsetting.dto;
-
-import static io.harness.annotations.dev.HarnessTeam.DX;
+import static io.harness.annotations.dev.HarnessTeam.PL;
 
 import io.harness.annotations.dev.OwnedBy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.annotations.ApiModel;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
 @Data
@@ -24,7 +27,7 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @ApiModel("AccountSettingResponse")
-@OwnedBy(DX)
+@OwnedBy(PL)
 @Schema(name = "AccountSettingResponse", description = "This has the Account Setting details along with its metadata.")
 public class AccountSettingResponseDTO {
   AccountSettingsDTO accountSettings;

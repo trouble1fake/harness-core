@@ -7,7 +7,6 @@
 
 package io.harness.ng.core.accountsetting.dto;
 
-import static io.harness.ConnectorConstants.CONNECTOR_TYPES;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 
 import io.harness.NGCommonEntityConstants;

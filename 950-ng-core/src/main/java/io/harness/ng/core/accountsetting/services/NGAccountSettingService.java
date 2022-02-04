@@ -10,7 +10,6 @@ package io.harness.ng.core.accountsetting.services;
 import io.harness.ng.core.accountsetting.dto.AccountSettingResponseDTO;
 import io.harness.ng.core.accountsetting.dto.AccountSettingType;
 import io.harness.ng.core.accountsetting.dto.AccountSettingsDTO;
-import io.harness.ng.core.accountsetting.entities.AccountSettings;
 
 import java.util.List;
 

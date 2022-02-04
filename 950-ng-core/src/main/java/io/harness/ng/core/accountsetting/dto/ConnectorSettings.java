@@ -7,12 +7,14 @@
 
 package io.harness.ng.core.accountsetting.dto;
 
-import lombok.*;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.springframework.data.annotation.TypeAlias;
 
-@EqualsAndHashCode(callSuper = true)
 @Data
 @Builder
+@EqualsAndHashCode(callSuper = true)
 @TypeAlias("io.harness.ng.core.accountsetting.dto.ConnectorSettings")
 public class ConnectorSettings extends AccountSettingConfig {
   Boolean builtInSMDisabled = Boolean.FALSE;

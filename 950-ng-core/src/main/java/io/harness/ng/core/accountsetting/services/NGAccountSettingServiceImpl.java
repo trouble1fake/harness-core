@@ -87,7 +87,6 @@ public class NGAccountSettingServiceImpl implements NGAccountSettingService {
   }
 
   private AccountSettingResponseDTO getResponse(AccountSettings accountSettings) {
-    AccountSettingResponseDTO accountSettingResponseDTO = accountSettingMapper.toResponseDTO(accountSettings);
-    return accountSettingResponseDTO;
+    return accountSettingMapper.toResponseDTO(accountSettings);
   }
 }
