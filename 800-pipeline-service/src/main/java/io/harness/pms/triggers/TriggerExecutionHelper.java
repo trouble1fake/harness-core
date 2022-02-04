@@ -91,7 +91,7 @@ public class TriggerExecutionHelper {
   private final ExecutionHelper executionHelper;
   private final PMSPipelineTemplateHelper pipelineTemplateHelper;
 
-  public PlanExecution resolveRuntimeInputAndSubmitExecutionReques(
+  public PlanExecution resolveRuntimeInputAndSubmitExecutionRequest(
       TriggerDetails triggerDetails, TriggerPayload triggerPayload) {
     String executionTag = generateExecutionTagForEvent(triggerDetails, triggerPayload);
     TriggeredBy embeddedUser =
@@ -120,20 +120,14 @@ public class TriggerExecutionHelper {
       String payload, String executionTagForGitEvent, ExecutionTriggerInfo triggerInfo) {
     try {
       NGTriggerEntity ngTriggerEntity = triggerDetails.getNgTriggerEntity();
-      String targetIdentifier = ngTriggerEntity.getTargetIdentifier();
-      Optional<PipelineEntity> pipelineEntityToExecute = pmsPipelineService.get(ngTriggerEntity.getAccountId(),
-          ngTriggerEntity.getOrgIdentifier(), ngTriggerEntity.getProjectIdentifier(), targetIdentifier, false);
-
-      if (!pipelineEntityToExecute.isPresent()) {
-        throw new TriggerException("Unable to continue trigger execution. Pipeline with identifier: "
-                + ngTriggerEntity.getTargetIdentifier() + ", with org: " + ngTriggerEntity.getOrgIdentifier()
-                + ", with ProjectId: " + ngTriggerEntity.getProjectIdentifier()
-                + ", For Trigger: " + ngTriggerEntity.getIdentifier() + " does not exist.",
-            USER);
-      }
-      PipelineEntity pipelineEntity = pipelineEntityToExecute.get();
-
+      String accountId = ngTriggerEntity.getAccountId();
+      String orgIdentifier = ngTriggerEntity.getOrgIdentifier();
+      String projectIdentifier = ngTriggerEntity.getProjectIdentifier();
+      String pipelineIdentifier = ngTriggerEntity.getTargetIdentifier();
       String runtimeInputYaml = triggerDetails.getNgTriggerConfigV2().getInputYaml();
+
+      PipelineEntity pipelineEntity =
+          executionHelper.fetchPipelineEntity(accountId, orgIdentifier, projectIdentifier, pipelineIdentifier);
 
       final String executionId = generateUuid();
       ExecutionMetadata.Builder executionMetaDataBuilder =
@@ -195,15 +189,13 @@ public class TriggerExecutionHelper {
           EmptyPredicate.isNotEmpty(basicPipeline.getNotificationRules()));
       // Set Principle user as pipeline service.
       SecurityContextBuilder.setContext(new ServicePrincipal(PIPELINE_SERVICE.getServiceId()));
-      pmsYamlSchemaService.validateYamlSchema(ngTriggerEntity.getAccountId(), ngTriggerEntity.getOrgIdentifier(),
-          ngTriggerEntity.getProjectIdentifier(), pipelineYaml);
+      pmsYamlSchemaService.validateYamlSchema(accountId, orgIdentifier, projectIdentifier, pipelineYaml);
 
       executionMetaDataBuilder.setPrincipalInfo(
           ExecutionPrincipalInfo.newBuilder().setShouldValidateRbac(false).build());
 
-      PlanExecution planExecution = executionHelper.startExecution(ngTriggerEntity.getAccountId(),
-          ngTriggerEntity.getOrgIdentifier(), ngTriggerEntity.getProjectIdentifier(), executionMetaDataBuilder.build(),
-          planExecutionMetadataBuilder.build(), false, null, null);
+      PlanExecution planExecution = executionHelper.startExecution(accountId, orgIdentifier, projectIdentifier,
+          executionMetaDataBuilder.build(), planExecutionMetadataBuilder.build(), false, null, null);
       // check if abort prev execution needed.
       requestPipelineExecutionAbortForSameExecTagIfNeeded(triggerDetails, planExecution, executionTagForGitEvent);
       return planExecution;

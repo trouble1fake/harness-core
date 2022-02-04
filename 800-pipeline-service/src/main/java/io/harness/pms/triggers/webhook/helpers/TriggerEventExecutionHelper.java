@@ -187,7 +187,7 @@ public class TriggerEventExecutionHelper {
         triggerPayloadBuilder.setManifestData(ManifestData.newBuilder().setVersion(build).build());
       }
 
-      PlanExecution response = triggerExecutionHelper.resolveRuntimeInputAndSubmitExecutionReques(
+      PlanExecution response = triggerExecutionHelper.resolveRuntimeInputAndSubmitExecutionRequest(
           triggerDetails, triggerPayloadBuilder.build());
       return generateEventHistoryForSuccess(triggerDetails, runtimeInputYaml, ngTriggerEntity, pseudoEvent, response);
     } catch (Exception e) {
