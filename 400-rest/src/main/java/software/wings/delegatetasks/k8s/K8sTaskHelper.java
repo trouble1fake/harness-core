@@ -97,7 +97,6 @@ import org.hibernate.validator.constraints.NotEmpty;
 @OwnedBy(CDP)
 public class K8sTaskHelper {
   @Inject protected DelegateLogService delegateLogService;
-  @Inject private transient KubernetesContainerService kubernetesContainerService;
   @Inject private GitService gitService;
   @Inject private EncryptionService encryptionService;
   @Inject private HelmTaskHelper helmTaskHelper;
@@ -107,10 +106,7 @@ public class K8sTaskHelper {
   @Inject private HelmHelper helmHelper;
   @Inject private CustomManifestService customManifestService;
   @Inject private ContainerDeploymentDelegateHelper containerDeploymentDelegateHelper;
-  @Inject private ScmDelegateClient scmDelegateClient;
-  @Inject private ScmServiceClient scmServiceClient;
   @Inject private ScmFetchFilesHelper scmFetchFilesHelper;
-  @Inject private HttpService httpService;
 
   public boolean doStatusCheckAllResourcesForHelm(Kubectl client, List<KubernetesResourceId> resourceIds, String ocPath,
       String workingDir, String namespace, String kubeconfigPath, ExecutionLogCallback executionLogCallback)

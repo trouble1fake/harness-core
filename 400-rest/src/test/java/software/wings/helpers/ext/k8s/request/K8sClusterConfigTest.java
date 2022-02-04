@@ -20,6 +20,7 @@ import software.wings.WingsBaseTest;
 import software.wings.beans.AzureConfig;
 import software.wings.beans.GcpConfig;
 import software.wings.beans.KubernetesClusterConfig;
+import software.wings.beans.RancherConfig;
 import software.wings.beans.SettingAttribute;
 import software.wings.delegatetasks.validation.capabilities.ClusterMasterUrlValidationCapability;
 import software.wings.service.impl.ContainerServiceParams;
@@ -43,6 +44,19 @@ public class K8sClusterConfigTest extends WingsBaseTest {
     testContainerServiceParamsNoMasterUrl("");
     testContainerServiceParamsNoMasterUrl(null);
     testContainerServiceParamsWithMasterUrl();
+  }
+
+  @Test
+  @Owner(developers = OwnerRule.SHUBHAM_MAHESHWARI)
+  @Category(UnitTests.class)
+  public void testRancherConfig() {
+    K8sClusterConfig clusterConfig = K8sClusterConfig.builder()
+        .cloudProvider(RancherConfig.builder().rancherUrl(MASTER_URL).build())
+        .build();
+
+    assertThat(clusterConfig.fetchRequiredExecutionCapabilities(null))
+        .containsExactlyInAnyOrder(
+            HttpConnectionExecutionCapability.builder().host("a.b.c").port(-1).scheme("http").build());
   }
 
   private void testKubernetesConfigWithDelegate() {

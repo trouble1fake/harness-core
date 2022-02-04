@@ -7,11 +7,13 @@
 
 package software.wings.delegatetasks.k8s.taskhandler;
 
+import static io.harness.rule.OwnerRule.SHUBHAM_MAHESHWARI;
 import static io.harness.rule.OwnerRule.UTSAV;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -26,6 +28,7 @@ import io.harness.rule.Owner;
 
 import software.wings.WingsBaseTest;
 import software.wings.beans.KubernetesClusterConfig;
+import software.wings.beans.RancherConfig;
 import software.wings.helpers.ext.container.ContainerDeploymentDelegateHelper;
 import software.wings.helpers.ext.k8s.request.K8sClusterConfig;
 import software.wings.helpers.ext.k8s.request.K8sTaskParameters;
@@ -127,6 +130,17 @@ public class K8sVersionTaskHandlerTest extends WingsBaseTest {
 
     KubernetesClusterConfig kubernetesClusterConfig1 = K8sVersionTaskHandler.getKubernetesConfig(k8sTaskParameters);
     assertThat(kubernetesClusterConfig1.getCcmConfig().isCloudCostEnabled()).isTrue();
+  }
+
+  @Test
+  @Owner(developers = SHUBHAM_MAHESHWARI)
+  @Category(UnitTests.class)
+  public void testGetKubernetesConfigWithRancherConfig() {
+    doReturn(k8sClusterConfig).when(k8sTaskParameters).getK8sClusterConfig();
+    RancherConfig rancherConfig = mock(RancherConfig.class);
+    doReturn(rancherConfig).when(k8sClusterConfig).getCloudProvider();
+
+    assertThat(K8sVersionTaskHandler.getKubernetesConfig(k8sTaskParameters)).isNull();
   }
 
   @Test

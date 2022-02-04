@@ -11,17 +11,23 @@ import static io.harness.k8s.model.KubernetesClusterAuthType.OIDC;
 import static io.harness.rule.OwnerRule.ACASIAN;
 import static io.harness.rule.OwnerRule.ADWAIT;
 import static io.harness.rule.OwnerRule.ANSHUL;
+import static io.harness.rule.OwnerRule.SHUBHAM_MAHESHWARI;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyList;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import io.harness.category.element.UnitTests;
 import io.harness.delegate.task.k8s.ContainerDeploymentDelegateBaseHelper;
+import io.harness.exception.InvalidRequestException;
 import io.harness.k8s.KubernetesContainerService;
 import io.harness.k8s.model.KubernetesConfig;
 import io.harness.k8s.model.OidcGrantType;
@@ -32,13 +38,16 @@ import io.harness.rule.Owner;
 
 import software.wings.WingsBaseTest;
 import software.wings.beans.KubernetesClusterConfig;
+import software.wings.beans.RancherConfig;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.command.ExecutionLogCallback;
+import software.wings.delegatetasks.rancher.RancherTaskHelper;
 import software.wings.helpers.ext.k8s.request.K8sClusterConfig;
 import software.wings.service.impl.ContainerServiceParams;
 import software.wings.service.intfc.security.EncryptionService;
 
 import com.github.scribejava.apis.openid.OpenIdOAuth2AccessToken;
+import java.io.IOException;
 import java.util.Collections;
 import org.junit.Before;
 import org.junit.Test;
@@ -51,6 +60,7 @@ public class ContainerDeploymentDelegateHelperTest extends WingsBaseTest {
   @Mock private KubernetesContainerService kubernetesContainerService;
   @Mock LogCallback logCallback;
   @Mock private EncryptionService encryptionService;
+  @Mock private RancherTaskHelper rancherTaskHelper;
   @Spy @InjectMocks private OidcTokenRetriever oidcTokenRetriever;
   @Spy @InjectMocks ContainerDeploymentDelegateBaseHelper containerDeploymentDelegateBaseHelper;
   @Spy @InjectMocks ContainerDeploymentDelegateHelper containerDeploymentDelegateHelper;
@@ -215,5 +225,82 @@ public class ContainerDeploymentDelegateHelperTest extends WingsBaseTest {
 
     KubernetesConfig kubernetesConfig = containerDeploymentDelegateHelper.getKubernetesConfig(k8sClusterConfig, false);
     assertThat(kubernetesConfig.getMasterUrl()).isEqualTo("https://example.com");
+  }
+
+  @Test
+  @Owner(developers = SHUBHAM_MAHESHWARI)
+  @Category(UnitTests.class)
+  public void testGetKubernetesConfigWithRancher() throws IOException {
+    RancherConfig rancherConfig = RancherConfig.builder().rancherUrl("sampleRancherUrl").build();
+    K8sClusterConfig k8sClusterConfig = K8sClusterConfig.builder()
+                                            .cloudProvider(rancherConfig)
+                                            .cloudProviderEncryptionDetails(emptyList())
+                                            .clusterName("sampleCluster")
+                                            .namespace("sampleNamespace")
+                                            .build();
+
+    doReturn(mock(KubernetesConfig.class))
+        .when(rancherTaskHelper)
+        .createKubeconfig(any(RancherConfig.class), anyList(), anyString(), anyString());
+    KubernetesConfig kubernetesConfig = containerDeploymentDelegateHelper.getKubernetesConfig(k8sClusterConfig, false);
+    verify(rancherTaskHelper, times(1))
+        .createKubeconfig(rancherConfig, Collections.emptyList(), "sampleCluster", "sampleNamespace");
+  }
+
+  @Test(expected = InvalidRequestException.class)
+  @Owner(developers = SHUBHAM_MAHESHWARI)
+  @Category(UnitTests.class)
+  public void testGetKubernetesConfigWithRancherWithException() throws IOException {
+    RancherConfig rancherConfig = RancherConfig.builder().rancherUrl("sampleRancherUrl").build();
+    K8sClusterConfig k8sClusterConfig = K8sClusterConfig.builder()
+                                            .cloudProvider(rancherConfig)
+                                            .cloudProviderEncryptionDetails(emptyList())
+                                            .clusterName("sampleCluster")
+                                            .namespace("sampleNamespace")
+                                            .build();
+
+    doThrow(new RuntimeException("some exception message"))
+        .when(rancherTaskHelper)
+        .createKubeconfig(any(RancherConfig.class), anyList(), anyString(), anyString());
+    KubernetesConfig kubernetesConfig = containerDeploymentDelegateHelper.getKubernetesConfig(k8sClusterConfig, false);
+  }
+
+  @Test(expected = InvalidRequestException.class)
+  @Owner(developers = SHUBHAM_MAHESHWARI)
+  @Category(UnitTests.class)
+  public void testGetKubernetesConfigForContainerParamsWithRancherWithException() throws IOException {
+    RancherConfig rancherConfig = RancherConfig.builder().rancherUrl("sampleRancherUrl").build();
+    SettingAttribute settingAttribute = mock(SettingAttribute.class);
+    ContainerServiceParams params = ContainerServiceParams.builder()
+                                        .settingAttribute(settingAttribute)
+                                        .clusterName("sampleCluster")
+                                        .namespace("sampleNamespace")
+                                        .build();
+
+    doReturn(rancherConfig).when(settingAttribute).getValue();
+    doThrow(new RuntimeException("some exception message"))
+        .when(rancherTaskHelper)
+        .createKubeconfig(any(RancherConfig.class), anyList(), anyString(), anyString());
+    KubernetesConfig kubernetesConfig = containerDeploymentDelegateHelper.getKubernetesConfig(params);
+  }
+
+  @Test
+  @Owner(developers = SHUBHAM_MAHESHWARI)
+  @Category(UnitTests.class)
+  public void testGetKubernetesConfigForContainerParamsWithRancher() throws IOException {
+    RancherConfig rancherConfig = RancherConfig.builder().rancherUrl("sampleRancherUrl").build();
+    SettingAttribute settingAttribute = mock(SettingAttribute.class);
+    ContainerServiceParams params = ContainerServiceParams.builder()
+                                        .settingAttribute(settingAttribute)
+                                        .clusterName("sampleCluster")
+                                        .namespace("sampleNamespace")
+                                        .build();
+
+    doReturn(rancherConfig).when(settingAttribute).getValue();
+    doReturn(mock(KubernetesConfig.class))
+        .when(rancherTaskHelper)
+        .createKubeconfig(any(RancherConfig.class), anyList(), anyString(), anyString());
+    KubernetesConfig kubernetesConfig = containerDeploymentDelegateHelper.getKubernetesConfig(params);
+    verify(rancherTaskHelper, times(1)).createKubeconfig(rancherConfig, null, "sampleCluster", "sampleNamespace");
   }
 }

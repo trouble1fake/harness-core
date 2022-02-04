@@ -277,6 +277,7 @@ public class WorkflowServiceHelper {
   public static final String VERIFY_STAGE_SERVICE = "Verify Stage Service";
   public static final String ROUTE_UPDATE = "Route Update";
   public static final String KUBERNETES_SWAP_SERVICES_PRIMARY_STAGE = "Swap Primary with Stage";
+  public static final String RANCHER_KUBERNETES_SWAP_SERVICES_PRIMARY_STAGE = "Rancher Swap Primary with Stage";
   public static final String INFRASTRUCTURE_NODE_NAME = "Prepare Infra";
   public static final String SELECT_NODE_NAME = "Select Nodes";
   public static final String ROLLBACK_AWS_LAMBDA = "Rollback AWS Lambda";

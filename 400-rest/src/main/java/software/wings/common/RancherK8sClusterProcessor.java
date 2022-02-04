@@ -34,6 +34,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.mongodb.morphia.annotations.Transient;
 
 @NoArgsConstructor
+@AllArgsConstructor
 public class RancherK8sClusterProcessor implements ExpressionProcessor {
   @Inject @Transient private SweepingOutputService sweepingOutputService;
 

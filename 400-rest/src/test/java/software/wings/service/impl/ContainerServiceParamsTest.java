@@ -11,6 +11,11 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.rule.OwnerRule.SAINATH;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
@@ -18,12 +23,15 @@ import io.harness.delegate.beans.executioncapability.ExecutionCapability;
 import io.harness.delegate.beans.executioncapability.HttpConnectionExecutionCapability;
 import io.harness.delegate.beans.executioncapability.SelectorCapability;
 import io.harness.rule.Owner;
+import io.harness.rule.OwnerRule;
 
 import software.wings.WingsBaseTest;
 import software.wings.beans.AwsConfig;
+import software.wings.beans.RancherConfig;
 import software.wings.beans.SettingAttribute;
 
 import groovy.util.logging.Slf4j;
+import java.util.Collections;
 import java.util.List;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -60,5 +68,24 @@ public class ContainerServiceParamsTest extends WingsBaseTest {
     assertThat(requiredExecutionCapabilities.size()).isEqualTo(2);
     assertThat(requiredExecutionCapabilities.get(0) instanceof HttpConnectionExecutionCapability).isTrue();
     assertThat(requiredExecutionCapabilities.get(1) instanceof SelectorCapability).isTrue();
+  }
+
+  @Test
+  @Owner(developers = OwnerRule.SHUBHAM_MAHESHWARI)
+  @Category(UnitTests.class)
+  public void testFetchRequiredExecutionCapabilitiesForRancherConfig() {
+    RancherConfig rancherConfig = mock(RancherConfig.class);
+    SettingAttribute settingAttribute = mock(SettingAttribute.class);
+    ContainerServiceParams serviceParams = ContainerServiceParams.builder().settingAttribute(settingAttribute).build();
+
+    doReturn(rancherConfig).when(settingAttribute).getValue();
+    doReturn(Collections.singletonList(HttpConnectionExecutionCapability.builder().build()))
+        .when(rancherConfig)
+        .fetchRequiredExecutionCapabilities(null);
+
+    List<ExecutionCapability> executionCapabilities = serviceParams.fetchRequiredExecutionCapabilities(null);
+    assertThat(executionCapabilities.size()).isEqualTo(1);
+    assertTrue(executionCapabilities.get(0) instanceof HttpConnectionExecutionCapability);
+    verify(rancherConfig, times(1)).fetchRequiredExecutionCapabilities(null);
   }
 }

@@ -38,6 +38,7 @@ import software.wings.beans.Environment;
 import software.wings.beans.GcpKubernetesInfrastructureMapping;
 import software.wings.beans.InfrastructureMappingType;
 import software.wings.beans.KubernetesClusterConfig;
+import software.wings.beans.RancherKubernetesInfrastructureMapping;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.SyncTaskContext;
 import software.wings.delegatetasks.DelegateProxyFactory;
@@ -178,6 +179,15 @@ public class ContainerMasterUrlHelperTest extends WingsBaseTest {
   }
 
   @Test
+  @Owner(developers = OwnerRule.SHUBHAM_MAHESHWARI)
+  @Category(UnitTests.class)
+  public void testFetchMasterUrlForRancher() {
+    assertThat(masterUrlHelper.fetchMasterUrl(
+                   ContainerServiceParams.builder().build(), new RancherKubernetesInfrastructureMapping()))
+        .isEqualTo("");
+  }
+
+  @Test
   @Owner(developers = OwnerRule.YOGESH)
   @Category(UnitTests.class)
   public void masterUrlRequired() {
@@ -192,6 +202,8 @@ public class ContainerMasterUrlHelperTest extends WingsBaseTest {
         masterUrlHelper.masterUrlRequired(buildInfraMapping(InfrastructureMappingType.AZURE_KUBERNETES, MASTER_URL)))
         .isFalse();
     assertThat(masterUrlHelper.masterUrlRequired(buildInfraMapping(InfrastructureMappingType.DIRECT_KUBERNETES, null)))
+        .isFalse();
+    assertThat(masterUrlHelper.masterUrlRequired(buildInfraMapping(InfrastructureMappingType.RANCHER_KUBERNETES, null)))
         .isFalse();
 
     ContainerInfrastructureMapping infraMapping = buildInfraMapping(InfrastructureMappingType.GCP_KUBERNETES, null);

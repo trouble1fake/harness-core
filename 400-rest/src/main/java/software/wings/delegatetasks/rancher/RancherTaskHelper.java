@@ -120,7 +120,7 @@ public class RancherTaskHelper {
           "Unable to find cluster with display name: " + clusterName + " in list of clusters fetched from Rancher");
     }
 
-    String kubeConfig = generateKubeConfigFromRancher(rancherConfig, encryptedDataDetails, clusterData.getId());
+    String kubeConfig = generateKubeConfigFromRancher(rancherConfig, clusterData.getId());
     ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
     Config config = yamlMapper.readValue(kubeConfig, Config.class);
 
@@ -130,8 +130,7 @@ public class RancherTaskHelper {
         .build();
   }
 
-  private String generateKubeConfigFromRancher(RancherConfig rancherConfig,
-      List<EncryptedDataDetail> encryptedDataDetails, String clusterId) throws IOException {
+  private String generateKubeConfigFromRancher(RancherConfig rancherConfig, String clusterId) throws IOException {
     String url = String.format("/v3/clusters/%s?action=generateKubeconfig", clusterId);
     HttpInternalResponse response = makeRancherApi("POST", url, rancherConfig);
 

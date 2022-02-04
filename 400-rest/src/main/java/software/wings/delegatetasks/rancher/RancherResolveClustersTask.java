@@ -42,7 +42,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.tuple.Pair;
-import org.jose4j.lang.JoseException;
 
 @Slf4j
 @OwnedBy(CDP)
@@ -62,7 +61,7 @@ public class RancherResolveClustersTask extends AbstractDelegateRunnableTask {
   }
 
   @Override
-  public RancherResolveClustersResponse run(TaskParameters parameters) throws IOException, JoseException {
+  public RancherResolveClustersResponse run(TaskParameters parameters) throws IOException {
     LogCallback logCallback = getLogStreamingTaskClient().obtainLogCallback(RancherResolveState.COMMAND_UNIT_NAME);
     if (!(parameters instanceof RancherResolveClustersTaskParameters)) {
       throw new InvalidArgumentsException(
@@ -85,6 +84,9 @@ public class RancherResolveClustersTask extends AbstractDelegateRunnableTask {
                       .map(clusterData -> clusterData.getName())
                       .collect(Collectors.toList()),
             LogLevel.INFO);
+      } else {
+        logCallback.saveExecutionLog("Rancher returned an empty list of clusters.", LogLevel.ERROR);
+        return RancherResolveClustersResponse.builder().executionStatus(ExecutionStatus.FAILED).build();
       }
     } catch (Exception e) {
       log.error("Caught exception while fetching clusters data from rancher", e);

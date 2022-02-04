@@ -123,6 +123,8 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.OrchestrationWorkflowType;
 
+import java.util.HashSet;
+import java.util.Set;
 import software.wings.api.DeploymentType;
 import software.wings.beans.InfrastructureMappingType;
 import software.wings.beans.PhaseStepType;
@@ -908,6 +910,7 @@ public enum StepType {
   public static final Map<WorkflowStepType, List<StepType>> workflowStepTypeListMap = new LinkedHashMap<>();
   public static final Map<InfrastructureMappingType, StepType> infrastructureMappingTypeToStepTypeMap =
       new LinkedHashMap<>();
+  public static final Set<StepType> k8sSteps = new HashSet<>();
 
   static {
     for (StepType st : StepType.values()) {
@@ -921,5 +924,15 @@ public enum StepType {
     infrastructureMappingTypeToStepTypeMap.put(InfrastructureMappingType.AWS_SSH, AWS_NODE_SELECT);
     infrastructureMappingTypeToStepTypeMap.put(AZURE_INFRA, AZURE_NODE_SELECT);
     infrastructureMappingTypeToStepTypeMap.put(PHYSICAL_DATA_CENTER_WINRM, AZURE_NODE_SELECT);
+
+    k8sSteps.add(KUBERNETES_SWAP_SERVICE_SELECTORS);
+    k8sSteps.add(K8S_SCALE);
+    k8sSteps.add(K8S_DELETE);
+    k8sSteps.add(K8S_APPLY);
+    k8sSteps.add(K8S_BLUE_GREEN_DEPLOY);
+    k8sSteps.add(K8S_DEPLOYMENT_ROLLING);
+    k8sSteps.add(K8S_CANARY_DEPLOY);
+    k8sSteps.add(K8S_DEPLOYMENT_ROLLING_ROLLBACK);
+    k8sSteps.add(K8S_TRAFFIC_SPLIT);
   }
 }

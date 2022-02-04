@@ -4296,7 +4296,7 @@ public class WorkflowServiceImpl implements WorkflowService, DataProvider {
       LinkedList<String> recent, StepType[] stepTypes, WorkflowPhase workflowPhase, String appId,
       OrchestrationWorkflowType orchestrationWorkflowType) {
     Map<String, WorkflowStepMeta> steps = new HashMap<>();
-    String infraDefinitionId = workflowPhase.getInfraDefinitionId();
+    String infraDefinitionId = workflowPhase != null ? workflowPhase.getInfraDefinitionId() : null;
     CloudProviderType cloudProviderType = null;
     if (infraDefinitionId != null) {
       InfrastructureDefinition infrastructureDefinition = infrastructureDefinitionService.get(appId, infraDefinitionId);
@@ -4307,6 +4307,11 @@ public class WorkflowServiceImpl implements WorkflowService, DataProvider {
     for (StepType step : stepTypes) {
       if (Objects.nonNull(cloudProviderType) && !CloudProviderType.RANCHER.equals(cloudProviderType)
           && step.name().startsWith("RANCHER_")) {
+        continue;
+      }
+
+      if (Objects.nonNull(cloudProviderType) && CloudProviderType.RANCHER.equals(cloudProviderType)
+          && StepType.k8sSteps.contains(step)) {
         continue;
       }
 
