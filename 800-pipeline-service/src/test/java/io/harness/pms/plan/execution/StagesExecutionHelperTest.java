@@ -73,5 +73,6 @@ public class StagesExecutionHelperTest extends CategoryTest {
     assertThat(stagesExecutionInfo1.getPipelineYamlToRun()).isEqualTo(s2StageYaml);
     assertThat(stagesExecutionInfo1.getFullPipelineYaml()).isEqualTo(pipelineYaml);
     assertThat(stagesExecutionInfo1.getExpressionValues()).isEqualTo(expressionValues);
+    assertThat(stagesExecutionInfo1.isAllowStagesExecution()).isEqualTo(true);
   }
 }

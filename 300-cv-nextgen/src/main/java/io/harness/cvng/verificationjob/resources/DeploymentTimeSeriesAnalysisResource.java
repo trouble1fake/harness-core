@@ -20,7 +20,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import javax.ws.rs.DefaultValue;
+import javax.ws.rs.BeanParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -43,16 +43,9 @@ public class DeploymentTimeSeriesAnalysisResource {
   @ApiOperation(value = "get metrics for given verificationJob", nickname = "getMetrics")
   public RestResponse<TransactionMetricInfoSummaryPageDTO> getMetrics(
       @PathParam("verificationJobInstanceId") String verificationJobInstanceId,
-      @QueryParam("accountId") String accountId, @QueryParam("anomalousMetricsOnly") boolean anomalousMetricsOnly,
-      @QueryParam("hostName") String hostName, @QueryParam("filter") String filter,
-      @QueryParam("pageNumber") int pageNumber, @QueryParam("pageSize") @DefaultValue("10") int pageSize) {
-    DeploymentTimeSeriesAnalysisFilter deploymentTimeSeriesAnalysisFilter =
-        DeploymentTimeSeriesAnalysisFilter.builder()
-            .anomalousMetricsOnly(anomalousMetricsOnly)
-            .hostName(hostName)
-            .filter(filter)
-            .build();
-    PageParams pageParams = PageParams.builder().page(pageNumber).size(pageSize).build();
+      @QueryParam("accountId") String accountId,
+      @BeanParam DeploymentTimeSeriesAnalysisFilter deploymentTimeSeriesAnalysisFilter,
+      @BeanParam PageParams pageParams) {
     return new RestResponse(deploymentTimeSeriesAnalysisService.getMetrics(
         accountId, verificationJobInstanceId, deploymentTimeSeriesAnalysisFilter, pageParams));
   }

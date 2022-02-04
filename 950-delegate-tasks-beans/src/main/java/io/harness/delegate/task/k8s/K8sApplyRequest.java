@@ -39,7 +39,7 @@ public class K8sApplyRequest implements K8sDeployRequest {
   List<String> filePaths;
   @Builder.Default boolean shouldOpenFetchFilesLogStream = true;
   CommandUnitsProgress commandUnitsProgress;
-  boolean useVarSupportForKustomize;
+  boolean useLatestKustomizeVersion;
   boolean useNewKubectlVersion;
 
   @Override

@@ -140,7 +140,7 @@ public class K8sRollingDeployRollback extends AbstractK8sState {
                       ? emptyList()
                       : k8sContextElement.getPrunedResourcesIds())
               .isPruningEnabled(featureFlagService.isEnabled(PRUNE_KUBERNETES_RESOURCES, context.getAccountId()))
-              .useVarSupportForKustomize(isUseVarSupportForKustomize(context.getAccountId()))
+              .useLatestKustomizeVersion(isUseLatestKustomizeVersion(context.getAccountId()))
               .useNewKubectlVersion(featureFlagService.isEnabled(NEW_KUBECTL_VERSION, infraMapping.getAccountId()))
               .build();
 
