@@ -12,6 +12,8 @@ import static io.harness.ng.core.CorrelationContext.getCorrelationIdInterceptor;
 import static io.harness.request.RequestContextFilter.getRequestContextInterceptor;
 import static io.harness.security.JWTAuthenticationFilter.X_SOURCE_PRINCIPAL;
 
+import static com.fasterxml.jackson.core.JsonGenerator.Feature.AUTO_CLOSE_JSON_CONTENT;
+import static com.fasterxml.jackson.core.JsonParser.Feature.AUTO_CLOSE_SOURCE;
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 import static org.apache.http.HttpHeaders.AUTHORIZATION;
 
@@ -33,6 +35,8 @@ import io.harness.serializer.kryo.KryoConverterFactory;
 
 import software.wings.jersey.JsonViews;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
@@ -125,6 +129,8 @@ public abstract class AbstractHttpClientFactory {
     objMapper.setSubtypeResolver(new JsonSubtypeResolver(objMapper.getSubtypeResolver()));
     objMapper.setConfig(objMapper.getSerializationConfig().withView(JsonViews.Public.class));
     objMapper.disable(FAIL_ON_UNKNOWN_PROPERTIES);
+    objMapper.configure(AUTO_CLOSE_JSON_CONTENT, false);
+    objMapper.configure(AUTO_CLOSE_SOURCE, false);
     objMapper.registerModule(new ProtobufModule());
     objMapper.registerModule(new Jdk8Module());
     objMapper.registerModule(new GuavaModule());
