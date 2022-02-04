@@ -142,6 +142,8 @@ public class TerraformRollbackStep extends TaskExecutableWithRollbackAndRbac<Ter
               .workspace(rollbackConfig.getWorkspace())
               .configFile(terraformStepHelper.getGitFetchFilesConfig(
                   rollbackConfig.getConfigFiles().toGitStoreConfig(), ambiance, TerraformStepHelper.TF_CONFIG_FILES))
+              .fileStoreConfigFiles(terraformStepHelper.getFileFactoryFetchFilesConfig(
+                  rollbackConfig.getFileStoreConfig(), ambiance, TerraformStepHelper.TF_CONFIG_FILES))
               .varFileInfos(
                   terraformStepHelper.prepareTerraformVarFileInfo(rollbackConfig.getVarFileConfigs(), ambiance));
 

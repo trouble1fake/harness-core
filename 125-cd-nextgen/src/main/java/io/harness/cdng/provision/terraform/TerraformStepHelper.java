@@ -557,6 +557,7 @@ public class TerraformStepHelper {
                                           .entityId(rollbackConfig.getEntityId())
                                           .pipelineExecutionId(ambiance.getPlanExecutionId())
                                           .configFiles(rollbackConfig.getConfigFiles())
+                                          .fileStoreConfig(rollbackConfig.getFileStoreConfig())
                                           .varFileConfigs(rollbackConfig.getVarFileConfigs())
                                           .backendConfig(rollbackConfig.getBackendConfig())
                                           .environmentVariables(rollbackConfig.getEnvironmentVariables())

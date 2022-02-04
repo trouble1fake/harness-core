@@ -33,6 +33,7 @@ import io.harness.cdng.provision.terraform.TerraformConfigHelper;
 import io.harness.cdng.provision.terraform.TerraformStepHelper;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.beans.logstreaming.UnitProgressData;
+import io.harness.delegate.beans.storeconfig.ArtifactoryStoreDelegateConfig;
 import io.harness.delegate.task.git.GitFetchFilesConfig;
 import io.harness.delegate.task.terraform.TFTaskType;
 import io.harness.delegate.task.terraform.TerraformTaskNGParameters;
@@ -177,8 +178,11 @@ public class TerraformRollbackStepTest extends CategoryTest {
 
     doReturn(null).when(executionSweepingOutputService).consume(any(), any(), any(), any());
     doReturn("fileId").when(terraformStepHelper).getLatestFileId("fullId");
-    GitFetchFilesConfig gitFetchFilesConfig = GitFetchFilesConfig.builder().build();
-    doReturn(gitFetchFilesConfig).when(terraformStepHelper).getGitFetchFilesConfig(any(), any(), any());
+    doReturn(null).when(terraformStepHelper).getGitFetchFilesConfig(any(), any(), any());
+    ArtifactoryStoreDelegateConfig artifactoryStoreDelegateConfig = ArtifactoryStoreDelegateConfig.builder().build();
+    doReturn(artifactoryStoreDelegateConfig)
+        .when(terraformStepHelper)
+        .getFileFactoryFetchFilesConfig(any(), any(), any());
     doReturn(null).when(terraformStepHelper).prepareTerraformVarFileInfo(any(), any());
     mockStatic(StepUtils.class);
     PowerMockito.when(StepUtils.prepareCDTaskRequest(any(), any(), any(), any(), any(), any(), any()))
@@ -195,6 +199,7 @@ public class TerraformRollbackStepTest extends CategoryTest {
     TerraformTaskNGParameters taskParameters =
         (TerraformTaskNGParameters) taskDataArgumentCaptor.getValue().getParameters()[0];
     assertThat(taskParameters.getTaskType()).isEqualTo(TFTaskType.APPLY);
+    assertThat(taskParameters.getFileStoreConfigFiles()).isEqualTo(artifactoryStoreDelegateConfig);
     verify(stepHelper, times(0)).sendRollbackTelemetryEvent(any(), any(), any());
   }
 

@@ -840,8 +840,13 @@ public class TerraformStepHelperTest extends CategoryTest {
     Ambiance ambiance = getAmbiance();
     ArgumentCaptor<TerraformConfig> captor = ArgumentCaptor.forClass(TerraformConfig.class);
     GitStoreConfigDTO configFiles = GithubStoreDTO.builder().branch("master").connectorRef("terraform").build();
-    TerraformConfig terraformConfig =
-        TerraformConfig.builder().backendConfig("back-content").workspace("w1").configFiles(configFiles).build();
+    ArtifactoryStoreConfig artifactoryStoreConfig = ArtifactoryStoreConfig.builder().build();
+    TerraformConfig terraformConfig = TerraformConfig.builder()
+                                          .backendConfig("back-content")
+                                          .workspace("w1")
+                                          .fileStoreConfig(artifactoryStoreConfig)
+                                          .configFiles(configFiles)
+                                          .build();
     helper.saveTerraformConfig(terraformConfig, ambiance);
     then(terraformConfigDAL).should(times(1)).saveTerraformConfig(captor.capture());
     System.out.println("");
@@ -850,6 +855,7 @@ public class TerraformStepHelperTest extends CategoryTest {
     assertThat(config.getAccountId()).isEqualTo("test-account");
     assertThat(config.getConfigFiles().toGitStoreConfig().getConnectorRef().getValue()).isEqualTo("terraform");
     assertThat(config.getConfigFiles().toGitStoreConfig().getBranch().getValue()).isEqualTo("master");
+    assertThat(config.getFileStoreConfig()).isEqualTo(artifactoryStoreConfig);
   }
 
   @Test
