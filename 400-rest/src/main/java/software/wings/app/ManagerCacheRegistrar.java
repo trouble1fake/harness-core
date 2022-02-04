@@ -167,6 +167,9 @@ public class ManagerCacheRegistrar extends AbstractModule {
     }, Names.named(WHITELIST_CACHE)));
     mapBinder.addBinding(SECRET_TOKEN_CACHE).to(Key.get(new TypeLiteral<Cache<String, EncryptedRecordData>>() {
     }, Names.named(SECRET_TOKEN_CACHE)));
+    mapBinder.addBinding(DELEGATE_TOKEN_CACHE)
+        .to(Key.get(
+            new TypeLiteral<Cache<DelegateTokenCacheKey, DelegateToken>>() {}, Names.named(DELEGATE_TOKEN_CACHE)));
   }
 
   private void registerRequiredBindings() {
