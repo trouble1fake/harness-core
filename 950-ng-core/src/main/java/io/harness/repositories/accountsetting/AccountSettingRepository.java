@@ -10,7 +10,8 @@ package io.harness.repositories.accountsetting;
 import io.harness.annotation.HarnessRepo;
 import io.harness.ng.core.accountsetting.entities.AccountSettings;
 
-import org.springframework.data.repository.Repository;
+import org.springframework.data.repository.CrudRepository;
 
 @HarnessRepo
-public interface AccountSettingRepository extends Repository<AccountSettings, String>, AccountSettingCustomRepository {}
+public interface AccountSettingRepository
+    extends CrudRepository<AccountSettings, String>, AccountSettingCustomRepository {}

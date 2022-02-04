@@ -13,8 +13,6 @@ import io.harness.ng.core.accountsetting.entities.AccountSettings;
 import java.util.List;
 
 public interface AccountSettingCustomRepository {
-  AccountSettings save(AccountSettings objectToSave);
-
   List<AccountSettings> findAll(
       String accountId, String orgIdentifier, String projectIdentifier, AccountSettingType type);
 

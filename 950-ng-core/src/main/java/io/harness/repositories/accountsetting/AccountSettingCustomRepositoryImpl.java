@@ -24,12 +24,6 @@ import org.springframework.data.mongodb.core.query.Update;
 @AllArgsConstructor(onConstructor = @__({ @Inject }))
 public class AccountSettingCustomRepositoryImpl implements AccountSettingCustomRepository {
   private MongoTemplate mongoTemplate;
-
-  @Override
-  public AccountSettings save(AccountSettings objectToSave) {
-    return mongoTemplate.save(objectToSave);
-  }
-
   @Override
   public List<AccountSettings> findAll(
       String accountId, String orgIdentifier, String projectIdentifier, AccountSettingType type) {
