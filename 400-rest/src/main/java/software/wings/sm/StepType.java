@@ -123,8 +123,6 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.OrchestrationWorkflowType;
 
-import java.util.HashSet;
-import java.util.Set;
 import software.wings.api.DeploymentType;
 import software.wings.beans.InfrastructureMappingType;
 import software.wings.beans.PhaseStepType;
@@ -287,9 +285,11 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @OwnedBy(CDC)
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)

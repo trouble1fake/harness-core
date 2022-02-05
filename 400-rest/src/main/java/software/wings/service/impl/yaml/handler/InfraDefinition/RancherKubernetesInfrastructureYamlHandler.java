@@ -28,15 +28,13 @@ public class RancherKubernetesInfrastructureYamlHandler
   @Override
   public Yaml toYaml(RancherKubernetesInfrastructure bean, String appId) {
     SettingAttribute cloudProvider = settingsService.get(bean.getCloudProviderId());
-    Yaml yaml = Yaml.builder()
+    return Yaml.builder()
                     .namespace(bean.getNamespace())
                     .releaseName(bean.getReleaseName())
                     .cloudProviderName(cloudProvider.getName())
                     .type(InfrastructureType.RANCHER_KUBERNETES)
                     .clusterSelectionCriteria(bean.getClusterSelectionCriteria())
                     .build();
-
-    return yaml;
   }
 
   @Override

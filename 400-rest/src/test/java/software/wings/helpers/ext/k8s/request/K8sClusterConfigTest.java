@@ -50,9 +50,8 @@ public class K8sClusterConfigTest extends WingsBaseTest {
   @Owner(developers = OwnerRule.SHUBHAM_MAHESHWARI)
   @Category(UnitTests.class)
   public void testRancherConfig() {
-    K8sClusterConfig clusterConfig = K8sClusterConfig.builder()
-        .cloudProvider(RancherConfig.builder().rancherUrl(MASTER_URL).build())
-        .build();
+    K8sClusterConfig clusterConfig =
+        K8sClusterConfig.builder().cloudProvider(RancherConfig.builder().rancherUrl(MASTER_URL).build()).build();
 
     assertThat(clusterConfig.fetchRequiredExecutionCapabilities(null))
         .containsExactlyInAnyOrder(

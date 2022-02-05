@@ -98,6 +98,7 @@ import software.wings.beans.ErrorStrategy;
 import software.wings.beans.GcpKubernetesInfrastructureMapping;
 import software.wings.beans.InfraMappingSweepingOutput;
 import software.wings.beans.InfrastructureMapping;
+import software.wings.beans.InfrastructureMappingType;
 import software.wings.beans.NameValuePair;
 import software.wings.beans.PcfInfrastructureMapping;
 import software.wings.beans.RancherKubernetesInfrastructureMapping;
@@ -1059,8 +1060,18 @@ public class ExecutionContextImpl implements DeploymentExecutionContext {
           SweepingOutputSecretManagerFunctor.builder().simpleEncryption(new SimpleEncryption()).build());
     }
 
-    contextMap.put(RancherK8sClusterProcessor.FILTERED_CLUSTERS_EXPR_PREFIX,
-        expressionProcessorFactory.getExpressionProcessor(RancherK8sClusterProcessor.EXPRESSION_EQUAL_PATTERN, this));
+    String infraMappingId = fetchInfraMappingId();
+    if (infraMappingId != null) {
+      String appId = getAppId();
+      InfrastructureMapping infrastructureMapping = infrastructureMappingService.get(appId, infraMappingId);
+      if (infrastructureMapping != null
+          && InfrastructureMappingType.RANCHER_KUBERNETES.name().equals(infrastructureMapping.getInfraMappingType())) {
+        contextMap.put(RancherK8sClusterProcessor.FILTERED_CLUSTERS_EXPR_PREFIX,
+            expressionProcessorFactory.getExpressionProcessor(
+                RancherK8sClusterProcessor.EXPRESSION_EQUAL_PATTERN, this));
+      }
+    }
+
     return contextMap;
   }
 

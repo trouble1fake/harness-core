@@ -10,7 +10,6 @@ package software.wings.helpers.ext.container;
 import static io.harness.rule.OwnerRule.ANSHUL;
 import static io.harness.rule.OwnerRule.SHUBHAM_MAHESHWARI;
 
-import static org.mockito.Matchers.anyString;
 import static software.wings.beans.DirectKubernetesInfrastructureMapping.Builder.aDirectKubernetesInfrastructureMapping;
 import static software.wings.beans.RancherKubernetesInfrastructureMapping.Builder.aRancherKubernetesInfrastructureMapping;
 import static software.wings.utils.WingsTestConstants.ACCOUNT_ID;
@@ -19,6 +18,7 @@ import static software.wings.utils.WingsTestConstants.SETTING_NAME;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
@@ -128,8 +128,8 @@ public class ContainerDeploymentManagerHelperTest extends WingsBaseTest {
         .when(secretManager)
         .getEncryptionDetails(any(RancherConfig.class), anyString(), anyString());
 
-    ContainerServiceParams params = containerDeploymentManagerHelper.getContainerServiceParams(
-        infrastructureMapping, "sampleServicename", context);
+    ContainerServiceParams params =
+        containerDeploymentManagerHelper.getContainerServiceParams(infrastructureMapping, "sampleServicename", context);
 
     assertThat(params.getClusterName()).isEqualTo("sampleCluster");
     assertThat(params.getNamespace()).isEqualTo("sampleNamespace");
@@ -157,8 +157,7 @@ public class ContainerDeploymentManagerHelperTest extends WingsBaseTest {
         .when(secretManager)
         .getEncryptionDetails(any(RancherConfig.class), anyString(), anyString());
 
-    K8sClusterConfig config = containerDeploymentManagerHelper.getK8sClusterConfig(
-        infrastructureMapping, context);
+    K8sClusterConfig config = containerDeploymentManagerHelper.getK8sClusterConfig(infrastructureMapping, context);
 
     assertThat(config.getClusterName()).isEqualTo("sampleCluster");
     assertThat(config.getNamespace()).isEqualTo("sampleNamespace");
