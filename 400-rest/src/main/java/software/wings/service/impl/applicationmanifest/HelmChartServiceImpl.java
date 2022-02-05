@@ -63,6 +63,11 @@ public class HelmChartServiceImpl implements HelmChartService {
 
   @Override
   public HelmChart create(HelmChart helmChart) {
+    HelmChart existingHelmChart = getManifestByVersionNumber(
+        helmChart.getAccountId(), helmChart.getApplicationManifestId(), helmChart.getVersion());
+    if (existingHelmChart != null) {
+      return existingHelmChart;
+    }
     String key = wingsPersistence.save(helmChart);
     return wingsPersistence.get(HelmChart.class, key);
   }
