@@ -14,8 +14,8 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.TypeAlias;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 @TypeAlias("io.harness.ng.core.accountsetting.dto.ConnectorSettings")
 public class ConnectorSettings extends AccountSettingConfig {
   @Builder
