@@ -11,7 +11,11 @@ import static io.harness.annotations.dev.HarnessTeam.PL;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.morphia.MorphiaRegistrar;
+import io.harness.serializer.kryo.DelegateServiceBeansKryoRegistrar;
 import io.harness.serializer.kryo.DelegateTasksBeansKryoRegister;
+import io.harness.serializer.kryo.DelegateTasksKryoRegistrar;
+import io.harness.serializer.kryo.NGAuditCommonsKryoRegistrar;
+import io.harness.serializer.kryo.NGCoreKryoRegistrar;
 import io.harness.serializer.kryo.NotificationSenderKryoRegistrar;
 import io.harness.serializer.morphia.NotificationClientRegistrars;
 import io.harness.serializer.morphia.NotificationSenderMorphiaRegistrar;
@@ -30,12 +34,20 @@ public class NotificationRegistrars {
           .addAll(WaitEngineRegistrars.kryoRegistrars)
           .addAll(SMCoreRegistrars.kryoRegistrars)
           .addAll(ApiServiceBeansRegistrars.kryoRegistrars)
+          .add(NGCoreKryoRegistrar.class)
+          .add(NGAuditCommonsKryoRegistrar.class)
+          .add(DelegateTasksKryoRegistrar.class)
+          .add(DelegateServiceBeansKryoRegistrar.class)
           .build();
 
   public static final ImmutableSet<Class<? extends MorphiaRegistrar>> morphiaRegistrars =
       ImmutableSet.<Class<? extends MorphiaRegistrar>>builder()
           .add(NotificationSenderMorphiaRegistrar.class)
           .addAll(NotificationClientRegistrars.morphiaRegistrars)
+          .addAll(DelegateServiceDriverRegistrars.morphiaRegistrars)
+          .addAll(NGCoreClientRegistrars.morphiaRegistrars)
+          .addAll(SMCoreRegistrars.morphiaRegistrars)
+          .addAll(DelegateTaskRegistrars.morphiaRegistrars)
           .build();
 
   public static final ImmutableSet<Class<? extends TypeConverter>> morphiaConverters =

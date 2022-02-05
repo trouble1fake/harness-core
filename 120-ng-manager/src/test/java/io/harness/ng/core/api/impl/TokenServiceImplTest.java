@@ -20,6 +20,8 @@ import static org.assertj.core.api.Assertions.failBecauseExceptionWasNotThrown;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import io.harness.NgManagerTestBase;
@@ -37,6 +39,8 @@ import io.harness.ng.core.dto.TokenDTO;
 import io.harness.ng.core.entities.ApiKey;
 import io.harness.ng.core.entities.Token;
 import io.harness.ng.core.mapper.TokenDTOMapper;
+import io.harness.ng.core.user.service.NgUserService;
+import io.harness.ng.serviceaccounts.service.api.ServiceAccountService;
 import io.harness.outbox.api.OutboxService;
 import io.harness.repositories.ng.core.spring.TokenRepository;
 import io.harness.rule.Owner;
@@ -44,6 +48,7 @@ import io.harness.security.SecurityContextBuilder;
 import io.harness.security.SourcePrincipalContextBuilder;
 import io.harness.security.dto.Principal;
 import io.harness.security.dto.UserPrincipal;
+import io.harness.serviceaccount.ServiceAccountDTO;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -62,6 +67,8 @@ public class TokenServiceImplTest extends NgManagerTestBase {
   private TokenRepository tokenRepository;
   private ApiKeyService apiKeyService;
   private OutboxService outboxService;
+  private ServiceAccountService serviceAccountService;
+  private NgUserService ngUserService;
   private String accountIdentifier;
   private String orgIdentifier;
   private String projectIdentifier;
@@ -86,6 +93,8 @@ public class TokenServiceImplTest extends NgManagerTestBase {
     tokenService = new TokenServiceImpl();
     apiKeyService = mock(ApiKeyService.class);
     outboxService = mock(OutboxService.class);
+    serviceAccountService = mock(ServiceAccountService.class);
+    ngUserService = mock(NgUserService.class);
     accountOrgProjectValidator = mock(AccountOrgProjectValidator.class);
     transactionTemplate = mock(TransactionTemplate.class);
     accountService = mock(AccountService.class);
@@ -123,6 +132,8 @@ public class TokenServiceImplTest extends NgManagerTestBase {
     when(transactionTemplate.execute(any())).thenReturn(token);
     FieldUtils.writeField(tokenService, "tokenRepository", tokenRepository, true);
     FieldUtils.writeField(tokenService, "apiKeyService", apiKeyService, true);
+    FieldUtils.writeField(tokenService, "serviceAccountService", serviceAccountService, true);
+    FieldUtils.writeField(tokenService, "ngUserService", ngUserService, true);
     FieldUtils.writeField(tokenService, "outboxService", outboxService, true);
     FieldUtils.writeField(tokenService, "accountOrgProjectValidator", accountOrgProjectValidator, true);
     FieldUtils.writeField(tokenService, "transactionTemplate", transactionTemplate, true);
@@ -172,6 +183,22 @@ public class TokenServiceImplTest extends NgManagerTestBase {
     } catch (Exception e) {
       assertThat(e).isInstanceOf(InvalidRequestException.class);
     }
+  }
+
+  @Test
+  @Owner(developers = PIYUSH)
+  @Category(UnitTests.class)
+  public void testGetToken_sat() {
+    tokenDTO.setApiKeyType(SERVICE_ACCOUNT);
+    token.setApiKeyType(SERVICE_ACCOUNT);
+    String email = "ab17@goat.com";
+    when(tokenRepository.findById(tokensUUId)).thenReturn(Optional.of(token));
+    when(serviceAccountService.getServiceAccountDTO(
+             accountIdentifier, orgIdentifier, projectIdentifier, parentIdentifier))
+        .thenReturn(ServiceAccountDTO.builder().email(email).name(email).build());
+    TokenDTO response = tokenService.getToken(tokensUUId, true);
+    assertThat(response.getEmail()).isEqualTo(email);
+    verify(serviceAccountService, times(1)).getServiceAccountDTO(any(), any(), any(), any());
   }
 
   @Test

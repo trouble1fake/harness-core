@@ -65,7 +65,7 @@ public class ScmOrchestratorServiceImpl implements ScmOrchestratorService {
     GitSyncSettingsDTO gitSyncSettings = gitSyncSettingsDTO.orElse(GitSyncSettingsDTO.builder()
                                                                        .accountIdentifier(accountId)
                                                                        .projectIdentifier(projectIdentifier)
-                                                                       .organizationIdentifier(orgIdentifier)
+                                                                       .orgIdentifier(orgIdentifier)
                                                                        .executeOnDelegate(true)
                                                                        .build());
     return gitSyncSettings.isExecuteOnDelegate();

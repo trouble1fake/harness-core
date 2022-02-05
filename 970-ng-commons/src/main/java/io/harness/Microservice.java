@@ -18,6 +18,7 @@ public enum Microservice {
   @JsonProperty("CF") CF,
   @JsonProperty("CE") CE,
   @JsonProperty("PMS") PMS,
+  @JsonProperty("POLICYMGMT") POLICYMGMT,
   @JsonProperty("ACCESSCONTROL") ACCESSCONTROL,
   @JsonProperty("TEMPLATESERVICE") TEMPLATESERVICE,
   @JsonProperty("RESOURCEGROUP") RESOURCEGROUP;

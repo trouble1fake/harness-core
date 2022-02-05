@@ -30,7 +30,6 @@ import software.wings.beans.governance.GovernanceConfig;
 import software.wings.beans.governance.GovernanceConfig.GovernanceConfigKeys;
 import software.wings.service.impl.deployment.checks.DeploymentFreezeUtils;
 import software.wings.service.intfc.AccountService;
-import software.wings.service.intfc.compliance.GovernanceConfigService;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
@@ -51,7 +50,6 @@ public class DeploymentFreezeDeactivationHandler implements Handler<GovernanceCo
   private static final int POOL_SIZE = 3;
   @Inject private PersistenceIteratorFactory persistenceIteratorFactory;
   @Inject DeploymentFreezeUtils deploymentFreezeUtils;
-  @Inject GovernanceConfigService governanceConfigService;
   PersistenceIterator<GovernanceConfig> iterator;
   @Inject private MorphiaPersistenceRequiredProvider<GovernanceConfig> persistenceProvider;
   @Inject private AccountService accountService;
@@ -75,7 +73,14 @@ public class DeploymentFreezeDeactivationHandler implements Handler<GovernanceCo
             .entityProcessController(new AccountStatusBasedEntityProcessController<>(accountService))
             .persistenceProvider(persistenceProvider)
             .schedulingType(IRREGULAR_SKIP_MISSED)
-            .filterExpander(query -> query.field(GovernanceConfigKeys.enableNextCloseIterations).equal(true))
+            .filterExpander(query
+                -> query.field(GovernanceConfigKeys.nextCloseIterations)
+                       .exists()
+                       .field(GovernanceConfigKeys.nextCloseIterations)
+                       .notEqual(null)
+                       .field(GovernanceConfigKeys.nextCloseIterations)
+                       .not()
+                       .sizeEq(0))
             .throttleInterval(ofSeconds(45)));
 
     executor.submit(() -> iterator.process());
@@ -113,7 +118,5 @@ public class DeploymentFreezeDeactivationHandler implements Handler<GovernanceCo
         log.error("Failed to handle deployment freeze de-activation {}", freezeWindow.getName(), e);
       }
     });
-
-    governanceConfigService.resetEnableIterators(entity);
   }
 }

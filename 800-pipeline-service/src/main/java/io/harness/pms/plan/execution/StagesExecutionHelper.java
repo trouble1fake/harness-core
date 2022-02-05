@@ -50,6 +50,7 @@ public class StagesExecutionHelper {
         .fullPipelineYaml(pipelineYaml)
         .stageIdentifiers(stagesToRun)
         .expressionValues(expressionValues)
+        .allowStagesExecution(true)
         .build();
   }
 }

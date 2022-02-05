@@ -33,6 +33,8 @@ import static io.harness.provision.TerraformConstants.WORKSPACE_DIR_BASE;
 import static io.harness.provision.TfVarSource.TfVarSourceType;
 import static io.harness.threading.Morpheus.sleep;
 
+import static software.wings.beans.LogColor.Yellow;
+import static software.wings.beans.LogWeight.Bold;
 import static software.wings.delegatetasks.validation.terraform.TerraformTaskUtils.fetchAllTfVarFilesArgument;
 import static software.wings.service.impl.aws.model.AwsConstants.AWS_DEFAULT_REGION;
 
@@ -69,7 +71,9 @@ import io.harness.logging.PlanJsonLogOutputStream;
 import io.harness.secretmanagerclient.EncryptDecryptHelper;
 import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.security.encryption.EncryptedRecordData;
+import io.harness.terraform.TerraformClient;
 import io.harness.terraform.TerraformHelperUtils;
+import io.harness.terraform.beans.TerraformVersion;
 import io.harness.terraform.expression.TerraformPlanExpressionInterface;
 import io.harness.terraform.request.TerraformExecuteStepRequest;
 
@@ -147,6 +151,7 @@ public class TerraformProvisionTask extends AbstractDelegateRunnableTask {
   @Inject private EncryptDecryptHelper planEncryptDecryptHelper;
   @Inject private TerraformBaseHelper terraformBaseHelper;
   @Inject private AwsHelperService awsHelperService;
+  @Inject private TerraformClient terraformClient;
 
   private static final String AWS_ACCESS_KEY_ID = "AWS_ACCESS_KEY_ID";
   private static final String AWS_SECRET_ACCESS_KEY = "AWS_SECRET_ACCESS_KEY";
@@ -357,8 +362,8 @@ public class TerraformProvisionTask extends AbstractDelegateRunnableTask {
             }
             // if the plan exists we should use the approved plan, instead create a plan
             if (code == 0 && parameters.getEncryptedTfPlan() == null) {
-              saveExecutionLog(color("\nGenerating terraform plan \n", LogColor.Yellow, LogWeight.Bold),
-                  CommandExecutionStatus.RUNNING, INFO, logCallback);
+              saveExecutionLog(color("\nGenerating terraform plan \n", Yellow, Bold), CommandExecutionStatus.RUNNING,
+                  INFO, logCallback);
               command = format("terraform plan -out=tfplan -input=false %s %s ", targetArgs, varParams);
               commandToLog = format("terraform plan -out=tfplan -input=false %s %s ", targetArgs, uiLogs);
               saveExecutionLog(commandToLog, CommandExecutionStatus.RUNNING, INFO, logCallback);
@@ -370,10 +375,10 @@ public class TerraformProvisionTask extends AbstractDelegateRunnableTask {
               }
             } else if (code == 0 && parameters.getEncryptedTfPlan() != null) {
               // case when we are inheriting the approved  plan
-              saveExecutionLog(color("\nDecrypting terraform plan before applying\n", LogColor.Yellow, LogWeight.Bold),
+              saveExecutionLog(color("\nDecrypting terraform plan before applying\n", Yellow, Bold),
                   CommandExecutionStatus.RUNNING, INFO, logCallback);
               saveTerraformPlanContentToFile(parameters, scriptDirectory);
-              saveExecutionLog(color("\nUsing approved terraform plan \n", LogColor.Yellow, LogWeight.Bold),
+              saveExecutionLog(color("\nUsing approved terraform plan \n", Yellow, Bold),
                   CommandExecutionStatus.RUNNING, INFO, logCallback);
             }
             if (code == 0 && !parameters.isRunPlanOnly()) {
@@ -429,8 +434,10 @@ public class TerraformProvisionTask extends AbstractDelegateRunnableTask {
                 }
               } else {
                 if (parameters.getEncryptedTfPlan() == null) {
-                  command = format("terraform destroy -force %s %s", targetArgs, varParams);
-                  commandToLog = format("terraform destroy -force %s %s", targetArgs, uiLogs);
+                  String autoApproveArg = TerraformHelperUtils.getAutoApproveArgument(
+                      terraformClient.version(parameters.getTimeoutInMillis(), scriptDirectory));
+                  command = format("terraform destroy %s %s %s", autoApproveArg, targetArgs, varParams);
+                  commandToLog = format("terraform destroy %s %s %s", autoApproveArg, targetArgs, uiLogs);
                   saveExecutionLog(commandToLog, CommandExecutionStatus.RUNNING, INFO, logCallback);
                   code = executeShellCommand(command, scriptDirectory, parameters, envVars, activityLogOutputStream);
                 } else {
@@ -513,8 +520,8 @@ public class TerraformProvisionTask extends AbstractDelegateRunnableTask {
 
       if (parameters.isExportPlanToApplyStep()) {
         byte[] terraformPlanFile = getTerraformPlanFile(scriptDirectory, parameters);
-        saveExecutionLog(color("\nEncrypting terraform plan \n", LogColor.Yellow, LogWeight.Bold),
-            CommandExecutionStatus.RUNNING, INFO, logCallback);
+        saveExecutionLog(
+            color("\nEncrypting terraform plan \n", Yellow, Bold), CommandExecutionStatus.RUNNING, INFO, logCallback);
 
         if (parameters.isUseOptimizedTfPlanJson()) {
           DelegateFile planDelegateFile =
@@ -594,7 +601,7 @@ public class TerraformProvisionTask extends AbstractDelegateRunnableTask {
           saveExecutionLog(color(format("Failed to delete secret: [%s] from vault: [%s], please clean it up",
                                      parameters.getEncryptedTfPlan().getEncryptionKey(),
                                      parameters.getSecretManagerConfig().getName()),
-                               LogColor.Yellow, LogWeight.Bold),
+                               Yellow, Bold),
               CommandExecutionStatus.RUNNING, WARN, logCallback);
           saveExecutionLog(ex.getMessage(), CommandExecutionStatus.RUNNING, WARN, logCallback);
           log.error("Exception occurred while deleting Terraform Plan from vault", ex);
@@ -739,6 +746,16 @@ public class TerraformProvisionTask extends AbstractDelegateRunnableTask {
   private int executeTerraformShowCommand(TerraformProvisionParameters parameters, String scriptDirectory,
       TerraformCommand terraformCommand, Map<String, String> envVars, PlanJsonLogOutputStream planJsonLogOutputStream,
       LogCallback logCallback) throws IOException, InterruptedException, TimeoutException {
+    TerraformVersion version = terraformClient.version(parameters.getTimeoutInMillis(), scriptDirectory);
+    if (!version.minVersion(0, 12)) {
+      String messageFormat = "Terraform plan json export not suppoerted in v%d.%d.%d. Minimum version is v0.12.x. "
+          + "Skipping command.";
+      String message = format(messageFormat, version.getMajor(), version.getMinor(), version.getPatch());
+      logCallback.saveExecutionLog(color("\n" + message + "\n", Yellow, Bold), WARN, CommandExecutionStatus.SKIPPED);
+
+      return 0;
+    }
+
     String planName =
         terraformCommand == APPLY ? TERRAFORM_PLAN_FILE_OUTPUT_NAME : TERRAFORM_DESTROY_PLAN_FILE_OUTPUT_NAME;
     saveExecutionLog(format("%nGenerating json representation of %s %n", planName), CommandExecutionStatus.RUNNING,

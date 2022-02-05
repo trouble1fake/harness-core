@@ -605,11 +605,8 @@ public class K8sTaskHelperTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testRenderTemplateForGivenFilesKustomizeSourceRepo() throws Exception {
     final String workingDirectory = ".";
-    K8sDelegateTaskParams k8sDelegateTaskParams = K8sDelegateTaskParams.builder()
-                                                      .workingDirectory(workingDirectory)
-                                                      .helmPath("helm")
-                                                      .useVarSupportForKustomize(false)
-                                                      .build();
+    K8sDelegateTaskParams k8sDelegateTaskParams =
+        K8sDelegateTaskParams.builder().workingDirectory(workingDirectory).helmPath("helm").build();
 
     doReturn(new ArrayList<>())
         .when(kustomizeTaskHelper)
@@ -627,11 +624,8 @@ public class K8sTaskHelperTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testRenderTemplateForGivenFilesKustomizeSourceRepoFFOn() throws Exception {
     final String workingDirectory = ".";
-    K8sDelegateTaskParams k8sDelegateTaskParams = K8sDelegateTaskParams.builder()
-                                                      .workingDirectory(workingDirectory)
-                                                      .helmPath("helm")
-                                                      .useVarSupportForKustomize(true)
-                                                      .build();
+    K8sDelegateTaskParams k8sDelegateTaskParams =
+        K8sDelegateTaskParams.builder().workingDirectory(workingDirectory).helmPath("helm").build();
 
     doReturn(new ArrayList<>())
         .when(kustomizeTaskHelper)

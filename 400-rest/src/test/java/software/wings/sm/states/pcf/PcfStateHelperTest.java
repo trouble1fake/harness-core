@@ -80,6 +80,7 @@ import io.harness.delegate.beans.pcf.CfRouteUpdateRequestConfigData;
 import io.harness.delegate.task.manifests.request.CustomManifestValuesFetchParams;
 import io.harness.delegate.task.pcf.PcfManifestsPackage;
 import io.harness.delegate.task.pcf.request.CfCommandRouteUpdateRequest;
+import io.harness.delegate.task.pcf.response.CfCommandExecutionResponse;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ff.FeatureFlagService;
@@ -1548,7 +1549,8 @@ public class PcfStateHelperTest extends WingsBaseTest {
     doReturn(SweepingOutputInstance.builder()).when(context).prepareSweepingOutputBuilder(any());
     ArgumentCaptor<SweepingOutputInstance> captor = ArgumentCaptor.forClass(SweepingOutputInstance.class);
 
-    pcfStateHelper.updateInfoVariables(context, stateExecutionData);
+    pcfStateHelper.updateInfoVariables(
+        context, stateExecutionData, CfCommandExecutionResponse.builder().build(), false, false);
 
     verify(sweepingOutputService, times(1)).deleteById(APP_ID, "1");
     verify(sweepingOutputService, times(1)).ensure(captor.capture());

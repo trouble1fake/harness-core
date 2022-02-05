@@ -21,6 +21,9 @@ import io.harness.app.PrimaryVersionManagerModule;
 import io.harness.callback.DelegateCallback;
 import io.harness.callback.DelegateCallbackToken;
 import io.harness.callback.MongoDatabase;
+import io.harness.delegate.beans.DelegateAsyncTaskResponse;
+import io.harness.delegate.beans.DelegateSyncTaskResponse;
+import io.harness.delegate.beans.DelegateTaskProgressResponse;
 import io.harness.govern.ProviderModule;
 import io.harness.grpc.DelegateServiceDriverGrpcClientModule;
 import io.harness.grpc.DelegateServiceGrpcClient;
@@ -212,7 +215,11 @@ public class NotificationServiceModule extends AbstractModule {
   @Singleton
   @Named("morphiaClasses")
   Map<Class, String> morphiaCustomCollectionNames() {
-    return ImmutableMap.<Class, String>builder().build();
+    return ImmutableMap.<Class, String>builder()
+        .put(DelegateSyncTaskResponse.class, "delegateSyncTaskResponses")
+        .put(DelegateAsyncTaskResponse.class, "delegateAsyncTaskResponses")
+        .put(DelegateTaskProgressResponse.class, "delegateTaskProgressResponses")
+        .build();
   }
 
   private ValidatorFactory getValidatorFactory() {

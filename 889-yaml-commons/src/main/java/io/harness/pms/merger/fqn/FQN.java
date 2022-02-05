@@ -51,6 +51,25 @@ public class FQN {
     return res.toString();
   }
 
+  public String displayWithoutParallel() {
+    StringBuilder res = new StringBuilder();
+    for (FQNNode node : fqnList) {
+      if (node.getNodeType() == FQNNode.NodeType.KEY) {
+        res.append(node.getKey()).append('.');
+      } else if (node.getNodeType() == FQNNode.NodeType.KEY_WITH_UUID) {
+        res.append(node.getKey())
+            .append('[')
+            .append(node.getUuidKey())
+            .append(':')
+            .append(node.getUuidValue())
+            .append("].");
+      } else if (node.getNodeType() == FQNNode.NodeType.UUID) {
+        res.append('[').append(node.getUuidKey()).append(':').append(node.getUuidValue()).append("].");
+      }
+    }
+    return res.toString();
+  }
+
   public String getExpressionFqn() {
     StringBuilder res = new StringBuilder();
     for (int i = 0; i < fqnList.size(); i++) {

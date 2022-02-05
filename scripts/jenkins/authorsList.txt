@@ -73,6 +73,8 @@ Munish Jalota munish.jalota@harness.io
 Jatin Shridhar jatin@harness.io
 Jelena Arsenijevic jelena.arsenijevic@harness.io
 Jenny James jenny.james@harness.io
+Johannes Batzill johannes@harness.io
+Johannes Batzill johannes.batzill@harness.io
 Johnny Liu johnny.liu@harness.io
 Juhi Agrawal juhi.agrawal@harness.io
 K Rohit Reddy rohit.reddy@harness.io
@@ -234,3 +236,4 @@ Joseph Sentongo joseph.sentongo@harness.io
 Sergey Bobrov sergey.bobrov@harness.io
 William Wissemann william.wissemann@harness.io
 Shubham Maheshwari shubham.maheshwari@harness.io
+Scott Walker scott.walker@harness.io

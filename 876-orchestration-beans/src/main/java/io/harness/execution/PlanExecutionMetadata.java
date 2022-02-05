@@ -55,6 +55,7 @@ public class PlanExecutionMetadata implements PersistentEntity, UuidAware, PmsNo
   private String expandedPipelineJson;
 
   private StagesExecutionMetadata stagesExecutionMetadata;
+  private Boolean allowStagesExecution;
 
   @Wither private String triggerJsonPayload;
   @Wither private TriggerPayload triggerPayload;
@@ -74,5 +75,9 @@ public class PlanExecutionMetadata implements PersistentEntity, UuidAware, PmsNo
   @Override
   public NodeType forNodeType() {
     return NodeType.PLAN;
+  }
+
+  public boolean isStagesExecutionAllowed() {
+    return allowStagesExecution != null && allowStagesExecution;
   }
 }
