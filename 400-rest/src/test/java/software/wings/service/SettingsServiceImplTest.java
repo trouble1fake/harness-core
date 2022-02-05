@@ -41,6 +41,9 @@ import static software.wings.security.EnvFilter.FilterType.PROD;
 import static software.wings.security.EnvFilter.FilterType.SELECTED;
 import static software.wings.security.PermissionAttribute.PermissionType.DEPLOYMENT;
 import static software.wings.security.PermissionAttribute.PermissionType.ENV;
+import static software.wings.security.PermissionAttribute.PermissionType.MANAGE_APPLICATIONS;
+import static software.wings.security.PermissionAttribute.PermissionType.MANAGE_CLOUD_PROVIDERS;
+import static software.wings.security.PermissionAttribute.PermissionType.MANAGE_CONNECTORS;
 import static software.wings.security.PermissionAttribute.PermissionType.PIPELINE;
 import static software.wings.security.PermissionAttribute.PermissionType.WORKFLOW;
 import static software.wings.security.UsageRestrictions.AppEnvRestriction.builder;
@@ -159,6 +162,7 @@ import software.wings.service.intfc.ServiceResourceService;
 import software.wings.service.intfc.ServiceVariableService;
 import software.wings.service.intfc.SettingsService;
 import software.wings.service.intfc.UserGroupService;
+import software.wings.service.intfc.UserService;
 import software.wings.service.intfc.WorkflowService;
 import software.wings.service.intfc.security.SecretManager;
 import software.wings.service.intfc.yaml.EntityUpdateService;
@@ -209,6 +213,7 @@ public class SettingsServiceImplTest extends WingsBaseTest {
   @Mock private SecretManager secretManager;
   @Mock private SettingValidationService settingValidationService;
   @Mock private UserGroupService userGroupService;
+  @Mock private UserService userService;
   @Mock private CCMSettingService ccmSettingService;
   @Mock private AccountService accountService;
   @Mock private SettingServiceHelper settingServiceHelper;
@@ -368,7 +373,9 @@ public class SettingsServiceImplTest extends WingsBaseTest {
                                             .build();
     when(mockWingsPersistence.get(SettingAttribute.class, SETTING_ID)).thenReturn(settingAttribute);
     when(artifactStreamService.list(any(PageRequest.class))).thenReturn(aPageResponse().build());
-    when(settingServiceHelper.userHasPermissionsToChangeEntity(eq(settingAttribute), anyString(), any()))
+    when(settingServiceHelper.getPermissionType(any())).thenReturn(MANAGE_CONNECTORS);
+    when(userService.hasPermission(any(), any())).thenReturn(false);
+    when(settingServiceHelper.userHasPermissionsToChangeEntity(eq(settingAttribute), anyString(), any(), eq(false)))
         .thenReturn(true);
 
     settingsService.delete(APP_ID, SETTING_ID);
@@ -391,7 +398,9 @@ public class SettingsServiceImplTest extends WingsBaseTest {
     when(mockWingsPersistence.get(SettingAttribute.class, SETTING_ID)).thenReturn(settingAttribute);
     when(artifactStreamService.list(any(PageRequest.class))).thenReturn(aPageResponse().build());
     when(artifactStreamService.listBySettingId(anyString())).thenReturn(new ArrayList<>());
-    when(settingServiceHelper.userHasPermissionsToChangeEntity(eq(settingAttribute), anyString(), any()))
+    when(settingServiceHelper.getPermissionType(any())).thenReturn(MANAGE_CLOUD_PROVIDERS);
+    when(userService.hasPermission(any(), any())).thenReturn(false);
+    when(settingServiceHelper.userHasPermissionsToChangeEntity(eq(settingAttribute), anyString(), any(), eq(false)))
         .thenReturn(true);
     when(featureFlagService.isEnabled(FeatureName.ARTIFACT_STREAM_REFACTOR, ACCOUNT_ID)).thenReturn(false);
 
@@ -417,7 +426,9 @@ public class SettingsServiceImplTest extends WingsBaseTest {
     when(artifactStreamService.listBySettingId(anyString()))
         .thenReturn(Lists.newArrayList(
             AmiArtifactStream.builder().name("ami-1").build(), AmiArtifactStream.builder().name("ami-2").build()));
-    when(settingServiceHelper.userHasPermissionsToChangeEntity(eq(settingAttribute), anyString(), any()))
+    when(settingServiceHelper.getPermissionType(any())).thenReturn(MANAGE_CLOUD_PROVIDERS);
+    when(userService.hasPermission(any(), any())).thenReturn(false);
+    when(settingServiceHelper.userHasPermissionsToChangeEntity(eq(settingAttribute), anyString(), any(), eq(false)))
         .thenReturn(true);
     when(featureFlagService.isEnabled(FeatureName.ARTIFACT_STREAM_REFACTOR, ACCOUNT_ID)).thenReturn(false);
 
@@ -441,7 +452,9 @@ public class SettingsServiceImplTest extends WingsBaseTest {
                                             .build();
     when(mockWingsPersistence.get(SettingAttribute.class, SETTING_ID)).thenReturn(settingAttribute);
     when(infrastructureDefinitionService.listNamesByConnectionAttr(any(), any())).thenReturn(null);
-    when(settingServiceHelper.userHasPermissionsToChangeEntity(eq(settingAttribute), anyString(), any()))
+    when(settingServiceHelper.getPermissionType(any())).thenReturn(MANAGE_APPLICATIONS);
+    when(userService.hasPermission(any(), any())).thenReturn(false);
+    when(settingServiceHelper.userHasPermissionsToChangeEntity(eq(settingAttribute), anyString(), any(), eq(false)))
         .thenReturn(true);
     when(featureFlagService.isEnabled(FeatureName.ARTIFACT_STREAM_REFACTOR, ACCOUNT_ID)).thenReturn(false);
 
@@ -463,7 +476,9 @@ public class SettingsServiceImplTest extends WingsBaseTest {
                                             .withValue(StringValue.Builder.aStringValue().build())
                                             .build();
     when(mockWingsPersistence.get(SettingAttribute.class, SETTING_ID)).thenReturn(settingAttribute);
-    when(settingServiceHelper.userHasPermissionsToChangeEntity(eq(settingAttribute), anyString(), any()))
+    when(settingServiceHelper.getPermissionType(any())).thenReturn(MANAGE_APPLICATIONS);
+    when(userService.hasPermission(any(), any())).thenReturn(false);
+    when(settingServiceHelper.userHasPermissionsToChangeEntity(eq(settingAttribute), anyString(), any(), eq(false)))
         .thenReturn(true);
     when(featureFlagService.isEnabled(FeatureName.ARTIFACT_STREAM_REFACTOR, ACCOUNT_ID)).thenReturn(false);
     when(infrastructureDefinitionService.listNamesByConnectionAttr(any(), any()))
@@ -488,7 +503,9 @@ public class SettingsServiceImplTest extends WingsBaseTest {
                                             .withValue(AzureArtifactsPATConfig.builder().build())
                                             .build();
     when(mockWingsPersistence.get(SettingAttribute.class, SETTING_ID)).thenReturn(settingAttribute);
-    when(settingServiceHelper.userHasPermissionsToChangeEntity(eq(settingAttribute), anyString(), any()))
+    when(settingServiceHelper.getPermissionType(any())).thenReturn(MANAGE_CONNECTORS);
+    when(userService.hasPermission(any(), any())).thenReturn(false);
+    when(settingServiceHelper.userHasPermissionsToChangeEntity(eq(settingAttribute), anyString(), any(), eq(false)))
         .thenReturn(true);
     when(featureFlagService.isEnabled(FeatureName.ARTIFACT_STREAM_REFACTOR, ACCOUNT_ID)).thenReturn(false);
     when(artifactStreamService.listBySettingId(anyString())).thenReturn(null);
@@ -510,7 +527,9 @@ public class SettingsServiceImplTest extends WingsBaseTest {
                                             .withValue(AzureArtifactsPATConfig.builder().build())
                                             .build();
     when(mockWingsPersistence.get(SettingAttribute.class, SETTING_ID)).thenReturn(settingAttribute);
-    when(settingServiceHelper.userHasPermissionsToChangeEntity(eq(settingAttribute), anyString(), any()))
+    when(settingServiceHelper.getPermissionType(any())).thenReturn(MANAGE_CONNECTORS);
+    when(userService.hasPermission(any(), any())).thenReturn(false);
+    when(settingServiceHelper.userHasPermissionsToChangeEntity(eq(settingAttribute), anyString(), any(), eq(false)))
         .thenReturn(true);
     when(featureFlagService.isEnabled(FeatureName.ARTIFACT_STREAM_REFACTOR, ACCOUNT_ID)).thenReturn(false);
     when(artifactStreamService.listBySettingId(anyString()))
@@ -536,7 +555,9 @@ public class SettingsServiceImplTest extends WingsBaseTest {
                                             .withValue(HttpHelmRepoConfig.builder().build())
                                             .build();
     when(mockWingsPersistence.get(SettingAttribute.class, SETTING_ID)).thenReturn(settingAttribute);
-    when(settingServiceHelper.userHasPermissionsToChangeEntity(eq(settingAttribute), anyString(), any()))
+    when(settingServiceHelper.getPermissionType(any())).thenReturn(MANAGE_CONNECTORS);
+    when(userService.hasPermission(any(), any())).thenReturn(false);
+    when(settingServiceHelper.userHasPermissionsToChangeEntity(eq(settingAttribute), anyString(), any(), eq(false)))
         .thenReturn(true);
     when(featureFlagService.isEnabled(FeatureName.ARTIFACT_STREAM_REFACTOR, ACCOUNT_ID)).thenReturn(false);
     when(applicationManifestService.getAllByConnectorId(anyString(), anyString(), any())).thenReturn(null);
@@ -558,7 +579,9 @@ public class SettingsServiceImplTest extends WingsBaseTest {
                                             .withValue(HttpHelmRepoConfig.builder().build())
                                             .build();
     when(mockWingsPersistence.get(SettingAttribute.class, SETTING_ID)).thenReturn(settingAttribute);
-    when(settingServiceHelper.userHasPermissionsToChangeEntity(eq(settingAttribute), anyString(), any()))
+    when(settingServiceHelper.getPermissionType(any())).thenReturn(MANAGE_CONNECTORS);
+    when(userService.hasPermission(any(), any())).thenReturn(false);
+    when(settingServiceHelper.userHasPermissionsToChangeEntity(eq(settingAttribute), anyString(), any(), eq(false)))
         .thenReturn(true);
     when(featureFlagService.isEnabled(FeatureName.ARTIFACT_STREAM_REFACTOR, ACCOUNT_ID)).thenReturn(false);
     when(applicationManifestService.getAllByConnectorId(anyString(), anyString(), any()))
@@ -604,7 +627,9 @@ public class SettingsServiceImplTest extends WingsBaseTest {
     when(mockWingsPersistence.createQuery(CVConfiguration.class)).thenReturn(query);
     when(query.filter(any(), any())).thenReturn(query);
     when(query.asList()).thenReturn(Lists.newArrayList(c1, c2));
-    when(settingServiceHelper.userHasPermissionsToChangeEntity(eq(settingAttribute), anyString(), any()))
+    when(settingServiceHelper.getPermissionType(any())).thenReturn(MANAGE_CONNECTORS);
+    when(userService.hasPermission(any(), any())).thenReturn(false);
+    when(settingServiceHelper.userHasPermissionsToChangeEntity(eq(settingAttribute), anyString(), any(), eq(false)))
         .thenReturn(true);
     when(featureFlagService.isEnabled(FeatureName.ARTIFACT_STREAM_REFACTOR, ACCOUNT_ID)).thenReturn(false);
     when(applicationManifestService.getAllByConnectorId(anyString(), anyString(), any())).thenReturn(null);
@@ -670,7 +695,9 @@ public class SettingsServiceImplTest extends WingsBaseTest {
                                             .build();
     when(mockWingsPersistence.get(SettingAttribute.class, SETTING_ID)).thenReturn(settingAttribute);
     when(artifactStreamService.list(any(PageRequest.class))).thenReturn(aPageResponse().build());
-    when(settingServiceHelper.userHasPermissionsToChangeEntity(eq(settingAttribute), anyString(), any()))
+    when(settingServiceHelper.getPermissionType(any())).thenReturn(MANAGE_CONNECTORS);
+    when(userService.hasPermission(any(), any())).thenReturn(false);
+    when(settingServiceHelper.userHasPermissionsToChangeEntity(eq(settingAttribute), anyString(), any(), eq(false)))
         .thenReturn(true);
 
     settingsService.delete(APP_ID, SETTING_ID);
@@ -712,7 +739,9 @@ public class SettingsServiceImplTest extends WingsBaseTest {
                 .withResponse(asList(
                     JenkinsArtifactStream.builder().sourceName(JOB_NAME).appId(APP_ID).serviceId(SERVICE_ID).build()))
                 .build());
-    when(settingServiceHelper.userHasPermissionsToChangeEntity(eq(settingAttribute), anyString(), any()))
+    when(settingServiceHelper.getPermissionType(any())).thenReturn(MANAGE_CONNECTORS);
+    when(userService.hasPermission(any(), any())).thenReturn(false);
+    when(settingServiceHelper.userHasPermissionsToChangeEntity(eq(settingAttribute), anyString(), any(), eq(false)))
         .thenReturn(true);
     when(appService.getAppIdsByAccountId(ACCOUNT_ID)).thenReturn(Collections.singletonList(APP_ID));
     when(serviceResourceService.get(SERVICE_ID)).thenReturn(Service.builder().build());
@@ -741,7 +770,9 @@ public class SettingsServiceImplTest extends WingsBaseTest {
                                .build()));
     when(infrastructureDefinitionService.listNamesByComputeProviderId(anyString(), anyString()))
         .thenReturn(asList("infra-definition"));
-    when(settingServiceHelper.userHasPermissionsToChangeEntity(eq(settingAttribute), anyString(), any()))
+    when(settingServiceHelper.getPermissionType(any())).thenReturn(MANAGE_CLOUD_PROVIDERS);
+    when(userService.hasPermission(any(), any())).thenReturn(false);
+    when(settingServiceHelper.userHasPermissionsToChangeEntity(eq(settingAttribute), anyString(), any(), eq(false)))
         .thenReturn(true);
 
     assertThatThrownBy(() -> settingsService.delete(APP_ID, SETTING_ID))

@@ -141,14 +141,15 @@ public class CIStageFilterJsonCreator extends GenericStageFilterJsonCreator {
       if (integrationStage.getInfrastructure().getType() == KUBERNETES_DIRECT) {
         K8sDirectInfraYaml k8sDirectInfraYaml = (K8sDirectInfraYaml) integrationStage.getInfrastructure();
 
-        final String clusterConnectorRef = k8sDirectInfraYaml.getSpec().getConnectorRef();
-
-        String fullQualifiedDomainName =
-            YamlUtils.getFullyQualifiedName(filterCreationContext.getCurrentField().getNode()) + PATH_CONNECTOR
-            + YAMLFieldNameConstants.SPEC + PATH_CONNECTOR + clusterConnectorRef;
-        result.add(
-            convertToEntityDetailProtoDTO(accountIdentifier, orgIdentifier, projectIdentifier, fullQualifiedDomainName,
-                ParameterField.createValueField(clusterConnectorRef), EntityTypeProtoEnum.CONNECTORS));
+        if (!k8sDirectInfraYaml.getSpec().getConnectorRef().isExpression()) {
+          final String clusterConnectorRef = k8sDirectInfraYaml.getSpec().getConnectorRef().getValue();
+          String fullQualifiedDomainName =
+              YamlUtils.getFullyQualifiedName(filterCreationContext.getCurrentField().getNode()) + PATH_CONNECTOR
+              + YAMLFieldNameConstants.SPEC + PATH_CONNECTOR + clusterConnectorRef;
+          result.add(convertToEntityDetailProtoDTO(accountIdentifier, orgIdentifier, projectIdentifier,
+              fullQualifiedDomainName, ParameterField.createValueField(clusterConnectorRef),
+              EntityTypeProtoEnum.CONNECTORS));
+        }
       }
     }
 

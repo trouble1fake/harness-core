@@ -317,7 +317,6 @@ public class DelegateServiceTest extends WingsBaseTest {
     when(subdomainUrlHelper.getDelegateMetadataUrl(any(), any(), any()))
         .thenReturn("http://localhost:" + port + "/delegateci.txt");
     when(mainConfiguration.getDeployMode()).thenReturn(DeployMode.KUBERNETES);
-    when(mainConfiguration.getKubectlVersion()).thenReturn("v1.12.2");
     when(mainConfiguration.getScmVersion()).thenReturn("542f4642");
     when(mainConfiguration.getOcVersion()).thenReturn("v4.2.16");
     when(mainConfiguration.getCdnConfig()).thenReturn(cdnConfig);
@@ -3836,8 +3835,8 @@ public class DelegateServiceTest extends WingsBaseTest {
                                             .k8sConfigDetails(k8sConfigDetails)
                                             .build();
     assertThatThrownBy(()
-                           -> delegateService.generateKubernetesYamlNg(ACCOUNT_ID, setupDetails,
-                               "https://localhost:9090", "https://localhost:7070", MediaType.MULTIPART_FORM_DATA_TYPE))
+                           -> delegateService.generateKubernetesYaml(ACCOUNT_ID, setupDetails, "https://localhost:9090",
+                               "https://localhost:7070", MediaType.MULTIPART_FORM_DATA_TYPE))
         .isInstanceOf(InvalidRequestException.class)
         .hasMessage(UNIQUE_DELEGATE_NAME_ERROR_MESSAGE);
   }

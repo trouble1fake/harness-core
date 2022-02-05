@@ -10,6 +10,7 @@ package io.harness.resourcegroup.resourceclient.gitops;
 import static io.harness.resourcegroup.beans.ValidatorType.BY_RESOURCE_TYPE;
 import static io.harness.resourcegroup.beans.ValidatorType.BY_RESOURCE_TYPE_INCLUDING_CHILD_SCOPES;
 
+import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.stripToNull;
 
 import io.harness.beans.Scope;
@@ -17,24 +18,37 @@ import io.harness.beans.ScopeLevel;
 import io.harness.eventsframework.EventsFrameworkMetadataConstants;
 import io.harness.eventsframework.consumer.Message;
 import io.harness.eventsframework.entity_crud.EntityChangeDTO;
+import io.harness.exception.InvalidRequestException;
+import io.harness.gitops.models.Repository;
+import io.harness.gitops.remote.GitopsResourceClient;
+import io.harness.ng.beans.PageResponse;
 import io.harness.resourcegroup.beans.ValidatorType;
 import io.harness.resourcegroup.framework.service.Resource;
 import io.harness.resourcegroup.framework.service.ResourceInfo;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.io.IOException;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import retrofit2.Response;
 
 @Singleton
+@AllArgsConstructor(access = AccessLevel.PUBLIC, onConstructor = @__({ @Inject }))
 @Slf4j
 public class RepositoryResourceImpl implements Resource {
+  private GitopsResourceClient gitopsResourceClient;
   @Override
   public String getType() {
     return "GITOPS_REPOSITORY";
@@ -72,7 +86,23 @@ public class RepositoryResourceImpl implements Resource {
 
   @Override
   public List<Boolean> validate(List<String> resourceIds, Scope scope) {
-    return null;
+    if (resourceIds.isEmpty()) {
+      return Collections.EMPTY_LIST;
+    }
+    Map<String, Object> filter = ImmutableMap.of("identifier", ImmutableMap.of("$in", resourceIds));
+    Response<PageResponse<Repository>> response = null;
+    try {
+      response = gitopsResourceClient
+                     .listRepositories(scope.getAccountIdentifier(), scope.getOrgIdentifier(),
+                         scope.getProjectIdentifier(), 0, resourceIds.size(), filter)
+                     .execute();
+    } catch (IOException e) {
+      throw new InvalidRequestException("failed to verify repository identifiers");
+    }
+    final List<Repository> repositories = response.body().getContent();
+    final Set<String> repositoriesSet =
+        repositories.stream().map(Repository::getIdentifier).collect(Collectors.toSet());
+    return resourceIds.stream().map(repositoriesSet::contains).collect(toList());
   }
 
   @Override

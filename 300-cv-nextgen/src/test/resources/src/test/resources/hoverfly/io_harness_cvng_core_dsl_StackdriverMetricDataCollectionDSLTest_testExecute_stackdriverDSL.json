@@ -1,0 +1,81 @@
+{
+  "data" : {
+    "pairs" : [ {
+      "request" : {
+        "path" : [ {
+          "matcher" : "exact",
+          "value" : "/v3/projects/chi-play/timeSeries"
+        } ],
+        "method" : [ {
+          "matcher" : "exact",
+          "value" : "GET"
+        } ],
+        "destination" : [ {
+          "matcher" : "exact",
+          "value" : "monitoring.googleapis.com"
+        } ],
+        "scheme" : [ {
+          "matcher" : "exact",
+          "value" : "https"
+        } ],
+        "query" : {
+          "aggregation.alignmentPeriod" : [ {
+            "matcher" : "exact",
+            "value" : "60s"
+          } ],
+          "aggregation.crossSeriesReducer" : [ {
+            "matcher" : "exact",
+            "value" : "REDUCE_MEAN"
+          } ],
+          "aggregation.perSeriesAligner" : [ {
+            "matcher" : "exact",
+            "value" : "ALIGN_MEAN"
+          } ],
+          "filter" : [ {
+            "matcher" : "exact",
+            "value" : "metric.type=\"kubernetes.io/container/cpu/limit_utilization\" resource.type=\"k8s_container\""
+          } ],
+          "interval.endTime" : [ {
+            "matcher" : "exact",
+            "value" : "2022-01-23T19:29:17.038Z"
+          } ],
+          "interval.startTime" : [ {
+            "matcher" : "exact",
+            "value" : "2022-01-23T18:29:17.038Z"
+          } ]
+        },
+        "body" : [ {
+          "matcher" : "exact",
+          "value" : ""
+        } ]
+      },
+      "response" : {
+        "status" : 200,
+        "body" : "H4sIAAAAAAAC/72aTW8cNwyG7/4Vxp7zQYqkPnxr0SKHFuihSQ8tgsB2Bui0611jvVsgDfzf+8qxE2+ToiDCkdfwx8xSq3ckkQ8pvT85PV3t56vp52k3Tzers9PfcOX09P3dT9y7mva7+RLXH67097+7nnBl9efhYtptpv1082zePr/cbvbn82baPb+8Pjxfz1fz/s1hP6/nv8/383azure/ffLQ9G662R52l9N/NF5v3nxscvXk0xvW5xfT+ubICFevd9s/psv9m/ltN778fX56vT5/t/r4ltvPPv6Dsh/mzZ3Fi29evfj+48es/jpfH6aX91357qdX3/746Ob1dt7sPz2rx8/r7j7uTju08K8+4s7N/ny3f4nH3ZtNlNJT4qdJXnI7S+2MyzOS+usjsXdG0+bt/5o8srh9bP5ByOcdebs9XKynX+5v0jMqKdempVDlnEzS4wZPvtB0gODqF1wDBXOGXjFOLUHzAL3Fr7cE6iVtNeNXSamkWssAxdmvOAcqNtVMRJJbUqY8QrH5FVuk4qpcSSVrJbxsgGL1K9bIWS1SkllfzcIp6QDF4lcscYpz99GC71xzy41HjHHyK06BY6zwW1wgV1MRGeGq2S+YAwVLLU20aIYHY+MRjov8iikyGAM/+lqWUkAiA4aY/bjFkbjFTYhaslxa4jJEsZ+3OJK3xJKRJCkIUZkH6PXzFkfyFlcGZhk8l1Ss4wGLmP28xZG8xbVqsZaTGGJUGjGn/bzFkbyVsgGpS4VgLVzaAMV+3uJA3sqNjJIwFzivlHXEOvbzFgfyFnKlRMyNWrOmYxT7eYsjeUuKYFJzK4hN8NgjZrUfuDgUuHrdIyGHsC58BGKyH7g4EriSqBlWcEq1KJksr5j8xEWBxJVzw0IuWMINU7rogAoX+YmLAokrw0NbYhVTBlrbAM9FfuaiSOZKkk24gTSRTojUAYr9zEWhzAWoVkkGx4UkWUco9jMXRTIXsiVBLFZ4bMSnIbPaz1wUWeMSltpRk5FLNCkjPJefuSiyxtUQihGOzQRue0A0Jj9xUSRx9So1NbPMBnctA2p65CcuiiQurS1VOC4GfoyoU5OftyiSt8gaUiemlltDyrh4nbqemZe3jkwC1nBprVQopowEWRcfY3Tfy1tHJgGKkRmDM7UHJ61pcT+N7nt568gkYBU3sVSBHsqgalu8xoXue3nryOTrFWeSjFiMlIlqkzZijL28dWTy9Yr7dhO+enSqrMvXP9B9L28dmUREYwwuIlMtyBPNRvhqL28dmUTwVrLasIR7BbfVEWPsJa4jkxD+QG6cQdNSkUENEOwFriOTrxfcSz1ZQNMZsUmW3zZG973IdWQSMKlNWq59L1VZgCDLK1Y/cmnkpiJwulQSK4wkouTFiwHovh+5NHJTMWUGZJbEiE8E+QMU+5FLI5HL4LQqW0t9m41HuGr1I5eGlriKdbYupCoIygME+4lLI4mLNDU0VU0011QHMKb6iUsjiUuZ1bgXbZUEIz5AsZ+4NHJXUTtsaauW2x13DVDsJy4N3VVkzVY1w3PVOqA2j+77kUtDdxWxhrlwTyaQI/OIWe1HLg09xlWSNfjqnHKvVC9eua1n4kcuCT3HZf3UGmkpmNo8Yh2LH7kktMplDU66ZOsEwsuf5EL3/cgloSe5xBSZoiAcA7mW33FC9/3IJYHIlRswE9jVj5NnKwPKeuJHLolELiTEuRQphVhGMLX4gUsigcvwaqlawkpefkMRnffjlkTilmTudUymJhmReIRiP25JJG4l5dpPBdRO1WVEZix+3JJI3MqKvEkbpZbK8ofW0Hk/bEnoEa7UT572AgiRAa6/rPj+r9cnD/+97p+2Omzmfe8fr05uT/4BAKXM2QY6AAA=",
+        "encodedBody" : true,
+        "templated" : false,
+        "headers" : {
+          "Alt-Svc" : [ "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000,h3-Q050=\":443\"; ma=2592000,h3-Q046=\":443\"; ma=2592000,h3-Q043=\":443\"; ma=2592000,quic=\":443\"; ma=2592000; v=\"46,43\"" ],
+          "Cache-Control" : [ "private" ],
+          "Content-Encoding" : [ "gzip" ],
+          "Content-Type" : [ "application/json; charset=UTF-8" ],
+          "Date" : [ "Mon, 31 Jan 2022 08:54:58 GMT" ],
+          "Hoverfly" : [ "Was-Here" ],
+          "Server" : [ "ESF" ],
+          "Vary" : [ "Origin", "X-Origin", "Referer" ],
+          "X-Content-Type-Options" : [ "nosniff" ],
+          "X-Frame-Options" : [ "SAMEORIGIN" ],
+          "X-Xss-Protection" : [ "0" ]
+        }
+      }
+    } ],
+    "globalActions" : {
+      "delays" : [ ]
+    }
+  },
+  "meta" : {
+    "schemaVersion" : "v5",
+    "hoverflyVersion" : "v1.1.5",
+    "timeExported" : "2022-01-31T08:58:47Z"
+  }
+}

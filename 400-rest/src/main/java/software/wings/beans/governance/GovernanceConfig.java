@@ -116,8 +116,6 @@ public class GovernanceConfig
     if (EmptyPredicate.isEmpty(timeRangeBasedFreezeConfigs)) {
       nextIterations = new ArrayList<>();
       nextCloseIterations = new ArrayList<>();
-      enableNextIterations = false;
-      enableNextCloseIterations = false;
       return new ArrayList<>();
     }
     try {
@@ -130,7 +128,6 @@ public class GovernanceConfig
                              .sorted()
                              .filter(time -> time > currentTime)
                              .collect(Collectors.toList());
-        recalculateEnableNextIterations();
         return nextIterations;
       } else {
         nextCloseIterations = timeRangeBasedFreezeConfigs.stream()
@@ -140,21 +137,12 @@ public class GovernanceConfig
                                   .sorted()
                                   .filter(time -> time > currentTime)
                                   .collect(Collectors.toList());
-        recalculateEnableNextCloseIterations();
         return nextCloseIterations;
       }
     } catch (Exception ex) {
       log.error("Failed to schedule notification for governance config {}", uuid, ex);
       throw ex;
     }
-  }
-
-  public void recalculateEnableNextCloseIterations() {
-    enableNextCloseIterations = EmptyPredicate.isNotEmpty(nextCloseIterations);
-  }
-
-  public void recalculateEnableNextIterations() {
-    enableNextIterations = EmptyPredicate.isNotEmpty(nextIterations);
   }
 
   @Override

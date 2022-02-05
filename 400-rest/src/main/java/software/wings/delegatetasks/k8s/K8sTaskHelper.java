@@ -183,7 +183,7 @@ public class K8sTaskHelper {
         String pluginRootDir = kustomizeConfig != null ? kustomizeConfig.getPluginRootDir() : null;
         String kustomizeDirPath = kustomizeConfig != null ? kustomizeConfig.getKustomizeDirPath() : null;
 
-        if (k8sDelegateTaskParams.isUseVarSupportForKustomize()) {
+        if (k8sDelegateTaskParams.isUseLatestKustomizeVersion()) {
           String kustomizePath = manifestFilesDirectory + '/' + kustomizeDirPath;
           k8sTaskHelperBase.savingPatchesToDirectory(kustomizePath, manifestOverrideFiles, executionLogCallback);
         }
@@ -255,7 +255,7 @@ public class K8sTaskHelper {
         KustomizeConfig kustomizeConfig = k8sDelegateManifestConfig.getKustomizeConfig();
         String pluginRootDir = kustomizeConfig != null ? kustomizeConfig.getPluginRootDir() : null;
         return kustomizeTaskHelper.buildForApply(k8sDelegateTaskParams.getKustomizeBinaryPath(), pluginRootDir,
-            manifestFilesDirectory, filesList, k8sTaskParameters.isUseVarSupportForKustomize(), manifestOverrideFiles,
+            manifestFilesDirectory, filesList, k8sTaskParameters.isUseLatestKustomizeVersion(), manifestOverrideFiles,
             executionLogCallback);
 
       default:

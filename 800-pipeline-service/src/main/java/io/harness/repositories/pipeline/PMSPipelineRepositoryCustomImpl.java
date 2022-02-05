@@ -183,8 +183,15 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
       Supplier<OutboxEvent> supplier = ()
           -> outboxService.save(new PipelineDeleteEvent(pipelineToUpdate.getAccountIdentifier(),
               pipelineToUpdate.getOrgIdentifier(), pipelineToUpdate.getProjectIdentifier(), pipelineToUpdate));
-      return gitAwarePersistence.save(
+      PipelineEntity pipelineEntity = gitAwarePersistence.save(
           pipelineToUpdate, pipelineToUpdate.getYaml(), ChangeType.DELETE, PipelineEntity.class, supplier);
+      if (pipelineEntity.getDeleted()
+          && gitSyncSdkService.isGitSyncEnabled(pipelineToUpdate.getAccountIdentifier(),
+              pipelineToUpdate.getOrgIdentifier(), pipelineToUpdate.getProjectIdentifier())) {
+        outboxService.save(new PipelineDeleteEvent(pipelineToUpdate.getAccountIdentifier(),
+            pipelineToUpdate.getOrgIdentifier(), pipelineToUpdate.getProjectIdentifier(), pipelineToUpdate, true));
+      }
+      return pipelineEntity;
     }
     throw new InvalidRequestException("No such pipeline exists");
   }

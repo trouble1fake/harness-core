@@ -18,6 +18,7 @@ import static io.harness.exception.WingsException.ExecutionContext.MANAGER;
 import static io.harness.logging.AutoLogContext.OverrideBehavior.OVERRIDE_ERROR;
 import static io.harness.maintenance.MaintenanceController.getMaintenanceFlag;
 import static io.harness.metrics.impl.DelegateMetricsServiceImpl.DELEGATE_TASK_EXPIRED;
+import static io.harness.metrics.impl.DelegateMetricsServiceImpl.DELEGATE_TASK_REBROADCAST;
 import static io.harness.persistence.HQuery.excludeAuthority;
 
 import static java.lang.System.currentTimeMillis;
@@ -63,6 +64,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
@@ -89,6 +92,9 @@ public class DelegateQueueTask implements Runnable {
   @Inject private DelegateTaskService delegateTaskService;
   @Inject private DelegateSelectionLogsService delegateSelectionLogsService;
   @Inject private DelegateMetricsService delegateMetricsService;
+
+  private static long BROADCAST_INTERVAL = TimeUnit.MINUTES.toMillis(1);
+  private static int MAX_BROADCAST_ROUND = 3;
 
   @Override
   public void run() {
@@ -247,6 +253,8 @@ public class DelegateQueueTask implements Runnable {
                                                    .lessThan(now)
                                                    .field(DelegateTaskKeys.expiry)
                                                    .greaterThan(now)
+                                                   .field(DelegateTaskKeys.broadcastRound)
+                                                   .lessThan(MAX_BROADCAST_ROUND)
                                                    .field(DelegateTaskKeys.delegateId)
                                                    .doesNotExist();
 
@@ -276,13 +284,27 @@ public class DelegateQueueTask implements Runnable {
           broadcastToDelegates.add(delegateId);
           eligibleDelegatesList.addLast(delegateId);
         }
+        long nextInterval = TimeUnit.SECONDS.toMillis(5);
+        int broadcastRoundCount = delegateTask.getBroadcastRound();
+        Set<String> alreadyTriedDelegates =
+            Optional.ofNullable(delegateTask.getAlreadyTriedDelegates()).orElse(Sets.newHashSet());
+
+        // if all delegates got one round of rebroadcast, then increase broadcast interval & broadcastRound
+        if (alreadyTriedDelegates.containsAll(delegateTask.getEligibleToExecuteDelegateIds())) {
+          alreadyTriedDelegates.clear();
+          broadcastRoundCount++;
+          nextInterval = (long) broadcastRoundCount * BROADCAST_INTERVAL;
+        }
+        alreadyTriedDelegates.addAll(broadcastToDelegates);
 
         UpdateOperations<DelegateTask> updateOperations =
             persistence.createUpdateOperations(DelegateTask.class)
                 .set(DelegateTaskKeys.lastBroadcastAt, now)
                 .set(DelegateTaskKeys.broadcastCount, delegateTask.getBroadcastCount() + 1)
                 .set(DelegateTaskKeys.eligibleToExecuteDelegateIds, eligibleDelegatesList)
-                .set(DelegateTaskKeys.nextBroadcast, now + TimeUnit.SECONDS.toMillis(5));
+                .set(DelegateTaskKeys.nextBroadcast, now + nextInterval)
+                .set(DelegateTaskKeys.alreadyTriedDelegates, alreadyTriedDelegates)
+                .set(DelegateTaskKeys.broadcastRound, broadcastRoundCount);
         delegateTask = persistence.findAndModify(query, updateOperations, HPersistence.returnNewOptions);
         // update failed, means this was broadcast by some other manager
         if (delegateTask == null) {
@@ -302,13 +324,10 @@ public class DelegateQueueTask implements Runnable {
         try (AutoLogContext ignore1 = new TaskLogContext(delegateTask.getUuid(), delegateTask.getData().getTaskType(),
                  TaskType.valueOf(delegateTask.getData().getTaskType()).getTaskGroup().name(), OVERRIDE_ERROR);
              AutoLogContext ignore2 = new AccountLogContext(delegateTask.getAccountId(), OVERRIDE_ERROR)) {
-          if (delegateTask.getBroadcastCount() > 1) {
-            log.info("Rebroadcast queued task id {} on broadcast attempt: {} to {} ", delegateTask.getUuid(),
-                delegateTask.getBroadcastCount(), delegateTask.getBroadcastToDelegateIds());
-          } else {
-            log.debug("Broadcast queued task id {}. Broadcast count: {}", delegateTask.getUuid(),
-                delegateTask.getBroadcastCount());
-          }
+          log.info("Rebroadcast queued task id {} on broadcast attempt: {} on round {} to {} ", delegateTask.getUuid(),
+              delegateTask.getBroadcastCount(), delegateTask.getBroadcastRound(),
+              delegateTask.getBroadcastToDelegateIds());
+          delegateMetricsService.recordDelegateTaskMetrics(delegateTask, DELEGATE_TASK_REBROADCAST);
           broadcastHelper.rebroadcastDelegateTask(delegateTask);
           count++;
         }

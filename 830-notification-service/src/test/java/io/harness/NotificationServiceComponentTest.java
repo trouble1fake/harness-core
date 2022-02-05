@@ -9,6 +9,8 @@ package io.harness;
 
 import static io.harness.rule.OwnerRule.ANKUSH;
 
+import static org.assertj.core.api.Assertions.assertThatCode;
+
 import io.harness.category.element.UnitTests;
 import io.harness.rule.Owner;
 import io.harness.testing.TestExecution;
@@ -24,12 +26,12 @@ public class NotificationServiceComponentTest extends NotificationServiceTestBas
   @Inject private Map<String, TestExecution> tests;
 
   @Test
-  @Owner(developers = ANKUSH, intermittent = true)
+  @Owner(developers = ANKUSH)
   @Category(UnitTests.class)
   public void componentNotificationServiceTests() {
-    //    for (Entry<String, TestExecution> test : tests.entrySet()) {
-    //      assertThatCode(() -> test.getValue().run()).as(test.getKey()).doesNotThrowAnyException();
-    //      log.info("{} passed", test.getKey());
-    //    }
+    for (Map.Entry<String, TestExecution> test : tests.entrySet()) {
+      assertThatCode(() -> test.getValue().run()).as(test.getKey()).doesNotThrowAnyException();
+      log.info("{} passed", test.getKey());
+    }
   }
 }

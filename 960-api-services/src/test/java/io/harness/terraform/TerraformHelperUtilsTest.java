@@ -8,6 +8,7 @@
 package io.harness.terraform;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.rule.OwnerRule.ABOSII;
 import static io.harness.rule.OwnerRule.ROHITKARELIA;
 
 import static java.lang.String.format;
@@ -18,6 +19,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.filesystem.FileIo;
 import io.harness.rule.Owner;
+import io.harness.terraform.beans.TerraformVersion;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,5 +55,16 @@ public class TerraformHelperUtilsTest extends CategoryTest {
     assertThat(tfFile).isNotNull();
     assertThat(tfFile.getName()).isEqualTo("terraform.tfstate");
     Files.deleteIfExists(Paths.get(tfFile.getPath()));
+  }
+
+  @Test
+  @Owner(developers = ABOSII)
+  @Category(UnitTests.class)
+  public void testGetAutoApproveArgument() {
+    assertThat(TerraformHelperUtils.getAutoApproveArgument(TerraformVersion.create(0, 7, 3))).isEqualTo("-force");
+    assertThat(TerraformHelperUtils.getAutoApproveArgument(TerraformVersion.create(0, 15, 2)))
+        .isEqualTo("-auto-approve");
+    assertThat(TerraformHelperUtils.getAutoApproveArgument(TerraformVersion.create(1, 4, 1)))
+        .isEqualTo("-auto-approve");
   }
 }

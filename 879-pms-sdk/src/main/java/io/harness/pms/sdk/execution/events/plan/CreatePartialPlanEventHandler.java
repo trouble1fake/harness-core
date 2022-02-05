@@ -20,6 +20,7 @@ import io.harness.pms.contracts.plan.Dependencies;
 import io.harness.pms.contracts.plan.ErrorResponse;
 import io.harness.pms.contracts.plan.PartialPlanResponse;
 import io.harness.pms.sdk.core.plan.creation.PlanCreationResponseBlobHelper;
+import io.harness.pms.sdk.core.plan.creation.beans.MergePlanCreationResponse;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationContext;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationResponse;
 import io.harness.pms.sdk.core.plan.creation.creators.PlanCreatorService;
@@ -61,7 +62,7 @@ public class CreatePartialPlanEventHandler
 
   @Override
   protected void handleResult(CreatePartialPlanEvent event, AsyncCreatorResponse creatorResponse) {
-    PlanCreationResponse finalResponse = (PlanCreationResponse) creatorResponse;
+    MergePlanCreationResponse finalResponse = (MergePlanCreationResponse) creatorResponse;
     if (EmptyPredicate.isNotEmpty(finalResponse.getErrorMessages())) {
       partialPlanResponseEventPublisher.publishEvent(
           PartialPlanResponse.newBuilder()
@@ -86,7 +87,7 @@ public class CreatePartialPlanEventHandler
   public Dependencies handleDependencies(
       PlanCreationContext ctx, AsyncCreatorResponse finalUncastedResponse, Dependencies dependencies) {
     return planCreatorService.createPlanForDependencies(
-        ctx, (PlanCreationResponse) finalUncastedResponse, dependencies);
+        ctx, (MergePlanCreationResponse) finalUncastedResponse, dependencies);
   }
 
   @Override

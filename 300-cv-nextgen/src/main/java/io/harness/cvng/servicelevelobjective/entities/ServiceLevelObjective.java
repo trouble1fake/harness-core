@@ -17,7 +17,6 @@ import io.harness.cvng.servicelevelobjective.beans.DayOfWeek;
 import io.harness.cvng.servicelevelobjective.beans.SLOCalenderType;
 import io.harness.cvng.servicelevelobjective.beans.SLOTargetType;
 import io.harness.cvng.servicelevelobjective.beans.ServiceLevelIndicatorType;
-import io.harness.data.structure.CollectionUtils;
 import io.harness.mongo.index.CompoundMongoIndex;
 import io.harness.mongo.index.MongoIndex;
 import io.harness.ng.DbAliases;
@@ -34,8 +33,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.Period;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -90,14 +89,13 @@ public class ServiceLevelObjective
     return ZoneOffset.UTC; // hardcoding it to UTC for now. We need to ask it from user.
   }
 
-  public int getActiveErrorBudgetMinutes(List<Double> errorBudgetIncrementPercentages, LocalDateTime currentDateTime) {
-    int errorBudgetMinutes = getTotalErrorBudgetMinutes(currentDateTime);
-    return CollectionUtils.emptyIfNull(errorBudgetIncrementPercentages)
-               .stream()
-               .map(incrementPercentage -> (errorBudgetMinutes * incrementPercentage) / 100)
-               .mapToInt(minutes -> minutes.intValue())
-               .sum()
-        + errorBudgetMinutes;
+  public int getActiveErrorBudgetMinutes(
+      List<Double> orderedErrorBudgetIncrementPercentages, LocalDateTime currentDateTime) {
+    int activeErrorBudget = getTotalErrorBudgetMinutes(currentDateTime);
+    for (Double incrementPercentage : orderedErrorBudgetIncrementPercentages) {
+      activeErrorBudget = activeErrorBudget + (int) Math.floor((activeErrorBudget * incrementPercentage) / 100);
+    }
+    return activeErrorBudget;
   }
 
   public int getTotalErrorBudgetMinutes(LocalDateTime currentDateTime) {
@@ -140,8 +138,8 @@ public class ServiceLevelObjective
       this.endTime = endTime;
     }
 
-    public Period getRemainingDays(LocalDateTime currentDateTime) {
-      return Period.between(currentDateTime.toLocalDate(), endTime.toLocalDate());
+    public int getRemainingDays(LocalDateTime currentDateTime) {
+      return (int) ChronoUnit.DAYS.between(currentDateTime.toLocalDate(), endTime.toLocalDate());
     }
     public int getTotalDays() {
       return (int) DAYS.between(getStartTime(), getEndTime());

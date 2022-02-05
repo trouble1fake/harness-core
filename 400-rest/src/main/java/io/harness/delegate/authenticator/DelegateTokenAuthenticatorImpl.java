@@ -150,6 +150,7 @@ public class DelegateTokenAuthenticatorImpl implements DelegateTokenAuthenticato
     return result;
   }
 
+  // TODO: Arpit associate delegate token correspondingly
   private boolean decryptDelegateTokenByQuery(
       Query query, String accountId, DelegateTokenStatus status, EncryptedJWT encryptedJWT, boolean isNg) {
     try (HIterator<NameAndValueAccess> records = new HIterator<>(query.fetch())) {

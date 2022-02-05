@@ -3,6 +3,7 @@
 # Use of this source code is governed by the PolyForm Free Trial 1.0.0 license
 # that can be found in the licenses directory at the root of this repository, also available at
 # https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
+set -x
 
 bold=$(tput bold)
 normal=$(tput sgr0)
@@ -29,7 +30,7 @@ do
       echo "Kryo dependencies file: " $KRYO_DEPENDENCIES_FILE
       echo "Proto dependencies file: " $PROTO_DEPENDENCIES_FILE
 
-      bazel query "deps(//$MODULE:module)" | grep -i "KryoRegistrar" | rev | cut -f 1 -d "/" | rev | cut -f 1 -d "." > $KRYO_DEPENDENCIES_FILE
+      bazel query "deps(//$MODULE:module)" | grep -Ei "KryoRegistrar|KryoRegister" | rev | cut -f 1 -d "/" | rev | cut -f 1 -d "." > $KRYO_DEPENDENCIES_FILE
       sh scripts/interface-hash/module-deps.sh $MODULE:module > $PROTO_DEPENDENCIES_FILE
 
       CODEBASE_HASH_STRING=`bazel run "//001-microservice-intfc-tool:module" -- kryo-file=$KRYO_DEPENDENCIES_FILE proto-file=$PROTO_DEPENDENCIES_FILE ignore-json | grep "Codebase Hash:"`

@@ -9,13 +9,16 @@ package io.harness.ccm.graphql.dto.recommendation;
 
 import io.harness.ccm.commons.beans.recommendation.ResourceType;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.leangen.graphql.annotations.GraphQLNonNull;
+import io.swagger.v3.oas.annotations.media.Schema;
 import javax.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Value;
 
 @Value
 @Builder
+@Schema(name = "RecommendationItem", description = "A single Cloud Cost Recommendation entity.")
 public class RecommendationItemDTO {
   @GraphQLNonNull @NotNull String id;
   String clusterName;
@@ -24,5 +27,5 @@ public class RecommendationItemDTO {
   Double monthlySaving;
   Double monthlyCost;
   @GraphQLNonNull @NotNull ResourceType resourceType;
-  RecommendationDetailsDTO recommendationDetails;
+  @JsonProperty(access = JsonProperty.Access.WRITE_ONLY) RecommendationDetailsDTO recommendationDetails;
 }

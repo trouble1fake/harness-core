@@ -363,6 +363,7 @@ public class NGMigrationApplication extends Application<MigratorConfig> {
 
     List<Module> modules = new ArrayList<>();
     addModules(configuration.getCg(), modules);
+    modules.add(new MigratorModule(configuration));
 
     Injector injector = Guice.createInjector(modules);
 
