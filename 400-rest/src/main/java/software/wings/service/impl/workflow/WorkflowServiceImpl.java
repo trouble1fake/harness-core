@@ -4305,7 +4305,8 @@ public class WorkflowServiceImpl implements WorkflowService, DataProvider {
 
     DeploymentType workflowPhaseDeploymentType = workflowPhase != null ? workflowPhase.getDeploymentType() : null;
     for (StepType step : stepTypes) {
-      if (Objects.nonNull(cloudProviderType) && !CloudProviderType.RANCHER.equals(cloudProviderType)
+      if ((Objects.isNull(cloudProviderType)
+              || Objects.nonNull(cloudProviderType) && !CloudProviderType.RANCHER.equals(cloudProviderType))
           && step.name().startsWith("RANCHER_")) {
         continue;
       }

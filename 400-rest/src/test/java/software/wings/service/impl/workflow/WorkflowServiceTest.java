@@ -33,7 +33,25 @@ import static io.harness.rule.OwnerRule.SATYAM;
 import static io.harness.rule.OwnerRule.SRINIVAS;
 import static io.harness.rule.OwnerRule.UJJAWAL;
 import static io.harness.rule.OwnerRule.YOGESH;
-
+import static java.lang.String.format;
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.toList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.entry;
+import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.groups.Tuple.tuple;
+import static org.assertj.core.util.Lists.newArrayList;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static software.wings.api.DeploymentType.AMI;
 import static software.wings.api.DeploymentType.ECS;
 import static software.wings.api.DeploymentType.KUBERNETES;
@@ -253,26 +271,12 @@ import static software.wings.utils.WingsTestConstants.UUID;
 import static software.wings.utils.WingsTestConstants.WORKFLOW_ID;
 import static software.wings.utils.WingsTestConstants.WORKFLOW_NAME;
 
-import static java.lang.String.format;
-import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
-import static java.util.stream.Collectors.toList;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.entry;
-import static org.assertj.core.api.Assertions.fail;
-import static org.assertj.core.groups.Tuple.tuple;
-import static org.assertj.core.util.Lists.newArrayList;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
+import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.inject.Inject;
+import io.fabric8.kubernetes.api.KubernetesHelper;
+import io.fabric8.kubernetes.api.model.HorizontalPodAutoscaler;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
@@ -293,7 +297,31 @@ import io.harness.limits.LimitCheckerFactory;
 import io.harness.persistence.HPersistence;
 import io.harness.rule.Owner;
 import io.harness.serializer.JsonUtils;
-
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import javax.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.reflect.FieldUtils;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.junit.experimental.categories.Category;
+import org.mockito.InOrder;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.Spy;
+import org.mockito.stubbing.Answer;
+import org.mongodb.morphia.query.FieldEnd;
+import org.mongodb.morphia.query.Query;
+import org.mongodb.morphia.query.UpdateOperations;
 import software.wings.WingsBaseTest;
 import software.wings.api.CloudProviderType;
 import software.wings.api.DeploymentType;
@@ -368,6 +396,9 @@ import software.wings.infra.PhysicalInfra;
 import software.wings.rules.Listeners;
 import software.wings.service.StaticMap;
 import software.wings.service.impl.AuditServiceHelper;
+import software.wings.service.impl.workflow.creation.K8V2BlueGreenWorkflowCreator;
+import software.wings.service.impl.workflow.creation.abstractfactories.AbstractWorkflowFactory;
+import software.wings.service.impl.workflow.creation.abstractfactories.K8sV2WorkflowFactory;
 import software.wings.service.intfc.AccountService;
 import software.wings.service.intfc.AppService;
 import software.wings.service.intfc.ArtifactService;
@@ -404,37 +435,6 @@ import software.wings.stencils.Stencil;
 import software.wings.stencils.StencilPostProcessor;
 import software.wings.stencils.WorkflowStepType;
 import software.wings.utils.WingsTestConstants.MockChecker;
-
-import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.inject.Inject;
-import io.fabric8.kubernetes.api.KubernetesHelper;
-import io.fabric8.kubernetes.api.model.HorizontalPodAutoscaler;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import javax.validation.ConstraintViolationException;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.reflect.FieldUtils;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.mockito.InOrder;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.stubbing.Answer;
-import org.mongodb.morphia.query.FieldEnd;
-import org.mongodb.morphia.query.Query;
-import org.mongodb.morphia.query.UpdateOperations;
 
 /**
  * The Class WorkflowServiceTest.
@@ -475,9 +475,11 @@ public class WorkflowServiceTest extends WingsBaseTest {
   @Mock private PersonalizationService personalizationService;
   @Mock private AuditServiceHelper auditServiceHelper;
   @Mock private HarnessTagService harnessTagService;
+  @Spy @Inject private AbstractWorkflowFactory abstractWorkflowFactory;
 
   @InjectMocks @Inject private WorkflowServiceHelper workflowServiceHelper;
   @InjectMocks @Inject private WorkflowServiceTemplateHelper workflowServiceTemplateHelper;
+  @InjectMocks @Inject private K8V2BlueGreenWorkflowCreator k8V2BlueGreenWorkflowCreator;
 
   private StencilPostProcessor stencilPostProcessor = mock(StencilPostProcessor.class,
       (Answer<List<Stencil>>) invocationOnMock -> (List<Stencil>) invocationOnMock.getArguments()[0]);
@@ -4877,7 +4879,12 @@ public class WorkflowServiceTest extends WingsBaseTest {
   public void testK8sV2BGWorkflowHasRouteUpdateStepInRollbackPhase() {
     Workflow workflow = constructBlueGreenWorkflow();
     when(infrastructureDefinitionService.get(APP_ID, INFRA_DEFINITION_ID)).thenReturn(constructGKInfraDef());
+    when(infrastructureDefinitionService.getInfraDefById(anyString(), anyString())).thenReturn(constructGKInfraDef());
 
+    K8sV2WorkflowFactory k8sV2WorkflowFactory = mock(K8sV2WorkflowFactory.class);
+    when(abstractWorkflowFactory.getWorkflowCreatorFactory(AbstractWorkflowFactory.Category.K8S_V2))
+        .thenReturn(k8sV2WorkflowFactory);
+    when(k8sV2WorkflowFactory.getWorkflowCreator(any())).thenReturn(k8V2BlueGreenWorkflowCreator);
     when(serviceResourceService.get(APP_ID, SERVICE_ID, false))
         .thenReturn(Service.builder()
                         .name(SERVICE_NAME)

@@ -9,6 +9,7 @@ package software.wings.service.impl.yaml.handler.workflow;
 
 import static io.harness.rule.OwnerRule.MILOS;
 
+import static software.wings.service.impl.workflow.WorkflowServiceTestHelper.constructGKInfraDef;
 import static software.wings.service.impl.yaml.handler.workflow.WorkflowYamlConstant.BLUE_GREEN_INVALID_YAML_CONTENT;
 import static software.wings.service.impl.yaml.handler.workflow.WorkflowYamlConstant.BLUE_GREEN_INVALID_YAML_FILE_PATH;
 import static software.wings.service.impl.yaml.handler.workflow.WorkflowYamlConstant.BLUE_GREEN_VALID_YAML_CONTENT_RESOURCE_PATH;
@@ -19,6 +20,8 @@ import static software.wings.utils.WingsTestConstants.APP_ID;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import io.harness.category.element.UnitTests;
@@ -32,7 +35,9 @@ import software.wings.beans.concurrency.ConcurrencyStrategy;
 import software.wings.beans.yaml.ChangeContext;
 import software.wings.common.InfrastructureConstants;
 import software.wings.service.impl.workflow.WorkflowServiceHelper;
+import software.wings.service.impl.workflow.creation.K8V2BlueGreenWorkflowCreator;
 import software.wings.service.impl.workflow.creation.abstractfactories.AbstractWorkflowFactory;
+import software.wings.service.impl.workflow.creation.abstractfactories.K8sV2WorkflowFactory;
 import software.wings.utils.WingsTestConstants;
 import software.wings.yaml.workflow.BlueGreenWorkflowYaml;
 
@@ -43,6 +48,7 @@ import org.junit.experimental.categories.Category;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.Spy;
 
 public class BlueGreenWorkflowYamlHandlerTest extends WorkflowYamlHandlerTestBase {
   private String workflowName = "blueGreen";
@@ -50,6 +56,8 @@ public class BlueGreenWorkflowYamlHandlerTest extends WorkflowYamlHandlerTestBas
   @InjectMocks @Inject private BlueGreenWorkflowYamlHandler yamlHandler;
   @Mock private LimitCheckerFactory limitCheckerFactory;
   @Mock private WorkflowServiceHelper workflowServiceHelper;
+  @Spy @Inject private AbstractWorkflowFactory abstractWorkflowFactory;
+  @InjectMocks @Inject private K8V2BlueGreenWorkflowCreator k8V2BlueGreenWorkflowCreator;
 
   @Before
   public void runBeforeTest() {
@@ -64,6 +72,12 @@ public class BlueGreenWorkflowYamlHandlerTest extends WorkflowYamlHandlerTestBas
         .thenReturn(new WingsTestConstants.MockChecker(true, ActionType.CREATE_WORKFLOW));
     when(workflowServiceHelper.isK8sV2Service(any(), any())).thenReturn(true);
     when(workflowServiceHelper.getCategory(any(), any())).thenReturn(AbstractWorkflowFactory.Category.K8S_V2);
+
+    K8sV2WorkflowFactory k8sV2WorkflowFactory = mock(K8sV2WorkflowFactory.class);
+    when(abstractWorkflowFactory.getWorkflowCreatorFactory(AbstractWorkflowFactory.Category.K8S_V2))
+        .thenReturn(k8sV2WorkflowFactory);
+    when(k8sV2WorkflowFactory.getWorkflowCreator(any())).thenReturn(k8V2BlueGreenWorkflowCreator);
+    when(infrastructureDefinitionService.getInfraDefById(anyString(), anyString())).thenReturn(constructGKInfraDef());
 
     String validYamlContent = readYamlStringInFile(BLUE_GREEN_VALID_YAML_CONTENT_RESOURCE_PATH);
     ChangeContext<BlueGreenWorkflowYaml> changeContext =

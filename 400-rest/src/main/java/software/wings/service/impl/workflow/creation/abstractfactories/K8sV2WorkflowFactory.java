@@ -28,7 +28,7 @@ import com.google.inject.Singleton;
 @OwnedBy(CDC)
 @TargetModule(HarnessModule._870_CG_ORCHESTRATION)
 @Singleton
-class K8sV2WorkflowFactory implements WorkflowCreatorFactory {
+public class K8sV2WorkflowFactory implements WorkflowCreatorFactory {
   @Inject private K8V2CanaryWorkflowCreator k8V2CanaryWorkflowCreator;
   @Inject private K8V2RollingWorkflowCreator k8V2RollingWorkflowCreator;
   @Inject private K8V2BlueGreenWorkflowCreator k8V2BlueGreenWorkflowCreator;

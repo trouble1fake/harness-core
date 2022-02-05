@@ -248,6 +248,7 @@ import software.wings.beans.Pipeline;
 import software.wings.beans.PipelineExecution;
 import software.wings.beans.Preference;
 import software.wings.beans.PrometheusConfig;
+import software.wings.beans.RancherKubernetesInfrastructureMapping;
 import software.wings.beans.ResourceConstraintInstance;
 import software.wings.beans.ResourceConstraintNotification;
 import software.wings.beans.ResourceLookup;
@@ -875,6 +876,7 @@ public class ManagerMorphiaRegistrar implements MorphiaRegistrar {
     set.add(DeploymentSummary.class);
     set.add(DeploymentTimeSeriesEvent.class);
     set.add(DirectKubernetesInfrastructureMapping.class);
+    set.add(RancherKubernetesInfrastructureMapping.class);
     set.add(DockerArtifactStream.class);
     set.add(DynaTraceCVServiceConfiguration.class);
     set.add(EcrArtifactStream.class);

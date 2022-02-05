@@ -31,7 +31,6 @@ import software.wings.helpers.ext.helm.HelmDeployService;
 import software.wings.helpers.ext.helm.request.HelmCommandRequest;
 import software.wings.helpers.ext.helm.request.HelmInstallCommandRequest;
 
-import com.google.inject.Inject;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.InjectMocks;
@@ -40,7 +39,7 @@ import org.mockito.Mock;
 @TargetModule(HarnessModule._930_DELEGATE_TASKS)
 @OwnedBy(CDP)
 public class HelmCommandCapabilityCheckTest extends WingsBaseTest {
-  @Inject @InjectMocks HelmCommandCapabilityCheck helmCommandCapabilityCheck;
+  @InjectMocks HelmCommandCapabilityCheck helmCommandCapabilityCheck;
   @Mock private HelmDeployService helmDeployService;
   @Mock private ContainerDeploymentDelegateHelper containerDeploymentDelegateHelper;
 

@@ -24,6 +24,7 @@ import io.harness.rule.Owner;
 import io.harness.security.encryption.SecretDecryptionService;
 
 import software.wings.cloudprovider.gke.GkeClusterService;
+import software.wings.helpers.ext.container.ContainerDeploymentDelegateHelper;
 import software.wings.service.intfc.security.EncryptionService;
 
 import com.google.common.util.concurrent.TimeLimiter;
@@ -86,6 +87,14 @@ public class KubernetesClientFactoryModuleTest extends CategoryTest {
       @Singleton
       TimeLimiter timeLimiter() {
         return mock(TimeLimiter.class);
+      }
+    });
+
+    modules.add(new ProviderModule() {
+      @Provides
+      @Singleton
+      ContainerDeploymentDelegateHelper containerDeploymentDelegateHelper() {
+        return mock(ContainerDeploymentDelegateHelper.class);
       }
     });
 
