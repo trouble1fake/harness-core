@@ -11,9 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.CI;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.steps.CIStepInfo;
-import io.harness.beans.yaml.extended.ImagePullPolicy;
 import io.harness.pms.yaml.ParameterField;
-import io.harness.yaml.core.variables.OutputNGVariable;
 import io.harness.yaml.extended.ci.container.ContainerResource;
 
 import java.util.List;
