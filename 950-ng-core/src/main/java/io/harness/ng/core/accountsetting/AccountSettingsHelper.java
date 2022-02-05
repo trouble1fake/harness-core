@@ -47,6 +47,7 @@ public class AccountSettingsHelper {
         switch (accountSettingType) {
           case CONNECTOR:
             accountSetting.setConfig(connectorSettings.getDefaultConfig());
+            break;
           default:
             log.error("No setting of given type is supported");
         }

@@ -22,6 +22,10 @@ import io.harness.eventsframework.consumer.Message;
 import io.harness.eventsframework.entity_crud.organization.OrganizationEntityChangeDTO;
 import io.harness.eventsframework.entity_crud.project.ProjectEntityChangeDTO;
 import io.harness.exception.InvalidRequestException;
+import io.harness.ng.core.accountsetting.dto.AccountSettingResponseDTO;
+import io.harness.ng.core.accountsetting.dto.AccountSettingType;
+import io.harness.ng.core.accountsetting.dto.ConnectorSettings;
+import io.harness.ng.core.accountsetting.services.NGAccountSettingService;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -35,12 +39,15 @@ import lombok.extern.slf4j.Slf4j;
 public class ConnectorEntityCRUDStreamListener implements MessageListener {
   private final HarnessSMManager harnessSMManager;
   private final ConnectorEntityCRUDEventHandler connectorEntityCRUDEventHandler;
+  private final NGAccountSettingService ngAccountSettingService;
 
   @Inject
-  public ConnectorEntityCRUDStreamListener(
-      HarnessSMManager harnessSMManager, ConnectorEntityCRUDEventHandler connectorEntityCRUDEventHandler) {
+  public ConnectorEntityCRUDStreamListener(HarnessSMManager harnessSMManager,
+      ConnectorEntityCRUDEventHandler connectorEntityCRUDEventHandler,
+      NGAccountSettingService ngAccountSettingService) {
     this.harnessSMManager = harnessSMManager;
     this.connectorEntityCRUDEventHandler = connectorEntityCRUDEventHandler;
+    this.ngAccountSettingService = ngAccountSettingService;
   }
 
   @Override
@@ -85,8 +92,12 @@ public class ConnectorEntityCRUDStreamListener implements MessageListener {
   }
 
   private boolean processOrganizationCreateEvent(OrganizationEntityChangeDTO organizationEntityChangeDTO) {
-    harnessSMManager.createHarnessSecretManager(
-        organizationEntityChangeDTO.getAccountIdentifier(), organizationEntityChangeDTO.getIdentifier(), null);
+    final boolean isBuiltInSMDisabled = getIsBuiltInSMDisabled(
+        organizationEntityChangeDTO.getAccountIdentifier(), null, null, AccountSettingType.CONNECTOR);
+    if (!isBuiltInSMDisabled) {
+      harnessSMManager.createHarnessSecretManager(
+          organizationEntityChangeDTO.getAccountIdentifier(), organizationEntityChangeDTO.getIdentifier(), null);
+    }
     return true;
   }
 
@@ -122,8 +133,12 @@ public class ConnectorEntityCRUDStreamListener implements MessageListener {
   }
 
   private boolean processProjectCreateEvent(ProjectEntityChangeDTO projectEntityChangeDTO) {
-    harnessSMManager.createHarnessSecretManager(projectEntityChangeDTO.getAccountIdentifier(),
-        projectEntityChangeDTO.getOrgIdentifier(), projectEntityChangeDTO.getIdentifier());
+    final boolean isBuiltInSMDisabled =
+        getIsBuiltInSMDisabled(projectEntityChangeDTO.getAccountIdentifier(), null, null, AccountSettingType.CONNECTOR);
+    if (!isBuiltInSMDisabled) {
+      harnessSMManager.createHarnessSecretManager(projectEntityChangeDTO.getAccountIdentifier(),
+          projectEntityChangeDTO.getOrgIdentifier(), projectEntityChangeDTO.getIdentifier());
+    }
     return true;
   }
 
@@ -134,5 +149,16 @@ public class ConnectorEntityCRUDStreamListener implements MessageListener {
 
   private boolean processProjectRestoreEvent(ProjectEntityChangeDTO projectEntityChangeDTO) {
     return true;
+  }
+
+  private boolean getIsBuiltInSMDisabled(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, AccountSettingType connector) {
+    final AccountSettingResponseDTO accountSettingResponseDTO =
+        ngAccountSettingService.get(accountIdentifier, orgIdentifier, projectIdentifier, AccountSettingType.CONNECTOR);
+    final ConnectorSettings config = (ConnectorSettings) accountSettingResponseDTO.getAccountSettings().getConfig();
+    if (config == null || config.getBuiltInSMDisabled() == null) {
+      return false;
+    }
+    return config.getBuiltInSMDisabled();
   }
 }

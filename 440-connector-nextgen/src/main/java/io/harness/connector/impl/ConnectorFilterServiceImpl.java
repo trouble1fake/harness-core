@@ -32,6 +32,7 @@ import io.harness.connector.entities.embedded.ceawsconnector.CEAwsConfig.CEAwsCo
 import io.harness.connector.entities.embedded.ceazure.CEAzureConfig.CEAzureConfigKeys;
 import io.harness.connector.entities.embedded.cek8s.CEK8sDetails.CEK8sDetailsKeys;
 import io.harness.connector.entities.embedded.gcpccm.GcpCloudCostConfig.GcpCloudCostConfigKeys;
+import io.harness.connector.entities.embedded.gcpkmsconnector.GcpKmsConnector;
 import io.harness.connector.services.ConnectorFilterService;
 import io.harness.delegate.beans.connector.CcmConnectorFilter;
 import io.harness.delegate.beans.connector.ConnectorType;
@@ -69,7 +70,7 @@ public class ConnectorFilterServiceImpl implements ConnectorFilterService {
   @Override
   public Criteria createCriteriaFromConnectorListQueryParams(String accountIdentifier, String orgIdentifier,
       String projectIdentifier, String filterIdentifier, String encodedSearchTerm, FilterPropertiesDTO filterProperties,
-      Boolean includeAllConnectorsAccessibleAtScope) {
+      Boolean includeAllConnectorsAccessibleAtScope, boolean isBuiltInSMDisabled) {
     if (isNotBlank(filterIdentifier) && filterProperties != null) {
       throw new InvalidRequestException("Can not apply both filter properties and saved filter together");
     }
@@ -81,6 +82,9 @@ public class ConnectorFilterServiceImpl implements ConnectorFilterService {
     } else {
       criteria.and(ConnectorKeys.orgIdentifier).is(orgIdentifier);
       criteria.and(ConnectorKeys.projectIdentifier).is(projectIdentifier);
+    }
+    if (isBuiltInSMDisabled) {
+      criteria.and(GcpKmsConnector.GcpKmsConnectorKeys.harnessManaged).ne(true);
     }
     criteria.orOperator(where(ConnectorKeys.deleted).exists(false), where(ConnectorKeys.deleted).is(false));
 
@@ -259,7 +263,7 @@ public class ConnectorFilterServiceImpl implements ConnectorFilterService {
 
   public Criteria createCriteriaFromConnectorFilter(String accountIdentifier, String orgIdentifier,
       String projectIdentifier, String searchTerm, ConnectorType connectorType, ConnectorCategory category,
-      ConnectorCategory sourceCategory) {
+      ConnectorCategory sourceCategory, boolean isBuiltInSMDisabled) {
     Criteria criteria = new Criteria();
     criteria.and(ConnectorKeys.accountIdentifier).is(accountIdentifier);
     criteria.orOperator(where(ConnectorKeys.deleted).exists(false), where(ConnectorKeys.deleted).is(false));
@@ -274,6 +278,9 @@ public class ConnectorFilterServiceImpl implements ConnectorFilterService {
     }
     if (sourceCategory != null && SECRET_MANAGER == sourceCategory) {
       criteria.and(ConnectorKeys.identifier).in(HARNESS_SECRET_MANAGER_IDENTIFIER);
+    }
+    if (isBuiltInSMDisabled) {
+      criteria.and(GcpKmsConnector.GcpKmsConnectorKeys.harnessManaged).ne(true);
     }
     if (isNotBlank(searchTerm)) {
       Criteria seachCriteria = new Criteria().orOperator(where(ConnectorKeys.name).regex(searchTerm, "i"),

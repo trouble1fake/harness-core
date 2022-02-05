@@ -42,6 +42,8 @@ import io.harness.filter.mapper.FilterPropertiesMapper;
 import io.harness.git.GitClientV2;
 import io.harness.git.GitClientV2Impl;
 import io.harness.impl.scm.ScmServiceClientImpl;
+import io.harness.ng.core.accountsetting.services.NGAccountSettingService;
+import io.harness.ng.core.accountsetting.services.NGAccountSettingServiceImpl;
 import io.harness.persistence.HPersistence;
 import io.harness.service.ScmServiceClient;
 
@@ -115,6 +117,7 @@ public class ConnectorModule extends AbstractModule {
     bind(NGConnectorSecretManagerService.class).to(NGConnectorSecretManagerServiceImpl.class);
     bind(GithubService.class).to(GithubServiceImpl.class);
     bind(ScmServiceClient.class).to(ScmServiceClientImpl.class);
+    bind(NGAccountSettingService.class).to(NGAccountSettingServiceImpl.class);
     MapBinder<String, FilterPropertiesMapper> filterPropertiesMapper =
         MapBinder.newMapBinder(binder(), String.class, FilterPropertiesMapper.class);
     filterPropertiesMapper.addBinding(FilterType.CONNECTOR.toString()).to(ConnectorFilterPropertiesMapper.class);

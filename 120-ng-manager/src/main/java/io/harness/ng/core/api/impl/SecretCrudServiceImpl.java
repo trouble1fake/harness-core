@@ -7,6 +7,7 @@
 
 package io.harness.ng.core.api.impl;
 
+import static io.harness.NGConstants.CONNECTOR_STRING;
 import static io.harness.NGConstants.HARNESS_SECRET_MANAGER_IDENTIFIER;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.connector.ConnectorCategory.SECRET_MANAGER;
@@ -26,6 +27,9 @@ import static org.springframework.data.mongodb.core.query.Criteria.where;
 import io.harness.NGResourceFilterConstants;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.connector.ConnectorCategory;
+import io.harness.connector.ConnectorResponseDTO;
+import io.harness.connector.helper.HarnessManagedConnectorHelper;
+import io.harness.connector.services.ConnectorService;
 import io.harness.delegate.beans.FileUploadLimit;
 import io.harness.eventsframework.EventsFrameworkMetadataConstants;
 import io.harness.eventsframework.api.EventsFrameworkDownException;
@@ -35,6 +39,8 @@ import io.harness.eventsframework.producer.Message;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.SecretManagementException;
 import io.harness.ng.beans.PageResponse;
+import io.harness.ng.core.accountsetting.AccountSettingsHelper;
+import io.harness.ng.core.accountsetting.dto.AccountSettingType;
 import io.harness.ng.core.api.NGEncryptedDataService;
 import io.harness.ng.core.api.NGSecretServiceV2;
 import io.harness.ng.core.api.SecretCrudService;
@@ -54,6 +60,7 @@ import io.harness.secretmanagerclient.ValueType;
 import io.harness.stream.BoundedInputStream;
 import io.harness.utils.PageUtils;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -81,16 +88,23 @@ public class SecretCrudServiceImpl implements SecretCrudService {
   private final SecretEntityReferenceHelper secretEntityReferenceHelper;
   private final Producer eventProducer;
   private final NGEncryptedDataService encryptedDataService;
+  private final AccountSettingsHelper accountSettingsHelper;
+  private final ConnectorService connectorService;
+  private final HarnessManagedConnectorHelper harnessManagedConnectorHelper;
 
   @Inject
   public SecretCrudServiceImpl(SecretEntityReferenceHelper secretEntityReferenceHelper, FileUploadLimit fileUploadLimit,
       NGSecretServiceV2 ngSecretService, @Named(ENTITY_CRUD) Producer eventProducer,
-      NGEncryptedDataService encryptedDataService) {
+      NGEncryptedDataService encryptedDataService, AccountSettingsHelper accountSettingsHelper,
+      ConnectorService connectorService, HarnessManagedConnectorHelper harnessManagedConnectorHelper) {
     this.fileUploadLimit = fileUploadLimit;
     this.secretEntityReferenceHelper = secretEntityReferenceHelper;
     this.ngSecretService = ngSecretService;
     this.eventProducer = eventProducer;
     this.encryptedDataService = encryptedDataService;
+    this.accountSettingsHelper = accountSettingsHelper;
+    this.connectorService = connectorService;
+    this.harnessManagedConnectorHelper = harnessManagedConnectorHelper;
   }
 
   private void checkEqualityOrThrow(Object str1, Object str2) {
@@ -139,6 +153,14 @@ public class SecretCrudServiceImpl implements SecretCrudService {
     if (SecretText.equals(dto.getType()) && isEmpty(((SecretTextSpecDTO) dto.getSpec()).getValue())) {
       throw new InvalidRequestException("value cannot be empty for a secret text.");
     }
+
+    boolean isBuiltInSMDisabled =
+        accountSettingsHelper.getIsBuiltInSMDisabled(accountIdentifier, null, null, AccountSettingType.CONNECTOR);
+
+    if (isBuiltInSMDisabled && checkIfSecretManagerUsedIsHarnessManaged(accountIdentifier, dto)) {
+      throw new InvalidRequestException("Built-in Harness Secret Manager cannot be used to create Secret.");
+    }
+
     if (SecretText.equals(dto.getType())) {
       NGEncryptedData encryptedData = encryptedDataService.createSecretText(accountIdentifier, dto);
       if (Optional.ofNullable(encryptedData).isPresent()) {
@@ -148,6 +170,30 @@ public class SecretCrudServiceImpl implements SecretCrudService {
       return createSecretInternal(accountIdentifier, dto, false);
     }
     throw new SecretManagementException(SECRET_MANAGEMENT_ERROR, "Unable to create secret remotely.", USER);
+  }
+
+  @VisibleForTesting
+  public boolean checkIfSecretManagerUsedIsHarnessManaged(String accountIdentifier, SecretDTOV2 dto) {
+    final String secretManagerIdentifier = getSecretManagerIdentifier(dto);
+    /**
+     * Using scope identifiers of secret because as of now Secrets can be created using SM at same scope. This should
+     * also change when across scope SM can be used for secret creation. *
+     */
+    Optional<ConnectorResponseDTO> secretManagerConfig = connectorService.get(
+        accountIdentifier, dto.getOrgIdentifier(), dto.getProjectIdentifier(), secretManagerIdentifier);
+
+    final Boolean isHarnessManaged =
+        secretManagerConfig
+            .map(connectorResponse
+                -> harnessManagedConnectorHelper.isHarnessManagedSecretManager(connectorResponse.getConnector()))
+            .orElseThrow(()
+                             -> new InvalidRequestException(String.format(CONNECTOR_STRING, secretManagerIdentifier,
+                                 accountIdentifier, dto.getOrgIdentifier(), dto.getProjectIdentifier())));
+    if (isHarnessManaged == Boolean.TRUE) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
   private SecretResponseWrapper createSecretInternal(String accountIdentifier, SecretDTOV2 dto, boolean draft) {

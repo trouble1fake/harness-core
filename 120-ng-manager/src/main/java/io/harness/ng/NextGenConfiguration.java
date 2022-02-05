@@ -111,6 +111,7 @@ public class NextGenConfiguration extends Configuration {
   public static final String SCIM_NG_RESOURCE = "io.harness.ng.scim.resource";
   public static final String LICENSING_USAGE_PACKAGE = "io.harness.licensing.usage.resources";
   public static final String ACCOUNT_SETTING_PACKAGE = "io.harness.ng.core.accountsetting.resources";
+
   public static final Collection<Class<?>> HARNESS_RESOURCE_CLASSES = getResourceClasses();
 
   @JsonProperty("swagger") private SwaggerBundleConfiguration swaggerBundleConfiguration;

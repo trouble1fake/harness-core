@@ -8,13 +8,11 @@
 package io.harness.ng.core.api.impl;
 
 import static io.harness.annotations.dev.HarnessTeam.PL;
-import static io.harness.rule.OwnerRule.NISHANT;
-import static io.harness.rule.OwnerRule.PHOENIKX;
+import static io.harness.rule.OwnerRule.*;
 
 import static io.github.benas.randombeans.api.EnhancedRandom.random;
 import static java.util.Collections.singletonList;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.eq;
@@ -30,12 +28,16 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import io.harness.CategoryTest;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
+import io.harness.connector.helper.HarnessManagedConnectorHelper;
+import io.harness.connector.services.ConnectorService;
 import io.harness.delegate.beans.FileUploadLimit;
 import io.harness.eventsframework.api.EventsFrameworkDownException;
 import io.harness.eventsframework.api.Producer;
 import io.harness.eventsframework.producer.Message;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ng.beans.PageResponse;
+import io.harness.ng.core.accountsetting.AccountSettingsHelper;
+import io.harness.ng.core.accountsetting.dto.AccountSettingType;
 import io.harness.ng.core.api.NGEncryptedDataService;
 import io.harness.ng.core.api.NGSecretServiceV2;
 import io.harness.ng.core.dto.secrets.SecretDTOV2;
@@ -78,12 +80,15 @@ public class SecretCrudServiceImplTest extends CategoryTest {
   @Mock private SecretCrudServiceImpl secretCrudService;
   @Mock private Producer eventProducer;
   @Mock private NGEncryptedDataService encryptedDataService;
+  @Mock private AccountSettingsHelper accountSettingsHelper;
+  @Mock private ConnectorService connectorService;
+  @Mock private HarnessManagedConnectorHelper harnessManagedConnectorHelper;
 
   @Before
   public void setup() {
     initMocks(this);
-    secretCrudServiceSpy = new SecretCrudServiceImpl(
-        secretEntityReferenceHelper, fileUploadLimit, ngSecretServiceV2, eventProducer, encryptedDataService);
+    secretCrudServiceSpy = new SecretCrudServiceImpl(secretEntityReferenceHelper, fileUploadLimit, ngSecretServiceV2,
+        eventProducer, encryptedDataService, accountSettingsHelper, connectorService, harnessManagedConnectorHelper);
     secretCrudService = spy(secretCrudServiceSpy);
   }
 
@@ -101,6 +106,79 @@ public class SecretCrudServiceImplTest extends CategoryTest {
                                   .spec(SecretTextSpecDTO.builder().valueType(ValueType.Inline).value("value").build())
                                   .build();
     SecretResponseWrapper responseWrapper = secretCrudService.create("account", secretDTOV2);
+    assertThat(responseWrapper).isNotNull();
+
+    verify(encryptedDataService).createSecretText(any(), any());
+    verify(ngSecretServiceV2).create(any(), any(), eq(false));
+  }
+
+  @Test
+  @Owner(developers = MEENAKSHI)
+  @Category(UnitTests.class)
+  public void testCreateSecretWhenDefaultSMIsDisabled() {
+    SecretDTOV2 secretDTOV2 = SecretDTOV2.builder()
+                                  .type(SecretType.SecretText)
+                                  .spec(SecretTextSpecDTO.builder()
+                                            .secretManagerIdentifier("harnessSecretManager")
+                                            .valueType(ValueType.Inline)
+                                            .value("value")
+                                            .build())
+                                  .build();
+    doReturn(true)
+        .when(accountSettingsHelper)
+        .getIsBuiltInSMDisabled("accountId", null, null, AccountSettingType.CONNECTOR);
+    doReturn(true).when(secretCrudService).checkIfSecretManagerUsedIsHarnessManaged("accountId", secretDTOV2);
+    assertThatThrownBy(() -> secretCrudService.create("accountId", secretDTOV2))
+        .isInstanceOf(InvalidRequestException.class);
+  }
+  @Test
+  @Owner(developers = MEENAKSHI)
+  @Category(UnitTests.class)
+  public void testCreateSecretWithSMOtherThanHarnessManagedSMWhichIsDisabled() {
+    NGEncryptedData encryptedDataDTO = NGEncryptedData.builder().type(SettingVariableTypes.SECRET_TEXT).build();
+    Secret secret = Secret.builder().build();
+    when(encryptedDataService.createSecretText(any(), any())).thenReturn(encryptedDataDTO);
+    when(ngSecretServiceV2.create(any(), any(), eq(false))).thenReturn(secret);
+    SecretDTOV2 secretDTOV2 = SecretDTOV2.builder()
+                                  .type(SecretType.SecretText)
+                                  .spec(SecretTextSpecDTO.builder()
+                                            .secretManagerIdentifier("harnessSecretManager")
+                                            .valueType(ValueType.Inline)
+                                            .value("value")
+                                            .build())
+                                  .build();
+    doReturn(true)
+        .when(accountSettingsHelper)
+        .getIsBuiltInSMDisabled("accountId", null, null, AccountSettingType.CONNECTOR);
+    doReturn(false).when(secretCrudService).checkIfSecretManagerUsedIsHarnessManaged("accountId", secretDTOV2);
+    SecretResponseWrapper responseWrapper = secretCrudService.create("accountId", secretDTOV2);
+    assertThat(responseWrapper).isNotNull();
+
+    verify(encryptedDataService).createSecretText(any(), any());
+    verify(ngSecretServiceV2).create(any(), any(), eq(false));
+  }
+
+  @Test
+  @Owner(developers = MEENAKSHI)
+  @Category(UnitTests.class)
+  public void testCreateSecretWithHarnessManagedSMWhichIsEnabled() {
+    NGEncryptedData encryptedDataDTO = NGEncryptedData.builder().type(SettingVariableTypes.SECRET_TEXT).build();
+    Secret secret = Secret.builder().build();
+    when(encryptedDataService.createSecretText(any(), any())).thenReturn(encryptedDataDTO);
+    when(ngSecretServiceV2.create(any(), any(), eq(false))).thenReturn(secret);
+    SecretDTOV2 secretDTOV2 = SecretDTOV2.builder()
+                                  .type(SecretType.SecretText)
+                                  .spec(SecretTextSpecDTO.builder()
+                                            .secretManagerIdentifier("harnessSecretManager")
+                                            .valueType(ValueType.Inline)
+                                            .value("value")
+                                            .build())
+                                  .build();
+    doReturn(false)
+        .when(accountSettingsHelper)
+        .getIsBuiltInSMDisabled("accountId", null, null, AccountSettingType.CONNECTOR);
+    doReturn(true).when(secretCrudService).checkIfSecretManagerUsedIsHarnessManaged("accountId", secretDTOV2);
+    SecretResponseWrapper responseWrapper = secretCrudService.create("accountId", secretDTOV2);
     assertThat(responseWrapper).isNotNull();
 
     verify(encryptedDataService).createSecretText(any(), any());

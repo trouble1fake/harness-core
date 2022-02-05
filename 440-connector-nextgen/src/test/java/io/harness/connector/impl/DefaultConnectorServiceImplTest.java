@@ -34,10 +34,13 @@ import io.harness.connector.ConnectorInfoDTO;
 import io.harness.connector.ConnectorResponseDTO;
 import io.harness.connector.ConnectorValidationResult;
 import io.harness.connector.ConnectorsTestBase;
+import io.harness.connector.entities.Connector;
 import io.harness.connector.entities.embedded.kubernetescluster.KubernetesClusterConfig;
+import io.harness.connector.entities.embedded.localconnector.LocalConnector;
 import io.harness.connector.validator.ConnectionValidator;
 import io.harness.connector.validator.KubernetesConnectionValidator;
 import io.harness.delegate.beans.connector.ConnectorConfigDTO;
+import io.harness.delegate.beans.connector.ConnectorType;
 import io.harness.delegate.beans.connector.k8Connector.KubernetesAuthDTO;
 import io.harness.delegate.beans.connector.k8Connector.KubernetesAuthType;
 import io.harness.delegate.beans.connector.k8Connector.KubernetesClusterConfigDTO;
@@ -50,6 +53,8 @@ import io.harness.entitysetupusageclient.remote.EntitySetupUsageClient;
 import io.harness.exception.InvalidRequestException;
 import io.harness.gitsync.clients.YamlGitConfigClient;
 import io.harness.gitsync.persistance.GitSyncSdkService;
+import io.harness.ng.core.accountsetting.AccountSettingsHelper;
+import io.harness.ng.core.accountsetting.dto.AccountSettingType;
 import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.repositories.ConnectorRepository;
 import io.harness.rule.Owner;
@@ -72,6 +77,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.data.domain.Page;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import retrofit2.Call;
 import retrofit2.Response;
 
@@ -86,7 +92,9 @@ public class DefaultConnectorServiceImplTest extends ConnectorsTestBase {
   @Mock ConnectorEntityReferenceHelper connectorEntityReferenceHelper;
   @Mock GitSyncSdkService gitSyncSdkService;
   @Mock YamlGitConfigClient yamlGitConfigClient;
+  @Mock AccountSettingsHelper accountSettingsHelper;
   @Inject @InjectMocks DefaultConnectorServiceImpl connectorService;
+  @Inject MongoTemplate mongoTemplate;
 
   String userName = "userName";
   String cacertIdentifier = "cacertIdentifier";
@@ -420,5 +428,72 @@ public class DefaultConnectorServiceImplTest extends ConnectorsTestBase {
     Page<ConnectorResponseDTO> connectorSummaryDTOSList_2 =
         connectorService.list(1, 2, accountIdentifier, null, null, null, "", "", false, true);
     assertThat(connectorSummaryDTOSList_2.get().count()).isEqualTo(1L);
+  }
+
+  @Test
+  @Owner(developers = OwnerRule.MEENAKSHI)
+  @Category({UnitTests.class})
+  public void testListWhenDefaultSMIsDisabled() {
+    doReturn(true)
+        .when(accountSettingsHelper)
+        .getIsBuiltInSMDisabled(accountIdentifier, null, null, AccountSettingType.CONNECTOR);
+    String connectorIdentifier1 = "harnessSecretManger";
+    String connectorIdentifier2 = "connectorIdentifier2";
+    String connectorIdentifier3 = "connectorIdentifier3";
+
+    final Connector connector = LocalConnector.builder().harnessManaged(true).isDefault(false).build();
+    connector.setAccountIdentifier(accountIdentifier);
+    connector.setIdentifier(connectorIdentifier1);
+    connector.setName("Harness Vault");
+    connector.setScope(Scope.ACCOUNT);
+    connector.setFullyQualifiedIdentifier(accountIdentifier + "/" + connectorIdentifier1);
+    connector.setType(ConnectorType.LOCAL);
+
+    mongoTemplate.save(connector);
+    createConnector(connectorIdentifier2, name + "2");
+    createConnector(connectorIdentifier3, name + "3");
+    Page<ConnectorResponseDTO> connectorSummaryDTOSList =
+        connectorService.list(0, 100, accountIdentifier, null, null, null, "", "", false, false);
+    assertThat(connectorSummaryDTOSList.getTotalElements()).isEqualTo(2);
+    List<String> connectorIdentifierList =
+        connectorSummaryDTOSList.stream()
+            .map(connectorSummaryDTO -> connectorSummaryDTO.getConnector().getIdentifier())
+            .collect(Collectors.toList());
+    assertThat(connectorIdentifierList).doesNotContain(connectorIdentifier1);
+    assertThat(connectorIdentifierList).contains(connectorIdentifier2);
+    assertThat(connectorIdentifierList).contains(connectorIdentifier3);
+  }
+
+  @Test
+  @Owner(developers = OwnerRule.MEENAKSHI)
+  @Category({UnitTests.class})
+  public void testListWhenDefaultSMIsEnabled() {
+    doReturn(false)
+        .when(accountSettingsHelper)
+        .getIsBuiltInSMDisabled(accountIdentifier, null, null, AccountSettingType.CONNECTOR);
+    String connectorIdentifier1 = "harnessSecretManger";
+    String connectorIdentifier2 = "connectorIdentifier2";
+    String connectorIdentifier3 = "connectorIdentifier3";
+
+    final Connector connector = LocalConnector.builder().harnessManaged(true).isDefault(false).build();
+    connector.setAccountIdentifier(accountIdentifier);
+    connector.setIdentifier(connectorIdentifier1);
+    connector.setName("Harness Vault");
+    connector.setScope(Scope.ACCOUNT);
+    connector.setFullyQualifiedIdentifier(accountIdentifier + "/" + connectorIdentifier1);
+    connector.setType(ConnectorType.LOCAL);
+    mongoTemplate.save(connector);
+    createConnector(connectorIdentifier2, name + "2");
+    createConnector(connectorIdentifier3, name + "3");
+    Page<ConnectorResponseDTO> connectorSummaryDTOSList =
+        connectorService.list(0, 100, accountIdentifier, null, null, null, "", "", false, false);
+    assertThat(connectorSummaryDTOSList.getTotalElements()).isEqualTo(3);
+    List<String> connectorIdentifierList =
+        connectorSummaryDTOSList.stream()
+            .map(connectorSummaryDTO -> connectorSummaryDTO.getConnector().getIdentifier())
+            .collect(Collectors.toList());
+    assertThat(connectorIdentifierList).contains(connectorIdentifier1);
+    assertThat(connectorIdentifierList).contains(connectorIdentifier2);
+    assertThat(connectorIdentifierList).contains(connectorIdentifier3);
   }
 }

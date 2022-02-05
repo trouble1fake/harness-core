@@ -12,8 +12,10 @@ import static io.harness.annotations.dev.HarnessTeam.PL;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.connector.impl.NGConnectorSecretManagerServiceImpl;
 import io.harness.connector.impl.NGVaultServiceImpl;
+import io.harness.connector.services.ConnectorService;
 import io.harness.connector.services.NGConnectorSecretManagerService;
 import io.harness.connector.services.NGVaultService;
+import io.harness.ng.ConnectorServiceImpl;
 import io.harness.ng.core.api.NGEncryptedDataService;
 import io.harness.ng.core.api.NGSecretActivityService;
 import io.harness.ng.core.api.NGSecretManagerService;
@@ -47,6 +49,7 @@ public class SecretManagementModule extends AbstractModule {
     bind(NGSecretManagerService.class).to(NGSecretManagerServiceImpl.class);
     bind(NGSecretServiceV2.class).to(NGSecretServiceV2Impl.class);
     bind(SecretCrudService.class).to(SecretCrudServiceImpl.class);
+    bind(ConnectorService.class).to(ConnectorServiceImpl.class);
     bind(NGSecretActivityService.class).to(NGSecretActivityServiceImpl.class);
     bind(NGEncryptorService.class).to(NGEncryptorServiceImpl.class);
     bind(NGVaultService.class).to(NGVaultServiceImpl.class);
