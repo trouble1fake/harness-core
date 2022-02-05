@@ -7,17 +7,14 @@
 
 package io.harness.ng.core.accountsetting.dto;
 
-import lombok.*;
-import lombok.experimental.FieldNameConstants;
-import org.mongodb.morphia.annotations.Entity;
-import org.springframework.data.annotation.Persistent;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.TypeAlias;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@FieldNameConstants(innerTypeName = "ConnectorSettingsKeys")
-@Entity(value = "accountSettings", noClassnameStored = true)
-@Persistent
 @NoArgsConstructor
 @TypeAlias("io.harness.ng.core.accountsetting.dto.ConnectorSettings")
 public class ConnectorSettings extends AccountSettingConfig {
