@@ -29,12 +29,12 @@ public class RancherKubernetesInfrastructureYamlHandler
   public Yaml toYaml(RancherKubernetesInfrastructure bean, String appId) {
     SettingAttribute cloudProvider = settingsService.get(bean.getCloudProviderId());
     return Yaml.builder()
-                    .namespace(bean.getNamespace())
-                    .releaseName(bean.getReleaseName())
-                    .cloudProviderName(cloudProvider.getName())
-                    .type(InfrastructureType.RANCHER_KUBERNETES)
-                    .clusterSelectionCriteria(bean.getClusterSelectionCriteria())
-                    .build();
+        .namespace(bean.getNamespace())
+        .releaseName(bean.getReleaseName())
+        .cloudProviderName(cloudProvider.getName())
+        .type(InfrastructureType.RANCHER_KUBERNETES)
+        .clusterSelectionCriteria(bean.getClusterSelectionCriteria())
+        .build();
   }
 
   @Override

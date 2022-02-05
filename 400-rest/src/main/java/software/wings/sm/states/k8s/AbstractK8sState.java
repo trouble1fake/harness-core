@@ -110,7 +110,6 @@ import software.wings.beans.yaml.GitFetchFilesFromMultipleRepoResult;
 import software.wings.delegatetasks.aws.AwsCommandHelper;
 import software.wings.expression.ManagerPreviewExpressionEvaluator;
 import software.wings.helpers.ext.container.ContainerDeploymentManagerHelper;
-import software.wings.helpers.ext.container.ContainerMasterUrlHelper;
 import software.wings.helpers.ext.helm.request.HelmChartConfigParams;
 import software.wings.helpers.ext.helm.request.HelmValuesFetchTaskParameters;
 import software.wings.helpers.ext.helm.response.HelmValuesFetchTaskResponse;
@@ -131,8 +130,6 @@ import software.wings.service.intfc.ActivityService;
 import software.wings.service.intfc.AppService;
 import software.wings.service.intfc.ApplicationManifestService;
 import software.wings.service.intfc.DelegateService;
-import software.wings.service.intfc.EnvironmentService;
-import software.wings.service.intfc.InfrastructureDefinitionService;
 import software.wings.service.intfc.InfrastructureMappingService;
 import software.wings.service.intfc.ServiceResourceService;
 import software.wings.service.intfc.SettingsService;
@@ -152,7 +149,6 @@ import software.wings.utils.ApplicationManifestUtils;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
-import com.mongodb.DuplicateKeyException;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -186,7 +182,6 @@ public abstract class AbstractK8sState extends State implements K8sStateExecutor
   @Inject private transient DelegateService delegateService;
   @Inject private transient AppService appService;
   @Inject private transient InfrastructureMappingService infrastructureMappingService;
-  @Inject private transient InfrastructureDefinitionService infrastructureDefinitionService;
   @Inject private SweepingOutputService sweepingOutputService;
   @Inject private transient AwsCommandHelper awsCommandHelper;
   @Inject private transient ActivityService activityService;
@@ -199,11 +194,9 @@ public abstract class AbstractK8sState extends State implements K8sStateExecutor
   @Inject private KustomizeHelper kustomizeHelper;
   @Inject private FeatureFlagService featureFlagService;
   @Inject private OpenShiftManagerService openShiftManagerService;
-  @Inject private ContainerMasterUrlHelper containerMasterUrlHelper;
   @Inject private InstanceService instanceService;
   @Inject private KryoSerializer kryoSerializer;
   @Inject private GitConfigHelperService gitConfigHelperService;
-  @Inject private EnvironmentService environmentService;
   @Inject public K8sStateHelper k8sStateHelper;
   private static final long MIN_TASK_TIMEOUT_IN_MINUTES = 1L;
 
@@ -573,18 +566,10 @@ public abstract class AbstractK8sState extends State implements K8sStateExecutor
   }
 
   public void saveK8sElement(ExecutionContext context, K8sElement k8sElement) {
-    try {
-      sweepingOutputService.save(context.prepareSweepingOutputBuilder(Scope.WORKFLOW)
-                                     .name("k8s")
-                                     .output(kryoSerializer.asDeflatedBytes(k8sElement))
-                                     .build());
-    } catch (InvalidRequestException e) {
-      if (e.getCause() instanceof DuplicateKeyException) {
-        log.warn("Skipping writing K8sElement to Sweeping Output as it might've been already written");
-      } else {
-        throw e;
-      }
-    }
+    sweepingOutputService.save(context.prepareSweepingOutputBuilder(Scope.WORKFLOW)
+                                   .name("k8s")
+                                   .output(kryoSerializer.asDeflatedBytes(k8sElement))
+                                   .build());
   }
 
   public ExecutionResponse queueK8sDelegateTask(ExecutionContext context, K8sTaskParameters k8sTaskParameters,
