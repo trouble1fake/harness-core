@@ -118,7 +118,7 @@ go_repository(
 
 go_rules_dependencies()
 
-go_register_toolchains(version = "1.17.1")
+go_register_toolchains(version = "1.17.5")
 
 gazelle_dependencies()
 
@@ -1465,13 +1465,6 @@ go_repository(
     importpath = "github.com/devigned/tab",
     sum = "h1:3mD6Kb1mUOYeLpJvTVSDwSg5ZsfSxfvxGRTxRsJsITA=",
     version = "v0.1.1",
-)
-
-go_repository(
-    name = "com_github_dgrijalva_jwt_go",
-    importpath = "github.com/dgrijalva/jwt-go",
-    sum = "h1:7qlOGliEKZXTDg6OTjfoBKDXWrumCAMpl/TFQ4/5kLM=",
-    version = "v3.2.0+incompatible",
 )
 
 go_repository(

@@ -341,24 +341,33 @@ public class YamlGitConfigServiceImpl implements YamlGitConfigService {
     validateFolderPathIsUnique(ygs);
     validateFoldersAreIndependant(ygs);
     validateAPIAccessFieldPresence(ygs);
-    validateThatHarnessStringComesOnce(ygs);
+    validateThatHarnessStringShouldNotComeMoreThanOnce(ygs);
   }
 
   @VisibleForTesting
-  void validateThatHarnessStringComesOnce(YamlGitConfigDTO ygs) {
+  void validateThatHarnessStringShouldNotComeMoreThanOnce(YamlGitConfigDTO ygs) {
     if (ygs.getRootFolders() == null) {
       return;
     }
     for (YamlGitConfigDTO.RootFolder folder : ygs.getRootFolders()) {
-      int harnessStringCount = getHarnessStringCount(folder.getRootFolder());
-      if (harnessStringCount > 1) {
+      if (checkIfHarnessDirComesMoreThanOnce(folder.getRootFolder())) {
         throw new InvalidRequestException("The .harness should come only once in the folder path");
       }
     }
   }
 
-  private int getHarnessStringCount(String folderPath) {
-    return folderPath.split(".harness", -1).length - 1;
+  private boolean checkIfHarnessDirComesMoreThanOnce(String folderPath) {
+    String[] directoryList = folderPath.split(PATH_DELIMITER);
+    boolean harnessDirAlreadyFound = false;
+    for (String directory : directoryList) {
+      if (HARNESS_FOLDER_EXTENSION.equals(directory)) {
+        if (harnessDirAlreadyFound) {
+          return true;
+        }
+        harnessDirAlreadyFound = true;
+      }
+    }
+    return false;
   }
 
   private void validateAPIAccessFieldPresence(YamlGitConfigDTO ygs) {

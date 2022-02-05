@@ -76,6 +76,7 @@ import io.harness.ngtriggers.beans.source.scheduled.ScheduledTriggerConfig;
 import io.harness.ngtriggers.beans.source.webhook.v2.WebhookTriggerConfigV2;
 import io.harness.ngtriggers.beans.source.webhook.v2.git.GitAware;
 import io.harness.ngtriggers.beans.target.TargetType;
+import io.harness.ngtriggers.exceptions.InvalidTriggerYamlException;
 import io.harness.ngtriggers.helpers.TriggerHelper;
 import io.harness.ngtriggers.helpers.WebhookConfigHelper;
 import io.harness.ngtriggers.utils.WebhookEventPayloadParser;
@@ -341,6 +342,25 @@ public class NGTriggerElementMapper {
         .version(ngTriggerEntity.getVersion())
         .yaml(generateNgTriggerConfigV2Yaml(ngTriggerEntity, true))
         .enabled(ngTriggerEntity.getEnabled() == null || ngTriggerEntity.getEnabled())
+        .errorResponse(false)
+        .build();
+  }
+
+  public NGTriggerResponseDTO toErrorDTO(InvalidTriggerYamlException e) {
+    NGTriggerEntity ngTriggerEntity = e.getTriggerDetails().getNgTriggerEntity();
+    return NGTriggerResponseDTO.builder()
+        .name(ngTriggerEntity.getName())
+        .identifier(ngTriggerEntity.getIdentifier())
+        .description(ngTriggerEntity.getDescription())
+        .type(ngTriggerEntity.getType())
+        .orgIdentifier(ngTriggerEntity.getOrgIdentifier())
+        .projectIdentifier(ngTriggerEntity.getProjectIdentifier())
+        .targetIdentifier(ngTriggerEntity.getTargetIdentifier())
+        .version(ngTriggerEntity.getVersion())
+        .yaml(generateNgTriggerConfigV2Yaml(ngTriggerEntity, true))
+        .enabled(ngTriggerEntity.getEnabled() == null || ngTriggerEntity.getEnabled())
+        .errors(e.getErrors())
+        .errorResponse(true)
         .build();
   }
 

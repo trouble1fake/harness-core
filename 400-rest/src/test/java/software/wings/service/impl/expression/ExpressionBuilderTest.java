@@ -30,7 +30,6 @@ import static software.wings.service.impl.expression.ExpressionBuilder.HELM_CHAR
 import static software.wings.service.impl.expression.ExpressionBuilder.INFRA_PCF_CLOUDPROVIDER_NAME;
 import static software.wings.service.impl.expression.ExpressionBuilder.INFRA_PCF_ORG;
 import static software.wings.service.impl.expression.ExpressionBuilder.INFRA_PCF_SPACE;
-import static software.wings.service.impl.expression.ExpressionBuilder.PCF_PLUGIN_SERVICE_CLI;
 import static software.wings.service.impl.expression.ExpressionBuilder.PCF_PLUGIN_SERVICE_MANIFEST;
 import static software.wings.service.impl.expression.ExpressionBuilder.PCF_PLUGIN_SERVICE_MANIFEST_REPO_ROOT;
 import static software.wings.service.impl.expression.ExpressionBuilder.PIPELINE_DESCRIPTION;
@@ -95,8 +94,7 @@ public class ExpressionBuilderTest extends WingsBaseTest {
     assertThat(expressionList).containsAll(setupExpressions);
     assertThat(expressionList).containsAll(afterSetupExpressions);
     assertThat(expressionList)
-        .containsAll(
-            Arrays.asList(PCF_PLUGIN_SERVICE_MANIFEST, PCF_PLUGIN_SERVICE_MANIFEST_REPO_ROOT, PCF_PLUGIN_SERVICE_CLI));
+        .containsAll(Arrays.asList(PCF_PLUGIN_SERVICE_MANIFEST, PCF_PLUGIN_SERVICE_MANIFEST_REPO_ROOT));
   }
 
   @Test

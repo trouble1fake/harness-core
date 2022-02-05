@@ -10,11 +10,16 @@ package io.harness.ngmigration.service;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
+import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.ngmigration.beans.MigrationInputDTO;
 import io.harness.ngmigration.beans.NgEntityDetail;
+import io.harness.ngmigration.client.NGClient;
+import io.harness.ngmigration.client.PmsClient;
 import io.harness.plancreator.pipeline.PipelineConfig;
 import io.harness.plancreator.pipeline.PipelineInfoConfig;
 import io.harness.plancreator.stages.StageElementWrapperConfig;
+import io.harness.pms.governance.PipelineSaveResponse;
+import io.harness.pms.yaml.YamlUtils;
 
 import software.wings.beans.Pipeline;
 import software.wings.beans.PipelineStage;
@@ -30,12 +35,18 @@ import software.wings.sm.StateType;
 
 import com.google.api.client.util.ArrayMap;
 import com.google.inject.Inject;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
+import okhttp3.MediaType;
+import okhttp3.RequestBody;
+import retrofit2.Response;
 
+@Slf4j
 @OwnedBy(HarnessTeam.CDC)
 public class PipelineMigrationService implements NgMigration {
   @Inject private PipelineService pipelineService;
@@ -82,8 +93,16 @@ public class PipelineMigrationService implements NgMigration {
   }
 
   @Override
-  public void migrate(
-      Map<CgEntityId, CgEntityNode> entities, Map<CgEntityId, Set<CgEntityId>> graph, CgEntityId entityId) {}
+  public void migrate(String auth, NGClient ngClient, PmsClient pmsClient, MigrationInputDTO inputDTO,
+      NGYamlFile yamlFile) throws IOException {
+    Response<ResponseDTO<PipelineSaveResponse>> resp =
+        pmsClient
+            .createPipeline(auth, inputDTO.getAccountIdentifier(), inputDTO.getOrgIdentifier(),
+                inputDTO.getProjectIdentifier(),
+                RequestBody.create(MediaType.parse("application/yaml"), YamlUtils.write(yamlFile.getYaml())))
+            .execute();
+    log.info("Pipeline creation Response details {}", resp.code());
+  }
 
   @Override
   public List<NGYamlFile> getYamls(MigrationInputDTO inputDTO, Map<CgEntityId, CgEntityNode> entities,
@@ -125,7 +144,11 @@ public class PipelineMigrationService implements NgMigration {
                                     .build())
             .build();
 
-    allFiles.add(NGYamlFile.builder().filename(pipeline.getName() + ".yaml").yaml(pipelineConfig).build());
+    allFiles.add(NGYamlFile.builder()
+                     .type(NGMigrationEntityType.PIPELINE)
+                     .filename(pipeline.getName() + ".yaml")
+                     .yaml(pipelineConfig)
+                     .build());
 
     return allFiles;
   }

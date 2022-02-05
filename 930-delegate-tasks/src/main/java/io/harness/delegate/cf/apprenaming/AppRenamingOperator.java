@@ -10,6 +10,7 @@ package io.harness.delegate.cf.apprenaming;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import io.harness.delegate.beans.pcf.CfAppSetupTimeDetails;
+import io.harness.delegate.beans.pcf.CfInBuiltVariablesUpdateValues;
 import io.harness.delegate.beans.pcf.CfRouteUpdateRequestConfigData;
 import io.harness.delegate.cf.PcfCommandTaskBaseHelper;
 import io.harness.logging.LogCallback;
@@ -30,8 +31,8 @@ public interface AppRenamingOperator {
     ROLLBACK_OPERATOR
   }
 
-  void renameApp(CfRouteUpdateRequestConfigData cfRouteUpdateConfigData, CfRequestConfig cfRequestConfig,
-      LogCallback executionLogCallback, CfDeploymentManager pcfDeploymentManager,
+  CfInBuiltVariablesUpdateValues renameApp(CfRouteUpdateRequestConfigData cfRouteUpdateConfigData,
+      CfRequestConfig cfRequestConfig, LogCallback executionLogCallback, CfDeploymentManager pcfDeploymentManager,
       PcfCommandTaskBaseHelper pcfCommandTaskBaseHelper) throws PivotalClientApiException;
 
   static AppRenamingOperator of(NamingTransition transition) throws PivotalClientApiException {

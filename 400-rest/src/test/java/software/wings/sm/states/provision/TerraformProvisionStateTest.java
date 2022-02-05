@@ -1900,6 +1900,7 @@ public class TerraformProvisionStateTest extends WingsBaseTest {
     response.put("activityId",
         TerraformExecutionData.builder()
             .encryptedTfPlan(EncryptedRecordData.builder().build())
+            .tfPlanJson("{\"plan\":\"data\"}")
             .tfPlanJsonFiledId("fileId")
             .build());
     doReturn("workflowExecutionId").when(executionContext).getWorkflowExecutionId();

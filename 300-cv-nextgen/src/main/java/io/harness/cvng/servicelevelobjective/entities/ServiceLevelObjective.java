@@ -33,8 +33,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.Period;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -138,8 +138,8 @@ public class ServiceLevelObjective
       this.endTime = endTime;
     }
 
-    public Period getRemainingDays(LocalDateTime currentDateTime) {
-      return Period.between(currentDateTime.toLocalDate(), endTime.toLocalDate());
+    public int getRemainingDays(LocalDateTime currentDateTime) {
+      return (int) ChronoUnit.DAYS.between(currentDateTime.toLocalDate(), endTime.toLocalDate());
     }
     public int getTotalDays() {
       return (int) DAYS.between(getStartTime(), getEndTime());

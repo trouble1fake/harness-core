@@ -43,8 +43,8 @@ public class K8sDirectInfraYaml implements Infrastructure {
   @NoArgsConstructor
   @AllArgsConstructor
   public static class K8sDirectInfraYamlSpec {
-    @NotNull private String connectorRef;
-    @NotNull private String namespace;
+    @NotNull @ApiModelProperty(dataType = STRING_CLASSPATH) private ParameterField<String> connectorRef;
+    @NotNull @ApiModelProperty(dataType = STRING_CLASSPATH) private ParameterField<String> namespace;
     @YamlSchemaTypes(value = {string})
     @ApiModelProperty(dataType = STRING_MAP_CLASSPATH)
     private ParameterField<Map<String, String>> annotations;

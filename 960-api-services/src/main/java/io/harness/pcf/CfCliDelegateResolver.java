@@ -8,6 +8,7 @@
 package io.harness.pcf;
 
 import static io.harness.pcf.model.PcfConstants.BIN_BASH;
+import static io.harness.pcf.model.PcfConstants.DEFAULT_CF_CLI_INSTALLATION_PATH;
 
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.SPACE;
@@ -38,7 +39,6 @@ import org.zeroturnaround.exec.stream.LogOutputStream;
 @OwnedBy(HarnessTeam.CDP)
 public class CfCliDelegateResolver {
   private static final int DEFAULT_CF_VERSION_CHECKING_TIMEOUT_IN_MIN = 1;
-  private static final String DEFAULT_CF_CLI_INSTALLATION_PATH = "cf";
 
   @Inject private DelegateConfiguration delegateConfiguration;
 

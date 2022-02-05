@@ -50,10 +50,10 @@ public class K8sBlueGreenDeployTaskParameters extends K8sTaskParameters implemen
       boolean skipDryRun, HelmVersion helmVersion, Boolean skipVersioningForAllK8sObjects,
       Set<String> delegateSelectors, boolean isPruningEnabled, boolean exportManifests, boolean inheritManifests,
       List<KubernetesResource> kubernetesResources, boolean useLatestChartMuseumVersion,
-      boolean useVarSupportForKustomize, boolean useNewKubectlVersion) {
+      boolean useLatestKustomizeVersion, boolean useNewKubectlVersion) {
     super(accountId, appId, commandName, activityId, k8sClusterConfig, workflowExecutionId, releaseName,
         timeoutIntervalInMin, k8sTaskType, helmVersion, delegateSelectors, useLatestChartMuseumVersion,
-        useVarSupportForKustomize, useNewKubectlVersion);
+        useLatestKustomizeVersion, useNewKubectlVersion);
     this.k8sDelegateManifestConfig = k8sDelegateManifestConfig;
     this.valuesYamlList = valuesYamlList;
     this.skipDryRun = skipDryRun;

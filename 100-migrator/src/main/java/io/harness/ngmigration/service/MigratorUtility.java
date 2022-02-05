@@ -7,8 +7,15 @@
 
 package io.harness.ngmigration.service;
 
+import io.harness.connector.ConnectorDTO;
+import io.harness.ng.core.dto.secrets.SecretRequestWrapper;
+import io.harness.plancreator.pipeline.PipelineConfig;
 import io.harness.pms.yaml.ParameterField;
 
+import software.wings.ngmigration.NGYamlFile;
+
+import java.util.Comparator;
+import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 
 public class MigratorUtility {
@@ -21,5 +28,22 @@ public class MigratorUtility {
       return ParameterField.createValueField("");
     }
     return ParameterField.createValueField(value);
+  }
+
+  public static void sort(List<NGYamlFile> files) {
+    files.sort(Comparator.comparingInt(MigratorUtility::toInt));
+  }
+
+  private static int toInt(NGYamlFile file) {
+    if (file.getYaml() instanceof SecretRequestWrapper) {
+      return 5;
+    }
+    if (file.getYaml() instanceof ConnectorDTO) {
+      return 10;
+    }
+    if (file.getYaml() instanceof PipelineConfig) {
+      return 50;
+    }
+    return Integer.MAX_VALUE;
   }
 }

@@ -13,6 +13,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.cli.CliResponse;
 import io.harness.logging.LogCallback;
 import io.harness.logging.PlanJsonLogOutputStream;
+import io.harness.terraform.beans.TerraformVersion;
 import io.harness.terraform.request.TerraformApplyCommandRequest;
 import io.harness.terraform.request.TerraformDestroyCommandRequest;
 import io.harness.terraform.request.TerraformInitCommandRequest;
@@ -68,5 +69,9 @@ public interface TerraformClient {
   @Nonnull
   CliResponse output(String tfOutputsFile, long timeoutInMillis, Map<String, String> envVariables,
       String scriptDirectory, @Nonnull LogCallback executionLogCallback)
+      throws InterruptedException, TimeoutException, IOException;
+
+  @Nonnull
+  TerraformVersion version(long timeoutInMillis, String scriptDirectory)
       throws InterruptedException, TimeoutException, IOException;
 }

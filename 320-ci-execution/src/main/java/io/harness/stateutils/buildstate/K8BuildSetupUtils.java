@@ -148,7 +148,7 @@ public class K8BuildSetupUtils {
 
     K8sDirectInfraYaml k8sDirectInfraYaml = (K8sDirectInfraYaml) infrastructure;
 
-    final String clusterName = k8sDirectInfraYaml.getSpec().getConnectorRef();
+    final String clusterName = k8sDirectInfraYaml.getSpec().getConnectorRef().getValue();
     Map<String, String> annotations = resolveMapParameter(
         "annotations", "K8BuildInfra", "stageSetup", k8sDirectInfraYaml.getSpec().getAnnotations(), false);
     Map<String, String> labels = resolveMapParameter(
@@ -265,7 +265,7 @@ public class K8BuildSetupUtils {
 
     return CIK8PodParams.<CIK8ContainerParams>builder()
         .name(podSetupInfo.getName())
-        .namespace(k8sDirectInfraYaml.getSpec().getNamespace())
+        .namespace((String) k8sDirectInfraYaml.getSpec().getNamespace().fetchFinalValue())
         .labels(buildLabels)
         .serviceAccountName(serviceAccountName)
         .annotations(annotations)

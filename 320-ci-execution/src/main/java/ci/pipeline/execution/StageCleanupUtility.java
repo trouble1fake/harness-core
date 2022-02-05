@@ -83,8 +83,8 @@ public class StageCleanupUtility {
     // It should always resolved to K8sDirectInfraYaml
     K8sDirectInfraYaml k8sDirectInfraYaml = (K8sDirectInfraYaml) infrastructure;
 
-    final String clusterConnectorRef = k8sDirectInfraYaml.getSpec().getConnectorRef();
-    final String namespace = k8sDirectInfraYaml.getSpec().getNamespace();
+    final String clusterConnectorRef = k8sDirectInfraYaml.getSpec().getConnectorRef().getValue();
+    final String namespace = (String) k8sDirectInfraYaml.getSpec().getNamespace().fetchFinalValue();
     final List<String> podNames = new ArrayList<>();
     podNames.add(k8StageInfraDetails.getPodName());
 

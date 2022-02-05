@@ -808,7 +808,10 @@ public class CIExecutionPlanTestHelper {
   public Infrastructure getInfrastructure() {
     return K8sDirectInfraYaml.builder()
         .type(Infrastructure.Type.KUBERNETES_DIRECT)
-        .spec(K8sDirectInfraYamlSpec.builder().connectorRef("testKubernetesCluster").namespace("testNamespace").build())
+        .spec(K8sDirectInfraYamlSpec.builder()
+                  .connectorRef(createValueField("testKubernetesCluster"))
+                  .namespace(createValueField("testNamespace"))
+                  .build())
         .build();
   }
 

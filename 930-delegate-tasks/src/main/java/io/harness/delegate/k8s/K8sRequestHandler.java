@@ -79,8 +79,7 @@ public abstract class K8sRequestHandler {
   }
 
   protected List<String> getManifestOverrideFlies(K8sDeployRequest request) {
-    if (request.isUseVarSupportForKustomize()
-        && KUSTOMIZE.equals(request.getManifestDelegateConfig().getManifestType())) {
+    if (KUSTOMIZE.equals(request.getManifestDelegateConfig().getManifestType())) {
       return request.getKustomizePatchesList();
     } else {
       return isEmpty(request.getValuesYamlList()) ? request.getOpenshiftParamList() : request.getValuesYamlList();

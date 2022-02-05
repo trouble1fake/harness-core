@@ -21,6 +21,7 @@ import static io.harness.delegate.configuration.InstallUtils.installKustomize;
 import static io.harness.delegate.configuration.InstallUtils.installOc;
 import static io.harness.delegate.configuration.InstallUtils.installScm;
 import static io.harness.delegate.configuration.InstallUtils.installTerraformConfigInspect;
+import static io.harness.delegate.configuration.InstallUtils.setupDefaultPaths;
 import static io.harness.delegate.configuration.InstallUtils.validateCfCliExists;
 import static io.harness.delegate.message.ManagerMessageConstants.JRE_VERSION;
 import static io.harness.delegate.message.ManagerMessageConstants.MIGRATE;
@@ -503,6 +504,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       if (!delegateConfiguration.isInstallClientToolsInBackground()) {
         log.info("Client tools will be installed synchronously, before delegate registers");
         if (delegateConfiguration.isClientToolsDownloadDisabled()) {
+          setupDefaultPaths(delegateConfiguration);
           kubectlInstalled = true;
           goTemplateInstalled = true;
           harnessPywinrmInstalled = true;
@@ -652,6 +654,9 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
 
       if (!delegateNg || isNotBlank(delegateProfile)) {
         startProfileCheck();
+      }
+      if (delegateConfiguration.isClientToolsDownloadDisabled()) {
+        setupDefaultPaths(delegateConfiguration);
       }
       if (!isClientToolsInstallationFinished()) {
         backgroundExecutor.submit(() -> {
@@ -833,11 +838,17 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     String cfCli6Path = delegateConfiguration.getCfCli6Path();
     if (isNoneBlank(cfCli6Path)) {
       log.info(format("Found custom CF CLI6 binary path: %s", cfCli6Path));
+      if (Files.notExists(Paths.get(cfCli6Path).normalize().toAbsolutePath())) {
+        log.warn(format("Not exists CF CLI6 binary file: %s", cfCli6Path));
+      }
     }
 
     String cfCli7Path = delegateConfiguration.getCfCli7Path();
     if (isNoneBlank(cfCli7Path)) {
       log.info(format("Found custom CF CLI7 binary path: %s", cfCli7Path));
+      if (Files.notExists(Paths.get(cfCli7Path).normalize().toAbsolutePath())) {
+        log.warn(format("Not exists CF CLI7 binary file: %s", cfCli7Path));
+      }
     }
 
     validateCfCliExists();

@@ -251,7 +251,7 @@ func TestStepPluginSuccess(t *testing.T) {
 	retries := int32(3)
 	log, _ := logs.GetObservedLogger(zap.InfoLevel)
 	mockStep := msteps.NewMockPluginStep(ctrl)
-	mockStep.EXPECT().Run(ctx).Return(retries, nil)
+	mockStep.EXPECT().Run(ctx).Return(nil, retries, nil)
 
 	oldSendStepStatus := sendStepStatus
 	defer func() { sendStepStatus = oldSendStepStatus }()
@@ -262,7 +262,7 @@ func TestStepPluginSuccess(t *testing.T) {
 
 	oldStep := pluginStep
 	defer func() { pluginStep = oldStep }()
-	pluginStep = func(step *pb.UnitStep, so output.StageOutput, log *zap.SugaredLogger) steps.PluginStep {
+	pluginStep = func(step *pb.UnitStep, tmpFilePath string, so output.StageOutput, log *zap.SugaredLogger) steps.PluginStep {
 		return mockStep
 	}
 

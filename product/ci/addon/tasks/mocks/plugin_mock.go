@@ -41,13 +41,14 @@ func (m *MockPluginTask) EXPECT() *MockPluginTaskMockRecorder {
 }
 
 // Run mocks base method.
-func (m *MockPluginTask) Run(ctx context.Context) (*proto.Artifact, int32, error) {
+func (m *MockPluginTask) Run(ctx context.Context) (map[string]string, *proto.Artifact, int32, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Run", ctx)
-	ret0, _ := ret[0].(*proto.Artifact)
-	ret1, _ := ret[1].(int32)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
+	ret0, _ := ret[0].(map[string]string)
+	ret1, _ := ret[1].(*proto.Artifact)
+	ret2, _ := ret[2].(int32)
+	ret3, _ := ret[3].(error)
+	return ret0, ret1, ret2, ret3
 }
 
 // Run indicates an expected call of Run.
