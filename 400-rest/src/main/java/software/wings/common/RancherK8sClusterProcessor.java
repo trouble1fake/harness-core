@@ -9,27 +9,21 @@ package software.wings.common;
 
 import io.harness.beans.SweepingOutput;
 import io.harness.context.ContextElementType;
-import io.harness.data.structure.UUIDGenerator;
 
 import software.wings.api.RancherClusterElement;
 import software.wings.service.intfc.sweepingoutput.SweepingOutputService;
-import software.wings.sm.ContextElement;
 import software.wings.sm.ExecutionContext;
 import software.wings.sm.ExpressionProcessor;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.google.inject.Inject;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.mongodb.morphia.annotations.Transient;
 

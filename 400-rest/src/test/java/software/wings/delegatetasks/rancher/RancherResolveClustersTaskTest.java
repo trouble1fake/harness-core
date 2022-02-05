@@ -11,8 +11,6 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.rule.OwnerRule.SHUBHAM_MAHESHWARI;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doNothing;
@@ -81,9 +79,9 @@ public class RancherResolveClustersTaskTest extends WingsBaseTest {
 
     RancherResolveClustersResponse response = task.run(parameters);
     assertThat(response.getExecutionStatus()).isEqualTo(ExecutionStatus.SUCCESS);
-    assertTrue(response.getClusters().contains("cluster1"));
-    assertFalse(response.getClusters().contains("cluster2"));
-    assertFalse(response.getClusters().contains("cluster3"));
+    assertThat(response.getClusters().contains("cluster1")).isTrue();
+    assertThat(response.getClusters().contains("cluster2")).isFalse();
+    assertThat(response.getClusters().contains("cluster3")).isFalse();
   }
 
   @Test
@@ -104,9 +102,9 @@ public class RancherResolveClustersTaskTest extends WingsBaseTest {
 
     RancherResolveClustersResponse response = task.run(parameters);
     assertThat(response.getExecutionStatus()).isEqualTo(ExecutionStatus.SUCCESS);
-    assertTrue(response.getClusters().contains("cluster1"));
-    assertTrue(response.getClusters().contains("cluster2"));
-    assertFalse(response.getClusters().contains("cluster3"));
+    assertThat(response.getClusters().contains("cluster1")).isTrue();
+    assertThat(response.getClusters().contains("cluster2")).isTrue();
+    assertThat(response.getClusters().contains("cluster3")).isFalse();
   }
 
   @Test
@@ -145,9 +143,9 @@ public class RancherResolveClustersTaskTest extends WingsBaseTest {
 
     RancherResolveClustersResponse response = task.run(parameters);
     assertThat(response.getExecutionStatus()).isEqualTo(ExecutionStatus.SUCCESS);
-    assertTrue(response.getClusters().contains("cluster1"));
-    assertTrue(response.getClusters().contains("cluster2"));
-    assertTrue(response.getClusters().contains("cluster3"));
+    assertThat(response.getClusters().contains("cluster1")).isTrue();
+    assertThat(response.getClusters().contains("cluster2")).isTrue();
+    assertThat(response.getClusters().contains("cluster3")).isTrue();
   }
 
   @Test

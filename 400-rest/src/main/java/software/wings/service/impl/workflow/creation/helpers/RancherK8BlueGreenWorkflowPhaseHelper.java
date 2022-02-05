@@ -14,8 +14,6 @@ import static io.harness.k8s.model.K8sExpressions.stageServiceNameExpression;
 
 import static software.wings.beans.PhaseStep.PhaseStepBuilder.aPhaseStep;
 import static software.wings.beans.PhaseStepType.K8S_PHASE_STEP;
-import static software.wings.sm.StateType.K8S_BLUE_GREEN_DEPLOY;
-import static software.wings.sm.StateType.KUBERNETES_SWAP_SERVICE_SELECTORS;
 import static software.wings.sm.StateType.RANCHER_K8S_BLUE_GREEN_DEPLOY;
 import static software.wings.sm.StateType.RANCHER_KUBERNETES_SWAP_SERVICE_SELECTORS;
 import static software.wings.sm.StateType.RANCHER_RESOLVE;

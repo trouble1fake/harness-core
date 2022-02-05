@@ -16,7 +16,6 @@ import io.harness.exception.InvalidRequestException;
 import software.wings.beans.AzureConfig;
 import software.wings.beans.GcpConfig;
 import software.wings.beans.KubernetesClusterConfig;
-import software.wings.beans.RancherConfig;
 import software.wings.service.impl.ContainerServiceParams;
 import software.wings.settings.SettingValue;
 

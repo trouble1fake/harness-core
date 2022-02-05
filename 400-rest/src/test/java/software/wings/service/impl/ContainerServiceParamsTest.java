@@ -11,7 +11,6 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.rule.OwnerRule.SAINATH;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -85,7 +84,7 @@ public class ContainerServiceParamsTest extends WingsBaseTest {
 
     List<ExecutionCapability> executionCapabilities = serviceParams.fetchRequiredExecutionCapabilities(null);
     assertThat(executionCapabilities.size()).isEqualTo(1);
-    assertTrue(executionCapabilities.get(0) instanceof HttpConnectionExecutionCapability);
+    assertThat(executionCapabilities.get(0) instanceof HttpConnectionExecutionCapability).isTrue();
     verify(rancherConfig, times(1)).fetchRequiredExecutionCapabilities(null);
   }
 }
