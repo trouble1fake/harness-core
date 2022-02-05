@@ -24,7 +24,4 @@ public interface PluginCompatibleStep extends CIStepInfo {
   ParameterField<String> getConnectorRef();
   ContainerResource getResources();
   ParameterField<Integer> getRunAsUser();
-  List<OutputNGVariable> getOutputVariables();
-  ParameterField<Boolean> getPrivileged();
-  ParameterField<ImagePullPolicy> getImagePullPolicy();
 }

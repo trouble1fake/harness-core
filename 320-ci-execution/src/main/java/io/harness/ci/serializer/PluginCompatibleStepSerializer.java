@@ -9,7 +9,6 @@ package io.harness.ci.serializer;
 
 import static io.harness.annotations.dev.HarnessTeam.CI;
 import static io.harness.common.CIExecutionConstants.PLUGIN_ARTIFACT_FILE_VALUE;
-import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.plugin.compatible.PluginCompatibleStep;
@@ -25,13 +24,11 @@ import io.harness.product.ci.engine.proto.UnitStep;
 import io.harness.stateutils.buildstate.PluginSettingUtils;
 import io.harness.utils.TimeoutUtils;
 import io.harness.yaml.core.timeout.Timeout;
-import io.harness.yaml.core.variables.OutputNGVariable;
 
 import com.google.inject.Inject;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 @OwnedBy(CI)
 public class PluginCompatibleStepSerializer implements ProtobufStepSerializer<PluginCompatibleStep> {
@@ -50,30 +47,22 @@ public class PluginCompatibleStepSerializer implements ProtobufStepSerializer<Pl
     }
 
     long timeout = TimeoutUtils.getTimeoutInSeconds(parameterFieldTimeout, pluginCompatibleStep.getDefaultTimeout());
+    List<String> outputVarNames = CIStepInfoUtils.getOutputVariables(pluginCompatibleStep);
 
     StepContext stepContext = StepContext.newBuilder().setExecutionTimeoutSecs(timeout).build();
     Map<String, String> envVarMap =
         PluginSettingUtils.getPluginCompatibleEnvVariables(pluginCompatibleStep, identifier, timeout, Type.K8);
-    PluginStep.Builder pluginStepBuilder =
+    PluginStep pluginStep =
         PluginStep.newBuilder()
             .setContainerPort(port)
             .setImage(CIStepInfoUtils.getPluginCustomStepImage(pluginCompatibleStep, ciExecutionServiceConfig, Type.K8))
             .addAllEntrypoint(
                 CIStepInfoUtils.getK8PluginCustomStepEntrypoint(pluginCompatibleStep, ciExecutionServiceConfig))
             .setContext(stepContext)
-
+            .addAllEnvVarOutputs(outputVarNames)
             .putAllEnvironment(envVarMap)
-            .setArtifactFilePath(PLUGIN_ARTIFACT_FILE_VALUE);
-
-    if (isNotEmpty(pluginCompatibleStep.getOutputVariables())) {
-      List<String> outputVarNames = pluginCompatibleStep.getOutputVariables()
-                                        .stream()
-                                        .map(OutputNGVariable::getName)
-                                        .collect(Collectors.toList());
-      pluginStepBuilder.addAllEnvVarOutputs(outputVarNames);
-    }
-
-    PluginStep pluginStep = pluginStepBuilder.build();
+            .setArtifactFilePath(PLUGIN_ARTIFACT_FILE_VALUE)
+            .build();
 
     return UnitStep.newBuilder()
         .setAccountId(accountId)

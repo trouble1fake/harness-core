@@ -325,7 +325,6 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
     envVarMap.putAll(BuildEnvironmentUtils.getBuildEnvironmentVariables(ciExecutionArgs));
     envVarMap.putAll(PluginSettingUtils.getPluginCompatibleEnvVariables(stepInfo, identifier, timeout, Type.K8));
     Integer runAsUser = resolveIntegerParameter(stepInfo.getRunAsUser(), null);
-    boolean privileged = resolveBooleanParameter(stepInfo.getPrivileged(), false);
 
     return ContainerDefinitionInfo.builder()
         .name(containerName)
@@ -344,8 +343,8 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
         .containerType(CIContainerType.PLUGIN)
         .stepIdentifier(identifier)
         .stepName(stepName)
-        .imagePullPolicy(RunTimeInputHandler.resolveImagePullPolicy(stepInfo.getImagePullPolicy()))
-        .privileged(privileged)
+        .imagePullPolicy(RunTimeInputHandler.resolveImagePullPolicy(CIStepInfoUtils.getImagePullPolicy(stepInfo)))
+        .privileged(resolveBooleanParameter(CIStepInfoUtils.getPrivilegedMode(stepInfo), false))
         .runAsUser(runAsUser)
         .build();
   }

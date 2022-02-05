@@ -20,7 +20,6 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.plugin.compatible.PluginCompatibleStep;
 import io.harness.beans.steps.CIStepInfoType;
 import io.harness.beans.steps.TypeInfo;
-import io.harness.beans.yaml.extended.ImagePullPolicy;
 import io.harness.data.validator.EntityIdentifier;
 import io.harness.filters.WithConnectorRef;
 import io.harness.pms.contracts.steps.StepCategory;
@@ -29,7 +28,6 @@ import io.harness.pms.execution.OrchestrationFacilitatorType;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.pms.yaml.YAMLFieldNameConstants;
 import io.harness.yaml.YamlSchemaTypes;
-import io.harness.yaml.core.variables.OutputNGVariable;
 import io.harness.yaml.extended.ci.container.ContainerResource;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -37,7 +35,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import io.swagger.annotations.ApiModelProperty;
 import java.beans.ConstructorProperties;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -132,24 +129,6 @@ public class GCRStepInfo implements PluginCompatibleStep, WithConnectorRef {
   @Override
   public StepType getStepType() {
     return STEP_TYPE;
-  }
-
-  @Override
-  public List<OutputNGVariable> getOutputVariables() {
-    return Collections.emptyList();
-  }
-
-  @Override
-  public ParameterField<Boolean> getPrivileged() {
-    ParameterField<Boolean> privilegedField = new ParameterField<>();
-    privilegedField.setValue(false);
-
-    return privilegedField;
-  }
-
-  @Override
-  public ParameterField<ImagePullPolicy> getImagePullPolicy() {
-    return null;
   }
 
   @Override

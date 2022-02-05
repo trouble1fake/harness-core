@@ -11,6 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.STO;
 import static io.harness.beans.SwaggerConstants.BOOLEAN_CLASSPATH;
 import static io.harness.beans.SwaggerConstants.INTEGER_CLASSPATH;
 import static io.harness.beans.SwaggerConstants.STRING_CLASSPATH;
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.string;
 
 import io.harness.annotation.RecasterAlias;
@@ -36,10 +37,9 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.annotations.ApiModelProperty;
 import java.beans.ConstructorProperties;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
@@ -62,6 +62,8 @@ public class SecurityStepInfo implements PluginCompatibleStep, WithConnectorRef 
                                                .setType(CIStepInfoType.SECURITY.getDisplayName())
                                                .setStepCategory(StepCategory.STEP)
                                                .build();
+
+  private enum DefaultOutputVariablesEnum { JOB_ID, CRITICAL, HIGH, MEDIUM, LOW, INFO, TOTAL }
 
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
   @ApiModelProperty(hidden = true)
@@ -111,6 +113,24 @@ public class SecurityStepInfo implements PluginCompatibleStep, WithConnectorRef 
   @Override
   public StepType getStepType() {
     return STEP_TYPE;
+  }
+
+  public List<OutputNGVariable> getOutputVariables() {
+    List<OutputNGVariable> outputVariables = Collections.emptyList();
+
+    for (DefaultOutputVariablesEnum defaultOutputVar : DefaultOutputVariablesEnum.values()) {
+      OutputNGVariable outVar = new OutputNGVariable();
+      outVar.setName(defaultOutputVar.name());
+      outputVariables.add(outVar);
+    }
+
+    List<OutputNGVariable> currentOutputVariables = this.outputVariables;
+
+    if (isEmpty(currentOutputVariables)) {
+      currentOutputVariables = Collections.emptyList();
+    }
+
+    return Stream.concat(outputVariables.stream(), currentOutputVariables.stream()).collect(Collectors.toList());
   }
 
   @Override
