@@ -7,7 +7,6 @@
 
 package io.harness.ng.core.accountsetting;
 
-import io.harness.ng.core.accountsetting.dto.AccountSettingConfig;
 import io.harness.ng.core.accountsetting.dto.AccountSettingResponseDTO;
 import io.harness.ng.core.accountsetting.dto.AccountSettingType;
 import io.harness.ng.core.accountsetting.dto.ConnectorSettings;
@@ -26,7 +25,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 public class AccountSettingsHelper {
   @Inject NGAccountSettingService ngAccountSettingService;
   @Inject MongoTemplate mongoTemplate;
-  @Inject AccountSettingConfig accountSettingConfig;
+  @Inject ConnectorSettings connectorSettings;
 
   public boolean getIsBuiltInSMDisabled(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, AccountSettingType type) {
@@ -43,14 +42,14 @@ public class AccountSettingsHelper {
     final List<AccountSettings> accountSettings = new ArrayList<>();
     try {
       for (AccountSettingType accountSettingType : AccountSettingType.values()) {
-        AccountSettings accountSetting = AccountSettings.builder()
-                                             .accountIdentifier(accountIdentifier)
-                                             .type(accountSettingType)
-                                             .config(accountSettingConfig.getDefaultConfig())
-                                             .build();
+        AccountSettings accountSetting =
+            AccountSettings.builder().accountIdentifier(accountIdentifier).type(accountSettingType).build();
+        switch (accountSettingType) {
+          case CONNECTOR:
+            accountSetting.setConfig(connectorSettings.getDefaultConfig());
+        }
         accountSettings.add(accountSetting);
       }
-
       mongoTemplate.insertAll(accountSettings);
     } catch (Exception ex) {
       log.error(String.format("Failed to create default account settings"), ex);

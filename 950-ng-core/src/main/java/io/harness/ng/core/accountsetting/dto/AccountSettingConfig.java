@@ -10,6 +10,7 @@ package io.harness.ng.core.accountsetting.dto;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 
@@ -17,5 +18,5 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonSubTypes({ @JsonSubTypes.Type(value = ConnectorSettings.class, name = "Connector") })
 public abstract class AccountSettingConfig {
-  public abstract AccountSettingConfig getDefaultConfig();
+  @JsonIgnore public abstract AccountSettingConfig getDefaultConfig();
 }

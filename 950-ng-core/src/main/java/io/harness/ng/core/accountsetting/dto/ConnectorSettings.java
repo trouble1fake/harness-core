@@ -7,16 +7,25 @@
 
 package io.harness.ng.core.accountsetting.dto;
 
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
+import lombok.experimental.FieldNameConstants;
+import org.mongodb.morphia.annotations.Entity;
+import org.springframework.data.annotation.Persistent;
 import org.springframework.data.annotation.TypeAlias;
 
 @Data
-@Builder
 @EqualsAndHashCode(callSuper = true)
+@FieldNameConstants(innerTypeName = "ConnectorSettingsKeys")
+@Entity(value = "accountSettings", noClassnameStored = true)
+@Persistent
+@NoArgsConstructor
 @TypeAlias("io.harness.ng.core.accountsetting.dto.ConnectorSettings")
 public class ConnectorSettings extends AccountSettingConfig {
+  @Builder
+  public ConnectorSettings(Boolean builtInSMDisabled) {
+    this.builtInSMDisabled = builtInSMDisabled;
+  }
+
   Boolean builtInSMDisabled;
 
   @Override
