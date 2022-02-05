@@ -7,6 +7,8 @@
 
 package io.harness.repositories.accountsetting;
 
+import static io.harness.ng.core.accountsetting.entities.AccountSettings.AccountSettingsKeys;
+
 import static org.springframework.data.mongodb.core.query.Update.update;
 
 import io.harness.ng.core.accountsetting.dto.AccountSettingType;
@@ -27,14 +29,14 @@ public class AccountSettingCustomRepositoryImpl implements AccountSettingCustomR
   @Override
   public List<AccountSettings> findAll(
       String accountId, String orgIdentifier, String projectIdentifier, AccountSettingType type) {
-    Criteria criteria = Criteria.where(AccountSettings.AccountSettingsKeys.accountIdentifier)
+    Criteria criteria = Criteria.where(AccountSettingsKeys.accountIdentifier)
                             .is(accountId)
-                            .and(AccountSettings.AccountSettingsKeys.orgIdentifier)
+                            .and(AccountSettingsKeys.orgIdentifier)
                             .is(orgIdentifier)
-                            .and(AccountSettings.AccountSettingsKeys.projectIdentifier)
+                            .and(AccountSettingsKeys.projectIdentifier)
                             .is(projectIdentifier);
     if (type != null) {
-      criteria = criteria.and(AccountSettings.AccountSettingsKeys.type).is(type);
+      criteria = criteria.and(AccountSettingsKeys.type).is(type);
     }
     Query query = new Query(criteria);
 
@@ -43,15 +45,15 @@ public class AccountSettingCustomRepositoryImpl implements AccountSettingCustomR
 
   @Override
   public AccountSettings upsert(AccountSettings accountSettings, String accountIdentifier) {
-    Criteria criteria = Criteria.where(AccountSettings.AccountSettingsKeys.accountIdentifier)
+    Criteria criteria = Criteria.where(AccountSettingsKeys.accountIdentifier)
                             .is(accountIdentifier)
-                            .and(AccountSettings.AccountSettingsKeys.orgIdentifier)
+                            .and(AccountSettingsKeys.orgIdentifier)
                             .is(accountSettings.getOrgIdentifier())
-                            .and(AccountSettings.AccountSettingsKeys.projectIdentifier)
+                            .and(AccountSettingsKeys.projectIdentifier)
                             .is(accountSettings.getProjectIdentifier())
-                            .and(AccountSettings.AccountSettingsKeys.type)
+                            .and(AccountSettingsKeys.type)
                             .is(accountSettings.getType());
-    Update update = update(AccountSettings.AccountSettingsKeys.config, accountSettings.getConfig());
+    Update update = update(AccountSettingsKeys.config, accountSettings.getConfig());
 
     UpdateResult upsert = mongoTemplate.upsert(new Query(criteria), update, AccountSettings.class);
     return accountSettings;
@@ -60,29 +62,29 @@ public class AccountSettingCustomRepositoryImpl implements AccountSettingCustomR
   @Override
   public AccountSettings findByScopeIdentifiersAndType(
       String accountId, String orgIdentifier, String projectIdentifier, AccountSettingType type) {
-    Criteria criteria = Criteria.where(AccountSettings.AccountSettingsKeys.accountIdentifier)
+    Criteria criteria = Criteria.where(AccountSettingsKeys.accountIdentifier)
                             .is(accountId)
-                            .and(AccountSettings.AccountSettingsKeys.orgIdentifier)
+                            .and(AccountSettingsKeys.orgIdentifier)
                             .is(orgIdentifier)
-                            .and(AccountSettings.AccountSettingsKeys.projectIdentifier)
+                            .and(AccountSettingsKeys.projectIdentifier)
                             .is(projectIdentifier)
-                            .and(AccountSettings.AccountSettingsKeys.type)
+                            .and(AccountSettingsKeys.type)
                             .is(type);
     return mongoTemplate.findOne(new Query(criteria), AccountSettings.class);
   }
 
   @Override
   public AccountSettings updateAccountSetting(AccountSettings accountSettings, String accountIdentifier) {
-    Criteria criteria = Criteria.where(AccountSettings.AccountSettingsKeys.accountIdentifier)
+    Criteria criteria = Criteria.where(AccountSettingsKeys.accountIdentifier)
                             .is(accountIdentifier)
-                            .and(AccountSettings.AccountSettingsKeys.orgIdentifier)
+                            .and(AccountSettingsKeys.orgIdentifier)
                             .is(accountSettings.getOrgIdentifier())
-                            .and(AccountSettings.AccountSettingsKeys.projectIdentifier)
+                            .and(AccountSettingsKeys.projectIdentifier)
                             .is(accountSettings.getProjectIdentifier())
-                            .and(AccountSettings.AccountSettingsKeys.type)
+                            .and(AccountSettingsKeys.type)
                             .is(accountSettings.getType());
 
-    Update update = update(AccountSettings.AccountSettingsKeys.config, accountSettings.getConfig());
+    Update update = update(AccountSettingsKeys.config, accountSettings.getConfig());
     return mongoTemplate.findAndModify(new Query(criteria), update, AccountSettings.class);
   }
 }
