@@ -13,6 +13,7 @@ import static io.harness.helpers.GlobalSecretManagerUtils.GLOBAL_ACCOUNT_ID;
 import static io.harness.security.PrincipalContextData.PRINCIPAL_CONTEXT;
 
 import io.harness.connector.ConnectorDTO;
+import io.harness.connector.ConnectorInfoDTO;
 import io.harness.connector.ConnectorResponseDTO;
 import io.harness.connector.services.ConnectorService;
 import io.harness.context.GlobalContext;
@@ -21,9 +22,12 @@ import io.harness.delegate.beans.connector.gcpkmsconnector.GcpKmsConnectorDTO;
 import io.harness.encryption.Scope;
 import io.harness.exception.InvalidRequestException;
 import io.harness.manage.GlobalContextManager;
+import io.harness.ng.SecretManagerConfigDTOMapper;
+import io.harness.ng.core.api.NGSecretManagerService;
 import io.harness.ng.core.api.SecretCrudService;
 import io.harness.ng.core.dto.secrets.SecretDTOV2;
 import io.harness.ng.core.dto.secrets.SecretResponseWrapper;
+import io.harness.ng.core.dto.secrets.SecretTextSpecDTO;
 import io.harness.ng.core.globalkms.dto.ConnectorSecretResponseDTO;
 import io.harness.ng.core.globalkms.services.GlobalKmsService;
 import io.harness.ng.core.globalkms.services.NgConnectorManagerClientService;
@@ -39,13 +43,16 @@ public class GlobalKmsServiceImpl implements GlobalKmsService {
   private final ConnectorService connectorService;
   private final SecretCrudService ngSecretService;
   private final NgConnectorManagerClientService ngConnectorManagerClientService;
+  private final NGSecretManagerService ngSecretManagerService;
 
   @Inject
   public GlobalKmsServiceImpl(@Named(DEFAULT_CONNECTOR_SERVICE) ConnectorService connectorService,
-      SecretCrudService ngSecretService, NgConnectorManagerClientService ngConnectorManagerClientService) {
+      SecretCrudService ngSecretService, NgConnectorManagerClientService ngConnectorManagerClientService,
+      NGSecretManagerService ngSecretManagerService) {
     this.connectorService = connectorService;
     this.ngSecretService = ngSecretService;
     this.ngConnectorManagerClientService = ngConnectorManagerClientService;
+    this.ngSecretManagerService = ngSecretManagerService;
   }
 
   @Override
@@ -61,6 +68,7 @@ public class GlobalKmsServiceImpl implements GlobalKmsService {
     existingConnectorConfig.setProjectId(connectorConfig.getProjectId());
     existingConnectorConfig.setRegion(connectorConfig.getRegion());
     existingSecret.setSpec(secret.getSpec());
+    validate(existingConnector.getConnector(), existingSecret);
     SecretResponseWrapper secretResponse = ngSecretService.update(GLOBAL_ACCOUNT_ID, existingSecret.getOrgIdentifier(),
         existingSecret.getProjectIdentifier(), existingSecret.getIdentifier(), existingSecret);
     ConnectorResponseDTO connectorResponse = connectorService.update(
@@ -69,6 +77,19 @@ public class GlobalKmsServiceImpl implements GlobalKmsService {
         .connectorResponseDTO(connectorResponse)
         .secretResponseWrapper(secretResponse)
         .build();
+  }
+
+  private void validate(ConnectorInfoDTO connectorDTO, SecretDTOV2 secretDTO) {
+    String credentials = ((SecretTextSpecDTO) (secretDTO.getSpec())).getValue();
+    ((GcpKmsConnectorDTO) (connectorDTO.getConnectorConfig()))
+        .getCredentials()
+        .setDecryptedValue(credentials.toCharArray());
+    boolean validateResult = ngSecretManagerService.validateNGSecretManager(GLOBAL_ACCOUNT_ID,
+        SecretManagerConfigDTOMapper.fromConnectorDTO(GLOBAL_ACCOUNT_ID,
+            ConnectorDTO.builder().connectorInfo(connectorDTO).build(), connectorDTO.getConnectorConfig()));
+    if (!validateResult) {
+      throw new InvalidRequestException("Failed to validate secret manager");
+    }
   }
 
   private void canUpdateGlobalKms(ConnectorDTO connector, SecretDTOV2 secret) {

@@ -16,6 +16,8 @@ import io.harness.secretmanagerclient.dto.SecretManagerConfigUpdateDTO;
 import io.harness.secretmanagerclient.dto.SecretManagerMetadataDTO;
 import io.harness.secretmanagerclient.dto.SecretManagerMetadataRequestDTO;
 
+import javax.validation.constraints.NotNull;
+
 @OwnedBy(PL)
 public interface NGSecretManagerService {
   SecretManagerConfigDTO createSecretManager(SecretManagerConfigDTO secretManagerConfigDTO);
@@ -31,6 +33,8 @@ public interface NGSecretManagerService {
 
   ConnectorValidationResult validate(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, String identifier);
+
+  boolean validateNGSecretManager(@NotNull String accountIdentifier, SecretManagerConfigDTO secretManagerConfigDTO);
 
   SecretManagerConfigDTO getGlobalSecretManager(String accountIdentifier);
 

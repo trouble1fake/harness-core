@@ -85,7 +85,8 @@ public class NGSecretManagerServiceImpl implements NGSecretManagerService {
         accountIdentifier, orgIdentifier, projectIdentifier, identifier, maskSecrets);
   }
 
-  private boolean validateNGSecretManager(
+  @Override
+  public boolean validateNGSecretManager(
       @NotNull String accountIdentifier, SecretManagerConfigDTO secretManagerConfigDTO) {
     boolean validationResult = false;
     if (null != secretManagerConfigDTO) {

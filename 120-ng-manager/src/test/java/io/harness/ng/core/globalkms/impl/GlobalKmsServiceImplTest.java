@@ -17,6 +17,8 @@ import static junit.framework.TestCase.assertNull;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -36,14 +38,18 @@ import io.harness.encryption.Scope;
 import io.harness.encryption.SecretRefData;
 import io.harness.exception.InvalidRequestException;
 import io.harness.manage.GlobalContextManager;
+import io.harness.ng.core.api.NGSecretManagerService;
 import io.harness.ng.core.api.SecretCrudService;
 import io.harness.ng.core.dto.secrets.SecretDTOV2;
 import io.harness.ng.core.dto.secrets.SecretResponseWrapper;
+import io.harness.ng.core.dto.secrets.SecretTextSpecDTO;
 import io.harness.ng.core.globalkms.dto.ConnectorSecretResponseDTO;
 import io.harness.ng.core.globalkms.services.NgConnectorManagerClientService;
 import io.harness.request.RequestContext;
 import io.harness.request.RequestContextData;
 import io.harness.rule.Owner;
+import io.harness.secretmanagerclient.dto.GcpKmsConfigDTO;
+import io.harness.secretmanagerclient.dto.SecretManagerConfigDTO;
 import io.harness.security.PrincipalContextData;
 import io.harness.security.dto.ServicePrincipal;
 import io.harness.security.dto.UserPrincipal;
@@ -71,6 +77,7 @@ public class GlobalKmsServiceImplTest extends CategoryTest {
   @Mock private ConnectorService connectorService;
   @Mock private SecretCrudService ngSecretService;
   @Mock private NgConnectorManagerClientService ngConnectorManagerClientService;
+  @Mock private NGSecretManagerService ngSecretManagerService;
   private GlobalKmsServiceImpl globalKmsService;
   @Captor ArgumentCaptor<String> accountIdentifierArgumentCaptor;
   @Captor ArgumentCaptor<String> orgIdentifierArgumentCaptor;
@@ -78,12 +85,14 @@ public class GlobalKmsServiceImplTest extends CategoryTest {
   @Captor ArgumentCaptor<String> identifierArgumentCaptor;
   @Captor ArgumentCaptor<ConnectorDTO> connectorDTOArgumentCaptor;
   @Captor ArgumentCaptor<SecretDTOV2> secretDTOV2ArgumentCaptor;
+  @Captor ArgumentCaptor<SecretManagerConfigDTO> secretManagerConfigDTOArgumentCaptor;
   @Rule public ExpectedException exceptionRule = ExpectedException.none();
   String accountId = UUIDGenerator.generateUuid();
   String userId = UUIDGenerator.generateUuid();
   String secretIdentifier = HARNESS_SECRET_MANAGER_IDENTIFIER + "_" + randomAlphabetic(10);
   UserPrincipal userPrincipal;
   static final String GET_USER_PRINCIPAL_OR_THROW = "getUserPrincipalOrThrow";
+  static final String VALIDATE = "validate";
   static final String CAN_UPDATE_GLOBAL_KMS = "canUpdateGlobalKms";
   static final String CHECK_FOR_HARNESS_SUPPORT_USER = "checkForHarnessSupportUser";
   static final String CHECK_CONNECTOR_TYPE_AND_CREDENTIALS_MATCH = "checkConnectorTypeAndCredentialsMatch";
@@ -93,8 +102,8 @@ public class GlobalKmsServiceImplTest extends CategoryTest {
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
-    globalKmsService =
-        PowerMockito.spy(new GlobalKmsServiceImpl(connectorService, ngSecretService, ngConnectorManagerClientService));
+    globalKmsService = PowerMockito.spy(new GlobalKmsServiceImpl(
+        connectorService, ngSecretService, ngConnectorManagerClientService, ngSecretManagerService));
     userPrincipal = new UserPrincipal(userId, randomAlphabetic(10), userId, accountId);
   }
 
@@ -131,7 +140,10 @@ public class GlobalKmsServiceImplTest extends CategoryTest {
   }
 
   private SecretDTOV2 getSecretDTOV2() {
-    return SecretDTOV2.builder().identifier(secretIdentifier).build();
+    return SecretDTOV2.builder()
+        .identifier(secretIdentifier)
+        .spec(SecretTextSpecDTO.builder().value(randomAlphabetic(50)).build())
+        .build();
   }
 
   private SecretResponseWrapper getSecretResponseWrapper() {
@@ -153,6 +165,7 @@ public class GlobalKmsServiceImplTest extends CategoryTest {
         .thenReturn(Optional.of(secretResponseWrapper));
     PowerMockito.doReturn(userPrincipal).when(globalKmsService, GET_USER_PRINCIPAL_OR_THROW);
     when(ngConnectorManagerClientService.isHarnessSupportUser(userId)).thenReturn(true);
+    when(ngSecretManagerService.validateNGSecretManager(eq(GLOBAL_ACCOUNT_ID), any())).thenReturn(true);
     when(ngSecretService.update(GLOBAL_ACCOUNT_ID, secretDTOV2.getOrgIdentifier(), secretDTOV2.getProjectIdentifier(),
              secretDTOV2.getIdentifier(), secretDTOV2))
         .thenReturn(SecretResponseWrapper.builder().build());
@@ -161,6 +174,8 @@ public class GlobalKmsServiceImplTest extends CategoryTest {
         .thenReturn(ConnectorResponseDTO.builder().build());
     ConnectorSecretResponseDTO response = globalKmsService.updateGlobalKms(connectorDTO, secretDTOV2);
     verifyPrivate(globalKmsService, times(1)).invoke(CAN_UPDATE_GLOBAL_KMS, connectorDTO, secretDTOV2);
+    verifyPrivate(globalKmsService, times(1))
+        .invoke(VALIDATE, globalKmsConnector.getConnector(), secretResponseWrapper.getSecret());
     verify(ngSecretService, times(1))
         .update(GLOBAL_ACCOUNT_ID, secretDTOV2.getOrgIdentifier(), secretDTOV2.getProjectIdentifier(),
             secretDTOV2.getIdentifier(), secretDTOV2);
@@ -437,5 +452,35 @@ public class GlobalKmsServiceImplTest extends CategoryTest {
     verify(ngSecretService, times(1))
         .get(GLOBAL_ACCOUNT_ID, secretDTOV2.getOrgIdentifier(), secretDTOV2.getProjectIdentifier(),
             secretDTOV2.getIdentifier());
+  }
+
+  @Test
+  @Owner(developers = NISHANT)
+  @Category(UnitTests.class)
+  public void testValidate() throws Exception {
+    SecretDTOV2 secretDTOV2 = getSecretDTOV2();
+    ConnectorInfoDTO connectorInfoDTO = getConnectorInfoDTO();
+    when(ngSecretManagerService.validateNGSecretManager(anyString(), any())).thenReturn(true);
+    Whitebox.invokeMethod(globalKmsService, VALIDATE, connectorInfoDTO, secretDTOV2);
+    verify(ngSecretManagerService, times(1)).validateNGSecretManager(anyString(), any());
+    verify(ngSecretManagerService)
+        .validateNGSecretManager(
+            accountIdentifierArgumentCaptor.capture(), secretManagerConfigDTOArgumentCaptor.capture());
+    assertEquals(GLOBAL_ACCOUNT_ID, accountIdentifierArgumentCaptor.getValue());
+    assertEquals(((SecretTextSpecDTO) secretDTOV2.getSpec()).getValue(),
+        String.valueOf(((GcpKmsConfigDTO) secretManagerConfigDTOArgumentCaptor.getValue()).getCredentials()));
+  }
+
+  @Test
+  @Owner(developers = NISHANT)
+  @Category(UnitTests.class)
+  public void testValidate_when_false() throws Exception {
+    SecretDTOV2 secretDTOV2 = getSecretDTOV2();
+    ConnectorInfoDTO connectorInfoDTO = getConnectorInfoDTO();
+    when(ngSecretManagerService.validateNGSecretManager(anyString(), any())).thenReturn(false);
+    exceptionRule.expect(InvalidRequestException.class);
+    exceptionRule.expectMessage("Failed to validate secret manager");
+    Whitebox.invokeMethod(globalKmsService, VALIDATE, connectorInfoDTO, secretDTOV2);
+    verify(ngSecretManagerService, times(1)).validateNGSecretManager(anyString(), any());
   }
 }
