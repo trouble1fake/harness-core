@@ -74,21 +74,21 @@ public class AccountSettingMapperTest extends NGCoreTestBase {
   @Test
   @Owner(developers = OwnerRule.MEENAKSHI)
   @Category(UnitTests.class)
-  public void toAccountSettingIsNull() {
-    final AccountSettings accountSettings = accountSettingMapper.toAccountSetting(null, accountIdentifier);
-    assertThat(accountSettings).isNotNull();
-    assertThat(accountSettings.getConfig()).isNull();
-  }
-
-  @Test
-  @Owner(developers = OwnerRule.MEENAKSHI)
-  @Category(UnitTests.class)
   public void toDTO() {
     final AccountSettingsDTO accountSettingsDTO = accountSettingMapper.toDTO(accountSettings);
     assertThat(accountSettingsDTO).isNotNull();
     assertThat(accountSettingsDTO.getConfig()).isEqualTo(accountSettings.getConfig());
     assertThat(accountSettingsDTO.getAccountIdentifier()).isEqualTo(accountSettings.getAccountIdentifier());
     assertThat(accountSettingsDTO.getType()).isEqualTo(accountSettings.getType());
+  }
+
+  @Test
+  @Owner(developers = OwnerRule.MEENAKSHI)
+  @Category(UnitTests.class)
+  public void toDTOIsNull() {
+    final AccountSettingsDTO accountSettings = accountSettingMapper.toDTO(null);
+    assertThat(accountSettings).isNotNull();
+    assertThat(accountSettings.getConfig()).isNull();
   }
 
   @Test

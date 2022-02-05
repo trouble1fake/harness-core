@@ -7,12 +7,11 @@
 
 package io.harness.repositories.accountsetting;
 
-import static io.harness.ng.core.accountsetting.entities.AccountSettings.AccountSettingsKeys;
-
 import static org.springframework.data.mongodb.core.query.Update.update;
 
 import io.harness.ng.core.accountsetting.dto.AccountSettingType;
 import io.harness.ng.core.accountsetting.entities.AccountSettings;
+import io.harness.ng.core.accountsetting.entities.AccountSettings.AccountSettingsKeys;
 
 import com.google.inject.Inject;
 import com.mongodb.client.result.UpdateResult;
