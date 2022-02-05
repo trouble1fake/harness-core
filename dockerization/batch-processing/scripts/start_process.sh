@@ -23,6 +23,19 @@ fi
 
 export JAVA_OPTS="-Xms${MEMORY}m -Xmx${MEMORY}m -XX:+HeapDumpOnOutOfMemoryError -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:mygclogfilename.gc -XX:+UseParallelGC -XX:MaxGCPauseMillis=500 -Dfile.encoding=UTF-8"
 
+function attach_jvm_profiler_agent() {
+  echo "Downloading YourKit-JavaProfiler agent"
+
+  DOWNLOAD_PATH="/tmp/YourKit-JavaProfiler-2021.11-b227.zip"
+  wget https://www.yourkit.com/download/YourKit-JavaProfiler-2021.11-b227.zip -O "${DOWNLOAD_PATH}"
+  unzip "${DOWNLOAD_PATH}" -d /opt/harness/
+  rm "${DOWNLOAD_PATH}"
+
+  JAVA_OPTS=$JAVA_OPTS" -agentpath:/opt/harness/YourKit-JavaProfiler-2021.11/bin/linux-x86-64/libyjpagent.so"
+
+  echo "Added Profiling agent JAVA_OPTS=${JAVA_OPTS}"
+}
+attach_jvm_profiler_agent
 
 if [[ "${DEPLOY_MODE}" == "KUBERNETES" ]] || [[ "${DEPLOY_MODE}" == "KUBERNETES_ONPREM" ]]; then
     java $JAVA_OPTS -jar $CAPSULE_JAR /opt/harness/batch-processing-config.yml
