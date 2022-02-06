@@ -129,6 +129,8 @@ public abstract class AbstractHttpClientFactory {
     objMapper.setSubtypeResolver(new JsonSubtypeResolver(objMapper.getSubtypeResolver()));
     objMapper.setConfig(objMapper.getSerializationConfig().withView(JsonViews.Public.class));
     objMapper.disable(FAIL_ON_UNKNOWN_PROPERTIES);
+    objMapper.configure(AUTO_CLOSE_SOURCE,false);
+    objMapper.configure(AUTO_CLOSE_JSON_CONTENT,false);
     objMapper.registerModule(new ProtobufModule());
     objMapper.registerModule(new Jdk8Module());
     objMapper.registerModule(new GuavaModule());
