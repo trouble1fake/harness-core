@@ -97,8 +97,8 @@ public class NexusRegistryServiceImpl implements NexusRegistryService {
   }
 
   @Override
-  public BuildDetailsInternal verifyBuildNumber(NexusRequest nexusConfig, String repository, String port,
-      String imageName, String repositoryFormat, String tag) {
+  public BuildDetailsInternal verifyBuildNumber(
+      NexusRequest nexusConfig, String repository, String port, String imageName, String repositoryFormat, String tag) {
     return getBuildNumber(nexusConfig, repository, port, imageName, repositoryFormat, tag);
   }
 
@@ -107,8 +107,8 @@ public class NexusRegistryServiceImpl implements NexusRegistryService {
     return nexusClient.isRunning(nexusConfig);
   }
 
-  private BuildDetailsInternal getBuildNumber(NexusRequest nexusConfig, String repository, String port,
-      String imageName, String repositoryFormat, String tag) {
+  private BuildDetailsInternal getBuildNumber(
+      NexusRequest nexusConfig, String repository, String port, String imageName, String repositoryFormat, String tag) {
     try {
       List<BuildDetailsInternal> builds =
           getBuildDetails(nexusConfig, repository, port, imageName, repositoryFormat, tag);

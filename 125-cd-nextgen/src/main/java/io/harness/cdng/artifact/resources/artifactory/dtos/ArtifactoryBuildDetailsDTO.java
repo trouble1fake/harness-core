@@ -8,9 +8,8 @@
 package io.harness.cdng.artifact.resources.artifactory.dtos;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import java.util.Map;
-
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.Map;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Value;
@@ -22,14 +21,10 @@ import lombok.experimental.FieldDefaults;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "This contains details regarding Artifactory artifact")
 public class ArtifactoryBuildDetailsDTO {
-  @Schema(description = "This is the artifact tag value")
-  String tag;
-  @Schema(description = "This is the URL to the artifact")
-  String buildUrl;
+  @Schema(description = "This is the artifact tag value") String tag;
+  @Schema(description = "This is the URL to the artifact") String buildUrl;
   @Schema(description = "This is map of the metadata details for the artifact (like artifact pull URL...")
   Map<String, String> metadata;
-  @Schema(description = "This is map of artifact labels")
-  Map<String, String> labels;
-  @Schema(description = "This is the artifact image path")
-  String imagePath;
+  @Schema(description = "This is map of artifact labels") Map<String, String> labels;
+  @Schema(description = "This is the artifact image path") String imagePath;
 }

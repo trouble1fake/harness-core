@@ -8,9 +8,8 @@
 package io.harness.cdng.artifact.resources.nexus.dtos;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import java.util.List;
-
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Value;
@@ -22,6 +21,5 @@ import lombok.experimental.FieldDefaults;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "Contains image artifact search result details")
 public class NexusResponseDTO {
-  @Schema(description = "Contains list of details for artifact image tags")
-  List<NexusBuildDetailsDTO> buildDetailsList;
+  @Schema(description = "Contains list of details for artifact image tags") List<NexusBuildDetailsDTO> buildDetailsList;
 }

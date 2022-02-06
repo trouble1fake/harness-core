@@ -365,10 +365,10 @@
             "repositoryFormat"
           ],
           "properties": {
-            "connectorRef": {
+            "artifactRepositoryUrl": {
               "type": "string"
             },
-            "artifactRepositoryUrl": {
+            "connectorRef": {
               "type": "string"
             },
             "imagePath": {
@@ -3133,10 +3133,10 @@
             "repositoryFormat"
           ],
           "properties": {
-            "connectorRef": {
+            "artifactRepositoryUrl": {
               "type": "string"
             },
-            "artifactRepositoryUrl": {
+            "connectorRef": {
               "type": "string"
             },
             "imagePath": {
@@ -3152,8 +3152,7 @@
               "type": "string"
             },
             "repositoryPort": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string"
             },
             "tag": {
               "type": "string"

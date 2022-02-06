@@ -75,8 +75,8 @@ public class ArtifactoryArtifactResource {
     if (!RepositoryFormat.docker.name().equals(repositoryFormat)) {
       throw new InvalidRequestException("RepositoryFormat is not docker. Only 'docker' allowed.");
     }
-    ArtifactoryResponseDTO buildDetails = artifactoryResourceService.getBuildDetails(connectorRef, repository,
-        imagePath, repositoryFormat, artifactRepositoryUrl, orgIdentifier, projectIdentifier);
+    ArtifactoryResponseDTO buildDetails = artifactoryResourceService.getBuildDetails(
+        connectorRef, repository, imagePath, repositoryFormat, artifactRepositoryUrl, orgIdentifier, projectIdentifier);
     return ResponseDTO.newResponse(buildDetails);
   }
 
@@ -102,8 +102,8 @@ public class ArtifactoryArtifactResource {
     if (!RepositoryFormat.docker.name().equals(repositoryFormat)) {
       throw new InvalidRequestException("RepositoryFormat is not docker. Only 'docker' allowed.");
     }
-    ArtifactoryResponseDTO buildDetails = artifactoryResourceService.getBuildDetails(connectorRef, repository,
-        imagePath, repositoryFormat, artifactRepositoryUrl, orgIdentifier, projectIdentifier);
+    ArtifactoryResponseDTO buildDetails = artifactoryResourceService.getBuildDetails(
+        connectorRef, repository, imagePath, repositoryFormat, artifactRepositoryUrl, orgIdentifier, projectIdentifier);
     return ResponseDTO.newResponse(buildDetails);
   }
 
