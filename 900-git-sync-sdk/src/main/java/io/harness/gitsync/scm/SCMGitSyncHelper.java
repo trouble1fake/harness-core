@@ -22,7 +22,6 @@ import io.harness.gitsync.FileInfo;
 import io.harness.gitsync.HarnessToGitPushInfoServiceGrpc.HarnessToGitPushInfoServiceBlockingStub;
 import io.harness.gitsync.Principal;
 import io.harness.gitsync.PushFileResponse;
-import io.harness.gitsync.UserPrincipal;
 import io.harness.gitsync.common.helper.ChangeTypeMapper;
 import io.harness.gitsync.common.helper.GitSyncGrpcClientUtils;
 import io.harness.gitsync.common.helper.UserPrincipalMapper;
@@ -36,6 +35,7 @@ import io.harness.ng.core.EntityDetail;
 import io.harness.ng.core.entitydetail.EntityDetailRestToProtoMapper;
 import io.harness.security.SourcePrincipalContextBuilder;
 import io.harness.security.dto.ServicePrincipal;
+import io.harness.security.dto.UserPrincipal;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -139,8 +139,7 @@ public class SCMGitSyncHelper {
     final Principal.Builder principalBuilder = Principal.newBuilder();
     switch (sourcePrincipal.getType()) {
       case USER:
-        io.harness.security.dto.UserPrincipal userPrincipalFromContext =
-            (io.harness.security.dto.UserPrincipal) sourcePrincipal;
+        UserPrincipal userPrincipalFromContext = (UserPrincipal) sourcePrincipal;
         return principalBuilder.setUserPrincipal(UserPrincipalMapper.toProto(userPrincipalFromContext)).build();
       case SERVICE:
         final ServicePrincipal servicePrincipalFromContext = (ServicePrincipal) sourcePrincipal;
