@@ -38,6 +38,7 @@ public class K8V2BlueGreenWorkflowCreator extends WorkflowCreator {
   @Inject private K8BlueGreenWorkflowPhaseHelper k8BlueGreenWorkflowPhaseHelper;
   @Inject private RancherK8BlueGreenWorkflowPhaseHelper rancherK8BlueGreenWorkflowPhaseHelper;
   @Inject private InfrastructureDefinitionService infrastructureDefinitionService;
+  private K8BlueGreenWorkflowPhaseHelper workflowPhaseHelperHolder;
 
   @Override
   public Workflow createWorkflow(Workflow clientWorkflow) {
@@ -47,7 +48,7 @@ public class K8V2BlueGreenWorkflowCreator extends WorkflowCreator {
     CanaryOrchestrationWorkflow canaryOrchestrationWorkflow = (CanaryOrchestrationWorkflow) orchestrationWorkflow;
     notNullCheck("orchestrationWorkflow", canaryOrchestrationWorkflow);
     updateWorkflowHelper(clientWorkflow.getAccountId(), clientWorkflow.getInfraDefinitionId());
-    if (k8BlueGreenWorkflowPhaseHelper.isCreationRequired(canaryOrchestrationWorkflow)) {
+    if (workflowPhaseHelperHolder.isCreationRequired(canaryOrchestrationWorkflow)) {
       addLinkedPreOrPostDeploymentSteps(canaryOrchestrationWorkflow);
       addWorkflowPhases(workflow);
     }
@@ -57,10 +58,10 @@ public class K8V2BlueGreenWorkflowCreator extends WorkflowCreator {
   private void addWorkflowPhases(Workflow workflow) {
     CanaryOrchestrationWorkflow orchestrationWorkflow =
         (CanaryOrchestrationWorkflow) workflow.getOrchestrationWorkflow();
-    WorkflowPhase workflowPhase = k8BlueGreenWorkflowPhaseHelper.getWorkflowPhase(workflow, PHASE_NAME);
+    WorkflowPhase workflowPhase = workflowPhaseHelperHolder.getWorkflowPhase(workflow, PHASE_NAME);
     orchestrationWorkflow.getWorkflowPhases().add(workflowPhase);
     orchestrationWorkflow.getRollbackWorkflowPhaseIdMap().put(
-        workflowPhase.getUuid(), k8BlueGreenWorkflowPhaseHelper.getRollbackPhaseForWorkflowPhase(workflowPhase));
+        workflowPhase.getUuid(), workflowPhaseHelperHolder.getRollbackPhaseForWorkflowPhase(workflowPhase));
     for (WorkflowPhase phase : orchestrationWorkflow.getWorkflowPhases()) {
       attachWorkflowPhase(workflow, phase);
     }
@@ -76,7 +77,9 @@ public class K8V2BlueGreenWorkflowCreator extends WorkflowCreator {
             .getInfrastructure()
             .getInfrastructureType()
             .equals(RANCHER_INFRA_TYPE)) {
-      this.k8BlueGreenWorkflowPhaseHelper = this.rancherK8BlueGreenWorkflowPhaseHelper;
+      this.workflowPhaseHelperHolder = this.rancherK8BlueGreenWorkflowPhaseHelper;
+    } else {
+      this.workflowPhaseHelperHolder = this.k8BlueGreenWorkflowPhaseHelper;
     }
   }
 }
