@@ -45,7 +45,6 @@ public class ArtifactoryRegistryServiceImpl implements ArtifactoryRegistryServic
   @Override
   public List<BuildDetailsInternal> getBuilds(ArtifactoryConfigRequest artifactoryConfig, String repositoryName,
       String imageName, String repoFormat, int maxNumberOfBuilds) {
-    List<BuildDetailsInternal> buildDetails = new ArrayList<>();
     try {
       return artifactoryClient.getArtifactsDetails(
           artifactoryConfig, repositoryName, imageName, repoFormat, maxNumberOfBuilds);

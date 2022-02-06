@@ -11,6 +11,8 @@ import io.harness.artifacts.beans.BuildDetailsInternal;
 import io.harness.artifacts.comparator.BuildDetailsInternalComparatorDescending;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.task.artifacts.DelegateArtifactTaskHandler;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateRequest;
+import io.harness.delegate.task.artifacts.mappers.ArtifactoryRequestResponseMapper;
 import io.harness.delegate.task.artifacts.mappers.NexusRequestResponseMapper;
 import io.harness.delegate.task.artifacts.response.ArtifactTaskExecutionResponse;
 import io.harness.nexus.service.NexusRegistryService;
@@ -70,6 +72,13 @@ public class NexusArtifactTaskHandler extends DelegateArtifactTaskHandler<NexusA
         .isArtifactSourceValid(true)
         .isArtifactServerValid(true)
         .build();
+  }
+
+  @Override
+  public ArtifactTaskExecutionResponse validateArtifactServer(NexusArtifactDelegateRequest attributesRequest) {
+    boolean isServerValidated = nexusRegistryService.validateCredentials(
+            NexusRequestResponseMapper.toNexusInternalConfig(attributesRequest));
+    return ArtifactTaskExecutionResponse.builder().isArtifactServerValid(isServerValidated).build();
   }
 
   boolean isRegex(NexusArtifactDelegateRequest artifactDelegateRequest) {

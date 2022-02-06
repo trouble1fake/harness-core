@@ -76,7 +76,7 @@ public class ArtifactoryRegistryArtifactConfig implements ArtifactConfig, Visita
   /**
    * Docker repo server hostname.
    */
-  @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) @Wither ParameterField<String> dockerRepositoryServer;
+  @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) @Wither ParameterField<String> artifactRepositoryUrl;
   /**
    * Tag refers to exact tag number.
    */

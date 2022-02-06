@@ -63,7 +63,7 @@ public class NexusResourceServiceImplTest extends CategoryTest {
   private static String IMAGE_PATH = "imagePath";
   private static String ORG_IDENTIFIER = "orgIdentifier";
   private static String PROJECT_IDENTIFIER = "projectIdentifier";
-  private static Integer REPO_PORT = 8181;
+  private static String REPO_PORT = "8181";
 
   @Mock ConnectorService connectorService;
   @Mock SecretManagerClientService secretManagerClientService;

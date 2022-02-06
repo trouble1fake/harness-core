@@ -60,8 +60,6 @@ import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.rule.Owner;
 import io.harness.security.encryption.EncryptedDataDetail;
 
-import software.wings.utils.RepositoryFormat;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;

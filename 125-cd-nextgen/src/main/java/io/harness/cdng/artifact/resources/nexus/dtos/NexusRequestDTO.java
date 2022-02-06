@@ -11,7 +11,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import java.util.List;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Value;
@@ -22,13 +22,8 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @JsonInclude(NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Schema(description = "Contains image artifact filter details")
 public class NexusRequestDTO {
-  /** Pass to get the build number*/
-  String tag;
-
-  /** Pass to get the last successful build matching this regex.*/
-  String tagRegex;
-
-  /** List of tags to get the labels for.*/
-  List<String> tagsList;
+  @Schema(description = "Image tag for finding the artifact") String tag;
+  @Schema(description = "Image tag regex value for finding the artifact") String tagRegex;
 }

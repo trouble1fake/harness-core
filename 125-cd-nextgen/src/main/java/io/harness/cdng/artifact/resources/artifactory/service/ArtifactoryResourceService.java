@@ -13,11 +13,11 @@ import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryRequestDTO
 import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryResponseDTO;
 
 public interface ArtifactoryResourceService {
-  ArtifactoryResponseDTO getBuildDetails(IdentifierRef artifactoryConnectorRef, String repository, String imagePath,
-      String repositoryFormat, String dockerRepositoryServer, String orgIdentifier, String projectIdentifier);
+  ArtifactoryResponseDTO getBuildDetails(IdentifierRef artifactoryConnectorRef, String repositoryName, String imagePath,
+      String repositoryFormat, String artifactRepositoryUrl, String orgIdentifier, String projectIdentifier);
 
-  ArtifactoryBuildDetailsDTO getSuccessfulBuild(IdentifierRef artifactoryConnectorRef, String repository,
-      String imagePath, String repositoryFormat, String dockerRepositoryServer,
+  ArtifactoryBuildDetailsDTO getSuccessfulBuild(IdentifierRef artifactoryConnectorRef, String repositoryName,
+      String imagePath, String repositoryFormat, String artifactRepositoryUrl,
       ArtifactoryRequestDTO artifactoryRequestDTO, String orgIdentifier, String projectIdentifier);
 
   boolean validateArtifactServer(IdentifierRef artifactoryConnectorRef, String orgIdentifier, String projectIdentifier);

@@ -15,6 +15,7 @@ import io.harness.cdng.artifact.resources.nexus.dtos.NexusBuildDetailsDTO;
 import io.harness.cdng.artifact.resources.nexus.dtos.NexusRequestDTO;
 import io.harness.cdng.artifact.resources.nexus.dtos.NexusResponseDTO;
 import io.harness.cdng.artifact.resources.nexus.service.NexusResourceService;
+import io.harness.exception.InvalidRequestException;
 import io.harness.gitsync.interceptor.GitEntityFindInfoDTO;
 import io.harness.ng.core.artifacts.resources.util.ArtifactResourceUtils;
 import io.harness.ng.core.dto.ErrorDTO;
@@ -62,8 +63,8 @@ public class NexusArtifactResource {
   @Path("getBuildDetails")
   @ApiOperation(value = "Gets nexus artifact build details", nickname = "getBuildDetailsForNexusArtifact")
   public ResponseDTO<NexusResponseDTO> getBuildDetails(@QueryParam("repository") String repository,
-      @QueryParam("repositoryPort") Integer repositoryPort, @QueryParam("repositoryFormat") String repositoryFormat,
-      @QueryParam("dockerRepositoryServer") String dockerRepositoryServer, @QueryParam("imagePath") String imagePath,
+      @QueryParam("repositoryPort") String repositoryPort, @QueryParam("repositoryFormat") String repositoryFormat,
+      @QueryParam("artifactRepositoryUrl") String artifactRepositoryUrl, @QueryParam("imagePath") String imagePath,
       @QueryParam("connectorRef") String nexusConnectorIdentifier,
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
       @NotNull @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
@@ -72,10 +73,10 @@ public class NexusArtifactResource {
     IdentifierRef connectorRef =
         IdentifierRefHelper.getIdentifierRef(nexusConnectorIdentifier, accountId, orgIdentifier, projectIdentifier);
     if (!RepositoryFormat.docker.name().equals(repositoryFormat)) {
-      repositoryFormat = RepositoryFormat.docker.name();
+      throw new InvalidRequestException("RepositoryFormat is not docker. Only 'docker' allowed.");
     }
     NexusResponseDTO buildDetails = nexusResourceService.getBuildDetails(connectorRef, repository, repositoryPort,
-        imagePath, repositoryFormat, dockerRepositoryServer, orgIdentifier, projectIdentifier);
+        imagePath, repositoryFormat, artifactRepositoryUrl, orgIdentifier, projectIdentifier);
     return ResponseDTO.newResponse(buildDetails);
   }
 
@@ -84,9 +85,9 @@ public class NexusArtifactResource {
   @ApiOperation(value = "Gets nexus artifact build details with yaml input for expression resolution",
       nickname = "getBuildDetailsForNexusArtifactWithYaml")
   public ResponseDTO<NexusResponseDTO>
-  getBuildDetailsV2(@QueryParam("repository") String repository, @QueryParam("repositoryPort") Integer repositoryPort,
+  getBuildDetailsV2(@QueryParam("repository") String repository, @QueryParam("repositoryPort") String repositoryPort,
       @QueryParam("imagePath") String imagePath, @QueryParam("repositoryFormat") String repositoryFormat,
-      @QueryParam("dockerRepositoryServer") String dockerRepositoryServer,
+      @QueryParam("artifactRepositoryUrl") String artifactRepositoryUrl,
       @QueryParam("connectorRef") String nexusConnectorIdentifier,
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
       @NotNull @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
@@ -100,10 +101,10 @@ public class NexusArtifactResource {
         projectIdentifier, pipelineIdentifier, runtimeInputYaml, imagePath, fqnPath, gitEntityBasicInfo);
 
     if (!RepositoryFormat.docker.name().equals(repositoryFormat)) {
-      repositoryFormat = RepositoryFormat.docker.name();
+      throw new InvalidRequestException("RepositoryFormat is not docker. Only 'docker' allowed.");
     }
     NexusResponseDTO buildDetails = nexusResourceService.getBuildDetails(connectorRef, repository, repositoryPort,
-        imagePath, repositoryFormat, dockerRepositoryServer, orgIdentifier, projectIdentifier);
+        imagePath, repositoryFormat, artifactRepositoryUrl, orgIdentifier, projectIdentifier);
     return ResponseDTO.newResponse(buildDetails);
   }
 
@@ -113,9 +114,9 @@ public class NexusArtifactResource {
       value = "Gets nexus artifact last successful build", nickname = "getLastSuccessfulBuildForNexusArtifact")
   public ResponseDTO<NexusBuildDetailsDTO>
   getLastSuccessfulBuild(@QueryParam("repository") String repository,
-      @QueryParam("repositoryPort") Integer repositoryPort, @QueryParam("imagePath") String imagePath,
+      @QueryParam("repositoryPort") String repositoryPort, @QueryParam("imagePath") String imagePath,
       @QueryParam("repositoryFormat") String repositoryFormat,
-      @QueryParam("dockerRepositoryServer") String dockerRepositoryServer,
+      @QueryParam("artifactRepositoryUrl") String artifactRepositoryUrl,
       @QueryParam("connectorRef") String dockerConnectorIdentifier,
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
       @NotNull @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
@@ -124,11 +125,11 @@ public class NexusArtifactResource {
         IdentifierRefHelper.getIdentifierRef(dockerConnectorIdentifier, accountId, orgIdentifier, projectIdentifier);
 
     if (!RepositoryFormat.docker.name().equals(repositoryFormat)) {
-      repositoryFormat = RepositoryFormat.docker.name();
+      throw new InvalidRequestException("RepositoryFormat is not docker. Only 'docker' allowed.");
     }
     NexusBuildDetailsDTO buildDetails =
         nexusResourceService.getSuccessfulBuild(connectorRef, repository, repositoryPort, imagePath, repositoryFormat,
-            dockerRepositoryServer, requestDTO, orgIdentifier, projectIdentifier);
+            artifactRepositoryUrl, requestDTO, orgIdentifier, projectIdentifier);
     return ResponseDTO.newResponse(buildDetails);
   }
 

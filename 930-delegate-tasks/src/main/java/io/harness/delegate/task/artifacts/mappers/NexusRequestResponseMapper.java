@@ -16,10 +16,6 @@ import io.harness.delegate.task.artifacts.nexus.NexusArtifactDelegateResponse;
 import io.harness.nexus.NexusRequest;
 import io.harness.utils.FieldWithPlainTextOrSecretValueHelper;
 
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
@@ -47,7 +43,7 @@ public class NexusRequestResponseMapper {
         .password(password.toCharArray())
         .version(request.getNexusConnectorDTO().getVersion())
         .hasCredentials(hasCredentials)
-        .dockerRepositoryServer(request.getDockerRepositoryServer())
+        .artifactRepositoryUrl(request.getArtifactRepositoryUrl())
         .build();
   }
 
@@ -59,18 +55,5 @@ public class NexusRequestResponseMapper {
         .tag(buildDetailsInternal.getNumber())
         .sourceType(ArtifactSourceType.NEXUS_REGISTRY)
         .build();
-  }
-
-  public List<NexusArtifactDelegateResponse> toNexusResponse(
-      List<Map<String, String>> labelsList, NexusArtifactDelegateRequest request) {
-    return IntStream.range(0, request.getTagsList().size())
-        .mapToObj(i
-            -> NexusArtifactDelegateResponse.builder()
-                   .buildDetails(
-                       ArtifactBuildDetailsMapper.toBuildDetailsNG(labelsList.get(i), request.getTagsList().get(i)))
-                   .imagePath(request.getImagePath())
-                   .sourceType(ArtifactSourceType.NEXUS_REGISTRY)
-                   .build())
-        .collect(Collectors.toList());
   }
 }

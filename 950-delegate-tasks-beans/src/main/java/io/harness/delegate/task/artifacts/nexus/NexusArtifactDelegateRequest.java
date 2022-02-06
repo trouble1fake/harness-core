@@ -35,11 +35,11 @@ import lombok.Value;
 @OwnedBy(HarnessTeam.CDP)
 public class NexusArtifactDelegateRequest implements ArtifactSourceDelegateRequest {
   /** Host from where to pull the images */
-  String dockerRepositoryServer;
+  String artifactRepositoryUrl;
   /** Nexus repo name. */
   String repositoryName;
   /** Nexus repository port. */
-  Integer repositoryPort;
+  String repositoryPort;
   /** Images in repos need to be referenced via a path. */
   String imagePath;
   /** Nexus repository format type. */
@@ -48,8 +48,6 @@ public class NexusArtifactDelegateRequest implements ArtifactSourceDelegateReque
   String tag;
   /** Tag regex is used to get latest build from builds matching regex. */
   String tagRegex;
-  /** List of buildNumbers/tags */
-  List<String> tagsList;
   String connectorRef;
   /** Nexus Connector*/
   NexusConnectorDTO nexusConnectorDTO;

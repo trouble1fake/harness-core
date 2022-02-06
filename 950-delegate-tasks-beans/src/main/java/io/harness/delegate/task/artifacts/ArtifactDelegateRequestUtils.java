@@ -71,10 +71,10 @@ public class ArtifactDelegateRequestUtils {
         .sourceType(sourceType)
         .build();
   }
-  public NexusArtifactDelegateRequest getNexusArtifactDelegateRequest(String repositoryName, Integer repositoryPort,
-      String imagePath, String repositoryFormat, String dockerRepositoryServer, String tag, String tagRegex,
-      List<String> tagsList, String connectorRef, NexusConnectorDTO nexusConnectorDTO,
-      List<EncryptedDataDetail> encryptedDataDetails, ArtifactSourceType sourceType) {
+  public NexusArtifactDelegateRequest getNexusArtifactDelegateRequest(String repositoryName, String repositoryPort,
+      String imagePath, String repositoryFormat, String artifactRepositoryUrl, String tag, String tagRegex,
+      String connectorRef, NexusConnectorDTO nexusConnectorDTO, List<EncryptedDataDetail> encryptedDataDetails,
+      ArtifactSourceType sourceType) {
     return NexusArtifactDelegateRequest.builder()
         .repositoryName(repositoryName)
         .repositoryPort(repositoryPort)
@@ -82,30 +82,28 @@ public class ArtifactDelegateRequestUtils {
         .repositoryFormat(repositoryFormat)
         .tag(trim(tag))
         .tagRegex(trim(tagRegex))
-        .tagsList(tagsList)
         .connectorRef(connectorRef)
         .nexusConnectorDTO(nexusConnectorDTO)
         .encryptedDataDetails(encryptedDataDetails)
         .sourceType(sourceType)
-        .dockerRepositoryServer(dockerRepositoryServer)
+        .artifactRepositoryUrl(artifactRepositoryUrl)
         .build();
   }
-  public ArtifactoryArtifactDelegateRequest getArtifactoryArtifactDelegateRequest(String repository, String imagePath,
-      String repositoryFormat, String dockerRepositoryServer, String tag, String tagRegex, List<String> tagsList,
+  public ArtifactoryArtifactDelegateRequest getArtifactoryArtifactDelegateRequest(String repositoryName,
+      String imagePath, String repositoryFormat, String artifactRepositoryUrl, String tag, String tagRegex,
       String connectorRef, ArtifactoryConnectorDTO artifactoryConnectorDTO,
       List<EncryptedDataDetail> encryptedDataDetails, ArtifactSourceType sourceType) {
     return ArtifactoryArtifactDelegateRequest.builder()
-        .repository(repository)
+        .repositoryName(repositoryName)
         .imagePath(trim(imagePath))
         .repositoryFormat(repositoryFormat)
         .tag(trim(tag))
         .tagRegex(trim(tagRegex))
-        .tagsList(tagsList)
         .connectorRef(connectorRef)
         .artifactoryConnectorDTO(artifactoryConnectorDTO)
         .encryptedDataDetails(encryptedDataDetails)
         .sourceType(sourceType)
-        .dockerRepositoryServer(dockerRepositoryServer)
+        .artifactRepositoryUrl(artifactRepositoryUrl)
         .build();
   }
   private String trim(String str) {

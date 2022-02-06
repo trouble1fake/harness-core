@@ -14,7 +14,7 @@
 				"imagePath": {
 					"type": "string"
 				},
-				"dockerRepositoryServer": {
+				"artifactRepositoryUrl": {
 					"type": "string"
 				},
 				"repositoryFormat": {

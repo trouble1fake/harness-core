@@ -368,7 +368,7 @@
             "connectorRef": {
               "type": "string"
             },
-            "dockerRepositoryServer": {
+            "artifactRepositoryUrl": {
               "type": "string"
             },
             "imagePath": {
@@ -3136,7 +3136,7 @@
             "connectorRef": {
               "type": "string"
             },
-            "dockerRepositoryServer": {
+            "artifactRepositoryUrl": {
               "type": "string"
             },
             "imagePath": {
@@ -3172,7 +3172,7 @@
             },
             {
               "required": [
-                "dockerRepositoryServer"
+                "artifactRepositoryUrl"
               ]
             }
           ]

@@ -20,5 +20,5 @@ public class ArtifactoryConfigRequest {
   String username;
   char[] password;
   boolean hasCredentials;
-  String artifactoryDockerRepositoryServer;
+  String artifactRepositoryUrl;
 }

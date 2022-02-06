@@ -110,7 +110,7 @@ public class NexusClientImpl {
     }
   }
 
-  public List<BuildDetailsInternal> getArtifactsVersions(NexusRequest nexusConfig, String repositoryName, Integer port,
+  public List<BuildDetailsInternal> getArtifactsVersions(NexusRequest nexusConfig, String repositoryName, String port,
       String imageName, String repoFormat) throws IOException {
     boolean isNexusTwo = nexusConfig.getVersion() == null || nexusConfig.getVersion().equalsIgnoreCase("2.x");
 
@@ -123,7 +123,7 @@ public class NexusClientImpl {
     }
   }
 
-  public List<BuildDetailsInternal> getBuildDetails(NexusRequest nexusConfig, String repository, Integer port,
+  public List<BuildDetailsInternal> getBuildDetails(NexusRequest nexusConfig, String repository, String port,
       String imageName, String repositoryFormat, String tag) throws IOException {
     boolean isNexusTwo = nexusConfig.getVersion() == null || nexusConfig.getVersion().equalsIgnoreCase("2.x");
 

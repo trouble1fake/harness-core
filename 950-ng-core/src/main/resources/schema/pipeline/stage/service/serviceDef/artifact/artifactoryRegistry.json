@@ -14,7 +14,7 @@
 				"repositoryFormat": {
 					"type": "string"
 				},
-				"dockerRepositoryServer": {
+				"artifactRepositoryUrl": {
 					"type": "string"
 				},
 				"tag": {

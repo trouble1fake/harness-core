@@ -9,6 +9,8 @@ package io.harness.cdng.artifact.resources.artifactory.dtos;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.List;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Value;
@@ -18,6 +20,8 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Schema(description = "Contains image artifact search result details")
 public class ArtifactoryResponseDTO {
+  @Schema(description = "Contains list of details for artifact image tags")
   List<ArtifactoryBuildDetailsDTO> buildDetailsList;
 }

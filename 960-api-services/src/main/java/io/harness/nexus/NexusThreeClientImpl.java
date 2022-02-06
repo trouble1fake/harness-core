@@ -120,7 +120,7 @@ public class NexusThreeClientImpl {
   }
 
   public List<BuildDetailsInternal> getArtifactsVersions(
-      NexusRequest nexusConfig, String repoName, Integer port, String imageName, String repoFormat) throws IOException {
+      NexusRequest nexusConfig, String repoName, String port, String imageName, String repoFormat) throws IOException {
     log.info("Retrieving artifacts versions");
     NexusThreeRestClient nexusThreeRestClient = getNexusThreeClient(nexusConfig);
     Response<Nexus3ComponentResponse> response;
@@ -185,7 +185,7 @@ public class NexusThreeClientImpl {
     return StringUtils.isNotBlank(imagePath) ? imagePath : defaultImagePath;
   }
 
-  public List<BuildDetailsInternal> getBuildDetails(NexusRequest nexusConfig, String repository, Integer port,
+  public List<BuildDetailsInternal> getBuildDetails(NexusRequest nexusConfig, String repository, String port,
       String imageName, String repositoryFormat, String tag) throws IOException {
     log.info("Retrieving artifact details");
     NexusThreeRestClient nexusThreeRestClient = getNexusThreeClient(nexusConfig);
@@ -202,7 +202,7 @@ public class NexusThreeClientImpl {
     return processComponentResponse(nexusConfig, repository, port, imageName, repositoryFormat, tag, response);
   }
 
-  private List<BuildDetailsInternal> processComponentResponse(NexusRequest nexusConfig, String repository, Integer port,
+  private List<BuildDetailsInternal> processComponentResponse(NexusRequest nexusConfig, String repository, String port,
       String imageName, String repositoryFormat, String tag, Response<Nexus3ComponentResponse> response) {
     if (isSuccessful(response)) {
       if (response.body() != null) {
@@ -219,11 +219,9 @@ public class NexusThreeClientImpl {
               imagePath = getArtifactImagePath(artifactFileMetadataInternals, null, null);
             }
 
-            String tagUrl = getBaseUrl(nexusConfig) + repository + "/" + imageName + "/";
             String repoName = ArtifactUtilities.getNexusRepositoryName(
-                nexusConfig.getNexusUrl(), String.valueOf(port), nexusConfig.getDockerRepositoryServer(), imageName);
+                nexusConfig.getNexusUrl(), port, nexusConfig.getArtifactRepositoryUrl(), imageName);
             log.info("Retrieving docker tags for repository {} imageName {} ", repository, imageName);
-            String domainName = Http.getDomainWithPort(nexusConfig.getNexusUrl());
             Map<String, String> metadata = new HashMap<>();
             metadata.put(ArtifactMetadataKeys.IMAGE, repoName + ":" + actualTag);
             metadata.put(ArtifactMetadataKeys.TAG, actualTag);

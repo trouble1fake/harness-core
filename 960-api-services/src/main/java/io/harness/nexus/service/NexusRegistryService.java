@@ -27,7 +27,7 @@ public interface NexusRegistryService {
    * @param maxNumberOfBuilds the max number of builds
    * @return the builds
    */
-  List<BuildDetailsInternal> getBuilds(NexusRequest nexusConfig, String repositoryName, Integer port, String imageName,
+  List<BuildDetailsInternal> getBuilds(NexusRequest nexusConfig, String repositoryName, String port, String imageName,
       String repoFormat, int maxNumberOfBuilds);
 
   /**
@@ -37,7 +37,7 @@ public interface NexusRegistryService {
    * @param tagRegex tag regex
    * @return the last successful build
    */
-  BuildDetailsInternal getLastSuccessfulBuildFromRegex(NexusRequest nexusConfig, String repository, Integer port,
+  BuildDetailsInternal getLastSuccessfulBuildFromRegex(NexusRequest nexusConfig, String repository, String port,
       String imageName, String repositoryFormat, String tagRegex);
 
   /**
@@ -46,7 +46,7 @@ public interface NexusRegistryService {
    * @param imageName the image name
    */
   BuildDetailsInternal verifyBuildNumber(
-      NexusRequest nexusConfig, String repository, Integer port, String imageName, String repositoryFormat, String tag);
+      NexusRequest nexusConfig, String repository, String port, String imageName, String repositoryFormat, String tag);
 
   /**
    * Validate the credentials

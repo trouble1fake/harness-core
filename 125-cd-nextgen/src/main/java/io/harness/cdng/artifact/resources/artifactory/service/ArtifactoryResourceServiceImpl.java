@@ -78,16 +78,16 @@ public class ArtifactoryResourceServiceImpl implements ArtifactoryResourceServic
   }
 
   @Override
-  public ArtifactoryResponseDTO getBuildDetails(IdentifierRef artifactoryConnectorRef, String repository,
-      String imagePath, String repositoryFormat, String dockerRepositoryServer, String orgIdentifier,
+  public ArtifactoryResponseDTO getBuildDetails(IdentifierRef artifactoryConnectorRef, String repositoryName,
+      String imagePath, String repositoryFormat, String artifactRepositoryUrl, String orgIdentifier,
       String projectIdentifier) {
     ArtifactoryConnectorDTO connector = getConnector(artifactoryConnectorRef);
     BaseNGAccess baseNGAccess =
         getBaseNGAccess(artifactoryConnectorRef.getAccountIdentifier(), orgIdentifier, projectIdentifier);
     List<EncryptedDataDetail> encryptionDetails = getEncryptionDetails(connector, baseNGAccess);
     ArtifactoryArtifactDelegateRequest artifactoryRequest =
-        ArtifactDelegateRequestUtils.getArtifactoryArtifactDelegateRequest(repository, imagePath, repositoryFormat,
-            dockerRepositoryServer, null, null, null, null, connector, encryptionDetails,
+        ArtifactDelegateRequestUtils.getArtifactoryArtifactDelegateRequest(repositoryName, imagePath, repositoryFormat,
+            artifactRepositoryUrl, null, null, null, connector, encryptionDetails,
             ArtifactSourceType.ARTIFACTORY_REGISTRY);
     try {
       ArtifactTaskExecutionResponse artifactTaskExecutionResponse = executeSyncTask(artifactoryRequest,
@@ -104,18 +104,17 @@ public class ArtifactoryResourceServiceImpl implements ArtifactoryResourceServic
   }
 
   @Override
-  public ArtifactoryBuildDetailsDTO getSuccessfulBuild(IdentifierRef artifactoryConnectorRef, String repository,
-      String imagePath, String repositoryFormat, String dockerRepositoryServer,
+  public ArtifactoryBuildDetailsDTO getSuccessfulBuild(IdentifierRef artifactoryConnectorRef, String repositoryName,
+      String imagePath, String repositoryFormat, String artifactRepositoryUrl,
       ArtifactoryRequestDTO artifactoryRequestDTO, String orgIdentifier, String projectIdentifier) {
     ArtifactoryConnectorDTO connector = getConnector(artifactoryConnectorRef);
     BaseNGAccess baseNGAccess =
         getBaseNGAccess(artifactoryConnectorRef.getAccountIdentifier(), orgIdentifier, projectIdentifier);
     List<EncryptedDataDetail> encryptionDetails = getEncryptionDetails(connector, baseNGAccess);
     ArtifactoryArtifactDelegateRequest artifactoryRequest =
-        ArtifactDelegateRequestUtils.getArtifactoryArtifactDelegateRequest(repository, imagePath, repositoryFormat,
-            dockerRepositoryServer, artifactoryRequestDTO.getTag(), artifactoryRequestDTO.getTagRegex(),
-            artifactoryRequestDTO.getTagsList(), null, connector, encryptionDetails,
-            ArtifactSourceType.ARTIFACTORY_REGISTRY);
+        ArtifactDelegateRequestUtils.getArtifactoryArtifactDelegateRequest(repositoryName, imagePath, repositoryFormat,
+            artifactRepositoryUrl, artifactoryRequestDTO.getTag(), artifactoryRequestDTO.getTagRegex(), null, connector,
+            encryptionDetails, ArtifactSourceType.ARTIFACTORY_REGISTRY);
     ArtifactTaskExecutionResponse artifactTaskExecutionResponse =
         executeSyncTask(artifactoryRequest, ArtifactTaskType.GET_LAST_SUCCESSFUL_BUILD, baseNGAccess,
             "Artifactory Get last successful build task failure due to error");
@@ -135,7 +134,7 @@ public class ArtifactoryResourceServiceImpl implements ArtifactoryResourceServic
     List<EncryptedDataDetail> encryptionDetails = getEncryptionDetails(connector, baseNGAccess);
     ArtifactoryArtifactDelegateRequest artifactoryRequest =
         ArtifactDelegateRequestUtils.getArtifactoryArtifactDelegateRequest(null, null, null, null, null, null, null,
-            null, connector, encryptionDetails, ArtifactSourceType.ARTIFACTORY_REGISTRY);
+            connector, encryptionDetails, ArtifactSourceType.ARTIFACTORY_REGISTRY);
     ArtifactTaskExecutionResponse artifactTaskExecutionResponse =
         executeSyncTask(artifactoryRequest, ArtifactTaskType.VALIDATE_ARTIFACT_SERVER, baseNGAccess,
             "Artifactory validate artifact server task failure due to error");

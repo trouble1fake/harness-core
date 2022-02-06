@@ -119,8 +119,7 @@ public class ArtifactUtils {
             ecrArtifactConfig.getConnectorRef().getValue());
       case NEXUS_REGISTRY:
         NexusRegistryArtifactConfig nexusRegistryArtifactConfig = (NexusRegistryArtifactConfig) artifactConfig;
-        return String.format(placeholder, sourceType, nexusRegistryArtifactConfig.getRepository().getValue(),
-            nexusRegistryArtifactConfig.getImagePath().getValue(),
+        return String.format(placeholder, sourceType, nexusRegistryArtifactConfig.getImagePath().getValue(),
             nexusRegistryArtifactConfig.getTag().getValue() != null
                 ? nexusRegistryArtifactConfig.getTag().getValue()
                 : nexusRegistryArtifactConfig.getTagRegex().getValue(),

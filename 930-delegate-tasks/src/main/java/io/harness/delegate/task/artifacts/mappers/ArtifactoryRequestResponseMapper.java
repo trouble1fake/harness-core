@@ -16,16 +16,12 @@ import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegat
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateResponse;
 import io.harness.utils.FieldWithPlainTextOrSecretValueHelper;
 
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class ArtifactoryRequestResponseMapper {
   public ArtifactoryConfigRequest toArtifactoryInternalConfig(ArtifactoryArtifactDelegateRequest request) {
-    String password = "";
+    char[] password = "".toCharArray();
     String username = "";
     boolean hasCredentials = false;
     if (request.getArtifactoryConnectorDTO().getAuth() != null
@@ -34,7 +30,7 @@ public class ArtifactoryRequestResponseMapper {
           (ArtifactoryUsernamePasswordAuthDTO) request.getArtifactoryConnectorDTO().getAuth().getCredentials();
       if (credentials.getPasswordRef() != null) {
         password = EmptyPredicate.isNotEmpty(credentials.getPasswordRef().getDecryptedValue())
-            ? new String(credentials.getPasswordRef().getDecryptedValue())
+            ? credentials.getPasswordRef().getDecryptedValue()
             : null;
       }
       username = FieldWithPlainTextOrSecretValueHelper.getSecretAsStringFromPlainTextOrSecretRef(
@@ -44,9 +40,9 @@ public class ArtifactoryRequestResponseMapper {
     return ArtifactoryConfigRequest.builder()
         .artifactoryUrl(request.getArtifactoryConnectorDTO().getArtifactoryServerUrl())
         .username(username)
-        .password(password.toCharArray())
+        .password(password)
         .hasCredentials(hasCredentials)
-        .artifactoryDockerRepositoryServer(request.getDockerRepositoryServer())
+        .artifactRepositoryUrl(request.getArtifactRepositoryUrl())
         .build();
   }
 
@@ -58,18 +54,5 @@ public class ArtifactoryRequestResponseMapper {
         .tag(buildDetailsInternal.getNumber())
         .sourceType(ArtifactSourceType.ARTIFACTORY_REGISTRY)
         .build();
-  }
-
-  public List<ArtifactoryArtifactDelegateResponse> toArtifactoryResponse(
-      List<Map<String, String>> labelsList, ArtifactoryArtifactDelegateRequest request) {
-    return IntStream.range(0, request.getTagsList().size())
-        .mapToObj(i
-            -> ArtifactoryArtifactDelegateResponse.builder()
-                   .buildDetails(
-                       ArtifactBuildDetailsMapper.toBuildDetailsNG(labelsList.get(i), request.getTagsList().get(i)))
-                   .imagePath(request.getImagePath())
-                   .sourceType(ArtifactSourceType.ARTIFACTORY_REGISTRY)
-                   .build())
-        .collect(Collectors.toList());
   }
 }

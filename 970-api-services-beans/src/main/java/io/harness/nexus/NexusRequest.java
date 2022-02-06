@@ -26,5 +26,5 @@ public class NexusRequest {
   char[] password;
   boolean hasCredentials;
   boolean isCertValidationRequired;
-  String dockerRepositoryServer;
+  String artifactRepositoryUrl;
 }

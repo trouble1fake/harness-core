@@ -203,7 +203,7 @@ public class ArtifactoryClientImpl {
 
         String tagUrl = getBaseUrl(artifactoryConfig) + repositoryName + "/" + imageName + "/";
         String repoName = ArtifactUtilities.getArtifactoryRepositoryName(artifactoryConfig.getArtifactoryUrl(),
-            artifactoryConfig.getArtifactoryDockerRepositoryServer(), repositoryName, imageName);
+            artifactoryConfig.getArtifactRepositoryUrl(), repositoryName, imageName);
         buildDetailsInternals = tags.stream()
                                     .map(tag -> {
                                       Map<String, String> metadata = new HashMap();

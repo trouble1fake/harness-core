@@ -46,7 +46,7 @@ public class NexusRegistryServiceImpl implements NexusRegistryService {
   @Inject NexusClientImpl nexusClient;
 
   @Override
-  public List<BuildDetailsInternal> getBuilds(NexusRequest nexusConfig, String repositoryName, Integer port,
+  public List<BuildDetailsInternal> getBuilds(NexusRequest nexusConfig, String repositoryName, String port,
       String imageName, String repoFormat, int maxNumberOfBuilds) {
     List<BuildDetailsInternal> buildDetails;
     try {
@@ -61,7 +61,7 @@ public class NexusRegistryServiceImpl implements NexusRegistryService {
     return buildDetails.stream().sorted(new BuildDetailsInternalComparatorAscending()).collect(toList());
   }
 
-  private List<BuildDetailsInternal> getBuildDetails(NexusRequest nexusConfig, String repository, Integer port,
+  private List<BuildDetailsInternal> getBuildDetails(NexusRequest nexusConfig, String repository, String port,
       String imageName, String repositoryFormat, String tag) throws IOException {
     List<BuildDetailsInternal> buildDetails;
     try {
@@ -77,7 +77,7 @@ public class NexusRegistryServiceImpl implements NexusRegistryService {
   }
 
   @Override
-  public BuildDetailsInternal getLastSuccessfulBuildFromRegex(NexusRequest nexusConfig, String repository, Integer port,
+  public BuildDetailsInternal getLastSuccessfulBuildFromRegex(NexusRequest nexusConfig, String repository, String port,
       String imageName, String repositoryFormat, String tagRegex) {
     List<BuildDetailsInternal> builds =
         getBuilds(nexusConfig, repository, port, imageName, repositoryFormat, MAX_NUMBER_OF_BUILDS);
@@ -97,7 +97,7 @@ public class NexusRegistryServiceImpl implements NexusRegistryService {
   }
 
   @Override
-  public BuildDetailsInternal verifyBuildNumber(NexusRequest nexusConfig, String repository, Integer port,
+  public BuildDetailsInternal verifyBuildNumber(NexusRequest nexusConfig, String repository, String port,
       String imageName, String repositoryFormat, String tag) {
     return getBuildNumber(nexusConfig, repository, port, imageName, repositoryFormat, tag);
   }
@@ -107,7 +107,7 @@ public class NexusRegistryServiceImpl implements NexusRegistryService {
     return nexusClient.isRunning(nexusConfig);
   }
 
-  private BuildDetailsInternal getBuildNumber(NexusRequest nexusConfig, String repository, Integer port,
+  private BuildDetailsInternal getBuildNumber(NexusRequest nexusConfig, String repository, String port,
       String imageName, String repositoryFormat, String tag) {
     try {
       List<BuildDetailsInternal> builds =

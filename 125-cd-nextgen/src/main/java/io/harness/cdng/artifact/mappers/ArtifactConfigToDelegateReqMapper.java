@@ -81,14 +81,13 @@ public class ArtifactConfigToDelegateReqMapper {
     if (EmptyPredicate.isEmpty(tag) && EmptyPredicate.isEmpty(tagRegex)) {
       tagRegex = "\\*";
     }
-    Integer port = artifactConfig.getRepositoryPort() != null ? artifactConfig.getRepositoryPort().getValue() : null;
-    String dockerRepositoryServer = artifactConfig.getDockerRepositoryServer() != null
-        ? artifactConfig.getDockerRepositoryServer().getValue()
-        : null;
+    String port = artifactConfig.getRepositoryPort() != null ? artifactConfig.getRepositoryPort().getValue() : null;
+    String artifactRepositoryUrl =
+        artifactConfig.getArtifactRepositoryUrl() != null ? artifactConfig.getArtifactRepositoryUrl().getValue() : null;
 
     return ArtifactDelegateRequestUtils.getNexusArtifactDelegateRequest(artifactConfig.getRepository().getValue(), port,
         artifactConfig.getImagePath().getValue(), artifactConfig.getRepositoryFormat().getValue(),
-        dockerRepositoryServer, tag, tagRegex, null, connectorRef, nexusConnectorDTO, encryptedDataDetails,
+        artifactRepositoryUrl, tag, tagRegex, connectorRef, nexusConnectorDTO, encryptedDataDetails,
         ArtifactSourceType.NEXUS_REGISTRY);
   }
 
@@ -102,13 +101,12 @@ public class ArtifactConfigToDelegateReqMapper {
       tagRegex = "\\*";
     }
 
-    String dockerRepositoryServer = artifactConfig.getDockerRepositoryServer() != null
-        ? artifactConfig.getDockerRepositoryServer().getValue()
-        : null;
+    String artifactRepositoryUrl =
+        artifactConfig.getArtifactRepositoryUrl() != null ? artifactConfig.getArtifactRepositoryUrl().getValue() : null;
 
     return ArtifactDelegateRequestUtils.getArtifactoryArtifactDelegateRequest(artifactConfig.getRepository().getValue(),
         artifactConfig.getImagePath().getValue(), artifactConfig.getRepositoryFormat().getValue(),
-        dockerRepositoryServer, tag, tagRegex, null, connectorRef, artifactoryConnectorDTO, encryptedDataDetails,
+        artifactRepositoryUrl, tag, tagRegex, connectorRef, artifactoryConnectorDTO, encryptedDataDetails,
         ArtifactSourceType.ARTIFACTORY_REGISTRY);
   }
 }

@@ -8,7 +8,6 @@
 package io.harness.cdng.artifact.resources.artifactory.service;
 
 import static io.harness.rule.OwnerRule.MLUKIC;
-import static io.harness.rule.OwnerRule.SAHIL;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
@@ -24,22 +23,14 @@ import io.harness.category.element.UnitTests;
 import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryBuildDetailsDTO;
 import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryRequestDTO;
 import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryResponseDTO;
-import io.harness.cdng.artifact.resources.docker.dtos.DockerBuildDetailsDTO;
-import io.harness.cdng.artifact.resources.docker.dtos.DockerRequestDTO;
-import io.harness.cdng.artifact.resources.docker.dtos.DockerResponseDTO;
-import io.harness.cdng.artifact.resources.docker.service.DockerResourceServiceImpl;
-import io.harness.cdng.artifact.resources.nexus.dtos.NexusRequestDTO;
 import io.harness.connector.ConnectorInfoDTO;
 import io.harness.connector.ConnectorResponseDTO;
 import io.harness.connector.services.ConnectorService;
 import io.harness.delegate.beans.connector.ConnectorType;
 import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryAuthenticationDTO;
 import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryConnectorDTO;
-import io.harness.delegate.beans.connector.docker.DockerAuthenticationDTO;
-import io.harness.delegate.beans.connector.docker.DockerConnectorDTO;
 import io.harness.delegate.task.artifacts.ArtifactTaskType;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateResponse;
-import io.harness.delegate.task.artifacts.docker.DockerArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.request.ArtifactTaskParameters;
 import io.harness.delegate.task.artifacts.response.ArtifactBuildDetailsNG;
 import io.harness.delegate.task.artifacts.response.ArtifactTaskExecutionResponse;

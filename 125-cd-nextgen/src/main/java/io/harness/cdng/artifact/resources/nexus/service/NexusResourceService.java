@@ -13,13 +13,13 @@ import io.harness.cdng.artifact.resources.nexus.dtos.NexusRequestDTO;
 import io.harness.cdng.artifact.resources.nexus.dtos.NexusResponseDTO;
 
 public interface NexusResourceService {
-  NexusResponseDTO getBuildDetails(IdentifierRef nexusConnectorRef, String repositoryName, Integer repositoryPort,
-      String imagePath, String repositoryFormat, String dockerRepositoryServer, String orgIdentifier,
+  NexusResponseDTO getBuildDetails(IdentifierRef nexusConnectorRef, String repositoryName, String repositoryPort,
+      String imagePath, String repositoryFormat, String artifactRepositoryUrl, String orgIdentifier,
       String projectIdentifier);
 
-  NexusBuildDetailsDTO getSuccessfulBuild(IdentifierRef nexusConnectorRef, String repositoryName,
-      Integer repositoryPort, String imagePath, String repositoryFormat, String dockerRepositoryServer,
-      NexusRequestDTO nexusRequestDTO, String orgIdentifier, String projectIdentifier);
+  NexusBuildDetailsDTO getSuccessfulBuild(IdentifierRef nexusConnectorRef, String repositoryName, String repositoryPort,
+      String imagePath, String repositoryFormat, String artifactRepositoryUrl, NexusRequestDTO nexusRequestDTO,
+      String orgIdentifier, String projectIdentifier);
 
   boolean validateArtifactServer(IdentifierRef nexusConnectorRef, String orgIdentifier, String projectIdentifier);
 }
