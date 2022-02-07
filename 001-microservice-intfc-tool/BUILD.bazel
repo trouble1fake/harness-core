@@ -157,8 +157,8 @@ java_binary(
         "//980-commons:module",
         "//999-annotations:module",
         "//access-control/contracts:module",
-        "//access-control/service/70-capsule:module",
-        "//access-control/service/80-aggregator:module",
-        "//access-control/service/90-core:module",
+        "//access-control/service:module",
+        "//access-control/libraries/80-aggregator:module",
+        "//access-control/libraries/90-core:module",
     ],
 )

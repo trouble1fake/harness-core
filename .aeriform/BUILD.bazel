@@ -522,14 +522,14 @@ aeriform("//999-annotations:module")
 
 aeriform("//access-control/contracts:module")
 
-aeriform("//access-control/service/70-capsule:module")
+aeriform("//access-control/service:module")
 
-aeriform("//access-control/service/70-capsule:tests")
+aeriform("//access-control/service:tests")
 
-aeriform("//access-control/service/80-aggregator:module")
+aeriform("//access-control/libraries/80-aggregator:module")
 
-aeriform("//access-control/service/80-aggregator:tests")
+aeriform("//access-control/libraries/80-aggregator:tests")
 
-aeriform("//access-control/service/90-core:module")
+aeriform("//access-control/libraries/90-core:module")
 
-aeriform("//access-control/service/90-core:tests")
+aeriform("//access-control/libraries/90-core:tests")

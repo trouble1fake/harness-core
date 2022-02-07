@@ -125,7 +125,6 @@ BAZEL_MODULES="\
   //940-feature-flag:module \
   //940-ng-audit-service:module \
   //940-notification-client:module \
-  //940-notification-client:module \
   //940-notification-client:module_deploy.jar \
   //940-resource-group-beans:module \
   //940-secret-manager-client:module \
@@ -194,9 +193,9 @@ BAZEL_MODULES="\
   //979-recaster:module \
   //990-commons-test:module \
   //999-annotations:module \
-  //access-control/service/70-capsule:module \
-  //access-control/service/80-aggregator:module \
-  //access-control/service/90-core:module \
+  //access-control/service:module \
+  //access-control/libraries/80-aggregator:module \
+  //access-control/libraries/90-core:module \
   //access-control/contracts:module \
   //product/ci/engine/proto:all \
   //product/ci/scm/proto:all \
