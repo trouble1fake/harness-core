@@ -32,6 +32,8 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.PlanExecution;
 import io.harness.generator.OrchestrationAdjacencyListGenerator;
+import io.harness.lock.AcquiredLock;
+import io.harness.lock.redis.RedisPersistentLocker;
 import io.harness.plan.NodeType;
 import io.harness.pms.contracts.execution.events.OrchestrationEventType;
 import io.harness.pms.execution.utils.StatusUtils;
@@ -45,6 +47,7 @@ import io.harness.springdata.TransactionHelper;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -70,15 +73,26 @@ public class GraphGenerationServiceImpl implements GraphGenerationService {
   @Inject private StepDetailsUpdateEventHandler stepDetailsUpdateEventHandler;
   @Inject private TransactionHelper transactionHelper;
   @Inject private PmsExecutionSummaryService pmsExecutionSummaryService;
+  @Inject private RedisPersistentLocker redisLocker;
 
   @Override
   public void updateGraph(String planExecutionId) {
-    transactionHelper.performTransactionWithoutRetry(() -> {
+    AcquiredLock lock;
+    String lockName = "GRAPH_LOCK_" + planExecutionId;
+    lock = this.redisLocker.tryToAcquireLock(lockName, Duration.ofSeconds(10));
+    if (lock == null) {
+      log.warn(String.format(
+          "[PMS_GRAPH_LOCK_TEST] Not able to take lock on graph generation for lockName - %s, returning early.",
+          lockName));
+      return;
+    }
+
+    try {
       long startTs = System.currentTimeMillis();
       Long lastUpdatedAt = mongoStore.getEntityUpdatedAt(
           OrchestrationGraph.ALGORITHM_ID, OrchestrationGraph.STRUCTURE_HASH, planExecutionId, null);
       if (lastUpdatedAt == null) {
-        return null;
+        return;
       }
       List<OrchestrationEventLog> unprocessedEventLogs =
           orchestrationEventLogRepository.findUnprocessedEvents(planExecutionId, lastUpdatedAt);
@@ -87,7 +101,7 @@ public class GraphGenerationServiceImpl implements GraphGenerationService {
         OrchestrationGraph orchestrationGraph = getCachedOrchestrationGraph(planExecutionId);
         if (orchestrationGraph == null) {
           log.warn("[PMS_GRAPH] Graph not yet generated. Passing on to next iteration");
-          return null;
+          return;
         }
         if (unprocessedEventLogs.size() > THRESHOLD_LOG) {
           log.warn("[PMS_GRAPH] Found [{}] unprocessed event logs", unprocessedEventLogs.size());
@@ -135,8 +149,9 @@ public class GraphGenerationServiceImpl implements GraphGenerationService {
         log.info("[PMS_GRAPH] Processing of [{}] orchestration event logs completed in [{}ms]",
             unprocessedEventLogs.size(), System.currentTimeMillis() - startTs);
       }
-      return null;
-    });
+    } finally {
+      redisLocker.destroy(lock);
+    }
   }
 
   @Override
