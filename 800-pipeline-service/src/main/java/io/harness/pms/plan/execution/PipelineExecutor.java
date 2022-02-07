@@ -51,7 +51,7 @@ public class PipelineExecutor {
   public PlanExecutionResponseDto runPipelineWithInputSetPipelineYaml(@NotNull String accountId,
       @NotNull String orgIdentifier, @NotNull String projectIdentifier, @NotNull String pipelineIdentifier,
       String moduleType, String runtimeInputYaml, boolean useV2) {
-    return startManualPlanExecution(accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, null, moduleType,
+    return startPlanExecution(accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, null, moduleType,
         runtimeInputYaml, Collections.emptyList(), Collections.emptyMap(), useV2);
   }
 
@@ -60,14 +60,14 @@ public class PipelineExecutor {
       String pipelineBranch, String pipelineRepoID) {
     String mergedRuntimeInputYaml = validateAndMergeHelper.getMergeInputSetFromPipelineTemplate(accountId,
         orgIdentifier, projectIdentifier, pipelineIdentifier, inputSetReferences, pipelineBranch, pipelineRepoID, null);
-    return startManualPlanExecution(accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, null, moduleType,
+    return startPlanExecution(accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, null, moduleType,
         mergedRuntimeInputYaml, Collections.emptyList(), Collections.emptyMap(), false);
   }
 
   public PlanExecutionResponseDto runStagesWithRuntimeInputYaml(@NotNull String accountId,
       @NotNull String orgIdentifier, @NotNull String projectIdentifier, @NotNull String pipelineIdentifier,
       String moduleType, RunStageRequestDTO runStageRequestDTO, boolean useV2) {
-    return startManualPlanExecution(accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, null, moduleType,
+    return startPlanExecution(accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, null, moduleType,
         runStageRequestDTO.getRuntimeInputYaml(), runStageRequestDTO.getStageIdentifiers(),
         runStageRequestDTO.getExpressionValues(), useV2);
   }
@@ -75,16 +75,16 @@ public class PipelineExecutor {
   public PlanExecutionResponseDto rerunStagesWithRuntimeInputYaml(@NotNull String accountId,
       @NotNull String orgIdentifier, @NotNull String projectIdentifier, @NotNull String pipelineIdentifier,
       String moduleType, String originalExecutionId, RunStageRequestDTO runStageRequestDTO, boolean useV2) {
-    return startManualPlanExecution(accountId, orgIdentifier, projectIdentifier, pipelineIdentifier,
-        originalExecutionId, moduleType, runStageRequestDTO.getRuntimeInputYaml(),
-        runStageRequestDTO.getStageIdentifiers(), runStageRequestDTO.getExpressionValues(), useV2);
+    return startPlanExecution(accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, originalExecutionId,
+        moduleType, runStageRequestDTO.getRuntimeInputYaml(), runStageRequestDTO.getStageIdentifiers(),
+        runStageRequestDTO.getExpressionValues(), useV2);
   }
 
   public PlanExecutionResponseDto rerunPipelineWithInputSetPipelineYaml(String accountId, String orgIdentifier,
       String projectIdentifier, String pipelineIdentifier, String moduleType, String originalExecutionId,
       String runtimeInputYaml, boolean useV2) {
-    return startManualPlanExecution(accountId, orgIdentifier, projectIdentifier, pipelineIdentifier,
-        originalExecutionId, moduleType, runtimeInputYaml, Collections.emptyList(), Collections.emptyMap(), useV2);
+    return startPlanExecution(accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, originalExecutionId,
+        moduleType, runtimeInputYaml, Collections.emptyList(), Collections.emptyMap(), useV2);
   }
 
   public PlanExecutionResponseDto rerunPipelineWithInputSetReferencesList(String accountId, String orgIdentifier,
@@ -92,14 +92,13 @@ public class PipelineExecutor {
       List<String> inputSetReferences, String pipelineBranch, String pipelineRepoID) {
     String mergedRuntimeInputYaml = validateAndMergeHelper.getMergeInputSetFromPipelineTemplate(accountId,
         orgIdentifier, projectIdentifier, pipelineIdentifier, inputSetReferences, pipelineBranch, pipelineRepoID, null);
-    return startManualPlanExecution(accountId, orgIdentifier, projectIdentifier, pipelineIdentifier,
-        originalExecutionId, moduleType, mergedRuntimeInputYaml, Collections.emptyList(), Collections.emptyMap(),
-        false);
+    return startPlanExecution(accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, originalExecutionId,
+        moduleType, mergedRuntimeInputYaml, Collections.emptyList(), Collections.emptyMap(), false);
   }
 
-  public PlanExecutionResponseDto startManualPlanExecution(String accountId, String orgIdentifier,
-      String projectIdentifier, String pipelineIdentifier, String originalExecutionId, String moduleType,
-      String runtimeInputYaml, List<String> stagesToRun, Map<String, String> expressionValues, boolean useV2) {
+  public PlanExecutionResponseDto startPlanExecution(String accountId, String orgIdentifier, String projectIdentifier,
+      String pipelineIdentifier, String originalExecutionId, String moduleType, String runtimeInputYaml,
+      List<String> stagesToRun, Map<String, String> expressionValues, boolean useV2) {
     return startPlanExecution(accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, originalExecutionId,
         moduleType, runtimeInputYaml, stagesToRun, expressionValues, useV2, null);
   }
