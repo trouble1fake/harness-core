@@ -7,6 +7,7 @@
 
 package io.harness.cvng.core.services.api;
 
+import static io.harness.cvng.core.services.impl.DatadogServiceImpl.MAX_METRIC_TAGS_COUNT;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.rule.OwnerRule.PAVIC;
 
@@ -37,6 +38,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -67,7 +69,6 @@ public class DatadogServiceImplTest extends CategoryTest {
               -> datadogDashboardMap.get("title").toString().toLowerCase().contains(FILTER.toLowerCase()))
           .collect(Collectors.toList());
 
-  private static final List<String> mockedMetricTags = Arrays.asList("tag1", "tag2", "tag3");
   private static final List<String> mockedActiveMetrics =
       Arrays.asList("activeMetric1", "activeMetric2", "activeMetric3");
 
@@ -137,13 +138,16 @@ public class DatadogServiceImplTest extends CategoryTest {
   @Owner(developers = PAVIC)
   @Category(UnitTests.class)
   public void testGetMetricTagsList() {
+    List<String> mockMetricTags = IntStream.range(0, 3000).mapToObj(String::valueOf).collect(Collectors.toList());
+
     when(mockedOnboardingService.getOnboardingResponse(eq(mockedProjectParams.getAccountIdentifier()), any()))
-        .thenReturn(OnboardingResponseDTO.builder().result(mockedMetricTags).build());
+        .thenReturn(OnboardingResponseDTO.builder().result(mockMetricTags).build());
 
     List<String> metricTags =
         classUnderTest.getMetricTagsList(mockedProjectParams, connectorIdentifier, MOCKED_METRIC_NAME, generateUuid());
 
-    testMetricsListRequest(DataCollectionRequestType.DATADOG_METRIC_TAGS, metricTags, mockedMetricTags);
+    testMetricsListRequest(DataCollectionRequestType.DATADOG_METRIC_TAGS, metricTags,
+        mockMetricTags.stream().limit(MAX_METRIC_TAGS_COUNT).collect(Collectors.toList()));
   }
 
   @Test

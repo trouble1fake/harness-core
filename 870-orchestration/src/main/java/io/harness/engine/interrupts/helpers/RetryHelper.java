@@ -127,7 +127,7 @@ public class RetryHelper {
         .endTs(null)
         .initialWaitDuration(null)
         .resolvedStepParameters(null)
-        .resolvedParams(null)
+        .resolvedParams(nodeExecution.getResolvedParams())
         .notifyId(nodeExecution.getNotifyId())
         .parentId(nodeExecution.getParentId())
         .nextId(nodeExecution.getNextId())

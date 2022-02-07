@@ -5,16 +5,20 @@ Var:header.put("Authorization", Var:headerVal)
 Var dashboardUrl = concat(Env:baseUrl, Env:path)
 Var responseList = []
 Var dashboardResponse = sync-call(url=Var:dashboardUrl, header=Var:header)
+
 Var widgets = extract(Var:dashboardResponse, $.gridLayout.widgets)
+Var widgetsWithMosiac = extract(Var:dashboardResponse, $.mosiacLayout.widgets)
 
 
-foreach widget in Var:widgets {
-  Var widgetName = extract(Var:widget, $.title)
-  Var dataset = extract(Var:widget, $.xyChart.dataSets)
-  Var dashMap = {}
-  Var:dashMap.put("widgetName", Var:widgetName)
-  Var:dashMap.put("dataSets", Var:dataset)
-  Var:responseList.append(Var:dashMap)
+if(widgets==null){
+    foreach widget in Var:widgets {
+      Var widgetName = extract(Var:widget, $.title)
+      Var dataset = extract(Var:widget, $.xyChart.dataSets)
+      Var dashMap = {}
+      Var:dashMap.put("widgetName", Var:widgetName)
+      Var:dashMap.put("dataSets", Var:dataset)
+      Var:responseList.append(Var:dashMap)
+    }
 }
 
 return Var:responseList

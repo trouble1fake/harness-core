@@ -70,7 +70,7 @@ import org.apache.commons.lang3.StringUtils;
       @ApiResponse(code = 400, response = FailureDTO.class, message = "Bad Request")
       , @ApiResponse(code = 500, response = ErrorDTO.class, message = "Internal server error")
     })
-@Tag(name = "acl", description = "This contains the APIs to perform access control checks")
+@Tag(name = "Access Control List", description = "This contains the APIs to perform access control checks")
 @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request",
     content =
     {

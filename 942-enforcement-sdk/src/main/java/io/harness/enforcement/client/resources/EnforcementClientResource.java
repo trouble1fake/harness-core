@@ -27,6 +27,7 @@ import com.google.inject.Inject;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -54,6 +55,7 @@ public class EnforcementClientResource {
   @PUT
   @Path("usage/{featureRestrictionName}")
   @InternalApi
+  @Operation(hidden = true)
   public ResponseDTO<FeatureRestrictionUsageDTO> getFeatureUsage(
       @NotNull @PathParam(FEATURE_RESTRICTION_NAME) FeatureRestrictionName featureRestrictionName,
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier String accountIdentifier,
@@ -72,6 +74,7 @@ public class EnforcementClientResource {
   @PUT
   @Path("custom/{featureRestrictionName}")
   @InternalApi
+  @Operation(hidden = true)
   public ResponseDTO<Boolean> evaluateCustomFeatureRestriction(
       @NotNull @PathParam(FEATURE_RESTRICTION_NAME) FeatureRestrictionName featureRestrictionName,
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier String accountIdentifier,

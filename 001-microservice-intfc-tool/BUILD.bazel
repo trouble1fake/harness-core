@@ -157,8 +157,8 @@ java_binary(
         "//970-rbac-core:module",
         "//970-telemetry-beans:module",
         "//970-watcher-beans:module",
+        "//979-recaster:module",
         "//980-commons:module",
-        "//980-recaster:module",
         "//999-annotations:module",
     ],
 )

@@ -17,7 +17,6 @@ import static io.harness.NGCommonEntityConstants.INTERNAL_SERVER_ERROR_MESSAGE;
 import static io.harness.NGCommonEntityConstants.ORG_PARAM_MESSAGE;
 import static io.harness.NGCommonEntityConstants.PROJECT_PARAM_MESSAGE;
 import static io.harness.annotations.dev.HarnessTeam.DX;
-import static io.harness.ng.core.rbac.ProjectPermissions.EDIT_PROJECT_PERMISSION;
 import static io.harness.ng.core.rbac.ProjectPermissions.VIEW_PROJECT_PERMISSION;
 
 import io.harness.NGCommonEntityConstants;
@@ -105,7 +104,7 @@ public class GitFullSyncResource {
   @Operation(operationId = "triggerFullSync", summary = "Triggers Full Sync",
       responses =
       { @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Successfully triggered Full Sync") })
-  @NGAccessControlCheck(resourceType = ResourceTypes.PROJECT, permission = EDIT_PROJECT_PERMISSION)
+  @NGAccessControlCheck(resourceType = ResourceTypes.PROJECT, permission = VIEW_PROJECT_PERMISSION)
   public ResponseDTO<TriggerFullSyncResponseDTO>
   triggerFullSync(@Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY)
                   @NotNull @io.harness.accesscontrol.AccountIdentifier String accountIdentifier,
@@ -126,7 +125,7 @@ public class GitFullSyncResource {
         @io.swagger.v3.oas.annotations.responses.
         ApiResponse(description = "Returns the configuration back along with the scope information")
       })
-  @NGAccessControlCheck(resourceType = ResourceTypes.PROJECT, permission = EDIT_PROJECT_PERMISSION)
+  @NGAccessControlCheck(resourceType = ResourceTypes.PROJECT, permission = VIEW_PROJECT_PERMISSION)
   public ResponseDTO<GitFullSyncConfigDTO>
   createFullSyncConfig(
       @Parameter(description = ACCOUNT_PARAM_MESSAGE) @NotNull @QueryParam(
@@ -149,7 +148,7 @@ public class GitFullSyncResource {
         @io.swagger.v3.oas.annotations.responses.
         ApiResponse(description = "Returns the configuration back along with the scope information")
       })
-  @NGAccessControlCheck(resourceType = ResourceTypes.PROJECT, permission = EDIT_PROJECT_PERMISSION)
+  @NGAccessControlCheck(resourceType = ResourceTypes.PROJECT, permission = VIEW_PROJECT_PERMISSION)
   public ResponseDTO<GitFullSyncConfigDTO>
   updateFullSyncConfig(
       @Parameter(description = ACCOUNT_PARAM_MESSAGE) @NotNull @QueryParam(

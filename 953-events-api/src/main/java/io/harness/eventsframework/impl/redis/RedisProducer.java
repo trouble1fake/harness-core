@@ -101,7 +101,8 @@ public class RedisProducer extends AbstractProducer {
     StreamMessageId messageId = stream.addAll(redisData, maxTopicSize, false);
     addMonitoring(message);
     redisData.remove(REDIS_STREAM_INTERNAL_KEY);
-    log.info("Events framework message inserted - messageId: {}, metaData: {}", messageId, redisData);
+    log.info("Events framework message inserted - messageId: {}, metaData: {} in the topic: {}", messageId, redisData,
+        this.getTopicName());
     return messageId.toString();
   }
 
