@@ -48,7 +48,7 @@ import org.mongodb.morphia.query.UpdateOperations;
 @ValidateOnExecution
 @OwnedBy(HarnessTeam.DEL)
 public class DelegateNgTokenServiceImpl implements DelegateNgTokenService, AccountCrudObserver {
-  private static final String DEFAULT_TOKEN_NAME = "default_ng";
+  private static final String DEFAULT_TOKEN_NAME = "default_token";
   private final HPersistence persistence;
   private final OutboxService outboxService;
 
