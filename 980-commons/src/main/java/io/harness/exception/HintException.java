@@ -36,7 +36,11 @@ public class HintException extends WingsException {
   public static final String HINT_DOCKER_HUB_IMAGE_NAME =
       "Check if the Docker image you are looking for is in the Docker registry.";
   public static final String HINT_DOCKER_HUB_ACCESS_DENIED = "Please ensure DockerHub credentials are valid";
+  public static final String HINT_NEXUS_IMAGE_NAME =
+      "Check if the Docker image you are looking for is in the Nexus registry.";
   public static final String HINT_NEXUS_ACCESS_DENIED = "Please ensure Nexus credentials are valid";
+  public static final String HINT_ARTIFACTORY_IMAGE_NAME =
+      "Check if the Docker image you are looking for is in the Artifactory registry.";
   public static final String HINT_ARTIFACTORY_ACCESS_DENIED = "Please ensure Artifactory credentials are valid";
   public static final String HINT_AWS_SM_ACCESS_DENIED = "Please ensure AWS Secret Manager credentials are valid";
   public static final String HINT_AWS_KMS_ACCESS_DENIED = "Please ensure AWS KMS secret key and accessKey are valid";
@@ -62,6 +66,14 @@ public class HintException extends WingsException {
       "Please check if tag is available. Refer https://docs.docker.com/engine/reference/commandline/images/#list-images-by-name-and-tag for more information";
   public static final String HINT_INVALID_IMAGE_REFER_LINK_DOCKER_HUB =
       "Please check if image is available. Refer https://docs.docker.com/engine/reference/commandline/images/#list-images-by-name-and-tag for more information";
+  public static final String HINT_INVALID_TAG_REFER_LINK_NEXUS_REGISTRY =
+      "Please check if tag is available. Refer https://help.sonatype.com/repomanager3/integrations/rest-and-integration-api/components-api for more information";
+  public static final String HINT_INVALID_IMAGE_REFER_LINK_NEXUS_REGISTRY =
+      "Please check if image is available. Refer https://help.sonatype.com/repomanager3/integrations/rest-and-integration-api/components-api for more information";
+  public static final String HINT_INVALID_TAG_REFER_LINK_ARTIFACTORY_REGISTRY =
+      "Please check if tag is available. Refer https://www.jfrog.com/confluence/display/JFROG/Artifactory+REST+API#ArtifactoryRESTAPI- for more information";
+  public static final String HINT_INVALID_IMAGE_REFER_LINK_ARTIFACTORY_REGISTRY =
+      "Please check if image is available. Refer https://www.jfrog.com/confluence/display/JFROG/Artifactory+REST+API#ArtifactoryRESTAPI-ListDockerTags for more information";
   public static final String HINT_INVALID_CONNECTOR =
       "Please ensure that connector %s is valid and using the correct Credentials.";
   public static final String DELEGATE_NOT_AVAILABLE =

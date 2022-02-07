@@ -24,6 +24,7 @@ import io.harness.delegate.task.artifacts.ArtifactSourceType;
 import io.harness.exception.InvalidRequestException;
 import io.harness.logging.LogCallback;
 import io.harness.logstreaming.NGLogCallback;
+import io.harness.pms.yaml.ParameterField;
 
 import com.google.common.hash.Hashing;
 import java.nio.charset.StandardCharsets;
@@ -120,7 +121,7 @@ public class ArtifactUtils {
       case NEXUS_REGISTRY:
         NexusRegistryArtifactConfig nexusRegistryArtifactConfig = (NexusRegistryArtifactConfig) artifactConfig;
         return String.format(placeholder, sourceType, nexusRegistryArtifactConfig.getImagePath().getValue(),
-            nexusRegistryArtifactConfig.getTag().getValue() != null
+            ParameterField.isNull(nexusRegistryArtifactConfig.getTag())
                 ? nexusRegistryArtifactConfig.getTag().getValue()
                 : nexusRegistryArtifactConfig.getTagRegex().getValue(),
             nexusRegistryArtifactConfig.getConnectorRef().getValue());
@@ -128,7 +129,7 @@ public class ArtifactUtils {
         ArtifactoryRegistryArtifactConfig artifactoryRegistryArtifactConfig =
             (ArtifactoryRegistryArtifactConfig) artifactConfig;
         return String.format(placeholder, sourceType, artifactoryRegistryArtifactConfig.getImagePath().getValue(),
-            artifactoryRegistryArtifactConfig.getTag().getValue() != null
+            ParameterField.isNull(artifactoryRegistryArtifactConfig.getTag())
                 ? artifactoryRegistryArtifactConfig.getTag().getValue()
                 : artifactoryRegistryArtifactConfig.getTagRegex().getValue(),
             artifactoryRegistryArtifactConfig.getConnectorRef().getValue());

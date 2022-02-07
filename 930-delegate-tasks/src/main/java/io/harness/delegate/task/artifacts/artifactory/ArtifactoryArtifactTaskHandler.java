@@ -7,6 +7,8 @@
 
 package io.harness.delegate.task.artifacts.artifactory;
 
+import io.harness.annotations.dev.HarnessTeam;
+import io.harness.annotations.dev.OwnedBy;
 import io.harness.artifactory.service.ArtifactoryRegistryService;
 import io.harness.artifacts.beans.BuildDetailsInternal;
 import io.harness.artifacts.comparator.BuildDetailsInternalComparatorDescending;
@@ -26,6 +28,7 @@ import lombok.AllArgsConstructor;
 
 @Singleton
 @AllArgsConstructor(access = AccessLevel.PACKAGE, onConstructor = @__({ @Inject }))
+@OwnedBy(HarnessTeam.CDP)
 public class ArtifactoryArtifactTaskHandler extends DelegateArtifactTaskHandler<ArtifactoryArtifactDelegateRequest> {
   private final ArtifactoryRegistryService artifactoryRegistryService;
   private final SecretDecryptionService secretDecryptionService;

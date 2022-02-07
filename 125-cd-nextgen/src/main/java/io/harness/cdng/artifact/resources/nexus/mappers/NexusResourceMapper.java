@@ -7,6 +7,8 @@
 
 package io.harness.cdng.artifact.resources.nexus.mappers;
 
+import io.harness.annotations.dev.HarnessTeam;
+import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.artifact.resources.nexus.dtos.NexusBuildDetailsDTO;
 import io.harness.cdng.artifact.resources.nexus.dtos.NexusResponseDTO;
 import io.harness.delegate.task.artifacts.nexus.NexusArtifactDelegateResponse;
@@ -17,6 +19,7 @@ import java.util.stream.Collectors;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
+@OwnedBy(HarnessTeam.CDP)
 public class NexusResourceMapper {
   public NexusResponseDTO toNexusResponse(List<NexusArtifactDelegateResponse> nexusArtifactDelegateResponseList) {
     List<NexusBuildDetailsDTO> detailsDTOList =

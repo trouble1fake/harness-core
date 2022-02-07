@@ -12,6 +12,8 @@ import static io.harness.rule.OwnerRule.MLUKIC;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.harness.CategoryTest;
+import io.harness.annotations.dev.HarnessTeam;
+import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.cdng.artifact.resources.nexus.dtos.NexusBuildDetailsDTO;
 import io.harness.cdng.artifact.resources.nexus.dtos.NexusResponseDTO;
@@ -24,6 +26,7 @@ import java.util.List;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+@OwnedBy(HarnessTeam.CDP)
 public class NexusResourceMapperTest extends CategoryTest {
   @Test
   @Owner(developers = MLUKIC)

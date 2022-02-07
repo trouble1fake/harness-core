@@ -7,6 +7,8 @@
 
 package io.harness.delegate.task.artifacts.nexus;
 
+import io.harness.annotations.dev.HarnessTeam;
+import io.harness.annotations.dev.OwnedBy;
 import io.harness.artifacts.beans.BuildDetailsInternal;
 import io.harness.artifacts.comparator.BuildDetailsInternalComparatorDescending;
 import io.harness.data.structure.EmptyPredicate;
@@ -26,6 +28,7 @@ import lombok.AllArgsConstructor;
 
 @Singleton
 @AllArgsConstructor(access = AccessLevel.PACKAGE, onConstructor = @__({ @Inject }))
+@OwnedBy(HarnessTeam.CDP)
 public class NexusArtifactTaskHandler extends DelegateArtifactTaskHandler<NexusArtifactDelegateRequest> {
   private final NexusRegistryService nexusRegistryService;
   private final SecretDecryptionService secretDecryptionService;

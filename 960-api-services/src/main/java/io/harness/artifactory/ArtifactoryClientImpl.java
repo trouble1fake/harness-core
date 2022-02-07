@@ -235,7 +235,8 @@ public class ArtifactoryClientImpl {
           "Check Artifactory artifact configuration",
           new InvalidArtifactServerException("Failed to fetch the image tags", WingsException.USER));
     }
-    return buildDetailsInternals.stream().sorted(new BuildDetailsInternalComparatorAscending()).collect(toList());
+    buildDetailsInternals.sort(new BuildDetailsInternalComparatorAscending());
+    return buildDetailsInternals;
   }
 
   @Data

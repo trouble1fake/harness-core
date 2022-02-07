@@ -7,6 +7,9 @@
 
 package io.harness.delegate.beans.artifact;
 
+import io.harness.annotations.dev.HarnessTeam;
+import io.harness.annotations.dev.OwnedBy;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,6 +19,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@OwnedBy(HarnessTeam.CDP)
 public class ArtifactFileMetadataInternal {
   private String fileName;
   private String url;

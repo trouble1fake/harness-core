@@ -7,6 +7,8 @@
 
 package io.harness.cdng.artifact.resources.artifactory.mappers;
 
+import io.harness.annotations.dev.HarnessTeam;
+import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryBuildDetailsDTO;
 import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryResponseDTO;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateResponse;
@@ -17,6 +19,7 @@ import java.util.stream.Collectors;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
+@OwnedBy(HarnessTeam.CDP)
 public class ArtifactoryResourceMapper {
   public ArtifactoryResponseDTO toArtifactoryResponse(
       List<ArtifactoryArtifactDelegateResponse> artifactoryArtifactDelegateResponseList) {

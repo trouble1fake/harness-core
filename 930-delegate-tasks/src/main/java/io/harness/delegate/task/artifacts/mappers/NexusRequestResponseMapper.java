@@ -7,6 +7,8 @@
 
 package io.harness.delegate.task.artifacts.mappers;
 
+import io.harness.annotations.dev.HarnessTeam;
+import io.harness.annotations.dev.OwnedBy;
 import io.harness.artifacts.beans.BuildDetailsInternal;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.beans.connector.nexusconnector.NexusUsernamePasswordAuthDTO;
@@ -19,10 +21,11 @@ import io.harness.utils.FieldWithPlainTextOrSecretValueHelper;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
+@OwnedBy(HarnessTeam.CDP)
 public class NexusRequestResponseMapper {
   public NexusRequest toNexusInternalConfig(NexusArtifactDelegateRequest request) {
-    String password = "";
-    String username = "";
+    char[] password = null;
+    String username = null;
     boolean hasCredentials = false;
     if (request.getNexusConnectorDTO().getAuth() != null
         && request.getNexusConnectorDTO().getAuth().getCredentials() != null) {
@@ -30,7 +33,7 @@ public class NexusRequestResponseMapper {
           (NexusUsernamePasswordAuthDTO) request.getNexusConnectorDTO().getAuth().getCredentials();
       if (credentials.getPasswordRef() != null) {
         password = EmptyPredicate.isNotEmpty(credentials.getPasswordRef().getDecryptedValue())
-            ? new String(credentials.getPasswordRef().getDecryptedValue())
+            ? credentials.getPasswordRef().getDecryptedValue()
             : null;
       }
       username = FieldWithPlainTextOrSecretValueHelper.getSecretAsStringFromPlainTextOrSecretRef(
@@ -40,7 +43,7 @@ public class NexusRequestResponseMapper {
     return NexusRequest.builder()
         .nexusUrl(request.getNexusConnectorDTO().getNexusServerUrl())
         .username(username)
-        .password(password.toCharArray())
+        .password(password)
         .version(request.getNexusConnectorDTO().getVersion())
         .hasCredentials(hasCredentials)
         .artifactRepositoryUrl(request.getArtifactRepositoryUrl())

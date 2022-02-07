@@ -9,6 +9,9 @@ package io.harness.cdng.artifact.resources.artifactory.dtos;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
+import io.harness.annotations.dev.HarnessTeam;
+import io.harness.annotations.dev.OwnedBy;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -23,6 +26,7 @@ import lombok.experimental.FieldDefaults;
 @JsonInclude(NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "Contains image artifact filter details")
+@OwnedBy(HarnessTeam.CDP)
 public class ArtifactoryRequestDTO {
   @Schema(description = "Image tag for finding the artifact") String tag;
   @Schema(description = "Image tag regex value for finding the artifact") String tagRegex;

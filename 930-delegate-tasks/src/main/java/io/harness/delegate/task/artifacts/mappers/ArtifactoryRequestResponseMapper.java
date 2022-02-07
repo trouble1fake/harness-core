@@ -7,6 +7,8 @@
 
 package io.harness.delegate.task.artifacts.mappers;
 
+import io.harness.annotations.dev.HarnessTeam;
+import io.harness.annotations.dev.OwnedBy;
 import io.harness.artifactory.ArtifactoryConfigRequest;
 import io.harness.artifacts.beans.BuildDetailsInternal;
 import io.harness.data.structure.EmptyPredicate;
@@ -19,10 +21,11 @@ import io.harness.utils.FieldWithPlainTextOrSecretValueHelper;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
+@OwnedBy(HarnessTeam.CDP)
 public class ArtifactoryRequestResponseMapper {
   public ArtifactoryConfigRequest toArtifactoryInternalConfig(ArtifactoryArtifactDelegateRequest request) {
-    char[] password = "".toCharArray();
-    String username = "";
+    char[] password = null;
+    String username = null;
     boolean hasCredentials = false;
     if (request.getArtifactoryConnectorDTO().getAuth() != null
         && request.getArtifactoryConnectorDTO().getAuth().getCredentials() != null) {

@@ -7,6 +7,9 @@
 
 package io.harness.cdng.artifact.resources.nexus.dtos;
 
+import io.harness.annotations.dev.HarnessTeam;
+import io.harness.annotations.dev.OwnedBy;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Map;
@@ -20,6 +23,7 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "This contains details regarding Nexus artifact")
+@OwnedBy(HarnessTeam.CDP)
 public class NexusBuildDetailsDTO {
   @Schema(description = "This is the artifact tag value") String tag;
   @Schema(description = "This is the URL to the artifact") String buildUrl;

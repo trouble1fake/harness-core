@@ -7,11 +7,14 @@
 
 package io.harness.cdng.artifact.resources.artifactory.service;
 
+import io.harness.annotations.dev.HarnessTeam;
+import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
 import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryBuildDetailsDTO;
 import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryRequestDTO;
 import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryResponseDTO;
 
+@OwnedBy(HarnessTeam.CDP)
 public interface ArtifactoryResourceService {
   ArtifactoryResponseDTO getBuildDetails(IdentifierRef artifactoryConnectorRef, String repositoryName, String imagePath,
       String repositoryFormat, String artifactRepositoryUrl, String orgIdentifier, String projectIdentifier);

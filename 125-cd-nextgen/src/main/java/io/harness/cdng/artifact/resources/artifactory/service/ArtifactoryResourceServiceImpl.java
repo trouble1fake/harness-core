@@ -67,14 +67,15 @@ import javax.validation.constraints.NotNull;
 public class ArtifactoryResourceServiceImpl implements ArtifactoryResourceService {
   private final ConnectorService connectorService;
   private final SecretManagerClientService secretManagerClientService;
-  @Inject private DelegateGrpcClientWrapper delegateGrpcClientWrapper;
+  private DelegateGrpcClientWrapper delegateGrpcClientWrapper;
   @VisibleForTesting static final int timeoutInSecs = 30;
 
   @Inject
   public ArtifactoryResourceServiceImpl(@Named(DEFAULT_CONNECTOR_SERVICE) ConnectorService connectorService,
-      SecretManagerClientService secretManagerClientService) {
+      SecretManagerClientService secretManagerClientService, DelegateGrpcClientWrapper delegateGrpcClientWrapper) {
     this.connectorService = connectorService;
     this.secretManagerClientService = secretManagerClientService;
+    this.delegateGrpcClientWrapper = delegateGrpcClientWrapper;
   }
 
   @Override
@@ -120,7 +121,9 @@ public class ArtifactoryResourceServiceImpl implements ArtifactoryResourceServic
             "Artifactory Get last successful build task failure due to error");
     ArtifactoryResponseDTO artifactoryResponseDTO = getArtifactoryResponseDTO(artifactTaskExecutionResponse);
     if (artifactoryResponseDTO.getBuildDetailsList().size() != 1) {
-      throw new ArtifactServerException("Artifactory get last successful build task failure.");
+      throw new ArtifactServerException(
+          "Artifactory get last successful build task failure. Expected was to get 1 build, but instead got "
+          + artifactoryResponseDTO.getBuildDetailsList().size() + " builds.");
     }
     return artifactoryResponseDTO.getBuildDetailsList().get(0);
   }
@@ -156,7 +159,7 @@ public class ArtifactoryResourceServiceImpl implements ArtifactoryResourceServic
     return (ArtifactoryConnectorDTO) connectors.getConnectorConfig();
   }
 
-  private boolean isAArtifactoryConnector(@Valid @NotNull ConnectorResponseDTO connectorResponseDTO) {
+  private boolean isAArtifactoryConnector(@NotNull ConnectorResponseDTO connectorResponseDTO) {
     return ConnectorType.ARTIFACTORY == (connectorResponseDTO.getConnector().getConnectorType());
   }
 

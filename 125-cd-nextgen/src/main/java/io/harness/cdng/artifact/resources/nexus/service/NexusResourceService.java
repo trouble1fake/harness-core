@@ -7,11 +7,14 @@
 
 package io.harness.cdng.artifact.resources.nexus.service;
 
+import io.harness.annotations.dev.HarnessTeam;
+import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
 import io.harness.cdng.artifact.resources.nexus.dtos.NexusBuildDetailsDTO;
 import io.harness.cdng.artifact.resources.nexus.dtos.NexusRequestDTO;
 import io.harness.cdng.artifact.resources.nexus.dtos.NexusResponseDTO;
 
+@OwnedBy(HarnessTeam.CDP)
 public interface NexusResourceService {
   NexusResponseDTO getBuildDetails(IdentifierRef nexusConnectorRef, String repositoryName, String repositoryPort,
       String imagePath, String repositoryFormat, String artifactRepositoryUrl, String orgIdentifier,

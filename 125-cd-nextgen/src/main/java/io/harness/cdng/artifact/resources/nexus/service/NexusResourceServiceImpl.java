@@ -67,14 +67,15 @@ import javax.validation.constraints.NotNull;
 public class NexusResourceServiceImpl implements NexusResourceService {
   private final ConnectorService connectorService;
   private final SecretManagerClientService secretManagerClientService;
-  @Inject private DelegateGrpcClientWrapper delegateGrpcClientWrapper;
+  private DelegateGrpcClientWrapper delegateGrpcClientWrapper;
   @VisibleForTesting static final int timeoutInSecs = 30;
 
   @Inject
   public NexusResourceServiceImpl(@Named(DEFAULT_CONNECTOR_SERVICE) ConnectorService connectorService,
-      SecretManagerClientService secretManagerClientService) {
+      SecretManagerClientService secretManagerClientService, DelegateGrpcClientWrapper delegateGrpcClientWrapper) {
     this.connectorService = connectorService;
     this.secretManagerClientService = secretManagerClientService;
+    this.delegateGrpcClientWrapper = delegateGrpcClientWrapper;
   }
 
   @Override
@@ -118,7 +119,9 @@ public class NexusResourceServiceImpl implements NexusResourceService {
             "Nexus Get last successful build task failure due to error");
     NexusResponseDTO nexusResponseDTO = getNexusResponseDTO(artifactTaskExecutionResponse);
     if (nexusResponseDTO.getBuildDetailsList().size() != 1) {
-      throw new ArtifactServerException("Nexus get last successful build task failure.");
+      throw new ArtifactServerException(
+          "Nexus get last successful build task failure. Expected was to get 1 build, but instead got "
+          + nexusResponseDTO.getBuildDetailsList().size() + " builds.");
     }
     return nexusResponseDTO.getBuildDetailsList().get(0);
   }
@@ -152,7 +155,7 @@ public class NexusResourceServiceImpl implements NexusResourceService {
     return (NexusConnectorDTO) connectors.getConnectorConfig();
   }
 
-  private boolean isANexusConnector(@Valid @NotNull ConnectorResponseDTO connectorResponseDTO) {
+  private boolean isANexusConnector(@NotNull ConnectorResponseDTO connectorResponseDTO) {
     return ConnectorType.NEXUS == (connectorResponseDTO.getConnector().getConnectorType());
   }
 

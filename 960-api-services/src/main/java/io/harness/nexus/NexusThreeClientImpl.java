@@ -201,7 +201,8 @@ public class NexusThreeClientImpl {
   }
 
   private List<BuildDetailsInternal> processComponentResponse(NexusRequest nexusConfig, String repository, String port,
-      String imageName, String repositoryFormat, String tag, Response<Nexus3ComponentResponse> response) {
+      String imageName, String repositoryFormat, String tag, Response<Nexus3ComponentResponse> response)
+      throws IOException {
     if (isSuccessful(response)) {
       if (response.body() != null) {
         List<BuildDetailsInternal> components = new ArrayList<>();
@@ -245,11 +246,12 @@ public class NexusThreeClientImpl {
       }
     }
 
-    log.error(response.errorBody().toString());
+    String errorString = response.errorBody().string();
+    log.error(errorString);
     throw NestedExceptionUtils.hintWithExplanationException(
         "Request to get artifact details has failed with code (" + response.code() + ")",
-        response.errorBody().toString().length() < 500 ? "Error response: " + response.errorBody().toString()
-                                                       : "Check logs for more details.",
+        errorString.length() < 500 ? "Error response: " + errorString
+                                   : "Error response (first 500 chars): " + errorString.substring(0, 500),
         new InvalidArtifactServerException("Failed to fetch the components", WingsException.USER));
   }
 }

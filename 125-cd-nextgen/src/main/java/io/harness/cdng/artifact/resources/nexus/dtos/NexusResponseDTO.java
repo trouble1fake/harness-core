@@ -7,6 +7,9 @@
 
 package io.harness.cdng.artifact.resources.nexus.dtos;
 
+import io.harness.annotations.dev.HarnessTeam;
+import io.harness.annotations.dev.OwnedBy;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
@@ -20,6 +23,7 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "Contains image artifact search result details")
+@OwnedBy(HarnessTeam.CDP)
 public class NexusResponseDTO {
   @Schema(description = "Contains list of details for artifact image tags") List<NexusBuildDetailsDTO> buildDetailsList;
 }

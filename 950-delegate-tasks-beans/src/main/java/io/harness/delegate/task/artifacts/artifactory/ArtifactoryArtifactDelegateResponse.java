@@ -7,6 +7,8 @@
 
 package io.harness.delegate.task.artifacts.artifactory;
 
+import io.harness.annotations.dev.HarnessTeam;
+import io.harness.annotations.dev.OwnedBy;
 import io.harness.delegate.task.artifacts.ArtifactSourceType;
 import io.harness.delegate.task.artifacts.response.ArtifactBuildDetailsNG;
 import io.harness.delegate.task.artifacts.response.ArtifactDelegateResponse;
@@ -17,6 +19,7 @@ import lombok.Value;
 
 @Value
 @EqualsAndHashCode(callSuper = false)
+@OwnedBy(HarnessTeam.CDP)
 public class ArtifactoryArtifactDelegateResponse extends ArtifactDelegateResponse {
   /** Images in repos need to be referenced via a path */
   String imagePath;
