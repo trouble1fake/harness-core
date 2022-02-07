@@ -16,16 +16,23 @@ import io.harness.pms.contracts.advisers.AdviserResponse;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.ExecutableResponse;
 import io.harness.pms.contracts.execution.Status;
+import io.harness.pms.contracts.execution.events.SdkResponseEventProto;
 import io.harness.pms.contracts.facilitators.FacilitatorResponseProto;
 import io.harness.pms.contracts.steps.io.StepResponseProto;
 
 import com.google.protobuf.ByteString;
+import lombok.NonNull;
+
 import java.util.EnumSet;
 import java.util.Map;
 
 @OwnedBy(HarnessTeam.PIPELINE)
 public interface NodeExecutionStrategy<T extends Node, N extends PmsNodeExecution, M extends PmsNodeExecutionMetadata> {
-  N triggerNode(Ambiance ambiance, T node, M metadata);
+  N triggerNode(@NonNull Ambiance ambiance, @NonNull T node, M metadata);
+
+  default N triggerNextNode(@NonNull Ambiance ambiance, @NonNull T node, N prevExecution, PmsNodeExecutionMetadata metadata){
+    throw new UnsupportedOperationException("Trigger Next Node Node not psuppoerted for plan");
+  };
 
   default void startExecution(Ambiance ambiance) {
     throw new UnsupportedOperationException("Start execution node Supported for plan");
@@ -61,4 +68,9 @@ public interface NodeExecutionStrategy<T extends Node, N extends PmsNodeExecutio
   }
 
   void handleError(Ambiance ambiance, Exception exception);
+
+  default void handleSdkResponseEvent(SdkResponseEventProto event){
+    throw new UnsupportedOperationException("Start execution node Supported for plan");
+  };
+
 }

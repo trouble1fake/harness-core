@@ -7,6 +7,7 @@
 
 package io.harness.engine.pms.execution.strategy.plan;
 
+import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.pms.contracts.execution.Status.ERRORED;
 
 import io.harness.annotations.dev.HarnessTeam;
@@ -21,6 +22,7 @@ import io.harness.engine.observers.OrchestrationEndObserver;
 import io.harness.engine.observers.OrchestrationStartObserver;
 import io.harness.engine.observers.beans.OrchestrationStartInfo;
 import io.harness.engine.pms.execution.strategy.NodeExecutionStrategy;
+import io.harness.engine.utils.PmsLevelUtils;
 import io.harness.exception.InvalidRequestException;
 import io.harness.execution.PlanExecution;
 import io.harness.execution.PlanExecution.PlanExecutionKeys;
@@ -35,6 +37,7 @@ import io.harness.pms.contracts.execution.events.OrchestrationEvent;
 import io.harness.pms.contracts.execution.events.OrchestrationEventType;
 import io.harness.pms.contracts.governance.GovernanceMetadata;
 import io.harness.pms.contracts.triggers.TriggerPayload;
+import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.plan.execution.SetupAbstractionKeys;
 import io.harness.springdata.TransactionHelper;
 
@@ -44,6 +47,7 @@ import com.google.inject.name.Named;
 import java.util.concurrent.ExecutorService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 @Slf4j
 @Singleton
@@ -62,7 +66,7 @@ public class PlanExecutionStrategy implements NodeExecutionStrategy<Plan, PlanEx
   @Getter private final Subject<OrchestrationEndObserver> orchestrationEndSubject = new Subject<>();
 
   @Override
-  public PlanExecution triggerNode(Ambiance ambiance, Plan plan, PlanExecutionMetadata metadata) {
+  public PlanExecution triggerNode(@NotNull Ambiance ambiance, @NotNull Plan plan, PlanExecutionMetadata metadata) {
     String accountId = ambiance.getSetupAbstractionsMap().get(SetupAbstractionKeys.accountId);
     String orgIdentifier = ambiance.getSetupAbstractionsMap().get(SetupAbstractionKeys.orgIdentifier);
     String projectIdentifier = ambiance.getSetupAbstractionsMap().get(SetupAbstractionKeys.projectIdentifier);
@@ -91,7 +95,9 @@ public class PlanExecutionStrategy implements NodeExecutionStrategy<Plan, PlanEx
       return planExecutionService.updateStatus(
           ambiance.getPlanExecutionId(), ERRORED, ops -> ops.set(PlanExecutionKeys.endTs, System.currentTimeMillis()));
     } else {
-      executorService.submit(() -> orchestrationEngine.triggerNode(ambiance, planNode, null));
+      Ambiance cloned =
+          AmbianceUtils.cloneForChild(ambiance, PmsLevelUtils.buildLevelFromNode(generateUuid(), planNode));
+      executorService.submit(() -> orchestrationEngine.triggerNode(cloned, planNode, null));
       return planExecution;
     }
   }

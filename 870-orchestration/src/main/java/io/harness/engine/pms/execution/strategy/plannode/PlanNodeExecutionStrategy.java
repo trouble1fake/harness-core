@@ -9,11 +9,11 @@ package io.harness.engine.pms.execution.strategy.plannode;
 
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
-import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.pms.contracts.execution.Status.RUNNING;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.stepDetail.NodeExecutionsInfo;
 import io.harness.engine.ExecutionCheck;
 import io.harness.engine.OrchestrationEngine;
 import io.harness.engine.executions.node.NodeExecutionService;
@@ -31,13 +31,13 @@ import io.harness.engine.pms.execution.strategy.EndNodeExecutionHelper;
 import io.harness.engine.pms.execution.strategy.NodeExecutionStrategy;
 import io.harness.engine.pms.resume.NodeResumeHelper;
 import io.harness.engine.pms.start.NodeStartHelper;
-import io.harness.engine.utils.PmsLevelUtils;
 import io.harness.eraro.ResponseMessage;
+import io.harness.event.handlers.SdkResponseProcessor;
 import io.harness.exception.exceptionmanager.ExceptionManager;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.NodeExecution.NodeExecutionKeys;
 import io.harness.execution.NodeExecutionMetadata;
-import io.harness.graph.stepDetail.service.PmsGraphStepDetailsService;
+import io.harness.execution.PmsNodeExecutionMetadata;
 import io.harness.logging.AutoLogContext;
 import io.harness.plan.PlanNode;
 import io.harness.pms.contracts.advisers.AdviseType;
@@ -46,6 +46,7 @@ import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.ambiance.Level;
 import io.harness.pms.contracts.execution.ExecutableResponse;
 import io.harness.pms.contracts.execution.Status;
+import io.harness.pms.contracts.execution.events.SdkResponseEventProto;
 import io.harness.pms.contracts.facilitators.FacilitatorResponseProto;
 import io.harness.pms.contracts.steps.io.StepResponseProto;
 import io.harness.pms.data.stepparameters.PmsStepParameters;
@@ -56,6 +57,9 @@ import io.harness.pms.execution.utils.StatusUtils;
 import io.harness.pms.expression.PmsEngineExpressionService;
 import io.harness.pms.sdk.core.steps.io.StepResponseNotifyData;
 import io.harness.pms.utils.OrchestrationMapBackwardCompatibilityUtils;
+import io.harness.registries.SdkResponseProcessorFactory;
+import io.harness.repositories.stepDetail.NodeExecutionsInfoRepository;
+import io.harness.springdata.TransactionHelper;
 import io.harness.waiter.WaitNotifyEngine;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -73,6 +77,7 @@ import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 @Slf4j
 @Singleton
@@ -95,47 +100,72 @@ public class PlanNodeExecutionStrategy
   @Inject private WaitNotifyEngine waitNotifyEngine;
   @Inject private OrchestrationEngine orchestrationEngine;
   @Inject private PmsOutcomeService outcomeService;
+  @Inject private SdkResponseProcessorFactory handlerFactory;
+  @Inject private TransactionHelper transactionHelper;
   @Inject @Named("EngineExecutorService") private ExecutorService executorService;
-  @Inject PmsGraphStepDetailsService pmsGraphStepDetailsService;
+  @Inject NodeExecutionsInfoRepository nodeExecutionsInfoRepository;
 
   @Override
-  public NodeExecution triggerNode(Ambiance ambiance, PlanNode node, NodeExecutionMetadata metadata) {
-    String uuid = generateUuid();
-    NodeExecution previousNodeExecution = null;
-    if (AmbianceUtils.obtainCurrentRuntimeId(ambiance) != null) {
-      previousNodeExecution = nodeExecutionService.update(AmbianceUtils.obtainCurrentRuntimeId(ambiance),
-          ops -> ops.set(NodeExecutionKeys.nextId, uuid).set(NodeExecutionKeys.endTs, System.currentTimeMillis()));
-    }
-    Ambiance cloned = AmbianceUtils.cloneForFinish(ambiance, PmsLevelUtils.buildLevelFromNode(uuid, node));
-    boolean skipUnresolvedExpressionsCheck = node.isSkipUnresolvedExpressionsCheck();
-    log.info("Starting to Resolve step parameters and Inputs");
-    Object resolvedStepParameters =
-        pmsEngineExpressionService.resolve(ambiance, node.getStepParameters(), skipUnresolvedExpressionsCheck);
-    NodeExecution nodeExecution =
-        NodeExecution.builder()
-            .uuid(uuid)
-            .planNode(node)
-            .ambiance(cloned)
-            .levelCount(cloned.getLevelsCount())
-            .status(Status.QUEUED)
-            .notifyId(previousNodeExecution == null ? null : previousNodeExecution.getNotifyId())
-            .parentId(previousNodeExecution == null ? null : previousNodeExecution.getParentId())
-            .previousId(previousNodeExecution == null ? null : previousNodeExecution.getUuid())
-            .unitProgresses(new ArrayList<>())
-            .startTs(AmbianceUtils.getCurrentLevelStartTs(cloned))
-            .module(node.getServiceName())
-            .resolvedParams(PmsStepParameters.parse(
-                OrchestrationMapBackwardCompatibilityUtils.extractToOrchestrationMap(resolvedStepParameters)))
-            .name(node.getName())
-            .skipGraphType(node.getSkipGraphType())
-            .identifier(node.getIdentifier())
-            .stepType(node.getStepType())
-            .nodeId(node.getUuid())
-            .build();
-    NodeExecution save = nodeExecutionService.save(nodeExecution);
+  public NodeExecution triggerNextNode(@NonNull Ambiance ambiance, @NonNull PlanNode node,
+      @NonNull NodeExecution prevExecution, PmsNodeExecutionMetadata metadata) {
+    NodeExecution saved = createNodeExecution(
+        ambiance, node, prevExecution.getNotifyId(), prevExecution.getParentId(), prevExecution.getUuid());
     // TODO: Should add to an execution queue rather than submitting straight to thread pool
-    executorService.submit(() -> startExecution(cloned));
-    return save;
+    executorService.submit(() -> startExecution(saved.getAmbiance()));
+    return saved;
+  }
+
+  @Override
+  public NodeExecution triggerNode(@NotNull Ambiance ambiance, @NotNull PlanNode node, NodeExecutionMetadata metadata) {
+    String parentId = AmbianceUtils.obtainParentRuntimeId(ambiance);
+    NodeExecution saved = createNodeExecution(ambiance, node, null, parentId, null);
+    // TODO: Should add to an execution queue rather than submitting straight to thread pool
+    executorService.submit(() -> startExecution(saved.getAmbiance()));
+    return saved;
+  }
+
+  private NodeExecution createNodeExecution(
+      @NotNull Ambiance ambiance, @NotNull PlanNode node, String notifyId, String parentId, String previousId) {
+    String uuid = AmbianceUtils.obtainCurrentRuntimeId(ambiance);
+    boolean skipUnresolvedExpressionsCheck = node.isSkipUnresolvedExpressionsCheck();
+    NodeExecution nodeExecution = NodeExecution.builder()
+                                      .uuid(uuid)
+                                      .planNode(node)
+                                      .ambiance(ambiance)
+                                      .levelCount(ambiance.getLevelsCount())
+                                      .status(Status.QUEUED)
+                                      .notifyId(notifyId)
+                                      .parentId(parentId)
+                                      .previousId(previousId)
+                                      .unitProgresses(new ArrayList<>())
+                                      .startTs(AmbianceUtils.getCurrentLevelStartTs(ambiance))
+                                      .module(node.getServiceName())
+                                      .name(node.getName())
+                                      .skipGraphType(node.getSkipGraphType())
+                                      .identifier(node.getIdentifier())
+                                      .stepType(node.getStepType())
+                                      .nodeId(node.getUuid())
+                                      .build();
+    return transactionHelper.performTransaction(() -> {
+      NodeExecution savedNodeExecution = nodeExecutionService.save(nodeExecution);
+      log.info("Starting to Resolve step parameters and Inputs");
+      Object resolvedStepParameters =
+          pmsEngineExpressionService.resolve(ambiance, node.getStepParameters(), skipUnresolvedExpressionsCheck);
+      PmsStepParameters pmsStepParameters = PmsStepParameters.parse(OrchestrationMapBackwardCompatibilityUtils.extractToOrchestrationMap(resolvedStepParameters));
+      savedNodeExecution = nodeExecutionService.update(savedNodeExecution.withResolvedParams(pmsStepParameters));
+      Object resolvedStepInputs =
+          pmsEngineExpressionService.resolve(ambiance, node.getStepInputs(), skipUnresolvedExpressionsCheck);
+      log.info("Step Parameters and Inputs Resolution complete");
+      NodeExecutionsInfo nodeExecutionsInfo =
+          NodeExecutionsInfo.builder()
+              .nodeExecutionId(uuid)
+              .planExecutionId(ambiance.getPlanExecutionId())
+              .resolvedInputs(PmsStepParameters.parse(
+                  OrchestrationMapBackwardCompatibilityUtils.extractToOrchestrationMap(resolvedStepInputs)))
+              .build();
+      nodeExecutionsInfoRepository.save(nodeExecutionsInfo);
+      return savedNodeExecution;
+    });
   }
 
   @Override
@@ -150,8 +180,6 @@ public class PlanNodeExecutionStrategy
         return;
       }
       log.info("Proceeding with  Execution. Reason : {}", check.getReason());
-
-      resolveParameters(ambiance, planNode);
 
       if (facilitationHelper.customFacilitatorPresent(planNode)) {
         facilitateEventPublisher.publishEvent(ambiance, planNode);
@@ -310,20 +338,6 @@ public class PlanNodeExecutionStrategy
     nodeAdviseHelper.queueAdvisingEvent(updatedNodeExecution, planNode, nodeExecution.getStatus());
   }
 
-  @VisibleForTesting
-  void resolveParameters(Ambiance ambiance, PlanNode node) {
-    String nodeExecutionId = Objects.requireNonNull(AmbianceUtils.obtainCurrentRuntimeId(ambiance));
-    boolean skipUnresolvedExpressionsCheck = node.isSkipUnresolvedExpressionsCheck();
-    log.info("Starting to Resolve step parameters and Inputs");
-    Object resolvedStepInputs =
-        pmsEngineExpressionService.resolve(ambiance, node.getStepInputs(), skipUnresolvedExpressionsCheck);
-    log.info("Step Parameters and Inputs Resolution complete");
-
-    pmsGraphStepDetailsService.addStepInputs(nodeExecutionId, ambiance.getPlanExecutionId(),
-        PmsStepParameters.parse(
-            OrchestrationMapBackwardCompatibilityUtils.extractToOrchestrationMap(resolvedStepInputs)));
-  }
-
   private ExecutionCheck performPreFacilitationChecks(Ambiance ambiance, PlanNode planNode) {
     // Ignore facilitation checks if node is retried
 
@@ -334,6 +348,14 @@ public class PlanNodeExecutionStrategy
     SkipPreFacilitationChecker sChecker = injector.getInstance(SkipPreFacilitationChecker.class);
     rChecker.setNextChecker(sChecker);
     return rChecker.check(ambiance, planNode);
+  }
+
+  @Override
+  public void handleSdkResponseEvent(SdkResponseEventProto event) {
+    log.info("Event for SdkResponseEvent received for eventType {}", event.getSdkResponseEventType());
+    SdkResponseProcessor handler = handlerFactory.getHandler(event.getSdkResponseEventType());
+    handler.handleEvent(event);
+    log.info("Event for SdkResponseEvent for event type {} completed successfully", event.getSdkResponseEventType());
   }
 
   @Override

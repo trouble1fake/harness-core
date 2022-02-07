@@ -187,4 +187,11 @@ public class AmbianceUtils {
     Level level = Objects.requireNonNull(obtainCurrentLevel(ambiance));
     return level.getRetryIndex() != 0;
   }
+
+  public static String obtainParentRuntimeId(Ambiance ambiance) {
+    if (ambiance.getLevelsCount() < 2){
+      return null;
+    }
+    return ambiance.getLevels(ambiance.getLevelsCount() - 2).getRuntimeId();
+  }
 }

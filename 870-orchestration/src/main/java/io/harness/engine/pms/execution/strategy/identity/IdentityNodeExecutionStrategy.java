@@ -8,7 +8,6 @@
 package io.harness.engine.pms.execution.strategy.identity;
 
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
-import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.springdata.SpringDataMongoUtils.setUnset;
 
 import io.harness.ModuleType;
@@ -23,7 +22,6 @@ import io.harness.engine.pms.commons.events.PmsEventSender;
 import io.harness.engine.pms.data.PmsOutcomeService;
 import io.harness.engine.pms.data.PmsSweepingOutputService;
 import io.harness.engine.pms.execution.strategy.NodeExecutionStrategy;
-import io.harness.engine.utils.PmsLevelUtils;
 import io.harness.execution.ExecutionModeUtils;
 import io.harness.execution.IdentityNodeExecutionMetadata;
 import io.harness.execution.NodeExecution;
@@ -54,6 +52,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.mongodb.core.query.Update;
 
 @OwnedBy(HarnessTeam.PIPELINE)
@@ -93,38 +92,29 @@ public class IdentityNodeExecutionStrategy
   }
 
   @Override
-  public NodeExecution triggerNode(Ambiance ambiance, IdentityPlanNode node, IdentityNodeExecutionMetadata metadata) {
-    String uuid = generateUuid();
-    NodeExecution previousNodeExecution = null;
-    if (AmbianceUtils.obtainCurrentRuntimeId(ambiance) != null) {
-      previousNodeExecution = nodeExecutionService.update(AmbianceUtils.obtainCurrentRuntimeId(ambiance),
-          ops -> ops.set(NodeExecutionKeys.nextId, uuid).set(NodeExecutionKeys.endTs, System.currentTimeMillis()));
-    }
-    Ambiance cloned = AmbianceUtils.cloneForFinish(ambiance, PmsLevelUtils.buildLevelFromNode(uuid, node));
-    NodeExecution nodeExecution =
-        NodeExecution.builder()
-            .uuid(uuid)
-            .planNode(node)
-            .ambiance(cloned)
-            .levelCount(cloned.getLevelsCount())
-            .status(Status.QUEUED)
-            .notifyId(previousNodeExecution == null ? null : previousNodeExecution.getNotifyId())
-            .parentId(previousNodeExecution == null ? null : previousNodeExecution.getParentId())
-            .previousId(previousNodeExecution == null ? null : previousNodeExecution.getUuid())
-            .unitProgresses(new ArrayList<>())
-            .startTs(AmbianceUtils.getCurrentLevelStartTs(cloned))
-            .originalNodeExecutionId(node.getOriginalNodeExecutionId())
-            .module(node.getServiceName())
-            .name(node.getName())
-            .skipGraphType(node.getSkipGraphType())
-            .identifier(node.getIdentifier())
-            .stepType(node.getStepType())
-            .nodeId(node.getUuid())
-            .build();
-    NodeExecution savedNodeExecution = nodeExecutionService.save(nodeExecution);
+  public NodeExecution triggerNode(
+      @NotNull Ambiance ambiance, @NotNull IdentityPlanNode node, IdentityNodeExecutionMetadata metadata) {
+    String uuid = AmbianceUtils.obtainCurrentRuntimeId(ambiance);
+    NodeExecution nodeExecution = NodeExecution.builder()
+                                      .uuid(uuid)
+                                      .planNode(node)
+                                      .ambiance(ambiance)
+                                      .levelCount(ambiance.getLevelsCount())
+                                      .status(Status.QUEUED)
+                                      .unitProgresses(new ArrayList<>())
+                                      .startTs(AmbianceUtils.getCurrentLevelStartTs(ambiance))
+                                      .originalNodeExecutionId(node.getOriginalNodeExecutionId())
+                                      .module(node.getServiceName())
+                                      .name(node.getName())
+                                      .skipGraphType(node.getSkipGraphType())
+                                      .identifier(node.getIdentifier())
+                                      .stepType(node.getStepType())
+                                      .nodeId(node.getUuid())
+                                      .build();
+    NodeExecution save = nodeExecutionService.save(nodeExecution);
     // TODO: Should add to an execution queue rather than submitting straight to thread pool
-    executorService.submit(() -> startExecution(cloned));
-    return savedNodeExecution;
+    executorService.submit(() -> startExecution(ambiance));
+    return save;
   }
 
   @Override

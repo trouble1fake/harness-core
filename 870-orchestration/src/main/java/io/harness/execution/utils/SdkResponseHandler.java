@@ -9,6 +9,7 @@ package io.harness.execution.utils;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.engine.OrchestrationEngine;
 import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.event.handlers.SdkResponseProcessor;
 import io.harness.execution.NodeExecution;
@@ -29,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @OwnedBy(HarnessTeam.PIPELINE)
 public class SdkResponseHandler extends PmsBaseEventHandler<SdkResponseEventProto> {
-  @Inject private SdkResponseProcessorFactory handlerRegistry;
+  @Inject private OrchestrationEngine engine;
   @Inject private NodeExecutionService nodeExecutionService;
 
   @Override
@@ -57,19 +58,6 @@ public class SdkResponseHandler extends PmsBaseEventHandler<SdkResponseEventProt
   @Override
   protected void handleEventWithContext(SdkResponseEventProto event) {
     // This is the event for new execution
-    Ambiance ambiance;
-    if (event.hasAmbiance()) {
-      ambiance = event.getAmbiance();
-    } else {
-      NodeExecution nodeExecution = nodeExecutionService.getWithFieldsIncluded(
-          SdkResponseEventUtils.getNodeExecutionId(event), NodeProjectionUtils.withAmbiance);
-      ambiance = nodeExecution.getAmbiance();
-    }
-    try (AutoLogContext ignore = AmbianceUtils.autoLogContext(ambiance)) {
-      log.info("Event for SdkResponseEvent received for eventType {}", event.getSdkResponseEventType());
-      SdkResponseProcessor handler = handlerRegistry.getHandler(event.getSdkResponseEventType());
-      handler.handleEvent(event);
-      log.info("Event for SdkResponseEvent for event type {} completed successfully", event.getSdkResponseEventType());
-    }
+      engine.handleSdkREsponseEvent(event);
   }
 }

@@ -117,11 +117,11 @@ public interface NodeExecutionService {
 
   List<NodeExecution> getStageNodesFromPlanExecutionId(String planExecutionId);
 
-  NodeExecution getPipelineNodeFromPlanExecutionId(String planExecutionId);
-
   List<String> fetchStageFqnFromStageIdentifiers(String planExecutionId, List<String> stageIdentifiers);
 
   Map<String, Node> mapNodeExecutionIdWithPlanNodeForGivenStageFQN(String planExecutionId, List<String> stageFQNs);
 
   List<NodeExecution> fetchStageExecutionsWithEndTsAndStatusProjection(String planExecutionId);
+
+  NodeExecution update(@NonNull NodeExecution nodeExecution);
 }

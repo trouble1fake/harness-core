@@ -48,7 +48,7 @@ public class NextStepHandlerTest extends OrchestrationTestBase {
   public void handleAdviseWhenNextNodeIsIsEmpty() {
     AdviserResponse adviserResponse =
         AdviserResponse.newBuilder()
-            .setNextStepAdvise(NextStepAdvise.newBuilder().setToStatus(Status.RUNNING).build())
+            .setNextStepAdvise(NextStepAdvise.newBuilder().build())
             .build();
 
     when(nodeExecutionService.updateStatusWithOps(anyString(), any(), any(), any())).thenReturn(null);

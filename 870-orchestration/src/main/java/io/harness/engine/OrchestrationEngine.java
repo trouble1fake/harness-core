@@ -18,6 +18,7 @@ import io.harness.plan.Node;
 import io.harness.pms.contracts.advisers.AdviserResponse;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.Status;
+import io.harness.pms.contracts.execution.events.SdkResponseEventProto;
 import io.harness.pms.contracts.facilitators.FacilitatorResponseProto;
 import io.harness.pms.contracts.steps.io.StepResponseProto;
 
@@ -40,9 +41,14 @@ import lombok.extern.slf4j.Slf4j;
 public class OrchestrationEngine {
   @Inject private NodeExecutionStrategyFactory strategyFactory;
 
-  public <T extends PmsNodeExecution> T triggerNode(Ambiance ambiance, Node node, PmsNodeExecutionMetadata metadata) {
+  public <T extends PmsNodeExecution> T triggerNode(@NonNull Ambiance ambiance, @NonNull Node node, PmsNodeExecutionMetadata metadata) {
     NodeExecutionStrategy strategy = strategyFactory.obtainStrategy(node.getNodeType());
     return (T) strategy.triggerNode(ambiance, node, metadata);
+  }
+
+  public <T extends PmsNodeExecution> T triggerNextNode(@NonNull Ambiance ambiance, @NonNull Node node, T previousExecution, PmsNodeExecutionMetadata metadata) {
+    NodeExecutionStrategy strategy = strategyFactory.obtainStrategy(node.getNodeType());
+    return (T) strategy.triggerNextNode(ambiance, node, previousExecution, metadata);
   }
 
   public void startNodeExecution(Ambiance ambiance) {
@@ -84,5 +90,11 @@ public class OrchestrationEngine {
   public void endNodeExecution(Ambiance ambiance) {
     NodeExecutionStrategy strategy = strategyFactory.obtainStrategy(OrchestrationUtils.currentNodeType(ambiance));
     strategy.endNodeExecution(ambiance);
+  }
+
+  public void handleSdkREsponseEvent(SdkResponseEventProto event) {
+    NodeExecutionStrategy strategy = strategyFactory.obtainStrategy(OrchestrationUtils.currentNodeType(event.getAmbiance()));
+    strategy.handleSdkResponseEvent(event);
+
   }
 }
