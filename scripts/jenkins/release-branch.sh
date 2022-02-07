@@ -83,10 +83,13 @@ if [[ "$EXECUTE_NEW_CODE" == "true" ]]; then
       major)
         echo "INFO: Incrementing major version."
         major=$(($major+1))
+        minor=0
+        build=0
         ;;
       minor)
         echo "INFO: Incrementing minor version."
         minor=$(($minor + 1))
+        build=0
         ;;
       build)
         echo "INFO: Incrementing build version."
