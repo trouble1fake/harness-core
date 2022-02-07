@@ -375,6 +375,134 @@ awsEc2InventorySchema = [
     },
 ]
 
+awsRdsInventorySchema = [
+    {
+        "mode": "NULLABLE",
+        "name": "linkedAccountId",
+        "type": "STRING"
+    },
+    {
+        "mode": "NULLABLE",
+        "name": "region",
+        "type": "STRING"
+    },
+    {
+        "mode": "NULLABLE",
+        "name": "DBInstanceIdentifier",
+        "type": "STRING"
+    },
+    {
+        "mode": "NULLABLE",
+        "name": "DBInstanceClass",
+        "type": "STRING"
+    },
+    {
+        "mode": "NULLABLE",
+        "name": "Engine",
+        "type": "STRING"
+    },
+    {
+        "mode": "NULLABLE",
+        "name": "EngineVersion",
+        "type": "STRING"
+    },
+    {
+        "mode": "NULLABLE",
+        "name": "DBInstanceStatus",
+        "type": "STRING"
+    },
+    {
+        "mode": "NULLABLE",
+        "name": "AllocatedStorage",
+        "type": "INTEGER"
+    },
+    {
+        "mode": "NULLABLE",
+        "name": "Iops",
+        "type": "INTEGER"
+    },
+    {
+        "mode": "NULLABLE",
+        "name": "AvailabilityZone",
+        "type": "STRING"
+    },
+    {
+        "mode": "NULLABLE",
+        "name": "MultiAZ",
+        "type": "BOOLEAN"
+    },
+    {
+        "mode": "NULLABLE",
+        "name": "PubliclyAccessible",
+        "type": "BOOLEAN"
+    },
+    {
+        "mode": "NULLABLE",
+        "name": "StorageType",
+        "type": "STRING"
+    },
+    {
+        "mode": "NULLABLE",
+        "name": "DBClusterIdentifier",
+        "type": "STRING"
+    },
+    {
+        "mode": "NULLABLE",
+        "name": "StorageEncrypted",
+        "type": "BOOLEAN"
+    },
+    {
+        "mode": "NULLABLE",
+        "name": "KmsKeyId",
+        "type": "STRING"
+    },
+    {
+        "mode": "NULLABLE",
+        "name": "DBInstanceArn",
+        "type": "STRING"
+    },
+    {
+        "mode": "NULLABLE",
+        "name": "MaxAllocatedStorage",
+        "type": "INTEGER"
+    },
+    {
+        "mode": "NULLABLE",
+        "name": "DeletionProtection",
+        "type": "BOOLEAN"
+    },
+    {
+        "mode": "NULLABLE",
+        "name": "InstanceCreateTime",
+        "type": "TIMESTAMP"
+    },
+    {
+        "mode": "NULLABLE",
+        "name": "lastUpdatedAt",
+        "type": "TIMESTAMP"
+    },
+    {
+        "fields": [
+            {
+                "name": "key",
+                "type": "STRING"
+            },
+            {
+                "name": "value",
+                "type": "STRING"
+            }
+        ],
+        "mode": "REPEATED",
+        "name": "tags",
+        "type": "RECORD"
+    },
+    {
+        "mode": "NULLABLE",
+        "name": "linkedAccountIdPartition",
+        "type": "INTEGER"
+    }
+]
+
 unifiedTableTableSchema = [
     {
         "mode": "REQUIRED",

@@ -24,6 +24,7 @@ AWSEC2INVENTORYMETRIC = "awsEc2InventoryMetric"
 AWSEC2INVENTORY = "awsEc2Inventory"
 AWSEBSINVENTORYMETRICS = "awsEbsInventoryMetrics"
 AWSEBSINVENTORY = "awsEbsInventory"
+AWSRDSINVENTORY = "awsRdsInventory"
 UNIFIED = "unifiedTable"
 AWSCURPREFIX = "awscur"
 COSTAGGREGATED = "costAggregated"
@@ -114,6 +115,12 @@ def createTable(client, table_ref):
         )
     elif tableName.startswith(AWSEBSINVENTORY):
         fieldset = bq_schema.awsEbsInventorySchema
+        partition = bigquery.RangePartitioning(
+            range_=bigquery.PartitionRange(start=0, end=10000, interval=1),
+            field="linkedAccountIdPartition"
+        )
+    elif tableName.startswith(AWSRDSINVENTORY):
+        fieldset = bq_schema.awsRdsInventorySchema
         partition = bigquery.RangePartitioning(
             range_=bigquery.PartitionRange(start=0, end=10000, interval=1),
             field="linkedAccountIdPartition"
