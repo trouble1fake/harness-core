@@ -77,7 +77,7 @@ public class GraphGenerationServiceImpl implements GraphGenerationService {
 
   @Override
   public void updateGraph(String planExecutionId) {
-    AcquiredLock lock;
+    AcquiredLock<?> lock;
     String lockName = "GRAPH_LOCK_" + planExecutionId;
     lock = this.redisLocker.tryToAcquireLock(lockName, Duration.ofSeconds(10));
     if (lock == null) {
