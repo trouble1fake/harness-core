@@ -49,7 +49,7 @@ public class TerraformStepDataGenerator {
   @Data
   @Builder
   public static class ArtifactoryStoreConfig {
-    private String repositoryPath;
+    private String repositoryName;
     private String connectorRef;
     private List<ArtifactoryFromYaml> artifacts;
   }
@@ -66,7 +66,7 @@ public class TerraformStepDataGenerator {
   }
 
   public static TerraformDestroyStepParameters generateDestroyStepPlan(
-          StoreConfigType storeType, Object storeConfigFilesParam, Object varStoreConfigFilesParam){
+      StoreConfigType storeType, Object storeConfigFilesParam, Object varStoreConfigFilesParam) {
     StoreConfig storeConfigFiles;
     StoreConfig storeVarFiles;
     TerraformConfigFilesWrapper configFilesWrapper = new TerraformConfigFilesWrapper();
@@ -77,42 +77,42 @@ public class TerraformStepDataGenerator {
       case GITLAB:
       case BITBUCKET:
         TerraformStepDataGenerator.GitStoreConfig gitStoreConfigFiles =
-                (TerraformStepDataGenerator.GitStoreConfig) storeConfigFilesParam;
+            (TerraformStepDataGenerator.GitStoreConfig) storeConfigFilesParam;
         storeConfigFiles =
-                GithubStore.builder()
-                        .branch(ParameterField.createValueField(gitStoreConfigFiles.branch))
-                        .gitFetchType(gitStoreConfigFiles.fetchType)
-                        .folderPath(ParameterField.createValueField(gitStoreConfigFiles.folderPath.getValue()))
-                        .connectorRef(ParameterField.createValueField(gitStoreConfigFiles.connectoref.getValue()))
-                        .build();
+            GithubStore.builder()
+                .branch(ParameterField.createValueField(gitStoreConfigFiles.branch))
+                .gitFetchType(gitStoreConfigFiles.fetchType)
+                .folderPath(ParameterField.createValueField(gitStoreConfigFiles.folderPath.getValue()))
+                .connectorRef(ParameterField.createValueField(gitStoreConfigFiles.connectoref.getValue()))
+                .build();
         configFilesWrapper.setStore(StoreConfigWrapper.builder().spec(storeConfigFiles).type(storeType).build());
         TerraformStepDataGenerator.GitStoreConfig gitStoreVarFiles =
-                (TerraformStepDataGenerator.GitStoreConfig) varStoreConfigFilesParam;
+            (TerraformStepDataGenerator.GitStoreConfig) varStoreConfigFilesParam;
         storeVarFiles = GithubStore.builder()
-                .branch(ParameterField.createValueField(gitStoreVarFiles.branch))
-                .gitFetchType(gitStoreVarFiles.fetchType)
-                .folderPath(ParameterField.createValueField(gitStoreVarFiles.folderPath.getValue()))
-                .connectorRef(ParameterField.createValueField(gitStoreVarFiles.connectoref.getValue()))
-                .build();
+                            .branch(ParameterField.createValueField(gitStoreVarFiles.branch))
+                            .gitFetchType(gitStoreVarFiles.fetchType)
+                            .folderPath(ParameterField.createValueField(gitStoreVarFiles.folderPath.getValue()))
+                            .connectorRef(ParameterField.createValueField(gitStoreVarFiles.connectoref.getValue()))
+                            .build();
         remoteTerraformVarFileSpec.setStore(StoreConfigWrapper.builder().spec(storeVarFiles).type(storeType).build());
         break;
       case ARTIFACTORY:
         ArtifactoryStoreConfig artifactoryStoreConfigFiles = (ArtifactoryStoreConfig) storeConfigFilesParam;
         storeConfigFiles =
-                io.harness.cdng.manifest.yaml.ArtifactoryStoreConfig.builder()
-                        .repositoryName(ParameterField.createValueField(artifactoryStoreConfigFiles.repositoryPath))
-                        .connectorRef(ParameterField.createValueField(artifactoryStoreConfigFiles.connectorRef))
-                        .artifacts(artifactoryStoreConfigFiles.artifacts)
-                        .build();
+            io.harness.cdng.manifest.yaml.ArtifactoryStoreConfig.builder()
+                .repositoryName(ParameterField.createValueField(artifactoryStoreConfigFiles.repositoryName))
+                .connectorRef(ParameterField.createValueField(artifactoryStoreConfigFiles.connectorRef))
+                .artifacts(artifactoryStoreConfigFiles.artifacts)
+                .build();
         configFilesWrapper.setStore(StoreConfigWrapper.builder().spec(storeConfigFiles).type(storeType).build());
         // Create the store file for the terraform variables
         TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreVarFiles =
-                (TerraformStepDataGenerator.ArtifactoryStoreConfig) varStoreConfigFilesParam;
+            (TerraformStepDataGenerator.ArtifactoryStoreConfig) varStoreConfigFilesParam;
         storeVarFiles = io.harness.cdng.manifest.yaml.ArtifactoryStoreConfig.builder()
-                .repositoryName(ParameterField.createValueField(artifactoryStoreVarFiles.repositoryPath))
-                .artifacts(artifactoryStoreConfigFiles.artifacts)
-                .connectorRef(ParameterField.createValueField(artifactoryStoreVarFiles.connectorRef))
-                .build();
+                            .repositoryName(ParameterField.createValueField(artifactoryStoreVarFiles.repositoryName))
+                            .artifacts(artifactoryStoreConfigFiles.artifacts)
+                            .connectorRef(ParameterField.createValueField(artifactoryStoreVarFiles.connectorRef))
+                            .build();
         remoteTerraformVarFileSpec.setStore(StoreConfigWrapper.builder().spec(storeVarFiles).type(storeType).build());
         break;
       default:
@@ -126,19 +126,19 @@ public class TerraformStepDataGenerator {
     terraformBackendConfig.setTerraformBackendConfigSpec(inlineTerraformBackendConfigSpec);
     LinkedHashMap<String, TerraformVarFile> varFilesMap = new LinkedHashMap<>();
     varFilesMap.put("var-file-01",
-            TerraformVarFile.builder().identifier("var-file-01").type("Inline").spec(inlineTerraformVarFileSpec).build());
+        TerraformVarFile.builder().identifier("var-file-01").type("Inline").spec(inlineTerraformVarFileSpec).build());
     varFilesMap.put("var-file-02",
-            TerraformVarFile.builder().identifier("var-file-02").type("Remote").spec(remoteTerraformVarFileSpec).build());
+        TerraformVarFile.builder().identifier("var-file-02").type("Remote").spec(remoteTerraformVarFileSpec).build());
     return TerraformDestroyStepParameters.infoBuilder()
-                    .provisionerIdentifier(ParameterField.createValueField("provId_$"))
-                    .configuration(TerraformStepConfigurationParameters.builder()
-                            .type(TerraformStepConfigurationType.INLINE)
-                            .spec(TerraformExecutionDataParameters.builder()
-                                    .configFiles(configFilesWrapper)
-                                    .varFiles(varFilesMap)
-                                    .build())
-                            .build())
-                    .build();
+        .provisionerIdentifier(ParameterField.createValueField("provId_$"))
+        .configuration(TerraformStepConfigurationParameters.builder()
+                           .type(TerraformStepConfigurationType.INLINE)
+                           .spec(TerraformExecutionDataParameters.builder()
+                                     .configFiles(configFilesWrapper)
+                                     .varFiles(varFilesMap)
+                                     .build())
+                           .build())
+        .build();
   }
 
   public static TerraformApplyStepParameters generateApplyStepPlan(
@@ -179,7 +179,7 @@ public class TerraformStepDataGenerator {
         ArtifactoryStoreConfig artifactoryStoreConfigFiles = (ArtifactoryStoreConfig) storeConfigFilesParam;
         storeConfigFiles =
             io.harness.cdng.manifest.yaml.ArtifactoryStoreConfig.builder()
-                .repositoryName(ParameterField.createValueField(artifactoryStoreConfigFiles.repositoryPath))
+                .repositoryName(ParameterField.createValueField(artifactoryStoreConfigFiles.repositoryName))
                 .connectorRef(ParameterField.createValueField(artifactoryStoreConfigFiles.connectorRef))
                 .artifacts(artifactoryStoreConfigFiles.artifacts)
                 .build();
@@ -188,7 +188,7 @@ public class TerraformStepDataGenerator {
         TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreVarFiles =
             (TerraformStepDataGenerator.ArtifactoryStoreConfig) varStoreConfigFilesParam;
         storeVarFiles = io.harness.cdng.manifest.yaml.ArtifactoryStoreConfig.builder()
-                            .repositoryName(ParameterField.createValueField(artifactoryStoreVarFiles.repositoryPath))
+                            .repositoryName(ParameterField.createValueField(artifactoryStoreVarFiles.repositoryName))
                             .artifacts(artifactoryStoreConfigFiles.artifacts)
                             .connectorRef(ParameterField.createValueField(artifactoryStoreVarFiles.connectorRef))
                             .build();
@@ -315,14 +315,14 @@ public class TerraformStepDataGenerator {
         ArtifactoryStoreConfig artifactoryStoreConfigFiles = (ArtifactoryStoreConfig) storeConfigFilesParam;
         storeConfigFiles =
             io.harness.cdng.manifest.yaml.ArtifactoryStoreConfig.builder()
-                .repositoryName(ParameterField.createValueField(artifactoryStoreConfigFiles.repositoryPath))
+                .repositoryName(ParameterField.createValueField(artifactoryStoreConfigFiles.repositoryName))
                 .connectorRef(ParameterField.createValueField(artifactoryStoreConfigFiles.connectorRef))
                 .build();
         configFilesWrapper.setStore(StoreConfigWrapper.builder().spec(storeConfigFiles).type(storeType).build());
         // Create the store file for the terraform variables
         ArtifactoryStoreConfig artifactoryStoreVarFiles = (ArtifactoryStoreConfig) varStoreConfigFilesParam;
         storeVarFiles = io.harness.cdng.manifest.yaml.ArtifactoryStoreConfig.builder()
-                            .repositoryName(ParameterField.createValueField(artifactoryStoreVarFiles.repositoryPath))
+                            .repositoryName(ParameterField.createValueField(artifactoryStoreVarFiles.repositoryName))
                             .connectorRef(ParameterField.createValueField(artifactoryStoreVarFiles.connectorRef))
                             .artifacts(artifactoryStoreVarFiles.artifacts)
                             .build();
@@ -425,7 +425,7 @@ public class TerraformStepDataGenerator {
         // Create the store file for the terraform variables
         ArtifactoryStoreConfig artifactoryStoreVarFiles = (ArtifactoryStoreConfig) varStoreConfigFilesParam;
         storeVarFiles = io.harness.cdng.manifest.yaml.ArtifactoryStoreConfig.builder()
-                            .repositoryName(ParameterField.createValueField(artifactoryStoreVarFiles.repositoryPath))
+                            .repositoryName(ParameterField.createValueField(artifactoryStoreVarFiles.repositoryName))
                             .connectorRef(ParameterField.createValueField(artifactoryStoreVarFiles.connectorRef))
                             .artifacts(artifactoryStoreVarFiles.artifacts)
                             .build();
@@ -482,7 +482,7 @@ public class TerraformStepDataGenerator {
         ArtifactoryStoreConfig artifactoryStoreConfigFiles = (ArtifactoryStoreConfig) storeConfigFilesParam;
         storeConfigFiles =
             io.harness.cdng.manifest.yaml.ArtifactoryStoreConfig.builder()
-                .repositoryName(ParameterField.createValueField(artifactoryStoreConfigFiles.repositoryPath))
+                .repositoryName(ParameterField.createValueField(artifactoryStoreConfigFiles.repositoryName))
                 .connectorRef(ParameterField.createValueField(artifactoryStoreConfigFiles.connectorRef))
                 .artifacts(artifactoryStoreConfigFiles.artifacts)
                 .build();

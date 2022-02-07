@@ -146,12 +146,12 @@ public class TerraformPlanStepTest extends CategoryTest {
     TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreConfigFiles =
         TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
             .connectorRef("connectorRef")
-            .repositoryPath("repositoryPath")
+            .repositoryName("repositoryPath")
             .build();
     TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreVarFiles =
         TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
             .connectorRef("connectorRef2")
-            .repositoryPath("repositoryPathtoVars")
+            .repositoryName("repositoryPathtoVars")
             .build();
     TerraformPlanStepParameters planStepParameters = TerraformStepDataGenerator.generateStepPlanFile(
         StoreConfigType.ARTIFACTORY, artifactoryStoreConfigFiles, artifactoryStoreVarFiles);
@@ -243,12 +243,12 @@ public class TerraformPlanStepTest extends CategoryTest {
     TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreConfigFiles =
         TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
             .connectorRef("connectorRef")
-            .repositoryPath("repositoryPath")
+            .repositoryName("repositoryPath")
             .build();
     TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreVarFiles =
         TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
             .connectorRef("connectorRef2")
-            .repositoryPath("repositoryPathtoVars")
+            .repositoryName("repositoryPathtoVars")
             .build();
     TerraformPlanStepParameters planStepParameters = TerraformStepDataGenerator.generateStepPlanFile(
         StoreConfigType.ARTIFACTORY, artifactoryStoreConfigFiles, artifactoryStoreVarFiles);

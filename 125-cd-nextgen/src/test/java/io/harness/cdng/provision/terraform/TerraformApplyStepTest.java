@@ -137,12 +137,12 @@ public class TerraformApplyStepTest extends CategoryTest {
     TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreConfigFiles =
         TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
             .connectorRef("connectorRef")
-            .repositoryPath("repositoryPath")
+            .repositoryName("repositoryPath")
             .build();
     TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreVarFiles =
         TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
             .connectorRef("connectorRef2")
-            .repositoryPath("repositoryPathtoVars")
+            .repositoryName("repositoryPathtoVars")
             .build();
 
     TerraformApplyStepParameters applyStepParameters = TerraformStepDataGenerator.generateApplyStepPlan(
@@ -241,12 +241,12 @@ public class TerraformApplyStepTest extends CategoryTest {
     TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreConfigFiles =
         TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
             .connectorRef("connectorRef")
-            .repositoryPath("repositoryPath")
+            .repositoryName("repositoryPath")
             .build();
     TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreVarFiles =
         TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
             .connectorRef("connectorRef2")
-            .repositoryPath("repositoryPathtoVars")
+            .repositoryName("repositoryPathtoVars")
             .build();
 
     TerraformApplyStepParameters applyStepParameters = TerraformStepDataGenerator.generateApplyStepPlan(
@@ -362,12 +362,12 @@ public class TerraformApplyStepTest extends CategoryTest {
     TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreConfigFiles =
         TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
             .connectorRef("connectorRef")
-            .repositoryPath("repositoryPath")
+            .repositoryName("repositoryPath")
             .build();
     TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreVarFiles =
         TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
             .connectorRef("connectorRef2")
-            .repositoryPath("repositoryPathtoVars")
+            .repositoryName("repositoryPathtoVars")
             .build();
 
     TerraformApplyStepParameters applyStepParameters = TerraformStepDataGenerator.generateApplyStepPlan(

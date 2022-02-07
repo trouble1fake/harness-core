@@ -177,13 +177,13 @@ public class TerraformStepHelperTest extends CategoryTest {
 
     TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreVarFiles =
         TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
-            .repositoryPath("RepositoryPath")
+            .repositoryName("RepositoryPath")
             .connectorRef("ConnectorRef")
             .artifacts(TerraformStepDataGenerator.generateArtifacts())
             .build();
     TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreConfigFiles =
         TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
-            .repositoryPath("RepositoryPathConfig")
+            .repositoryName("RepositoryPathConfig")
             .connectorRef("ConnectorRefConfig")
             .artifacts(TerraformStepDataGenerator.generateArtifacts())
             .build();
@@ -338,7 +338,7 @@ public class TerraformStepHelperTest extends CategoryTest {
     Ambiance ambiance = getAmbiance();
     TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreVarFiles =
         TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
-            .repositoryPath("RepositoryPath")
+            .repositoryName("RepositoryPath")
             .connectorRef("ConnectorRef")
             .artifacts(TerraformStepDataGenerator.generateArtifacts())
             .build();
@@ -395,13 +395,13 @@ public class TerraformStepHelperTest extends CategoryTest {
     // Create 3 var files with different stores at the same time
     TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreVarFilesA =
         TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
-            .repositoryPath("RepositoryPath")
+            .repositoryName("RepositoryPath")
             .connectorRef("ConnectorRef")
             .artifacts(TerraformStepDataGenerator.generateArtifacts())
             .build();
     TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreVarFilesB =
         TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
-            .repositoryPath("RepositoryPath2")
+            .repositoryName("RepositoryPath2")
             .connectorRef("ConnectorRef")
             .artifacts(TerraformStepDataGenerator.generateArtifacts())
             .build();
@@ -592,7 +592,7 @@ public class TerraformStepHelperTest extends CategoryTest {
     Ambiance ambiance = getAmbiance();
     TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreVarFiles =
         TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
-            .repositoryPath("RepositoryPath")
+            .repositoryName("RepositoryPath")
             .connectorRef("ConnectorRef")
             .artifacts(TerraformStepDataGenerator.generateArtifacts())
             .build();
