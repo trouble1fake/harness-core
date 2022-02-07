@@ -24,6 +24,7 @@ import software.wings.beans.InfrastructureMappingType;
 import software.wings.beans.RancherKubernetesInfrastructureMapping;
 import software.wings.service.impl.yaml.handler.InfraDefinition.CloudProviderInfrastructureYaml;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import java.util.List;
 import lombok.Builder;
@@ -49,6 +50,7 @@ public class RancherKubernetesInfrastructure
     String labelValues;
   }
 
+  @JsonIgnore
   @Override
   public String getClusterName() {
     // cluster id is null in rancher
