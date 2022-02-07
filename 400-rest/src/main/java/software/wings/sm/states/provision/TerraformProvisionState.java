@@ -330,7 +330,11 @@ public abstract class TerraformProvisionState extends State {
 
   private void saveTerraformPlanJson(
       TerraformExecutionData executionData, ExecutionContext context, TerraformCommand terraformCommand) {
-    if (featureFlagService.isEnabled(FeatureName.EXPORT_TF_PLAN, context.getAccountId())) {
+    // We are checking for nulls in tfPlanJson field because it can be null even if feature flag is set to true.
+    // Customer sometimes enables that flag because the customer is using multiple terraform versions at the same time,
+    // some of which do not support exporting in json format
+    if (featureFlagService.isEnabled(FeatureName.EXPORT_TF_PLAN, context.getAccountId())
+        && executionData.getTfPlanJson() != null) {
       String variableName = terraformCommand == TerraformCommand.APPLY ? TF_APPLY_VAR_NAME : TF_DESTROY_VAR_NAME;
       // if the plan variable exists overwrite it
       SweepingOutputInstance sweepingOutputInstance =

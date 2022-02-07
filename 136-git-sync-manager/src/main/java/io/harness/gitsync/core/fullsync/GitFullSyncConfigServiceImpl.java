@@ -11,9 +11,13 @@ import static org.springframework.data.mongodb.core.query.Update.update;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.delegate.beans.git.YamlGitConfigDTO;
 import io.harness.eraro.ErrorCode;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
+import io.harness.gitsync.common.beans.GitBranch;
+import io.harness.gitsync.common.service.GitBranchService;
+import io.harness.gitsync.common.service.YamlGitConfigService;
 import io.harness.gitsync.core.beans.GitFullSyncConfig;
 import io.harness.gitsync.core.beans.GitFullSyncConfig.GitFullSyncConfigKeys;
 import io.harness.gitsync.fullsync.dtos.GitFullSyncConfigDTO;
@@ -34,12 +38,16 @@ import org.springframework.data.mongodb.core.query.Update;
 @Slf4j
 public class GitFullSyncConfigServiceImpl implements GitFullSyncConfigService {
   private final GitFullSyncConfigRepository gitFullSyncConfigRepository;
+  private final GitBranchService gitBranchService;
+  private final YamlGitConfigService yamlGitConfigService;
   private final String ERROR_MSG_WHEN_CONFIG_EXIST =
       "A full sync config already exists for this account [%s], org [%s], project [%s]";
 
   @Override
   public GitFullSyncConfigDTO createConfig(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, GitFullSyncConfigRequestDTO dto) {
+    validateBranch(accountIdentifier, orgIdentifier, projectIdentifier, dto.getRepoIdentifier(), dto.getBranch(),
+        dto.isNewBranch());
     GitFullSyncConfig gitFullSyncConfig =
         GitFullSyncConfigMapper.fromDTO(accountIdentifier, orgIdentifier, projectIdentifier, dto);
     try {
@@ -66,6 +74,8 @@ public class GitFullSyncConfigServiceImpl implements GitFullSyncConfigService {
   @Override
   public GitFullSyncConfigDTO updateConfig(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, GitFullSyncConfigRequestDTO dto) {
+    validateBranch(accountIdentifier, orgIdentifier, projectIdentifier, dto.getRepoIdentifier(), dto.getBranch(),
+        dto.isNewBranch());
     Criteria criteria = getCriteria(accountIdentifier, orgIdentifier, projectIdentifier);
 
     Update update = update(GitFullSyncConfigKeys.baseBranch, dto.getBaseBranch())
@@ -104,5 +114,17 @@ public class GitFullSyncConfigServiceImpl implements GitFullSyncConfigService {
         .is(orgIdentifier)
         .and(GitFullSyncConfigKeys.projectIdentifier)
         .is(projectIdentifier);
+  }
+
+  private void validateBranch(String accountIdentifier, String orgIdentifier, String projectIdentifier,
+      String yamlGitConfigId, String branch, boolean isNewBranch) {
+    YamlGitConfigDTO yamlGitConfig =
+        yamlGitConfigService.get(projectIdentifier, orgIdentifier, accountIdentifier, yamlGitConfigId);
+    GitBranch gitBranch = gitBranchService.get(accountIdentifier, yamlGitConfig.getRepo(), branch);
+    if (gitBranch == null && !isNewBranch) {
+      throw new InvalidRequestException(String.format("Branch [%s] does not exist", branch));
+    } else if (gitBranch != null && isNewBranch) {
+      throw new InvalidRequestException(String.format("Branch [%s] already exist", branch));
+    }
   }
 }

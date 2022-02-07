@@ -93,9 +93,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -104,6 +107,7 @@ import org.zeroturnaround.exec.stream.LogOutputStream;
 
 @TargetModule(HarnessModule._930_DELEGATE_TASKS)
 @OwnedBy(CDP)
+@RunWith(JUnitParamsRunner.class)
 public class TerraformProvisionTaskTest extends WingsBaseTest {
   @Mock private EncryptionService mockEncryptionService;
   @Mock private GitClient gitClient;
@@ -138,6 +142,16 @@ public class TerraformProvisionTaskTest extends WingsBaseTest {
 
   private TerraformProvisionTask terraformProvisionTaskSpy;
   private TerraformBaseHelperImpl spyTerraformBaseHelperImpl;
+
+  // should execute show does should not depend on skipRefresh, but we try each combination to be sure
+  private Object[][] tfVersion_and_skipRefresh_and_shouldExecuteShowCommand() {
+    return new Object[][] {{TerraformVersion.create(0, 11, 15), Boolean.FALSE, Boolean.FALSE},
+        {TerraformVersion.create(0, 11, 15), Boolean.TRUE, Boolean.FALSE},
+        {TerraformVersion.create(0, 12, 0), Boolean.FALSE, Boolean.TRUE},
+        {TerraformVersion.create(0, 12, 0), Boolean.TRUE, Boolean.TRUE},
+        {TerraformVersion.create(0, 12, 31), Boolean.FALSE, Boolean.TRUE},
+        {TerraformVersion.create(0, 12, 31), Boolean.TRUE, Boolean.TRUE}};
+  }
 
   @Before
   public void setUp() throws Exception {
@@ -439,6 +453,23 @@ public class TerraformProvisionTaskTest extends WingsBaseTest {
     assertThat(terraformExecutionData.getEncryptedTfPlan()).isEqualTo(encryptedPlanContent);
   }
 
+  @Test
+  @Owner(developers = OwnerRule.BOGDAN)
+  @Category(UnitTests.class)
+  @Parameters(method = "tfVersion_and_skipRefresh_and_shouldExecuteShowCommand")
+  public void TC2_testPlanAndExport_shouldExportJsonPlanIfVersionGreaterOrEqualsThan_0_12(
+      TerraformVersion terraformVersion, Boolean skipRefresh, Boolean shouldExportJsonPlan)
+      throws IOException, TimeoutException, InterruptedException {
+    setupForApply();
+    doReturn(terraformVersion).when(terraformClient).version(anyLong(), anyString());
+
+    TerraformProvisionParameters terraformProvisionParameters = createTerraformProvisionParameters(
+        true, true, null, TerraformCommandUnit.Apply, TerraformCommand.APPLY, true, skipRefresh);
+    terraformProvisionTaskSpy.run(terraformProvisionParameters);
+
+    assertThat(getCommandsExecuted().contains("terraform show")).isEqualTo(shouldExportJsonPlan);
+  }
+
   /**
    *  should not skip refresh since not using approved plan
    */
@@ -649,6 +680,22 @@ public class TerraformProvisionTaskTest extends WingsBaseTest {
   }
 
   @Test
+  @Owner(developers = OwnerRule.BOGDAN)
+  @Category(UnitTests.class)
+  @Parameters(method = "tfVersion_and_skipRefresh_and_shouldExecuteShowCommand")
+  public void TC3_destroyRunPlanOnly_testExportingWithRegardsToTerraformVersion(TerraformVersion terraformVersion,
+      Boolean skipRefresh, Boolean shouldExportJsonPlan) throws InterruptedException, TimeoutException, IOException {
+    setupForDestroyTests();
+    doReturn(terraformVersion).when(terraformClient).version(anyLong(), anyString());
+
+    TerraformProvisionParameters terraformProvisionParameters = createTerraformProvisionParameters(
+        true, true, null, TerraformCommandUnit.Destroy, TerraformCommand.DESTROY, true, skipRefresh);
+    terraformProvisionTaskSpy.run(terraformProvisionParameters);
+
+    assertThat(getCommandsExecuted().contains("terraform show")).isEqualTo(shouldExportJsonPlan);
+  }
+
+  @Test
   @Owner(developers = ABOSII)
   @Category(UnitTests.class)
   public void testSavePlanJsonFileToFileService() throws Exception {
@@ -685,17 +732,20 @@ public class TerraformProvisionTaskTest extends WingsBaseTest {
   }
 
   private void verifyCommandExecuted(String... commands) throws IOException, InterruptedException, TimeoutException {
+    assertThat(getCommandsExecuted()).containsExactly(commands);
+  }
+
+  private List<String> getCommandsExecuted() throws IOException, InterruptedException, TimeoutException {
     ArgumentCaptor<String> listCaptor = ArgumentCaptor.forClass(String.class);
     Mockito.verify(terraformProvisionTaskSpy, atLeastOnce())
         .executeShellCommand(
             listCaptor.capture(), anyString(), any(TerraformProvisionParameters.class), any(Map.class), any());
-    assertThat(listCaptor.getAllValues()
-                   .stream()
-                   .map(s -> "terraform " + s.split("terraform")[1])
-                   .map(s -> s.split("\\s+"))
-                   .map(s -> s[0] + " " + s[1])
-                   .collect(Collectors.toList()))
-        .containsExactly(commands);
+    return listCaptor.getAllValues()
+        .stream()
+        .map(s -> "terraform " + s.split("terraform")[1])
+        .map(s -> s.split("\\s+"))
+        .map(s -> s[0] + " " + s[1])
+        .collect(Collectors.toList());
   }
 
   private void verify(TerraformExecutionData terraformExecutionData, TerraformCommand command) {

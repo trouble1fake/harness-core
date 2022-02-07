@@ -1349,9 +1349,6 @@ public class DelegateServiceImpl implements DelegateService {
         params.put("k8sPermissionsType", templateParameters.getK8sPermissionsType().name());
       }
 
-      boolean versionCheckEnabled = hasVersionCheckDisabled(templateParameters.getAccountId());
-      params.put("versionCheckDisabled", String.valueOf(versionCheckEnabled));
-
       if (isNotBlank(templateParameters.getDelegateTokenName())) {
         params.put("delegateTokenName", templateParameters.getDelegateTokenName());
       }

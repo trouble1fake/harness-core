@@ -514,27 +514,6 @@ public class PipelineResource implements YamlSchemaResource {
     return ResponseDTO.newResponse(ExpandedPipelineJsonDTO.builder().expandedJson(expandedPipelineJSON).build());
   }
 
-  @GET
-  @Path("/steps")
-  @ApiOperation(value = "Get Steps for given module", nickname = "getSteps")
-  @Operation(operationId = "getSteps", summary = "Gets all the Steps for given Category",
-      responses =
-      {
-        @io.swagger.v3.oas.annotations.responses.
-        ApiResponse(responseCode = "default", description = "Returns steps for a given Category")
-      })
-  public ResponseDTO<StepCategory>
-  getSteps(@Parameter(description = "Step Category for which you needs all its steps",
-               required = true) @NotNull @QueryParam("category") String category,
-      @Parameter(description = "Module of the step to which it belongs", required = true) @NotNull @QueryParam(
-          "module") String module,
-      @Parameter(description = PipelineResourceConstants.ACCOUNT_PARAM_MESSAGE) @QueryParam(
-          "accountId") String accountId) {
-    log.info("Get Steps for module " + module);
-
-    return ResponseDTO.newResponse(pmsPipelineService.getSteps(module, category, accountId));
-  }
-
   @POST
   @Path("/v2/steps")
   @ApiOperation(value = "Get Steps for given modules Version 2", nickname = "getStepsV2")

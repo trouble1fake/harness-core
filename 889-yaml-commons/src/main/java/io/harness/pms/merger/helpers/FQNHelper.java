@@ -32,7 +32,7 @@ public class FQNHelper {
       YAMLFieldNameConstants.KEY, YAMLFieldNameConstants.COMMAND_TYPE);
 
   public void validateUniqueFqn(FQN fqn, Object value, Map<FQN, Object> res, HashSet<String> expressions) {
-    String expressionFqn = fqn.getExpressionFqn();
+    String expressionFqn = fqn.displayWithoutParallel();
     if (expressions.contains(expressionFqn)) {
       String fqnDisplay = fqn.display();
       throw new InvalidRequestException(String.format(" This element is coming twice in yaml %s",

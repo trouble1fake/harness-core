@@ -522,9 +522,9 @@ aeriform("//980-commons:module")
 
 aeriform("//980-commons:tests")
 
-aeriform("//980-recaster:module")
+aeriform("//979-recaster:module")
 
-aeriform("//980-recaster:tests")
+aeriform("//979-recaster:tests")
 
 aeriform("//990-commons-test:abstract-module")
 

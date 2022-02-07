@@ -68,7 +68,6 @@ public class RecommendationService {
     return result;
   }
 
-  // TODO(UTSAV): Add unit test
   public int getRecommendationsCount(@NonNull String accountId, @NonNull Condition condition) {
     return k8sRecommendationDAO.fetchRecommendationsCount(accountId, condition);
   }

@@ -1,0 +1,5 @@
+name: Perpetual Task
+identifier: perpetual_task
+labels:
+  - accountId
+  - perpetualTaskType

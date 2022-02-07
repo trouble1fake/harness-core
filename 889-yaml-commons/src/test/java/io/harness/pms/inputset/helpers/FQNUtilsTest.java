@@ -180,5 +180,12 @@ public class FQNUtilsTest extends CategoryTest {
     String yaml5 = toYaml(failureStrategyYaml);
     assertThat(FQNMapGenerator.generateFQNMap(YamlUtils.readTree(yaml5).getNode().getCurrJsonNode()))
         .isNotInstanceOf(InvalidRequestException.class);
+
+    String parallelStepsFailedFqn = "fqnUniqueTestForParallelSteps.yaml";
+    String parallelStepsFailedFqnYaml = toYaml(parallelStepsFailedFqn);
+    assertThatThrownBy(()
+                           -> FQNMapGenerator.generateFQNMap(
+                               YamlUtils.readTree(parallelStepsFailedFqnYaml).getNode().getCurrJsonNode()))
+        .isInstanceOf(InvalidRequestException.class);
   }
 }

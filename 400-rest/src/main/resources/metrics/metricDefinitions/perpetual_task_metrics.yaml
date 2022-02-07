@@ -1,0 +1,28 @@
+name: Perpetual Task Metrics
+identifier: perpetual_task_metrics
+metricGroup: perpetual_task
+metrics:
+  - metricName: perpetual_task_create
+    metricDefinition: Perpetual task creation count
+    type: Count
+    unit: "1"
+  - metricName: perpetual_task_reset
+    metricDefinition: Perpetual task reset count
+    type: Count
+    unit: "1"
+  - metricName: perpetual_task_delete
+    metricDefinition: Perpetual task delete count
+    type: Count
+    unit: "1"
+  - metricName: perpetual_task_pause
+    metricDefinition: Perpetual task pause count
+    type: Count
+    unit: "1"
+  - metricName: perpetual_task_assigned
+    metricDefinition: perpetual task assigned count
+    type: Count
+    unit: "1"
+  - metricName: perpetual_task_unassigned
+    metricDefinition: perpetual task unassigned count
+    type: Count
+    unit: "1"

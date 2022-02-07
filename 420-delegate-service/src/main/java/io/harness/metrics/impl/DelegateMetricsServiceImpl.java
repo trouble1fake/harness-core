@@ -15,6 +15,7 @@ import io.harness.delegate.beans.DelegateTaskResponse;
 import io.harness.metrics.AutoMetricContext;
 import io.harness.metrics.beans.DelegateTaskMetricContext;
 import io.harness.metrics.beans.DelegateTaskResponseMetricContext;
+import io.harness.metrics.beans.PerpetualTaskMetricContext;
 import io.harness.metrics.intfc.DelegateMetricsService;
 import io.harness.metrics.service.api.MetricService;
 
@@ -41,6 +42,13 @@ public class DelegateMetricsServiceImpl implements DelegateMetricsService {
   public static final String DELEGATE_RESTARTED = "delegate_restarted";
   public static final String DELEGATE_DISCONNECTED = "delegate_disconnected";
   public static final String DELEGATE_DESTROYED = "destroy_delegate";
+
+  public static final String PERPETUAL_TASK_CREATE = "perpetual_task_create";
+  public static final String PERPETUAL_TASK_RESET = "perpetual_task_reset";
+  public static final String PERPETUAL_TASK_DELETE = "perpetual_task_delete";
+  public static final String PERPETUAL_TASK_PAUSE = "perpetual_task_pause";
+  public static final String PERPETUAL_TASK_ASSIGNED = "perpetual_task_assigned";
+  public static final String PERPETUAL_TASK_UNASSIGNED = "perpetual_task_unassigned";
 
   @Inject private MetricService metricService;
   @Inject private DelegateTaskMetricContextBuilder metricContextBuilder;
@@ -73,6 +81,13 @@ public class DelegateMetricsServiceImpl implements DelegateMetricsService {
       return;
     }
     try (AutoMetricContext ignore = metricContextBuilder.getContext(delegate, Delegate.class)) {
+      metricService.incCounter(metricName);
+    }
+  }
+
+  @Override
+  public void recordPerpetualTaskMetrics(String accountId, String perpetualTaskType, String metricName) {
+    try (PerpetualTaskMetricContext ignore = new PerpetualTaskMetricContext(accountId, perpetualTaskType)) {
       metricService.incCounter(metricName);
     }
   }
