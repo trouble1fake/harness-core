@@ -7,8 +7,13 @@
 
 package io.harness.nexus;
 
-import com.google.common.collect.Lists;
-import com.google.inject.Singleton;
+import static io.harness.annotations.dev.HarnessTeam.CDC;
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+import static io.harness.nexus.NexusHelper.isSuccessful;
+
+import static java.util.Collections.emptyMap;
+
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.artifact.ArtifactMetadataKeys;
 import io.harness.artifact.ArtifactUtilities;
@@ -20,25 +25,22 @@ import io.harness.exception.WingsException;
 import io.harness.nexus.model.Asset;
 import io.harness.nexus.model.Nexus3ComponentResponse;
 import io.harness.nexus.model.Nexus3Repository;
-import lombok.extern.slf4j.Slf4j;
-import okhttp3.Credentials;
-import org.apache.commons.lang3.StringUtils;
-import retrofit2.Response;
-import retrofit2.converter.jackson.JacksonConverterFactory;
+
 import software.wings.utils.RepositoryFormat;
 
+import com.google.common.collect.Lists;
+import com.google.inject.Singleton;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import static io.harness.annotations.dev.HarnessTeam.CDC;
-import static io.harness.data.structure.EmptyPredicate.isEmpty;
-import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
-import static io.harness.nexus.NexusHelper.isSuccessful;
-import static java.util.Collections.emptyMap;
+import lombok.extern.slf4j.Slf4j;
+import okhttp3.Credentials;
+import org.apache.commons.lang3.StringUtils;
+import retrofit2.Response;
+import retrofit2.converter.jackson.JacksonConverterFactory;
 
 @OwnedBy(CDC)
 @Singleton
