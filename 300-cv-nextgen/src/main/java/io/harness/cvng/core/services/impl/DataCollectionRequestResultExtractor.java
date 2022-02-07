@@ -24,10 +24,10 @@ public interface DataCollectionRequestResultExtractor<ConnectorConfig extends Co
                                                     .projectIdentifier(projectParams.getProjectIdentifier())
                                                     .tracingId(tracingId)
                                                     .build();
-    logger.debug("Triggering {} onboarding request. TracingId: {}", dataCollectionRequest.getType(), tracingId);
+    logger.info("Triggering {} onboarding request. TracingId: {}", dataCollectionRequest.getType(), tracingId);
     OnboardingResponseDTO response =
         onboardingService.getOnboardingResponse(projectParams.getAccountIdentifier(), onboardingRequestDTO);
-    logger.debug("{} onboarding request was successful. Tracing id: {}", dataCollectionRequest.getType(), tracingId);
+    logger.info("{} onboarding request was successful. Tracing id: {}", dataCollectionRequest.getType(), tracingId);
     return new Gson().fromJson(JsonUtils.asJson(response.getResult()), type);
   }
 }

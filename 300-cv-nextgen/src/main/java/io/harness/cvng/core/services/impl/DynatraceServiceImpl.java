@@ -23,6 +23,7 @@ import io.harness.delegate.beans.connector.dynatrace.DynatraceConnectorDTO;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
 import java.lang.reflect.Type;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashSet;
@@ -34,11 +35,12 @@ import lombok.extern.slf4j.Slf4j;
 public class DynatraceServiceImpl
     implements DynatraceService, DataCollectionRequestResultExtractor<DynatraceConnectorDTO> {
   @Inject private OnboardingService onboardingService;
+  @Inject private Clock clock;
 
   @Override
   public List<DynatraceServiceDTO> getAllServices(
       ProjectParams projectParams, String connectorIdentifier, String tracingId) {
-    Instant now = Instant.now();
+    Instant now = clock.instant();
     DynatraceServiceListRequest request =
         // we are getting active services in the last 6 months
         DynatraceServiceListRequest.builder()
@@ -46,7 +48,7 @@ public class DynatraceServiceImpl
             .to(now.toEpochMilli())
             .type(DataCollectionRequestType.DYNATRACE_SERVICE_LIST_REQUEST)
             .build();
-    log.debug("Created {} request with params: from {}, to {}", request.getType(), request.getFrom(), request.getTo());
+    log.info("Created {} request with params: from {}, to {}", request.getType(), request.getFrom(), request.getTo());
     Type type = new TypeToken<List<DynatraceServiceDTO>>() {}.getType();
     return performRequestAndGetDataResult(
         request, onboardingService, type, projectParams, connectorIdentifier, tracingId, log);
@@ -57,7 +59,7 @@ public class DynatraceServiceImpl
       ProjectParams projectParams, String connectorIdentifier, String tracingId) {
     DynatraceMetricListRequest request =
         DynatraceMetricListRequest.builder().type(DataCollectionRequestType.DYNATRACE_METRIC_LIST_REQUEST).build();
-    log.debug("Created {} request...", request.getType());
+    log.info("Created {} request...", request.getType());
     Type type = new TypeToken<List<DynatraceMetricDTO>>() {}.getType();
     return performRequestAndGetDataResult(
         request, onboardingService, type, projectParams, connectorIdentifier, tracingId, log);
@@ -70,7 +72,7 @@ public class DynatraceServiceImpl
                                                  .serviceId(serviceEntityId)
                                                  .type(DataCollectionRequestType.DYNATRACE_SERVICE_DETAILS_REQUEST)
                                                  .build();
-    log.debug("Created {} request with params: serviceId {}", request.getType(), request.getServiceId());
+    log.info("Created {} request with params: serviceId {}", request.getType(), request.getServiceId());
     Type type = new TypeToken<DynatraceServiceDTO>() {}.getType();
     return performRequestAndGetDataResult(
         request, onboardingService, type, projectParams, connectorIdentifier, tracingId, log);
@@ -79,7 +81,7 @@ public class DynatraceServiceImpl
   @Override
   public Set<MetricPackValidationResponse> validateData(ProjectParams projectParams, String connectorIdentifier,
       List<String> serviceMethodsIds, List<MetricPackDTO> metricPacks, String tracingId) {
-    log.debug("Dynatrace MetricPack validateData called. Number of MetricPacks: {}.", metricPacks.size());
+    log.info("Dynatrace MetricPack validateData called. Number of MetricPacks: {}.", metricPacks.size());
 
     Set<MetricPackValidationResponse> metricPackValidationResponses = new HashSet<>();
     metricPacks.forEach(metricPack -> {
@@ -90,7 +92,7 @@ public class DynatraceServiceImpl
               .type(DataCollectionRequestType.DYNATRACE_VALIDATION_REQUEST)
               .build();
 
-      log.debug("Created {} request for MetricPack: {}", request.getType(), metricPack.getIdentifier());
+      log.info("Created {} request for MetricPack: {}", request.getType(), metricPack.getIdentifier());
 
       Type type = new TypeToken<List<MetricValidationResponse>>() {}.getType();
       List<MetricValidationResponse> validationResponses = performRequestAndGetDataResult(
@@ -105,14 +107,14 @@ public class DynatraceServiceImpl
           metricPackValidationResponseBuilder.overallStatus(ThirdPartyApiResponseStatus.SUCCESS).build();
       metricPackValidationResponse.updateStatus();
 
-      log.debug(
+      log.info(
           "Retrieved single metric validation responses for MetricPack: {}. Response list size: {}. Validation overallStatus: {}",
           metricPack.getIdentifier(), validationResponses.size(), metricPackValidationResponse.getOverallStatus());
 
       metricPackValidationResponses.add(metricPackValidationResponse);
     });
 
-    log.debug(
+    log.info(
         "Successfully collected MetricPacks validation responses. List size: {}", metricPackValidationResponses.size());
 
     return metricPackValidationResponses;
@@ -121,7 +123,7 @@ public class DynatraceServiceImpl
   @Override
   public List<TimeSeriesSampleDTO> fetchSampleData(ProjectParams projectParams, String connectorIdentifier,
       String serviceId, String metricSelector, String tracingId) {
-    Instant now = Instant.now();
+    Instant now = clock.instant();
     DynatraceSampleDataRequest request = DynatraceSampleDataRequest.builder()
                                              .from(now.minus(Duration.ofMinutes(60)).toEpochMilli())
                                              .to(now.toEpochMilli())
@@ -129,7 +131,7 @@ public class DynatraceServiceImpl
                                              .metricSelector(metricSelector)
                                              .type(DataCollectionRequestType.DYNATRACE_SAMPLE_DATA_REQUEST)
                                              .build();
-    log.debug("Created {} request with params: serviceId {}, metricSelector: {}, from: {}, to: {}", request.getType(),
+    log.info("Created {} request with params: serviceId {}, metricSelector: {}, from: {}, to: {}", request.getType(),
         request.getServiceId(), request.getMetricSelector(), request.getFrom(), request.getType());
     Type type = new TypeToken<List<TimeSeriesSampleDTO>>() {}.getType();
     return performRequestAndGetDataResult(
