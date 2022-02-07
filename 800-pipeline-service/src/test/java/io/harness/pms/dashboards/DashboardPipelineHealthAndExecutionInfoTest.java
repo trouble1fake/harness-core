@@ -25,6 +25,7 @@ import io.harness.pms.Dashboard.PipelineExecutionInfo;
 import io.harness.pms.Dashboard.StatusAndTime;
 import io.harness.pms.execution.ExecutionStatus;
 import io.harness.pms.pipeline.service.PipelineDashboardServiceImpl;
+import io.harness.pms.pipeline.service.QueryService;
 import io.harness.rule.Owner;
 import io.harness.timescaledb.TimeScaleDBService;
 
@@ -43,6 +44,7 @@ import org.mockito.Spy;
 public class DashboardPipelineHealthAndExecutionInfoTest extends CategoryTest {
   @Mock TimeScaleDBService timeScaleDBService;
   @InjectMocks @Spy private PipelineDashboardServiceImpl pipelineDashboardService;
+  @InjectMocks @Spy private QueryService queryService;
 
   @Before
   public void setup() {
@@ -68,15 +70,15 @@ public class DashboardPipelineHealthAndExecutionInfoTest extends CategoryTest {
     StatusAndTime statusAndTime = StatusAndTime.builder().status(status).time(time).build();
 
     doReturn(statusAndTime)
-        .when(pipelineDashboardService)
+        .when(queryService)
         .queryBuilderSelectStatusAndTime(
             anyString(), anyString(), anyString(), anyString(), anyLong(), anyLong(), anyString());
     doReturn(0L)
-        .when(pipelineDashboardService)
+        .when(queryService)
         .queryBuilderMean(anyString(), anyString(), anyString(), anyString(), anyLong(), anyLong(), anyString());
 
     doReturn(0L)
-        .when(pipelineDashboardService)
+        .when(queryService)
         .queryBuilderMedian(anyString(), anyString(), anyString(), anyString(), anyLong(), anyLong(), anyString());
 
     DashboardPipelineHealthInfo dashboardPipelineHealthInfo = pipelineDashboardService.getDashboardPipelineHealthInfo(
@@ -93,7 +95,7 @@ public class DashboardPipelineHealthAndExecutionInfoTest extends CategoryTest {
     List<String> emptyStatus = new ArrayList<>();
     List<Long> emptyTime = new ArrayList<>();
     doReturn(StatusAndTime.builder().time(emptyTime).status(emptyStatus).build())
-        .when(pipelineDashboardService)
+        .when(queryService)
         .queryBuilderSelectStatusAndTime(
             anyString(), anyString(), anyString(), anyString(), anyLong(), anyLong(), anyString());
 
@@ -109,23 +111,19 @@ public class DashboardPipelineHealthAndExecutionInfoTest extends CategoryTest {
     String table = "pipeline_execution_summary_ci";
 
     // currentMean
-    doReturn(100L)
-        .when(pipelineDashboardService)
-        .queryBuilderMean("ac", "or", "pr", "pip", startInterval, 1619827200000L, table);
+    doReturn(100L).when(queryService).queryBuilderMean("ac", "or", "pr", "pip", startInterval, 1619827200000L, table);
 
     // currentMedian
-    doReturn(150L)
-        .when(pipelineDashboardService)
-        .queryBuilderMedian("ac", "or", "pr", "pip", startInterval, 1619827200000L, table);
+    doReturn(150L).when(queryService).queryBuilderMedian("ac", "or", "pr", "pip", startInterval, 1619827200000L, table);
 
     // PreviousMean
     doReturn(40L)
-        .when(pipelineDashboardService)
+        .when(queryService)
         .queryBuilderMean("ac", "or", "pr", "pip", previousStartInterval, startInterval, table);
 
     // previousMedian
     doReturn(180L)
-        .when(pipelineDashboardService)
+        .when(queryService)
         .queryBuilderMedian("ac", "or", "pr", "pip", previousStartInterval, startInterval, table);
 
     DashboardPipelineHealthInfo dashboardPipelineHealthInfoMeanMedian =
@@ -152,7 +150,7 @@ public class DashboardPipelineHealthAndExecutionInfoTest extends CategoryTest {
     StatusAndTime statusAndTime = StatusAndTime.builder().status(status).time(time).build();
 
     doReturn(statusAndTime)
-        .when(pipelineDashboardService)
+        .when(queryService)
         .queryBuilderSelectStatusAndTime(
             anyString(), anyString(), anyString(), anyString(), anyLong(), anyLong(), anyString());
 
