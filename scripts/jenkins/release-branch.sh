@@ -103,7 +103,7 @@ if [[ "$EXECUTE_NEW_CODE" == "true" ]]; then
     echo "New version: major.minor.build: $NEW_VERSION"
     git tag -a ${NEW_VERSION} ${SHA} -m "Release Tag: v${NEW_VERSION}"
     print_err "$?" "Tagging Failed"
-    git push origin master
+    git push origin ${NEW_VERSION}
     print_err "$?" "Pushing Tag to master failed"
 fi
 
