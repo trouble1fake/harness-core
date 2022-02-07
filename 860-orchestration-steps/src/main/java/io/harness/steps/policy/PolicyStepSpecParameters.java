@@ -12,9 +12,9 @@ import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import lombok.Value;
 
+@Value
 @EqualsAndHashCode(callSuper = true)
 @OwnedBy(PIPELINE)
-@Value
 public class PolicyStepSpecParameters extends PolicyStepBase implements SpecParameters {
   @Builder
   public PolicyStepSpecParameters(
