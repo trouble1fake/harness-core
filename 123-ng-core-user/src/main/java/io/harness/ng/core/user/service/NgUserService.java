@@ -50,6 +50,8 @@ public interface NgUserService {
    */
   Page<UserInfo> listCurrentGenUsers(String accountIdentifier, String searchString, Pageable page);
 
+  Optional<UserInfo> getUserInfoByEmailFromCG(String email);
+
   List<UserInfo> listCurrentGenUsers(String accountId, UserFilterNG userFilter);
 
   ScimListResponse<ScimUser> searchScimUsersByEmailQuery(
@@ -71,7 +73,7 @@ public interface NgUserService {
   List<UserMetadataDTO> getUserMetadata(List<String> userIds);
 
   void addServiceAccountToScope(
-      String serviceAccountId, Scope scope, String roleIdentifier, UserMembershipUpdateSource source);
+      String serviceAccountId, Scope scope, RoleBinding roleBinding, UserMembershipUpdateSource source);
 
   Page<UserMembership> listUserMemberships(Criteria criteria, Pageable pageable);
 

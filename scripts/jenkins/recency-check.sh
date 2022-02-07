@@ -6,7 +6,7 @@
 
 if [ -z "${ghprbTargetBranch}" ]
 then
-  ghprbTargetBranch=master
+  ghprbTargetBranch=develop
 fi
 
 BREAKING_COMMITS=`git log --pretty=oneline --no-merges HEAD..origin/${ghprbTargetBranch} | grep '\[PR_FIX\]\|\[REFACTORING\]'`

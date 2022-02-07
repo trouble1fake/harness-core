@@ -255,7 +255,7 @@ public class K8sStepHelper extends CDStepHelper {
 
   public List<String> renderPatches(
       ManifestOutcome manifestOutcome, Ambiance ambiance, List<String> patchesFileContents) {
-    if (!isUseVarSupportForKustomize(AmbianceUtils.getAccountId(ambiance)) || null == manifestOutcome) {
+    if (null == manifestOutcome) {
       return emptyList();
     }
 
@@ -538,20 +538,15 @@ public class K8sStepHelper extends CDStepHelper {
     ManifestOutcome k8sManifestOutcome = getK8sSupportedManifestOutcome(manifestsOutcome.values());
 
     if (ManifestType.Kustomize.equals(k8sManifestOutcome.getType())) {
-      if (isUseVarSupportForKustomize(AmbianceUtils.getAccountId(ambiance))) {
-        List<KustomizePatchesManifestOutcome> kustomizePatchesManifests =
-            getKustomizePatchesManifests(getOrderedManifestOutcome(manifestsOutcome.values()));
-        if (isEmpty(kustomizePatchesManifests)) {
-          return k8sStepExecutor.executeK8sTask(k8sManifestOutcome, ambiance, stepElementParameters, emptyList(),
-              K8sExecutionPassThroughData.builder().infrastructure(infrastructureOutcome).build(), true, null);
-        }
-
-        return prepareKustomizeTemplateWithPatchesManifest(k8sStepExecutor, kustomizePatchesManifests,
-            k8sManifestOutcome, ambiance, stepElementParameters, infrastructureOutcome);
-      } else {
+      List<KustomizePatchesManifestOutcome> kustomizePatchesManifests =
+          getKustomizePatchesManifests(getOrderedManifestOutcome(manifestsOutcome.values()));
+      if (isEmpty(kustomizePatchesManifests)) {
         return k8sStepExecutor.executeK8sTask(k8sManifestOutcome, ambiance, stepElementParameters, emptyList(),
             K8sExecutionPassThroughData.builder().infrastructure(infrastructureOutcome).build(), true, null);
       }
+
+      return prepareKustomizeTemplateWithPatchesManifest(k8sStepExecutor, kustomizePatchesManifests, k8sManifestOutcome,
+          ambiance, stepElementParameters, infrastructureOutcome);
     }
 
     if (VALUES_YAML_SUPPORTED_MANIFEST_TYPES.contains(k8sManifestOutcome.getType())) {

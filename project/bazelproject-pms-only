@@ -11,7 +11,6 @@ directories:
   874-orchestration-delay
   876-orchestration-beans
   878-pipeline-service-utilities
-  878-pms-coupling
   879-pms-sdk
   882-pms-sdk-core
   884-pms-commons
@@ -73,7 +72,7 @@ directories:
   970-rbac-core
   970-watcher-beans
   980-commons
-  980-recaster
+  979-recaster
   990-commons-test
   999-annotations
   project
@@ -91,7 +90,6 @@ targets:
   874-orchestration-delay:module
   876-orchestration-beans:module
   878-pipeline-service-utilities:module
-  878-pms-coupling:module
   879-pms-sdk:module
   882-pms-sdk-core:module
   884-pms-commons:module
@@ -102,7 +100,7 @@ targets:
   950-wait-engine:module
   959-timeout-engine:module
   960-persistence:module
-  980-recaster:module
+  979-recaster:module
 
 
 import_run_configurations:

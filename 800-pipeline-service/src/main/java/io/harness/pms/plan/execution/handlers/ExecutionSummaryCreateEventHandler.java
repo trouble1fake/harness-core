@@ -124,6 +124,8 @@ public class ExecutionSummaryCreateEventHandler implements OrchestrationStartObs
       layoutNodeDTOMap.put(entry.getKey(), graphLayoutNodeDTO);
       modules.add(moduleName);
     }
+
+    PlanExecutionMetadata planExecutionMetadata = orchestrationStartInfo.getPlanExecutionMetadata();
     PipelineExecutionSummaryEntity pipelineExecutionSummaryEntity =
         PipelineExecutionSummaryEntity.builder()
             .layoutNodeMap(layoutNodeDTOMap)
@@ -132,9 +134,8 @@ public class ExecutionSummaryCreateEventHandler implements OrchestrationStartObs
             .startingNodeId(startingNodeId)
             .planExecutionId(planExecutionId)
             .name(pipelineEntity.get().getName())
-            .inputSetYaml(orchestrationStartInfo.getPlanExecutionMetadata().getInputSetYaml())
-            .pipelineTemplate(
-                getPipelineTemplate(pipelineEntity.get(), orchestrationStartInfo.getPlanExecutionMetadata()))
+            .inputSetYaml(planExecutionMetadata.getInputSetYaml())
+            .pipelineTemplate(getPipelineTemplate(pipelineEntity.get(), planExecutionMetadata))
             .internalStatus(Status.NO_OP)
             .status(ExecutionStatus.NOTSTARTED)
             .startTs(planExecution.getStartTs())
@@ -151,8 +152,9 @@ public class ExecutionSummaryCreateEventHandler implements OrchestrationStartObs
                                         .parentExecutionId(parentExecutionId)
                                         .rootExecutionId(rootExecutionId)
                                         .build())
+            .allowStagesExecution(planExecutionMetadata.isStagesExecutionAllowed())
             .governanceMetadata(planExecution.getGovernanceMetadata())
-            .stagesExecutionMetadata(orchestrationStartInfo.getPlanExecutionMetadata().getStagesExecutionMetadata())
+            .stagesExecutionMetadata(planExecutionMetadata.getStagesExecutionMetadata())
             .build();
     pmsExecutionSummaryRespository.save(pipelineExecutionSummaryEntity);
   }

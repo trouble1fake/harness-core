@@ -1,7 +1,5 @@
 # Dropwizard config
 server:
-  dumpAfterStart: true
-  dumpBeforeStop: true
   allowedMethods: ["GET"]
   adminConnectors: []
   applicationConnectors:
@@ -30,4 +28,3 @@ grpcServiceConnectorPort: 8080
 logStreamingServiceBaseUrl: http://localhost:8079
 clientToolsDownloadDisabled: true
 installClientToolsInBackground: true
-versionCheckDisabled: true

@@ -52,6 +52,10 @@ spec:
     metadata:
       labels:
         harness.io/name: ${delegateName}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3460"
+        prometheus.io/path: "/api/metrics"
     spec:
       terminationGracePeriodSeconds: 600
       containers:

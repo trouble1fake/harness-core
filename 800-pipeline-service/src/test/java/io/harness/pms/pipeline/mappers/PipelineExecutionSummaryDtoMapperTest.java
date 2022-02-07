@@ -123,6 +123,7 @@ public class PipelineExecutionSummaryDtoMapperTest extends PipelineServiceTestBa
         PipelineExecutionSummaryDtoMapper.toDto(executionSummaryEntity, null);
     assertThat(executionSummaryDTO.isStagesExecution()).isFalse();
     assertThat(executionSummaryDTO.getStagesExecuted()).isNull();
+    assertThat(executionSummaryDTO.isAllowStageExecutions()).isFalse();
 
     PipelineExecutionSummaryEntity executionSummaryEntityWithStages =
         PipelineExecutionSummaryEntity.builder()
@@ -137,6 +138,7 @@ public class PipelineExecutionSummaryDtoMapperTest extends PipelineServiceTestBa
                                          .stageIdentifiers(Collections.singletonList("s1"))
                                          .fullPipelineYaml(getPipelineYaml())
                                          .build())
+            .allowStagesExecution(true)
             .build();
     PipelineExecutionSummaryDTO executionSummaryDTOWithStages =
         PipelineExecutionSummaryDtoMapper.toDto(executionSummaryEntityWithStages, null);
@@ -145,6 +147,7 @@ public class PipelineExecutionSummaryDtoMapperTest extends PipelineServiceTestBa
     assertThat(executionSummaryDTOWithStages.getStagesExecuted().contains("s1")).isTrue();
     assertThat(executionSummaryDTOWithStages.getStagesExecutedNames()).hasSize(1);
     assertThat(executionSummaryDTOWithStages.getStagesExecutedNames().get("s1")).isEqualTo("s one");
+    assertThat(executionSummaryDTOWithStages.isAllowStageExecutions()).isTrue();
   }
 
   private String getPipelineYaml() {

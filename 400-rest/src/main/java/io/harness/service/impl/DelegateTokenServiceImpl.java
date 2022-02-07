@@ -133,8 +133,11 @@ public class DelegateTokenServiceImpl implements DelegateTokenService, AccountCr
   public List<DelegateTokenDetails> getDelegateTokens(String accountId, DelegateTokenStatus status, String tokenName) {
     List<DelegateToken> queryResults;
 
-    Query<DelegateToken> query =
-        persistence.createQuery(DelegateToken.class).field(DelegateTokenKeys.accountId).equal(accountId);
+    Query<DelegateToken> query = persistence.createQuery(DelegateToken.class)
+                                     .field(DelegateTokenKeys.accountId)
+                                     .equal(accountId)
+                                     .field(DelegateTokenKeys.isNg)
+                                     .notEqual(true);
 
     if (null != status) {
       query = query.field(DelegateTokenKeys.status).equal(status);

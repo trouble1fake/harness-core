@@ -13,6 +13,7 @@ import static io.harness.delegate.configuration.InstallUtils.helm3Version;
 import static io.harness.filesystem.FileIo.deleteDirectoryAndItsContentIfExists;
 import static io.harness.rule.OwnerRule.ANSHUL;
 import static io.harness.rule.OwnerRule.AVMOHAN;
+import static io.harness.rule.OwnerRule.NAMAN_TALAYCHA;
 import static io.harness.rule.OwnerRule.RIHAZ;
 import static io.harness.rule.OwnerRule.SHUBHAM;
 import static io.harness.rule.OwnerRule.VAIBHAV_SI;
@@ -110,13 +111,13 @@ public class InstallUtilsTest extends CategoryTest implements MockableTestMixin 
       setStaticFieldValue(SystemUtils.class, "IS_OS_MAC", false);
       assertThat(InstallUtils.getScmDownloadUrl(delegateConfiguration))
           .isEqualTo(
-              "https://app.harness.io/storage/harness-download/harness-scm/release/0e23b6f1/bin/linux/amd64/scm");
+              "https://app.harness.io/storage/harness-download/harness-scm/release/3ac4cefa/bin/linux/amd64/scm");
 
       setStaticFieldValue(SystemUtils.class, "IS_OS_WINDOWS", false);
       setStaticFieldValue(SystemUtils.class, "IS_OS_MAC", true);
       assertThat(InstallUtils.getScmDownloadUrl(delegateConfiguration))
           .isEqualTo(
-              "https://app.harness.io/storage/harness-download/harness-scm/release/0e23b6f1/bin/darwin/amd64/scm");
+              "https://app.harness.io/storage/harness-download/harness-scm/release/3ac4cefa/bin/darwin/amd64/scm");
     } finally {
       setStaticFieldValue(SystemUtils.class, "IS_OS_WINDOWS", win);
       setStaticFieldValue(SystemUtils.class, "IS_OS_MAC", mac);
@@ -224,6 +225,20 @@ public class InstallUtilsTest extends CategoryTest implements MockableTestMixin 
   }
 
   @Test
+  @Owner(developers = NAMAN_TALAYCHA)
+  @Category(UnitTests.class)
+  public void testGetKustomizePath() {
+    InstallUtils.kustomizePath = "usr/local/bin/kustomize";
+    InstallUtils.isCustomKustomizePath = true;
+    assertThat(InstallUtils.getKustomizePath(true)).isEqualTo(InstallUtils.kustomizePath);
+    assertThat(InstallUtils.getKustomizePath(false)).isEqualTo(InstallUtils.kustomizePath);
+
+    InstallUtils.isCustomKustomizePath = false;
+    assertThat(InstallUtils.getKustomizePath(true)).isNotEqualTo(InstallUtils.kustomizePath);
+    assertThat(InstallUtils.getKustomizePath(false)).isNotEqualTo(InstallUtils.kustomizePath);
+  }
+
+  @Test
   @Owner(developers = VAIBHAV_SI)
   @Category(FunctionalTests.class)
   public void shouldInstallKustomize() throws IOException, IllegalAccessException {
@@ -235,6 +250,19 @@ public class InstallUtilsTest extends CategoryTest implements MockableTestMixin 
 
     // Won't download this time
     assertThat(InstallUtils.installKustomize(delegateConfiguration)).isTrue();
+  }
+
+  @Test
+  @Owner(developers = NAMAN_TALAYCHA)
+  @Category(FunctionalTests.class)
+  public void shouldInstallKustomizeCustom() throws IOException, IllegalAccessException {
+    assumeThat(SystemUtils.IS_OS_WINDOWS).isFalse();
+    assumeThat(SystemUtils.IS_OS_MAC).isFalse();
+    deleteDirectoryAndItsContentIfExists("./client-tools/kustomize/");
+    delegateConfiguration.setKustomizePath("usr/local/bin/kustomize");
+    assertThat(InstallUtils.installKustomize(delegateConfiguration)).isTrue();
+    assertThat(InstallUtils.kustomizePath).isEqualTo("usr/local/bin/kustomize");
+    assertThat(InstallUtils.isCustomKustomizePath).isTrue();
   }
 
   @Test

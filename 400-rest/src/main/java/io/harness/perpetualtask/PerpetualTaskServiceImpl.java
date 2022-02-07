@@ -9,6 +9,12 @@ package io.harness.perpetualtask;
 
 import static io.harness.delegate.message.ManagerMessageConstants.UPDATE_PERPETUAL_TASK;
 import static io.harness.logging.AutoLogContext.OverrideBehavior.OVERRIDE_ERROR;
+import static io.harness.metrics.impl.DelegateMetricsServiceImpl.PERPETUAL_TASK_ASSIGNED;
+import static io.harness.metrics.impl.DelegateMetricsServiceImpl.PERPETUAL_TASK_CREATE;
+import static io.harness.metrics.impl.DelegateMetricsServiceImpl.PERPETUAL_TASK_DELETE;
+import static io.harness.metrics.impl.DelegateMetricsServiceImpl.PERPETUAL_TASK_PAUSE;
+import static io.harness.metrics.impl.DelegateMetricsServiceImpl.PERPETUAL_TASK_RESET;
+import static io.harness.metrics.impl.DelegateMetricsServiceImpl.PERPETUAL_TASK_UNASSIGNED;
 
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.TargetModule;
@@ -19,6 +25,7 @@ import io.harness.grpc.auth.DelegateAuthServerInterceptor;
 import io.harness.grpc.utils.HTimestamps;
 import io.harness.logging.AccountLogContext;
 import io.harness.logging.AutoLogContext;
+import io.harness.metrics.intfc.DelegateMetricsService;
 import io.harness.observer.RemoteObserverInformer;
 import io.harness.observer.Subject;
 import io.harness.perpetualtask.internal.PerpetualTaskRecord;
@@ -61,10 +68,12 @@ public class PerpetualTaskServiceImpl implements PerpetualTaskService, DelegateO
   private PerpetualTaskServiceClientRegistry clientRegistry;
   private final BroadcasterFactory broadcasterFactory;
   private final PerpetualTaskScheduleService perpetualTaskScheduleService;
+  private static final int TASK_FAILED_EXECUTION_LIMIT = 5;
 
   @Inject private MainConfiguration mainConfiguration;
   @Inject private DelegateServiceClassicGrpcClient delegateServiceClassicGrpcClient;
   @Inject private RemoteObserverInformer remoteObserverInformer;
+  @Inject private DelegateMetricsService delegateMetricsService;
 
   @Inject
   public PerpetualTaskServiceImpl(PerpetualTaskRecordDao perpetualTaskRecordDao,
@@ -91,6 +100,12 @@ public class PerpetualTaskServiceImpl implements PerpetualTaskService, DelegateO
     remoteObserverInformer.sendEvent(ReflectionUtils.getMethod(PerpetualTaskStateObserver.class,
                                          "onPerpetualTaskAssigned", String.class, String.class, String.class),
         PerpetualTaskServiceImpl.class, accountId, taskId, delegateId);
+
+    PerpetualTaskRecord perpetualTaskRecord = perpetualTaskRecordDao.getTask(taskId);
+    if (perpetualTaskRecord != null) {
+      String perpetualTaskType = perpetualTaskRecord.getPerpetualTaskType();
+      delegateMetricsService.recordPerpetualTaskMetrics(accountId, perpetualTaskType, PERPETUAL_TASK_ASSIGNED);
+    }
   }
 
   public void broadcastToDelegate() {
@@ -152,6 +167,7 @@ public class PerpetualTaskServiceImpl implements PerpetualTaskService, DelegateO
       try (AutoLogContext ignore1 = new PerpetualTaskLogContext(taskId, OVERRIDE_ERROR)) {
         log.info("Created a perpetual task with id={}.", taskId);
       }
+      delegateMetricsService.recordPerpetualTaskMetrics(accountId, perpetualTaskType, PERPETUAL_TASK_CREATE);
       return taskId;
     }
   }
@@ -161,6 +177,12 @@ public class PerpetualTaskServiceImpl implements PerpetualTaskService, DelegateO
     try (AutoLogContext ignore0 = new AccountLogContext(accountId, OVERRIDE_ERROR);
          AutoLogContext ignore1 = new PerpetualTaskLogContext(taskId, OVERRIDE_ERROR)) {
       log.info("Resetting the perpetual task");
+
+      PerpetualTaskRecord perpetualTaskRecord = perpetualTaskRecordDao.getTask(taskId);
+      if (perpetualTaskRecord != null) {
+        String perpetualTaskType = perpetualTaskRecord.getPerpetualTaskType();
+        delegateMetricsService.recordPerpetualTaskMetrics(accountId, perpetualTaskType, PERPETUAL_TASK_RESET);
+      }
       return perpetualTaskRecordDao.resetDelegateIdForTask(accountId, taskId, taskExecutionBundle);
     }
   }
@@ -177,6 +199,12 @@ public class PerpetualTaskServiceImpl implements PerpetualTaskService, DelegateO
   public boolean deleteTask(String accountId, String taskId) {
     try (AutoLogContext ignore0 = new AccountLogContext(accountId, OVERRIDE_ERROR);
          AutoLogContext ignore1 = new PerpetualTaskLogContext(taskId, OVERRIDE_ERROR)) {
+      PerpetualTaskRecord perpetualTaskRecord = perpetualTaskRecordDao.getTask(taskId);
+      if (perpetualTaskRecord != null) {
+        String perpetualTaskType = perpetualTaskRecord.getPerpetualTaskType();
+        delegateMetricsService.recordPerpetualTaskMetrics(accountId, perpetualTaskType, PERPETUAL_TASK_DELETE);
+      }
+
       boolean hasDeleted = perpetualTaskRecordDao.remove(accountId, taskId);
       if (hasDeleted) {
         log.info("Deleted the perpetual task");
@@ -190,6 +218,12 @@ public class PerpetualTaskServiceImpl implements PerpetualTaskService, DelegateO
     try (AutoLogContext ignore0 = new AccountLogContext(accountId, OVERRIDE_ERROR);
          AutoLogContext ignore1 = new PerpetualTaskLogContext(taskId, OVERRIDE_ERROR)) {
       log.info("Pausing the perpetual task");
+
+      PerpetualTaskRecord perpetualTaskRecord = perpetualTaskRecordDao.getTask(taskId);
+      if (perpetualTaskRecord != null) {
+        String perpetualTaskType = perpetualTaskRecord.getPerpetualTaskType();
+        delegateMetricsService.recordPerpetualTaskMetrics(accountId, perpetualTaskType, PERPETUAL_TASK_PAUSE);
+      }
       return perpetualTaskRecordDao.pauseTask(accountId, taskId);
     }
   }
@@ -280,12 +314,38 @@ public class PerpetualTaskServiceImpl implements PerpetualTaskService, DelegateO
 
   @Override
   public boolean triggerCallback(String taskId, long heartbeatMillis, PerpetualTaskResponse perpetualTaskResponse) {
-    return perpetualTaskRecordDao.saveHeartbeat(taskId, heartbeatMillis);
+    int responseCode = perpetualTaskResponse.getResponseCode();
+    long taskFailedExecutionCount = 0;
+    if (responseCode == 500) {
+      PerpetualTaskRecord taskRecord = perpetualTaskRecordDao.getTask(taskId);
+      taskFailedExecutionCount = taskRecord.getFailedExecutionCount();
+      taskFailedExecutionCount++;
+      boolean saveHeartbeat = perpetualTaskRecordDao.saveHeartbeat(taskId, heartbeatMillis, taskFailedExecutionCount);
+      if (taskFailedExecutionCount >= TASK_FAILED_EXECUTION_LIMIT) {
+        setTaskUnassigned(taskId);
+        updateTaskUnassignedReason(
+            taskId, PerpetualTaskUnassignedReason.MULTIPLE_FAILED_PERPETUAL_TASK, taskRecord.getAssignTryCount());
+      }
+      return saveHeartbeat;
+    }
+    return perpetualTaskRecordDao.saveHeartbeat(taskId, heartbeatMillis, taskFailedExecutionCount);
   }
 
   @Override
   public void updateTaskUnassignedReason(String taskId, PerpetualTaskUnassignedReason reason, int assignTryCount) {
     perpetualTaskRecordDao.updateTaskUnassignedReason(taskId, reason, assignTryCount);
+
+    PerpetualTaskRecord perpetualTaskRecord = perpetualTaskRecordDao.getTask(taskId);
+    if (perpetualTaskRecord != null) {
+      String accountId = perpetualTaskRecord.getAccountId();
+      String perpetualTaskType = perpetualTaskRecord.getPerpetualTaskType();
+      delegateMetricsService.recordPerpetualTaskMetrics(accountId, perpetualTaskType, PERPETUAL_TASK_UNASSIGNED);
+    }
+  }
+
+  @Override
+  public void setTaskUnassigned(String taskId) {
+    perpetualTaskRecordDao.setTaskUnassigned(taskId);
   }
 
   @Override

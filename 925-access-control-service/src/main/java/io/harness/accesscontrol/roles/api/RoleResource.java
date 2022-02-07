@@ -95,7 +95,7 @@ import retrofit2.http.Body;
       , @ApiResponse(code = 500, response = ErrorDTO.class, message = "Internal server error"),
           @ApiResponse(code = 403, response = AccessDeniedErrorDTO.class, message = "Unauthorized")
     })
-@Tag(name = "roles", description = "This contains APIs for CRUD on roles")
+@Tag(name = "Roles", description = "This contains APIs for CRUD on roles")
 @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request",
     content =
     {

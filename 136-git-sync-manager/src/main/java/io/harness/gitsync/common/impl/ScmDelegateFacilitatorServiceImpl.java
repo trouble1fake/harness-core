@@ -57,6 +57,7 @@ import io.harness.gitsync.common.dtos.GitDiffResultFileListDTO;
 import io.harness.gitsync.common.dtos.GitFileChangeDTO;
 import io.harness.gitsync.common.dtos.GitFileContent;
 import io.harness.gitsync.common.helper.FileBatchResponseMapper;
+import io.harness.gitsync.common.helper.GitSyncConnectorHelper;
 import io.harness.gitsync.common.helper.PRFileListMapper;
 import io.harness.gitsync.common.helper.UserProfileHelper;
 import io.harness.gitsync.common.service.YamlGitConfigService;
@@ -106,8 +107,9 @@ public class ScmDelegateFacilitatorServiceImpl extends AbstractScmClientFacilita
   public ScmDelegateFacilitatorServiceImpl(@Named("connectorDecoratorService") ConnectorService connectorService,
       ConnectorErrorMessagesHelper connectorErrorMessagesHelper, YamlGitConfigService yamlGitConfigService,
       SecretManagerClientService secretManagerClientService, DelegateGrpcClientWrapper delegateGrpcClientWrapper,
-      UserProfileHelper userProfileHelper) {
-    super(connectorService, connectorErrorMessagesHelper, yamlGitConfigService, userProfileHelper);
+      UserProfileHelper userProfileHelper, GitSyncConnectorHelper gitSyncConnectorHelper) {
+    super(connectorService, connectorErrorMessagesHelper, yamlGitConfigService, userProfileHelper,
+        gitSyncConnectorHelper);
     this.secretManagerClientService = secretManagerClientService;
     this.delegateGrpcClientWrapper = delegateGrpcClientWrapper;
   }
@@ -384,8 +386,8 @@ public class ScmDelegateFacilitatorServiceImpl extends AbstractScmClientFacilita
 
   @Override
   public CreateFileResponse createFile(InfoForGitPush infoForPush) {
-    GitFileDetailsBuilder gitFileDetails = getGitFileDetails(infoForPush.getYaml(), infoForPush.getFilePath(),
-        infoForPush.getFolderPath(), infoForPush.getCommitMsg(), infoForPush.getBranch());
+    GitFileDetailsBuilder gitFileDetails = getGitFileDetails(infoForPush.getAccountId(), infoForPush.getYaml(),
+        infoForPush.getFilePath(), infoForPush.getFolderPath(), infoForPush.getCommitMsg(), infoForPush.getBranch());
     final List<EncryptedDataDetail> encryptionDetails = getEncryptedDataDetails(infoForPush.getAccountId(),
         infoForPush.getOrgIdentifier(), infoForPush.getProjectIdentifier(), infoForPush.getScmConnector());
     ScmPushTaskParams scmPushTaskParams = ScmPushTaskParams.builder()
@@ -411,8 +413,8 @@ public class ScmDelegateFacilitatorServiceImpl extends AbstractScmClientFacilita
 
   @Override
   public UpdateFileResponse updateFile(InfoForGitPush infoForPush) {
-    GitFileDetailsBuilder gitFileDetails = getGitFileDetails(infoForPush.getYaml(), infoForPush.getFilePath(),
-        infoForPush.getFolderPath(), infoForPush.getCommitMsg(), infoForPush.getBranch());
+    GitFileDetailsBuilder gitFileDetails = getGitFileDetails(infoForPush.getAccountId(), infoForPush.getYaml(),
+        infoForPush.getFilePath(), infoForPush.getFolderPath(), infoForPush.getCommitMsg(), infoForPush.getBranch());
     gitFileDetails.oldFileSha(infoForPush.getOldFileSha());
     final List<EncryptedDataDetail> encryptionDetails = getEncryptedDataDetails(infoForPush.getAccountId(),
         infoForPush.getOrgIdentifier(), infoForPush.getProjectIdentifier(), infoForPush.getScmConnector());
@@ -439,8 +441,8 @@ public class ScmDelegateFacilitatorServiceImpl extends AbstractScmClientFacilita
 
   @Override
   public DeleteFileResponse deleteFile(InfoForGitPush infoForPush) {
-    GitFileDetailsBuilder gitFileDetails = getGitFileDetails(infoForPush.getYaml(), infoForPush.getFilePath(),
-        infoForPush.getFolderPath(), infoForPush.getCommitMsg(), infoForPush.getBranch());
+    GitFileDetailsBuilder gitFileDetails = getGitFileDetails(infoForPush.getAccountId(), infoForPush.getYaml(),
+        infoForPush.getFilePath(), infoForPush.getFolderPath(), infoForPush.getCommitMsg(), infoForPush.getBranch());
     gitFileDetails.oldFileSha(infoForPush.getOldFileSha());
     final List<EncryptedDataDetail> encryptionDetails = getEncryptedDataDetails(infoForPush.getAccountId(),
         infoForPush.getOrgIdentifier(), infoForPush.getProjectIdentifier(), infoForPush.getScmConnector());

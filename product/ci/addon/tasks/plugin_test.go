@@ -16,6 +16,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	mexec "github.com/wings-software/portal/commons/go/lib/exec"
+	"github.com/wings-software/portal/commons/go/lib/filesystem"
 	"github.com/wings-software/portal/commons/go/lib/logs"
 	pb "github.com/wings-software/portal/product/ci/engine/proto"
 	"go.uber.org/zap"
@@ -32,6 +33,8 @@ func TestPluginSuccess(t *testing.T) {
 	cmd := mexec.NewMockCommand(ctrl)
 	pstate := mexec.NewMockProcessState(ctrl)
 	log, _ := logs.GetObservedLogger(zap.InfoLevel)
+	fs := filesystem.NewMockFileSystem(ctrl)
+
 	e := pluginTask{
 		id:                "step1",
 		image:             "plugin/drone-git",
@@ -41,6 +44,7 @@ func TestPluginSuccess(t *testing.T) {
 		addonLogger:       log.Sugar(),
 		cmdContextFactory: cmdFactory,
 		procWriter:        &buf,
+		fs:                fs,
 	}
 
 	oldImgMetadata := getImgMetadata
@@ -57,8 +61,9 @@ func TestPluginSuccess(t *testing.T) {
 	cmd.EXPECT().ProcessState().Return(pstate)
 	pstate.EXPECT().SysUsageUnit().Return(&syscall.Rusage{Maxrss: 100}, nil)
 	cmd.EXPECT().Wait().Return(nil)
+	fs.EXPECT().Stat("step1.out").Return(nil, nil)
 
-	_, retries, err := e.Run(ctx)
+	_, _, retries, err := e.Run(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, retries, numRetries)
 }
@@ -71,6 +76,7 @@ func TestPluginNonZeroStatus(t *testing.T) {
 	var buf bytes.Buffer
 	commands := []string{"git"}
 	cmdFactory := mexec.NewMockCmdContextFactory(ctrl)
+	fs := filesystem.NewMockFileSystem(ctrl)
 	cmd := mexec.NewMockCommand(ctrl)
 	pstate := mexec.NewMockProcessState(ctrl)
 	log, _ := logs.GetObservedLogger(zap.InfoLevel)
@@ -83,6 +89,7 @@ func TestPluginNonZeroStatus(t *testing.T) {
 		addonLogger:       log.Sugar(),
 		cmdContextFactory: cmdFactory,
 		procWriter:        &buf,
+		fs:                fs,
 	}
 
 	oldImgMetadata := getImgMetadata
@@ -99,8 +106,9 @@ func TestPluginNonZeroStatus(t *testing.T) {
 	cmd.EXPECT().ProcessState().Return(pstate)
 	pstate.EXPECT().SysUsageUnit().Return(&syscall.Rusage{Maxrss: 100}, nil)
 	cmd.EXPECT().Wait().Return(&exec.ExitError{})
+	fs.EXPECT().Stat("step1.out").Return(nil, nil)
 
-	_, retries, err := e.Run(ctx)
+	_, _, retries, err := e.Run(ctx)
 	assert.NotNil(t, err)
 	if _, ok := err.(*exec.ExitError); !ok {
 		t.Fatalf("Expected err of type exec.ExitError")
@@ -110,6 +118,7 @@ func TestPluginNonZeroStatus(t *testing.T) {
 
 func TestPluginTaskCreate(t *testing.T) {
 	log, _ := logs.GetObservedLogger(zap.InfoLevel)
+	tmpPath := "/tmp/"
 	step := &pb.UnitStep{
 		Id: "test",
 		Step: &pb.UnitStep_Plugin{
@@ -120,13 +129,14 @@ func TestPluginTaskCreate(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	executor := NewPluginTask(step, nil, log.Sugar(), &buf, false, log.Sugar())
+	executor := NewPluginTask(step, nil, tmpPath, log.Sugar(), &buf, false, log.Sugar())
 	assert.NotNil(t, executor)
 }
 
 func TestPluginEntrypointErr(t *testing.T) {
 	ctrl, ctx := gomock.WithContext(context.Background(), t)
 	defer ctrl.Finish()
+	tmpPath := "/tmp/"
 
 	log, _ := logs.GetObservedLogger(zap.InfoLevel)
 	step := &pb.UnitStep{
@@ -145,14 +155,15 @@ func TestPluginEntrypointErr(t *testing.T) {
 	defer func() { getImgMetadata = oldImgMetadata }()
 
 	var buf bytes.Buffer
-	executor := NewPluginTask(step, nil, log.Sugar(), &buf, false, log.Sugar())
-	_, _, err := executor.Run(ctx)
+	executor := NewPluginTask(step, nil, tmpPath, log.Sugar(), &buf, false, log.Sugar())
+	_, _, _, err := executor.Run(ctx)
 	assert.NotNil(t, err)
 }
 
 func TestPluginEmptyEntrypointErr(t *testing.T) {
 	ctrl, ctx := gomock.WithContext(context.Background(), t)
 	defer ctrl.Finish()
+	tmpPath := "/tmp/"
 
 	log, _ := logs.GetObservedLogger(zap.InfoLevel)
 	step := &pb.UnitStep{
@@ -171,7 +182,7 @@ func TestPluginEmptyEntrypointErr(t *testing.T) {
 	defer func() { getImgMetadata = oldImgMetadata }()
 
 	var buf bytes.Buffer
-	executor := NewPluginTask(step, nil, log.Sugar(), &buf, false, log.Sugar())
-	_, _, err := executor.Run(ctx)
+	executor := NewPluginTask(step, nil, tmpPath, log.Sugar(), &buf, false, log.Sugar())
+	_, _, _, err := executor.Run(ctx)
 	assert.NotNil(t, err)
 }

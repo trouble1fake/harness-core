@@ -33,7 +33,7 @@ public class DelegateServiceTokenHelper {
   }
 
   private String getServiceToken() {
-    return serviceTokenGenerator.getServiceTokenWithDuration(accountSecret, Duration.ofHours(12));
+    return serviceTokenGenerator.getServiceTokenWithDuration(accountSecret, Duration.ofHours(24));
   }
 
   public Map<String, SecretParams> getServiceTokenSecretParams() {

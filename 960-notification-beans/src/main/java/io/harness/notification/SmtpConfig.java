@@ -7,6 +7,8 @@
 
 package io.harness.notification;
 
+import io.harness.secret.ConfigSecret;
+
 import software.wings.jersey.JsonViews;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -33,7 +35,7 @@ public class SmtpConfig {
   @JsonProperty("port") private int port;
   @JsonProperty("fromAddress") private String fromAddress;
   @JsonProperty("useSSL") private boolean useSSL;
-  @JsonProperty("username") private String username;
-  @JsonProperty("password") private char[] password;
+  @JsonProperty("username") @ConfigSecret private String username;
+  @JsonProperty("password") @ConfigSecret private char[] password;
   @JsonView(JsonViews.Internal.class) @SchemaIgnore private String encryptedPassword;
 }

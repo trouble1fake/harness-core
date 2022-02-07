@@ -41,6 +41,7 @@ import io.harness.eventsframework.schemas.entitysetupusage.EntitySetupUsageCreat
 import io.harness.exception.DuplicateFieldException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.gitsync.common.beans.YamlGitConfig;
+import io.harness.gitsync.common.beans.YamlGitConfig.YamlGitConfigKeys;
 import io.harness.gitsync.common.events.GitSyncConfigChangeEventConstants;
 import io.harness.gitsync.common.events.GitSyncConfigChangeEventType;
 import io.harness.gitsync.common.events.GitSyncConfigSwitchType;
@@ -66,6 +67,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.google.protobuf.StringValue;
+import com.mongodb.client.result.UpdateResult;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -79,6 +81,9 @@ import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 
 @Singleton
 @Slf4j
@@ -129,13 +134,6 @@ public class YamlGitConfigServiceImpl implements YamlGitConfigService {
                              getYamlGitConfigNotFoundMessage(accountId, orgIdentifier, projectIdentifier, identifier)));
   }
 
-  @Override
-  public YamlGitConfigDTO getByFolderIdentifierAndIsEnabled(
-      String projectIdentifier, String orgIdentifier, String accountId, String folderId) {
-    // todo @deepak Implement this method when required
-    return null;
-  }
-
   private Optional<YamlGitConfig> getYamlGitConfigEntity(
       String accountId, String orgIdentifier, String projectIdentifier, String identifier) {
     return yamlGitConfigRepository.findByAccountIdAndOrgIdentifierAndProjectIdentifierAndIdentifier(
@@ -152,13 +150,6 @@ public class YamlGitConfigServiceImpl implements YamlGitConfigService {
         .stream()
         .map(YamlGitConfigMapper::toYamlGitConfigDTO)
         .collect(Collectors.toList());
-  }
-
-  private String findDefaultIfPresent(YamlGitConfigDTO yamlGitConfigDTO) {
-    if (yamlGitConfigDTO.getDefaultRootFolder() != null) {
-      return yamlGitConfigDTO.getDefaultRootFolder().getIdentifier();
-    }
-    return null;
   }
 
   @Override
@@ -350,24 +341,33 @@ public class YamlGitConfigServiceImpl implements YamlGitConfigService {
     validateFolderPathIsUnique(ygs);
     validateFoldersAreIndependant(ygs);
     validateAPIAccessFieldPresence(ygs);
-    validateThatHarnessStringComesOnce(ygs);
+    validateThatHarnessStringShouldNotComeMoreThanOnce(ygs);
   }
 
   @VisibleForTesting
-  void validateThatHarnessStringComesOnce(YamlGitConfigDTO ygs) {
+  void validateThatHarnessStringShouldNotComeMoreThanOnce(YamlGitConfigDTO ygs) {
     if (ygs.getRootFolders() == null) {
       return;
     }
     for (YamlGitConfigDTO.RootFolder folder : ygs.getRootFolders()) {
-      int harnessStringCount = getHarnessStringCount(folder.getRootFolder());
-      if (harnessStringCount > 1) {
+      if (checkIfHarnessDirComesMoreThanOnce(folder.getRootFolder())) {
         throw new InvalidRequestException("The .harness should come only once in the folder path");
       }
     }
   }
 
-  private int getHarnessStringCount(String folderPath) {
-    return folderPath.split(".harness", -1).length - 1;
+  private boolean checkIfHarnessDirComesMoreThanOnce(String folderPath) {
+    String[] directoryList = folderPath.split(PATH_DELIMITER);
+    boolean harnessDirAlreadyFound = false;
+    for (String directory : directoryList) {
+      if (HARNESS_FOLDER_EXTENSION.equals(directory)) {
+        if (harnessDirAlreadyFound) {
+          return true;
+        }
+        harnessDirAlreadyFound = true;
+      }
+    }
+    return false;
   }
 
   private void validateAPIAccessFieldPresence(YamlGitConfigDTO ygs) {
@@ -400,6 +400,25 @@ public class YamlGitConfigServiceImpl implements YamlGitConfigService {
       deleteBranches(yamlGitConfigDTOS);
     }
     return isDeleted;
+  }
+
+  @Override
+  public void updateTheConnectorRepoAndBranch(String accountIdentifier, String orgIdentifier, String projectIdentifier,
+      String yamlGitConfigIdentifier, String repo, String branch) {
+    Update update =
+        new Update().set(YamlGitConfigKeys.gitConnectorsRepo, repo).set(YamlGitConfigKeys.gitConnectorsBranch, branch);
+    Query query = new Query().addCriteria(new Criteria()
+                                              .and(YamlGitConfigKeys.accountId)
+                                              .is(accountIdentifier)
+                                              .and(YamlGitConfigKeys.orgIdentifier)
+                                              .is(orgIdentifier)
+                                              .and(YamlGitConfigKeys.projectIdentifier)
+                                              .is(projectIdentifier)
+                                              .and(YamlGitConfigKeys.identifier)
+                                              .is(yamlGitConfigIdentifier));
+    final UpdateResult status = yamlGitConfigRepository.update(query, update);
+    log.info("Updated the repo and branch of YamlGitConfig [{}] with modified count [{}]", yamlGitConfigIdentifier,
+        status.getModifiedCount());
   }
 
   public Optional<ConnectorInfoDTO> getGitConnector(IdentifierRef identifierRef) {

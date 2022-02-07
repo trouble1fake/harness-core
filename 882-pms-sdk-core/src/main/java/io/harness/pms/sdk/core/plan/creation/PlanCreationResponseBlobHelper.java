@@ -14,7 +14,7 @@ import io.harness.data.structure.EmptyPredicate;
 import io.harness.pms.contracts.plan.PlanCreationBlobResponse;
 import io.harness.pms.contracts.plan.PlanCreationContextValue;
 import io.harness.pms.contracts.plan.PlanNodeProto;
-import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationResponse;
+import io.harness.pms.sdk.core.plan.creation.beans.MergePlanCreationResponse;
 import io.harness.pms.sdk.core.plan.creation.mappers.PlanNodeProtoMapper;
 
 import com.google.inject.Inject;
@@ -27,7 +27,7 @@ import java.util.Map;
 public class PlanCreationResponseBlobHelper {
   @Inject PlanNodeProtoMapper planNodeProtoMapper;
 
-  public PlanCreationBlobResponse toBlobResponse(PlanCreationResponse planCreationResponse) {
+  public PlanCreationBlobResponse toBlobResponse(MergePlanCreationResponse planCreationResponse) {
     PlanCreationBlobResponse.Builder finalBlobResponseBuilder = PlanCreationBlobResponse.newBuilder();
     if (EmptyPredicate.isNotEmpty(planCreationResponse.getNodes())) {
       Map<String, PlanNodeProto> newNodes = new HashMap<>();

@@ -12,7 +12,6 @@ import static io.harness.annotations.dev.HarnessTeam.CDC;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
-import io.harness.pms.sdk.core.data.Outcome;
 
 import software.wings.api.ExecutionDataValue;
 import software.wings.api.InstanceFetchStateExecutionSummary;
@@ -33,7 +32,7 @@ import lombok.EqualsAndHashCode;
 @JsonTypeName("instanceFetchStateExecutionData")
 @OwnedBy(CDC)
 @TargetModule(HarnessModule._870_CG_ORCHESTRATION)
-public class InstanceFetchStateExecutionData extends StateExecutionData implements Outcome {
+public class InstanceFetchStateExecutionData extends StateExecutionData {
   private String activityId;
   private String hostObjectArrayPath;
   private String instanceFetchScript;

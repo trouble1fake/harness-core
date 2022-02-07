@@ -126,6 +126,7 @@ import io.harness.beans.event.cg.entities.InfraDefinitionEntity;
 import io.harness.beans.event.cg.entities.ServiceEntity;
 import io.harness.beans.event.cg.pipeline.ExecutionArgsEventData;
 import io.harness.beans.event.cg.pipeline.PipelineEventData;
+import io.harness.beans.event.cg.pipeline.PipelineExecData;
 import io.harness.cache.MongoStore;
 import io.harness.context.ContextElementType;
 import io.harness.data.structure.CollectionUtils;
@@ -154,6 +155,7 @@ import io.harness.state.inspection.StateInspectionService;
 import io.harness.tasks.ResponseData;
 import io.harness.waiter.WaitNotifyEngine;
 
+import software.wings.api.AppManifestCollectionExecutionData;
 import software.wings.api.ApprovalStateExecutionData;
 import software.wings.api.ArtifactCollectionExecutionData;
 import software.wings.api.AwsAmiDeployStateExecutionData;
@@ -188,6 +190,7 @@ import software.wings.beans.AwsLambdaExecutionSummary;
 import software.wings.beans.Base;
 import software.wings.beans.BuildExecutionSummary;
 import software.wings.beans.CanaryWorkflowExecutionAdvisor;
+import software.wings.beans.CollectionEntityType;
 import software.wings.beans.ContainerInfrastructureMapping;
 import software.wings.beans.CountsByStatuses;
 import software.wings.beans.CustomOrchestrationWorkflow;
@@ -1594,7 +1597,6 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
         workflowService.getResolvedServiceIds(workflow, executionArgs.getWorkflowVariables());
     envId = resolveEnvId != null ? resolveEnvId : envId;
     User user = UserThreadLocal.get();
-    boolean shouldAuthorizeExecution = trigger == null && user != null;
 
     // The workflow execution is direct workflow execution and not in Pipeline or trigger.
     boolean isDirectExecution = trigger == null && user != null && isEmpty(pipelineExecutionId);
@@ -1613,27 +1615,30 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
 
     // Doing this check here so that workflow is already fetched from databae.
     preDeploymentChecks.checkIfWorkflowUsingRestrictedFeatures(workflow);
-    PreDeploymentChecker deploymentFreezeChecker = new DeploymentFreezeChecker(governanceConfigService,
-        new DeploymentCtx(
-            appId, isNotEmpty(envId) ? Collections.singletonList(envId) : Collections.emptyList(), resolvedServiceIds),
-        environmentService, featureFlagService);
 
-    // Check deployment freeze conditions for both direct workflow or pipeline executions
-    // Freeze can be override only for manual deployments, trigger based deployments are rejected when freeze active
-    boolean canOverrideFreeze = false;
-    if (featureFlagService.isEnabled(NEW_DEPLOYMENT_FREEZE, accountId)) {
-      if (isNotEmpty(pipelineExecutionId)) {
-        WorkflowExecution pipelineExecution = wingsPersistence.createQuery(WorkflowExecution.class)
-                                                  .project(WorkflowExecutionKeys.canOverrideFreeze, true)
-                                                  .filter(WorkflowExecutionKeys.uuid, pipelineExecutionId)
-                                                  .get();
-        canOverrideFreeze = pipelineExecution.isCanOverrideFreeze();
-      } else {
-        canOverrideFreeze = user != null && checkIfOverrideFreeze();
+    if (!executionArgs.isContinueRunningPipelinesDuringMigration()) {
+      PreDeploymentChecker deploymentFreezeChecker = new DeploymentFreezeChecker(governanceConfigService,
+          new DeploymentCtx(appId, isNotEmpty(envId) ? Collections.singletonList(envId) : Collections.emptyList(),
+              resolvedServiceIds),
+          environmentService, featureFlagService);
+
+      // Check deployment freeze conditions for both direct workflow or pipeline executions
+      // Freeze can be override only for manual deployments, trigger based deployments are rejected when freeze active
+      boolean canOverrideFreeze = false;
+      if (featureFlagService.isEnabled(NEW_DEPLOYMENT_FREEZE, accountId)) {
+        if (isNotEmpty(pipelineExecutionId)) {
+          WorkflowExecution pipelineExecution = wingsPersistence.createQuery(WorkflowExecution.class)
+                                                    .project(WorkflowExecutionKeys.canOverrideFreeze, true)
+                                                    .filter(WorkflowExecutionKeys.uuid, pipelineExecutionId)
+                                                    .get();
+          canOverrideFreeze = pipelineExecution.isCanOverrideFreeze();
+        } else {
+          canOverrideFreeze = user != null && checkIfOverrideFreeze();
+        }
       }
-    }
-    if (!canOverrideFreeze) {
-      deploymentFreezeChecker.check(accountId);
+      if (!canOverrideFreeze) {
+        deploymentFreezeChecker.check(accountId);
+      }
     }
 
     checkPreDeploymentConditions(accountId, appId);
@@ -1802,6 +1807,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
                 .data(CgPipelineStartPayload.builder()
                           .application(ApplicationEventData.builder().id(app.getAppId()).name(app.getName()).build())
                           .executionId(execution.getUuid())
+                          .pipelineExecution(PipelineExecData.builder().id(execution.getUuid()).build())
                           .services(isEmpty(execution.getServiceIds())
                                   ? Collections.emptyList()
                                   : execution.getServiceIds()
@@ -3080,13 +3086,15 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
     // Doing this check here so that workflow is already fetched from database.
     preDeploymentChecks.checkIfWorkflowUsingRestrictedFeatures(workflow);
 
-    PreDeploymentChecker deploymentFreezeChecker = new DeploymentFreezeChecker(governanceConfigService,
-        new DeploymentCtx(appId, Collections.singletonList(envId), getWorkflowServiceIds(workflow)), environmentService,
-        featureFlagService);
-    User user = UserThreadLocal.get();
-    boolean canOverrideFreeze = user != null && checkIfOverrideFreeze();
-    if (!canOverrideFreeze) {
-      deploymentFreezeChecker.check(accountId);
+    if (!featureFlagService.isEnabled(FeatureName.FREEZE_DURING_MIGRATION, accountId)) {
+      PreDeploymentChecker deploymentFreezeChecker = new DeploymentFreezeChecker(governanceConfigService,
+          new DeploymentCtx(appId, Collections.singletonList(envId), getWorkflowServiceIds(workflow)),
+          environmentService, featureFlagService);
+      User user = UserThreadLocal.get();
+      boolean canOverrideFreeze = user != null && checkIfOverrideFreeze();
+      if (!canOverrideFreeze) {
+        deploymentFreezeChecker.check(accountId);
+      }
     }
 
     // Not including instance limit and deployment limit check as it is a emergency rollback
@@ -4688,6 +4696,32 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
   }
 
   @Override
+  public List<HelmChart> getManifestsCollected(String appId, String executionUuid) {
+    List<StateExecutionInstance> allStateExecutionInstances =
+        wingsPersistence.createQuery(StateExecutionInstance.class)
+            .filter(StateExecutionInstanceKeys.appId, appId)
+            .filter(StateExecutionInstanceKeys.executionUuid, executionUuid)
+            .filter(StateExecutionInstanceKeys.stateType, ARTIFACT_COLLECTION.name())
+            .asList();
+
+    if (isEmpty(allStateExecutionInstances)) {
+      return null;
+    }
+
+    List<HelmChart> helmCharts = new ArrayList<>();
+    allStateExecutionInstances.forEach(stateExecutionInstance -> {
+      if (!(stateExecutionInstance.fetchStateExecutionData() instanceof AppManifestCollectionExecutionData)) {
+        return;
+      }
+
+      AppManifestCollectionExecutionData executionData =
+          (AppManifestCollectionExecutionData) stateExecutionInstance.fetchStateExecutionData();
+      helmCharts.add(helmChartService.get(appId, executionData.getChartId()));
+    });
+    return helmCharts;
+  }
+
+  @Override
   public List<Artifact> getArtifactsCollected(String appId, String executionUuid) {
     List<StateExecutionInstance> allStateExecutionInstances =
         wingsPersistence.createQuery(StateExecutionInstance.class)
@@ -4756,8 +4790,10 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
       return false;
     }
 
-    return buildExecutionSummaries.stream().anyMatch(
-        summary -> summary.getArtifactStreamId().equals(buildExecutionSummary.getArtifactStreamId()));
+    return buildExecutionSummaries.stream().anyMatch(summary
+        -> CollectionEntityType.MANIFEST.name().equals(summary.getSourceType())
+            ? summary.getAppManifestId().equals(buildExecutionSummary.getAppManifestId())
+            : summary.getArtifactStreamId().equals(buildExecutionSummary.getArtifactStreamId()));
   }
 
   @Override

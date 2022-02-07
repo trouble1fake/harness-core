@@ -28,11 +28,13 @@ import io.harness.grpc.delegateservice.DelegateServiceGrpcAgentClientModule;
 import io.harness.grpc.pingpong.PingPongModule;
 import io.harness.logstreaming.LogStreamingModule;
 import io.harness.managerclient.DelegateManagerClientModule;
+import io.harness.metrics.MetricRegistryModule;
 import io.harness.perpetualtask.PerpetualTaskWorkerModule;
 import io.harness.serializer.KryoModule;
 
 import software.wings.delegatetasks.k8s.client.KubernetesClientFactoryModule;
 
+import com.codahale.metrics.MetricRegistry;
 import com.google.inject.AbstractModule;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -50,6 +52,7 @@ public class DelegateAgentModule extends AbstractModule {
     install(new DelegateHealthModule());
     install(KryoModule.getInstance());
     install(new DelegateKryoModule());
+    install(new MetricRegistryModule(new MetricRegistry()));
 
     install(new DelegateManagerClientModule(configuration.getManagerUrl(), configuration.getVerificationServiceUrl(),
         configuration.getCvNextGenUrl(), configuration.getAccountId(), configuration.getAccountSecret()));

@@ -76,6 +76,7 @@ public class PipelineExecutionSummaryDtoMapper {
         .isStagesExecution(isStagesExecution)
         .stagesExecuted(stageIdentifiers)
         .stagesExecutedNames(stagesExecutedNames)
+        .allowStageExecutions(pipelineExecutionSummaryEntity.isStagesExecutionAllowed())
         .build();
   }
 

@@ -18,6 +18,7 @@ import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.events.AddStepDetailsInstanceRequest;
 import io.harness.pms.contracts.execution.events.SdkResponseEventProto;
 import io.harness.pms.contracts.execution.events.SdkResponseEventType;
+import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.sdk.core.AmbianceTestUtils;
 import io.harness.pms.sdk.core.PmsSdkCoreTestBase;
 import io.harness.pms.sdk.core.response.publishers.SdkResponseEventPublisher;
@@ -48,6 +49,7 @@ public class SdkGraphVisualizationDataServiceImplTest extends PmsSdkCoreTestBase
         AddStepDetailsInstanceRequest.newBuilder()
             .setStepDetails(TestStepDetailsInfo.builder().build().toViewJson())
             .setName("test")
+            .setNodeExecutionId(AmbianceUtils.obtainCurrentRuntimeId(ambiance))
             .build();
 
     SdkResponseEventProto sdkResponseEvent =

@@ -130,11 +130,11 @@ func TestExecutePluginStep(t *testing.T) {
 
 	oldPluginTask := newPluginTask
 	defer func() { newPluginTask = oldPluginTask }()
-	newPluginTask = func(step *pb.UnitStep, so map[string]*pb.StepOutput, log *zap.SugaredLogger, w io.Writer, logMetrics bool, addonLogger *zap.SugaredLogger) tasks.PluginTask {
+	newPluginTask = func(step *pb.UnitStep, so map[string]*pb.StepOutput, tmpFilePath string, log *zap.SugaredLogger, w io.Writer, logMetrics bool, addonLogger *zap.SugaredLogger) tasks.PluginTask {
 		return mockStep
 	}
 
-	mockStep.EXPECT().Run(ctx).Return(nil, int32(1), nil)
+	mockStep.EXPECT().Run(ctx).Return(nil, nil, int32(1), nil)
 	h := NewAddonHandler(stopCh, false, log.Sugar())
 	_, err := h.ExecuteStep(ctx, in)
 	assert.Nil(t, err)

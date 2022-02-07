@@ -54,7 +54,7 @@ public class YamlSchemaTransientHelper {
     }
   };
 
-  public static final Set<String> allV2Stages = ImmutableSet.of("Deployment");
+  public static final Set<String> allV2Stages = ImmutableSet.of("Deployment", "Approval", "CI", "FeatureFlag");
 
   public void deleteSpecNodeInStageElementConfig(JsonNode stageElementConfig) {
     JsonNodeUtils.deletePropertiesInJsonNode((ObjectNode) stageElementConfig.get(PROPERTIES_NODE), "spec");
@@ -74,6 +74,12 @@ public class YamlSchemaTransientHelper {
   public void removeV2StagesFromStageElementConfig(JsonNode stageElementConfigNode) {
     for (JsonNode jsonNode : stageElementConfigNode.get(ONE_OF_NODE)) {
       removeV2StepFromAllOfNode((ArrayNode) jsonNode.get(ALL_OF_NODE), allV2Stages);
+      try {
+        ArrayNode enumNode = (ArrayNode) jsonNode.get(PROPERTIES_NODE).get(TYPE_NODE).get(ENUM_NODE);
+        removeV2EnumsFromTypeNode(enumNode, allV2Stages);
+      } catch (Exception e) {
+        // Type ENUM node not present.(Would be template node)
+      }
     }
   }
 
@@ -81,6 +87,9 @@ public class YamlSchemaTransientHelper {
     Set<String> v2StepTypes = allStepV2EntityTypes.stream().map(EntityType::getYamlName).collect(Collectors.toSet());
     removeV2StepFromAllOfNode((ArrayNode) stepElementConfigNode.get(ALL_OF_NODE), v2StepTypes);
     ArrayNode enumNode = (ArrayNode) stepElementConfigNode.get(PROPERTIES_NODE).get(TYPE_NODE).get(ENUM_NODE);
+    removeV2EnumsFromTypeNode(enumNode, v2StepTypes);
+  }
+  public void removeV2EnumsFromTypeNode(ArrayNode enumNode, Set<String> v2StepTypes) {
     if (enumNode == null) {
       return;
     }
@@ -92,6 +101,7 @@ public class YamlSchemaTransientHelper {
       }
     }
   }
+
   public void removeV2StepFromAllOfNode(ArrayNode allOfNode, Set<String> v2StepTypes) {
     if (allOfNode == null) {
       return;
