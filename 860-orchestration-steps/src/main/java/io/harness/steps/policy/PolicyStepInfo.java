@@ -16,7 +16,6 @@ import io.harness.walktree.visitor.Visitable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeName;
-
 import java.util.List;
 import lombok.Builder;
 import lombok.Data;
@@ -25,8 +24,8 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.TypeAlias;
 
 @OwnedBy(PIPELINE)
-@NoArgsConstructor
 @Data
+@NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @JsonTypeName(StepSpecTypeConstants.POLICY_STEP)
 @SimpleVisitorHelper(helperClass = PolicyStepInfoVisitorHelper.class)
