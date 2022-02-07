@@ -20,6 +20,7 @@ import io.harness.ngmigration.beans.MigrationInputDTO;
 import io.harness.ngmigration.beans.NgEntityDetail;
 import io.harness.ngmigration.client.NGClient;
 import io.harness.ngmigration.client.PmsClient;
+import io.harness.secretmanagerclient.SecretType;
 import io.harness.secretmanagerclient.ValueType;
 import io.harness.secrets.SecretService;
 import io.harness.serializer.JsonUtils;
@@ -77,9 +78,13 @@ public class SecretMigrationService implements NgMigrationService {
   @Override
   public void migrate(String auth, NGClient ngClient, PmsClient pmsClient, MigrationInputDTO inputDTO,
       NGYamlFile yamlFile) throws IOException {
+    SecretRequestWrapper secretRequestWrapper = (SecretRequestWrapper) yamlFile.getYaml();
     Response<ResponseDTO<SecretResponseWrapper>> resp =
-        ngClient.createSecret(auth, inputDTO.getAccountIdentifier(), JsonUtils.asTree(yamlFile.getYaml())).execute();
-    log.info("Secret creation Response details {}", resp.code());
+        ngClient
+            .createSecret(auth, inputDTO.getAccountIdentifier(), secretRequestWrapper.getSecret().getOrgIdentifier(),
+                secretRequestWrapper.getSecret().getProjectIdentifier(), JsonUtils.asTree(yamlFile.getYaml()))
+            .execute();
+    log.info("Secret creation Response details {} {}", resp.code(), resp.message());
   }
 
   @Override
@@ -97,6 +102,7 @@ public class SecretMigrationService implements NgMigrationService {
                   .filename("secret/" + encryptedData.getName() + ".yaml")
                   .yaml(SecretRequestWrapper.builder()
                             .secret(SecretDTOV2.builder()
+                                        .type(SecretType.SecretText)
                                         .name(encryptedData.getName())
                                         .identifier(identifier)
                                         .description(null)

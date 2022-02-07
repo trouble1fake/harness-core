@@ -79,7 +79,7 @@ cg:
     enabled: true
     #mongoUri: mongodb://localhost:27017/service_scheduler
 
-  enableIterators: true
+  enableIterators: false
   trialRegistrationAllowed: true
   eventsFrameworkAvailableInOnPrem: false
   trialRegistrationAllowedForBugathon: false

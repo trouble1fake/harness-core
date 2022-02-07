@@ -81,7 +81,7 @@ public class ConnectorMigrationService implements NgMigrationService {
       NGYamlFile yamlFile) throws IOException {
     Response<ResponseDTO<ConnectorResponseDTO>> resp =
         ngClient.createConnector(auth, inputDTO.getAccountIdentifier(), JsonUtils.asTree(yamlFile.getYaml())).execute();
-    log.info("Connector creation Response details {}", resp.code());
+    log.info("Connector creation Response details {} {}", resp.code(), resp.message());
   }
 
   @Override

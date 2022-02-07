@@ -101,7 +101,7 @@ public class PipelineMigrationService implements NgMigrationService {
                 inputDTO.getProjectIdentifier(),
                 RequestBody.create(MediaType.parse("application/yaml"), YamlUtils.write(yamlFile.getYaml())))
             .execute();
-    log.info("Pipeline creation Response details {}", resp.code());
+    log.info("Pipeline creation Response details {} {}", resp.code(), resp.message());
   }
 
   @Override

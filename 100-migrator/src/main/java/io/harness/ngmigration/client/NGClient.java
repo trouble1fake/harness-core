@@ -29,5 +29,7 @@ public interface NGClient {
 
   @POST("v2/secrets")
   Call<ResponseDTO<SecretResponseWrapper>> createSecret(@Header("Authorization") String auth,
-      @Query(NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier, @Body JsonNode connectorDTO);
+      @Query(NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier,
+      @Query(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
+      @Query(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier, @Body JsonNode connectorDTO);
 }
