@@ -22,20 +22,21 @@ import (
 
 // PluginStep represents interface to execute a plugin step
 type PluginStep interface {
-	Run(ctx context.Context) (int32, error)
+	Run(ctx context.Context) (*output.StepOutput, int32, error)
 }
 
 type pluginStep struct {
 	id            string
 	image         string
 	step          *pb.UnitStep
+	tmpFilePath   string
 	containerPort uint32
 	stageOutput   output.StageOutput
 	log           *zap.SugaredLogger
 }
 
 // NewPluginStep creates a plugin step executor
-func NewPluginStep(step *pb.UnitStep, stageOutput output.StageOutput,
+func NewPluginStep(step *pb.UnitStep, tmpFilePath string, stageOutput output.StageOutput,
 	log *zap.SugaredLogger) PluginStep {
 	r := step.GetPlugin()
 	return &pluginStep{
@@ -43,16 +44,17 @@ func NewPluginStep(step *pb.UnitStep, stageOutput output.StageOutput,
 		image:         r.GetImage(),
 		step:          step,
 		containerPort: r.GetContainerPort(),
+		tmpFilePath:   tmpFilePath,
 		stageOutput:   stageOutput,
 		log:           log,
 	}
 }
 
 // Executes customer provided plugin step
-func (e *pluginStep) Run(ctx context.Context) (int32, error) {
+func (e *pluginStep) Run(ctx context.Context) (*output.StepOutput, int32, error) {
 	if err := e.validate(); err != nil {
 		e.log.Errorw("failed to validate plugin step", "step_id", e.id, zap.Error(err))
-		return int32(1), err
+		return nil, int32(1), err
 	}
 	return e.execute(ctx)
 }
@@ -69,13 +71,13 @@ func (e *pluginStep) validate() error {
 	return nil
 }
 
-func (e *pluginStep) execute(ctx context.Context) (int32, error) {
+func (e *pluginStep) execute(ctx context.Context) (*output.StepOutput, int32, error) {
 	st := time.Now()
 
 	addonClient, err := newAddonClient(uint(e.containerPort), e.log)
 	if err != nil {
 		e.log.Errorw("Unable to create CI addon client", "step_id", e.id, "elapsed_time_ms", utils.TimeSince(st), zap.Error(err))
-		return int32(1), errors.Wrap(err, "Could not create CI Addon client")
+		return nil, int32(1), errors.Wrap(err, "Could not create CI Addon client")
 	}
 	defer addonClient.CloseConn()
 
@@ -84,10 +86,12 @@ func (e *pluginStep) execute(ctx context.Context) (int32, error) {
 	ret, err := c.ExecuteStep(ctx, arg, grpc_retry.WithMax(maxAddonRetries))
 	if err != nil {
 		e.log.Errorw("Plugin step RPC failed", "step_id", e.id, "elapsed_time_ms", utils.TimeSince(st), zap.Error(err))
-		return int32(1), err
+		return nil, int32(1), err
 	}
 	e.log.Infow("Successfully executed step", "step_id", e.id, "elapsed_time_ms", utils.TimeSince(st))
-	return ret.GetNumRetries(), nil
+	stepOutput := &output.StepOutput{}
+	stepOutput.Output.Variables = ret.GetOutput()
+	return stepOutput, ret.GetNumRetries(), nil
 }
 
 func (e *pluginStep) getExecuteStepArg() *addonpb.ExecuteStepRequest {
@@ -100,6 +104,7 @@ func (e *pluginStep) getExecuteStepArg() *addonpb.ExecuteStepRequest {
 
 	return &addonpb.ExecuteStepRequest{
 		Step:            e.step,
+		TmpFilePath:     e.tmpFilePath,
 		PrevStepOutputs: prevStepOutputs,
 	}
 }

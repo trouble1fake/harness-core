@@ -276,7 +276,8 @@ public class PcfSwitchBlueGreenRoutes extends State {
       stateExecutionData.setStatus(executionStatus);
       stateExecutionData.setErrorMsg(executionResponse.getErrorMessage());
       if (executionStatus == ExecutionStatus.SUCCESS) {
-        pcfStateHelper.updateInfoVariables(context, stateExecutionData);
+        pcfStateHelper.updateInfoVariables(
+            context, stateExecutionData, executionResponse, isRollback(), upSizeInActiveApp);
       }
 
       if (!isRollback()) {

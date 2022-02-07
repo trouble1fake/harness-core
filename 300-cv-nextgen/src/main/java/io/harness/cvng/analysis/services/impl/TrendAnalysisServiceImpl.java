@@ -193,6 +193,8 @@ public class TrendAnalysisServiceImpl implements TrendAnalysisService {
             .filter(LogAnalysisClusterKeys.verificationTaskId, verificationTaskId)
             .filter(LogAnalysisClusterKeys.isEvicted, Boolean.FALSE)
             .asList();
+    logAnalysisClusters =
+        logAnalysisClusters.stream().peek(LogAnalysisCluster::deCompressText).collect(Collectors.toList());
     List<TimeSeriesRecordDTO> testData = new ArrayList<>();
     logAnalysisClusters.forEach(logAnalysisCluster -> {
       if (Instant.ofEpochMilli(logAnalysisCluster.getFirstSeenTime())
@@ -332,7 +334,9 @@ public class TrendAnalysisServiceImpl implements TrendAnalysisService {
         index--;
       }
     }
-    hPersistence.save(new ArrayList<>(logAnalysisClusterMap.values()));
+    List<LogAnalysisCluster> logAnalysisClusterList =
+        logAnalysisClusterMap.values().stream().peek(LogAnalysisCluster::compressText).collect(Collectors.toList());
+    hPersistence.save(logAnalysisClusterList);
   }
 
   private TimeSeriesRiskSummary buildRiskSummary(

@@ -12,6 +12,7 @@ import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 import io.harness.ModuleType;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
+import io.harness.exception.InvalidRequestException;
 import io.harness.pms.contracts.plan.ExpansionRequestType;
 import io.harness.pms.contracts.plan.JsonExpansionInfo;
 import io.harness.pms.contracts.steps.StepCategory;
@@ -28,9 +29,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 
 @OwnedBy(PIPELINE)
 @Singleton
+@Slf4j
 public class ExpansionRequestsHelper {
   @Inject PmsSdkInstanceService pmsSdkInstanceService;
 
@@ -41,8 +44,11 @@ public class ExpansionRequestsHelper {
       String sdkInstanceName = sdkInstance.getName();
       ModuleType module = ModuleType.fromString(sdkInstanceName);
       List<JsonExpansionInfo> jsonExpansionInfo = sdkInstance.getJsonExpansionInfo();
-      if (EmptyPredicate.isEmpty(jsonExpansionInfo)) {
-        return;
+      if (jsonExpansionInfo == null) {
+        log.error("Module [" + sdkInstanceName
+            + "] not registered properly with Pipeline Service. JsonExpansionInfo is null in PmsSdkInstance.");
+        throw new InvalidRequestException("Module [" + sdkInstanceName
+            + "] not registered properly with Pipeline Service. JsonExpansionInfo is null in PmsSdkInstance.");
       }
       Set<String> expandableKeys =
           jsonExpansionInfo.stream()
@@ -78,18 +84,25 @@ public class ExpansionRequestsHelper {
     for (PmsSdkInstance sdkInstance : activeInstances) {
       String sdkInstanceName = sdkInstance.getName();
       ModuleType module = ModuleType.fromString(sdkInstanceName);
-      List<JsonExpansionInfo> jsonExpansionInfo =
-          sdkInstance.getJsonExpansionInfo()
-              .stream()
-              .filter(info -> info.getExpansionType().equals(ExpansionRequestType.LOCAL_FQN))
-              .filter(info -> info.getStageType().getStepCategory().equals(StepCategory.STAGE))
-              .collect(Collectors.toList());
-      jsonExpansionInfo.forEach(info
-          -> localFQNExpansionInfo.add(LocalFQNExpansionInfo.builder()
-                                           .module(module)
-                                           .localFQN(info.getKey())
-                                           .stageType(info.getStageType().getType())
-                                           .build()));
+      if (sdkInstance.getJsonExpansionInfo() != null) {
+        List<JsonExpansionInfo> jsonExpansionInfo =
+            sdkInstance.getJsonExpansionInfo()
+                .stream()
+                .filter(info -> info.getExpansionType().equals(ExpansionRequestType.LOCAL_FQN))
+                .filter(info -> info.getStageType().getStepCategory().equals(StepCategory.STAGE))
+                .collect(Collectors.toList());
+        jsonExpansionInfo.forEach(info
+            -> localFQNExpansionInfo.add(LocalFQNExpansionInfo.builder()
+                                             .module(module)
+                                             .localFQN(info.getKey())
+                                             .stageType(info.getStageType().getType())
+                                             .build()));
+      } else {
+        log.error("Module [" + sdkInstanceName
+            + "] not registered properly with Pipeline Service. JsonExpansionInfo is null in PmsSdkInstance.");
+        throw new InvalidRequestException("Module [" + sdkInstanceName
+            + "] not registered properly with Pipeline Service. JsonExpansionInfo is null in PmsSdkInstance.");
+      }
     }
     return localFQNExpansionInfo;
   }

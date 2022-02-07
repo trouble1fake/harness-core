@@ -8,6 +8,7 @@
 package software.wings.service.impl;
 
 import static io.harness.rule.OwnerRule.BOJAN;
+import static io.harness.rule.OwnerRule.XIN;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.anyObject;
@@ -49,6 +50,7 @@ import org.mockito.Mockito;
 @OwnedBy(HarnessTeam.DEL)
 public class DelegateMetricsServiceTest extends WingsBaseTest {
   private static final String ACCOUNT_ID = "accountId";
+  private static final String PERPETUAL_TASK_TYPE = "perpetualTaskType";
   private static final String TEST_CUSTOM_METRIC_NAME = "test_custom_metric_name";
 
   @Inject private DelegateTaskMetricContextBuilder metricContextBuilder;
@@ -124,6 +126,14 @@ public class DelegateMetricsServiceTest extends WingsBaseTest {
     delegateTaskServiceClassic.processDelegateTask(createDefaultDelegateTask(), DelegateTask.Status.QUEUED);
     Mockito.verify(metricService).incCounter(eq("delegate_task_no_eligible_delegates"));
     Mockito.verify(metricService).incCounter(eq("delegate_response"));
+  }
+
+  @Test
+  @Owner(developers = XIN)
+  @Category(UnitTests.class)
+  public void testRecordPerpetualTaskMetrics() {
+    delegateMetricsService.recordPerpetualTaskMetrics(ACCOUNT_ID, PERPETUAL_TASK_TYPE, TEST_CUSTOM_METRIC_NAME);
+    Mockito.verify(metricService).incCounter(eq(TEST_CUSTOM_METRIC_NAME));
   }
 
   private static DelegateTask createDefaultDelegateTask() {

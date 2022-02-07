@@ -14,6 +14,8 @@ import static io.harness.rule.OwnerRule.MATT;
 import static junit.framework.TestCase.fail;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.when;
 
 import io.harness.CategoryTest;
 import io.harness.annotations.dev.OwnedBy;
@@ -26,13 +28,17 @@ import io.harness.ngtriggers.beans.source.NGTriggerSourceV2;
 import io.harness.ngtriggers.beans.source.NGTriggerType;
 import io.harness.ngtriggers.beans.source.scheduled.CronTriggerSpec;
 import io.harness.ngtriggers.beans.source.scheduled.ScheduledTriggerConfig;
+import io.harness.ngtriggers.buildtriggers.helpers.BuildTriggerHelper;
 import io.harness.ngtriggers.service.impl.NGTriggerServiceImpl;
 import io.harness.rule.Owner;
 
+import java.util.Optional;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
@@ -40,6 +46,12 @@ import org.mockito.junit.MockitoRule;
 public class NGTriggerServiceTest extends CategoryTest {
   @Rule public MockitoRule mockitoRule = MockitoJUnit.rule();
   @InjectMocks NGTriggerServiceImpl ngTriggerServiceImpl;
+  @Mock BuildTriggerHelper validationHelper;
+
+  @Before
+  public void setup() {
+    when(validationHelper.fetchPipelineForTrigger(any())).thenReturn(Optional.empty());
+  }
 
   @Test
   @Owner(developers = MATT)

@@ -24,10 +24,14 @@ import io.harness.cvng.core.beans.params.PageParams;
 import io.harness.cvng.core.services.api.MetricPackService;
 import io.harness.cvng.core.services.api.monitoredService.MonitoredServiceService;
 import io.harness.cvng.servicelevelobjective.beans.ErrorBudgetRisk;
+import io.harness.cvng.servicelevelobjective.beans.SLOCalenderType;
 import io.harness.cvng.servicelevelobjective.beans.SLODashboardApiFilter;
 import io.harness.cvng.servicelevelobjective.beans.SLODashboardWidget;
 import io.harness.cvng.servicelevelobjective.beans.SLODashboardWidget.Point;
+import io.harness.cvng.servicelevelobjective.beans.SLOTarget;
+import io.harness.cvng.servicelevelobjective.beans.SLOTargetType;
 import io.harness.cvng.servicelevelobjective.beans.ServiceLevelObjectiveDTO;
+import io.harness.cvng.servicelevelobjective.beans.slotargetspec.CalenderSLOTargetSpec;
 import io.harness.cvng.servicelevelobjective.entities.SLIRecord;
 import io.harness.cvng.servicelevelobjective.entities.SLIRecord.SLIRecordParam;
 import io.harness.cvng.servicelevelobjective.entities.ServiceLevelIndicator;
@@ -128,6 +132,41 @@ public class SLODashboardServiceImplTest extends CvNextGenTestBase {
     assertThat(sloDashboardWidget.getEnvironmentIdentifier()).isEqualTo(monitoredServiceDTO.getEnvironmentRef());
     assertThat(sloDashboardWidget.getServiceName()).isEqualTo("Mocked service name");
     assertThat(sloDashboardWidget.getEnvironmentName()).isEqualTo("Mocked env name");
+  }
+
+  @Test
+  @Owner(developers = KAMAL)
+  @Category(UnitTests.class)
+  public void testGetSloDashboardWidgets_withSLOQuarter() {
+    String monitoredServiceIdentifier = "monitoredServiceIdentifier";
+    MonitoredServiceDTO monitoredServiceDTO =
+        builderFactory.monitoredServiceDTOBuilder().identifier(monitoredServiceIdentifier).build();
+    HealthSource healthSource = monitoredServiceDTO.getSources().getHealthSources().iterator().next();
+    monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceDTO);
+    ServiceLevelObjectiveDTO serviceLevelObjective = builderFactory.getServiceLevelObjectiveDTOBuilder()
+                                                         .monitoredServiceRef(monitoredServiceIdentifier)
+                                                         .healthSourceRef(healthSource.getIdentifier())
+                                                         .build();
+
+    SLOTarget calendarSloTarget = SLOTarget.builder()
+                                      .type(SLOTargetType.CALENDER)
+                                      .sloTargetPercentage(80.0)
+                                      .spec(CalenderSLOTargetSpec.builder()
+                                                .type(SLOCalenderType.QUARTERLY)
+                                                .spec(CalenderSLOTargetSpec.QuarterlyCalenderSpec.builder().build())
+                                                .build())
+                                      .build();
+    serviceLevelObjective.setTarget(calendarSloTarget);
+    serviceLevelObjectiveService.create(builderFactory.getProjectParams(), serviceLevelObjective);
+    PageResponse<SLODashboardWidget> pageResponse =
+        sloDashboardService.getSloDashboardWidgets(builderFactory.getProjectParams(),
+            SLODashboardApiFilter.builder().build(), PageParams.builder().page(0).size(4).build());
+    assertThat(pageResponse.getPageItemCount()).isEqualTo(1);
+    assertThat(pageResponse.getTotalItems()).isEqualTo(1);
+    List<SLODashboardWidget> sloDashboardWidgets = pageResponse.getContent();
+    assertThat(sloDashboardWidgets).hasSize(1);
+    SLODashboardWidget sloDashboardWidget = sloDashboardWidgets.get(0);
+    assertThat(sloDashboardWidget.getTimeRemainingDays()).isEqualTo(66);
   }
 
   @Test

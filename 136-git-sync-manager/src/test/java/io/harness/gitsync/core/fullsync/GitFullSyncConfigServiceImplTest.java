@@ -7,16 +7,24 @@
 
 package io.harness.gitsync.core.fullsync;
 
+import static io.harness.rule.OwnerRule.BHAVYA;
 import static io.harness.rule.OwnerRule.PHOENIKX;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.when;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
+import io.harness.delegate.beans.connector.ConnectorType;
+import io.harness.delegate.beans.git.YamlGitConfigDTO;
 import io.harness.exception.InvalidRequestException;
 import io.harness.gitsync.GitSyncTestBase;
+import io.harness.gitsync.common.beans.GitBranch;
+import io.harness.gitsync.common.service.GitBranchService;
+import io.harness.gitsync.common.service.YamlGitConfigService;
 import io.harness.gitsync.fullsync.dtos.GitFullSyncConfigDTO;
 import io.harness.gitsync.fullsync.dtos.GitFullSyncConfigRequestDTO;
 import io.harness.repositories.fullSync.GitFullSyncConfigRepository;
@@ -24,9 +32,12 @@ import io.harness.rule.Owner;
 
 import com.google.inject.Inject;
 import java.util.Optional;
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 @OwnedBy(HarnessTeam.PL)
 public class GitFullSyncConfigServiceImplTest extends GitSyncTestBase {
@@ -37,12 +48,32 @@ public class GitFullSyncConfigServiceImplTest extends GitSyncTestBase {
   public static final String ACCOUNT = "account";
   public static final String ORG = "org";
   public static final String PROJECT = "project";
-  private GitFullSyncConfigServiceImpl gitFullSyncConfigService;
+  public static final String REPO_URL = "repo_url";
+  private YamlGitConfigDTO yamlGitConfigDTO;
+  private GitBranch gitBranch;
   @Inject private GitFullSyncConfigRepository gitFullSyncConfigRepository;
+  @Inject private GitFullSyncConfigServiceImpl gitFullSyncConfigService;
+  @Mock private GitBranchService gitBranchService;
+  @Mock private YamlGitConfigService yamlGitConfigService;
 
   @Before
-  public void setup() {
-    gitFullSyncConfigService = new GitFullSyncConfigServiceImpl(gitFullSyncConfigRepository);
+  public void setup() throws Exception {
+    MockitoAnnotations.initMocks(this);
+    yamlGitConfigDTO = YamlGitConfigDTO.builder()
+                           .accountIdentifier(ACCOUNT)
+                           .projectIdentifier(PROJECT)
+                           .organizationIdentifier(ORG)
+                           .branch(BRANCH)
+                           .repo(REPO_URL)
+                           .identifier(YAML_GIT_CONFIG)
+                           .gitConnectorType(ConnectorType.GIT)
+                           .build();
+    gitBranch = GitBranch.builder().branchName(BRANCH).repoURL(REPO_URL).build();
+    when(yamlGitConfigService.get(any(), any(), any(), any())).thenReturn(yamlGitConfigDTO);
+    when(gitBranchService.get(any(), any(), any())).thenReturn(gitBranch);
+
+    FieldUtils.writeField(gitFullSyncConfigService, "yamlGitConfigService", yamlGitConfigService, true);
+    FieldUtils.writeField(gitFullSyncConfigService, "gitBranchService", gitBranchService, true);
   }
 
   private GitFullSyncConfigDTO create() {
@@ -103,20 +134,41 @@ public class GitFullSyncConfigServiceImplTest extends GitSyncTestBase {
   @Test
   @Owner(developers = PHOENIKX)
   @Category(UnitTests.class)
-  public void testCreateConfig_failsIfConfigAlreadyExistsInScope() {
-    create();
-    try {
-      create();
-      fail("Execution should not reach here");
-    } catch (InvalidRequestException invalidRequestException) {
-      // ignore
-    }
+  public void testGet_whenNoConfigExists() {
+    assertThat(gitFullSyncConfigService.get(ACCOUNT, ORG, PROJECT)).isNotPresent();
   }
 
   @Test
-  @Owner(developers = PHOENIKX)
+  @Owner(developers = BHAVYA)
   @Category(UnitTests.class)
-  public void testGet_whenNoConfigExists() {
-    assertThat(gitFullSyncConfigService.get(ACCOUNT, ORG, PROJECT)).isNotPresent();
+  public void testUpdateConfig_whenSameConfigIsUpdated() {
+    create();
+    GitFullSyncConfigRequestDTO gitFullSyncConfigRequestDTO = GitFullSyncConfigRequestDTO.builder()
+                                                                  .repoIdentifier(YAML_GIT_CONFIG)
+                                                                  .createPullRequest(true)
+                                                                  .branch(BRANCH)
+                                                                  .prTitle(PR_TITLE)
+                                                                  .baseBranch(BASE_BRANCH)
+                                                                  .build();
+    GitFullSyncConfigDTO gitFullSyncConfigDTO =
+        gitFullSyncConfigService.updateConfig(ACCOUNT, ORG, PROJECT, gitFullSyncConfigRequestDTO);
+    assertThat(gitFullSyncConfigDTO).isNotNull();
+  }
+
+  @Test
+  @Owner(developers = BHAVYA)
+  @Category(UnitTests.class)
+  public void testCreateConfig_whenNewBranchExist() {
+    GitFullSyncConfigRequestDTO gitFullSyncConfigRequestDTO = GitFullSyncConfigRequestDTO.builder()
+                                                                  .repoIdentifier(YAML_GIT_CONFIG)
+                                                                  .createPullRequest(true)
+                                                                  .branch(BRANCH)
+                                                                  .prTitle(PR_TITLE)
+                                                                  .baseBranch(BASE_BRANCH)
+                                                                  .isNewBranch(true)
+                                                                  .build();
+    assertThatThrownBy(() -> gitFullSyncConfigService.createConfig(ACCOUNT, ORG, PROJECT, gitFullSyncConfigRequestDTO))
+        .isInstanceOf(InvalidRequestException.class)
+        .matches(ex -> ex.getMessage().equals(String.format("Branch [%s] already exist", BRANCH)));
   }
 }

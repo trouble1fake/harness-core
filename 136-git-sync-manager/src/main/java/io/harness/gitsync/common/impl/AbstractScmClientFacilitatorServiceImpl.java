@@ -145,15 +145,26 @@ public abstract class AbstractScmClientFacilitatorServiceImpl implements ScmClie
   }
 
   GitFileDetailsBuilder getGitFileDetails(
-      String yaml, String filePath, String folderPath, String commitMsg, String branch) {
+      String accountId, String yaml, String filePath, String folderPath, String commitMsg, String branch) {
     final EmbeddedUser currentUser = ScmUserHelper.getCurrentUser();
     String filePathForPush = ScmGitUtils.createFilePath(folderPath, filePath);
+    String scmUserName = getSmcUserName(accountId);
     return GitFileDetails.builder()
         .branch(branch)
         .commitMessage(isEmpty(commitMsg) ? GitSyncConstants.COMMIT_MSG : commitMsg)
         .fileContent(yaml)
         .filePath(filePathForPush)
         .userEmail(currentUser.getEmail())
-        .userName(currentUser.getName());
+        .userName(isEmpty(scmUserName) ? currentUser.getName() : scmUserName);
+  }
+
+  private String getSmcUserName(String accountId) {
+    String scmUserName = "";
+    try {
+      scmUserName = userProfileHelper.getScmUserName(accountId);
+    } catch (Exception ex) {
+      log.error("Error occured while getting Scm User", ex);
+    }
+    return scmUserName;
   }
 }

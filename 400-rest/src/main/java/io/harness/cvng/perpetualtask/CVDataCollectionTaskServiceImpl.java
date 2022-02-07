@@ -189,11 +189,12 @@ public class CVDataCollectionTaskServiceImpl implements CVDataCollectionTaskServ
                                        .orgIdentifier(orgIdentifier)
                                        .projectIdentifier(projectIdentifier)
                                        .build();
+    List<List<EncryptedDataDetail>> encryptedData = new ArrayList<>();
     switch (bundle.getDataCollectionType()) {
       case CV:
         List<DecryptableEntity> decryptableEntities =
             bundle.getConnectorDTO().getConnectorConfig().getDecryptableEntities();
-        List<List<EncryptedDataDetail>> encryptedData = new ArrayList<>();
+
         if (isNotEmpty(decryptableEntities)) {
           for (int decryptableEntityIndex = 0; decryptableEntityIndex < decryptableEntities.size();
                decryptableEntityIndex++) {
@@ -209,8 +210,9 @@ public class CVDataCollectionTaskServiceImpl implements CVDataCollectionTaskServ
         if (!credential.getKubernetesCredentialType().isDecryptable()) {
           return new ArrayList<>();
         }
-        return new ArrayList(getEncryptedDataDetails(
+        encryptedData.add(getEncryptedDataDetails(
             basicNGAccessObject, ((KubernetesClusterDetailsDTO) credential.getConfig()).getAuth().getCredentials()));
+        return encryptedData;
       default:
         Switch.unhandled(bundle.getDataCollectionType());
         throw new IllegalStateException("invalid type " + bundle.getDataCollectionType());

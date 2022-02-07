@@ -129,20 +129,6 @@ public class PipelineResource implements YamlSchemaResource {
   private final GovernanceService governanceService;
   private final PmsFeatureFlagHelper pmsFeatureFlagHelper;
 
-  private PipelineEntity createPipelineInternal(
-      String accountId, String orgId, String projectId, PipelineEntity pipelineEntity) throws IOException {
-    // Apply all the templateRefs(if any) then check for schema validation.
-    TemplateMergeResponseDTO templateMergeResponseDTO =
-        pipelineTemplateHelper.resolveTemplateRefsInPipeline(pipelineEntity);
-    String resolveTemplateRefsInPipeline = templateMergeResponseDTO.getMergedPipelineYaml();
-    pmsYamlSchemaService.validateYamlSchema(accountId, orgId, projectId, resolveTemplateRefsInPipeline);
-    // validate unique fqn in resolveTemplateRefsInPipeline
-    pmsYamlSchemaService.validateUniqueFqn(resolveTemplateRefsInPipeline);
-    pipelineEntity.setTemplateReference(
-        EmptyPredicate.isNotEmpty(templateMergeResponseDTO.getTemplateReferenceSummaries()));
-    return pmsPipelineService.create(pipelineEntity);
-  }
-
   @POST
   @ApiOperation(value = "Create a Pipeline", nickname = "createPipeline")
   @Operation(operationId = "postPipeline", summary = "Create a Pipeline",
@@ -164,7 +150,16 @@ public class PipelineResource implements YamlSchemaResource {
     PipelineEntity pipelineEntity = PMSPipelineDtoMapper.toPipelineEntity(accountId, orgId, projectId, yaml);
     log.info(String.format("Creating pipeline with identifier %s in project %s, org %s, account %s",
         pipelineEntity.getIdentifier(), projectId, orgId, accountId));
-    PipelineEntity createdEntity = createPipelineInternal(accountId, orgId, projectId, pipelineEntity);
+    // Apply all the templateRefs(if any) then check for schema validation.
+    TemplateMergeResponseDTO templateMergeResponseDTO =
+        pipelineTemplateHelper.resolveTemplateRefsInPipeline(pipelineEntity);
+    String resolveTemplateRefsInPipeline = templateMergeResponseDTO.getMergedPipelineYaml();
+    pmsYamlSchemaService.validateYamlSchema(accountId, orgId, projectId, resolveTemplateRefsInPipeline);
+    // validate unique fqn in resolveTemplateRefsInPipeline
+    pmsYamlSchemaService.validateUniqueFqn(resolveTemplateRefsInPipeline);
+    pipelineEntity.setTemplateReference(
+        EmptyPredicate.isNotEmpty(templateMergeResponseDTO.getTemplateReferenceSummaries()));
+    PipelineEntity createdEntity = pmsPipelineService.create(pipelineEntity);
     return ResponseDTO.newResponse(createdEntity.getVersion().toString(), createdEntity.getIdentifier());
   }
 
@@ -190,15 +185,27 @@ public class PipelineResource implements YamlSchemaResource {
     PipelineEntity pipelineEntity = PMSPipelineDtoMapper.toPipelineEntity(accountId, orgId, projectId, yaml);
     log.info(String.format("Creating pipeline with identifier %s in project %s, org %s, account %s",
         pipelineEntity.getIdentifier(), projectId, orgId, accountId));
-    String expandedPipelineJSON =
-        pmsPipelineService.fetchExpandedPipelineJSONFromYaml(accountId, orgId, projectId, yaml);
+
+    // Apply all the templateRefs(if any) then check for schema validation.
+    TemplateMergeResponseDTO templateMergeResponseDTO =
+        pipelineTemplateHelper.resolveTemplateRefsInPipeline(pipelineEntity);
+    String resolveTemplateRefsInPipeline = templateMergeResponseDTO.getMergedPipelineYaml();
+    pmsYamlSchemaService.validateYamlSchema(accountId, orgId, projectId, resolveTemplateRefsInPipeline);
+    // validate unique fqn in resolveTemplateRefsInPipeline
+    pmsYamlSchemaService.validateUniqueFqn(resolveTemplateRefsInPipeline);
+    pipelineEntity.setTemplateReference(
+        EmptyPredicate.isNotEmpty(templateMergeResponseDTO.getTemplateReferenceSummaries()));
+
+    String expandedPipelineJSON = pmsPipelineService.fetchExpandedPipelineJSONFromYaml(
+        accountId, orgId, projectId, resolveTemplateRefsInPipeline);
     GovernanceMetadata governanceMetadata = governanceService.evaluateGovernancePolicies(
         expandedPipelineJSON, accountId, orgId, projectId, OpaConstants.OPA_EVALUATION_ACTION_PIPELINE_SAVE, "");
     if (governanceMetadata.getDeny()) {
       return ResponseDTO.newResponse(PipelineSaveResponse.builder().governanceMetadata(governanceMetadata).build());
     }
 
-    PipelineEntity createdEntity = createPipelineInternal(accountId, orgId, projectId, pipelineEntity);
+    PipelineEntity createdEntity = pmsPipelineService.create(pipelineEntity);
+
     return ResponseDTO.newResponse(createdEntity.getVersion().toString(),
         PipelineSaveResponse.builder()
             .governanceMetadata(governanceMetadata)
@@ -273,27 +280,6 @@ public class PipelineResource implements YamlSchemaResource {
     return ResponseDTO.newResponse(version, pipeline);
   }
 
-  private PipelineEntity updatePipelineInternal(String accountId, String orgId, String projectId, String yaml,
-      String pipelineId, String ifMatch) throws IOException {
-    // Apply all the templateRefs(if any) then check for schema validation.
-    TemplateMergeResponseDTO templateMergeResponseDTO =
-        pipelineTemplateHelper.resolveTemplateRefsInPipeline(accountId, orgId, projectId, yaml);
-    String resolveTemplateRefsInPipeline = templateMergeResponseDTO.getMergedPipelineYaml();
-    pmsYamlSchemaService.validateYamlSchema(accountId, orgId, projectId, resolveTemplateRefsInPipeline);
-    // validate unique fqn in yaml
-    pmsYamlSchemaService.validateUniqueFqn(resolveTemplateRefsInPipeline);
-
-    PipelineEntity pipelineEntity = PMSPipelineDtoMapper.toPipelineEntity(accountId, orgId, projectId, yaml);
-    if (!pipelineEntity.getIdentifier().equals(pipelineId)) {
-      throw new InvalidRequestException("Pipeline identifier in URL does not match pipeline identifier in yaml");
-    }
-    pipelineEntity.setTemplateReference(
-        EmptyPredicate.isNotEmpty(templateMergeResponseDTO.getTemplateReferenceSummaries()));
-
-    PipelineEntity withVersion = pipelineEntity.withVersion(isNumeric(ifMatch) ? parseLong(ifMatch) : null);
-    return pmsPipelineService.updatePipelineYaml(withVersion, ChangeType.MODIFY);
-  }
-
   @PUT
   @Path("/{pipelineIdentifier}")
   @ApiOperation(value = "Update a Pipeline", nickname = "putPipeline")
@@ -320,7 +306,23 @@ public class PipelineResource implements YamlSchemaResource {
       throws IOException {
     log.info(String.format("Updating pipeline with identifier %s in project %s, org %s, account %s", pipelineId,
         projectId, orgId, accountId));
-    PipelineEntity updatedEntity = updatePipelineInternal(accountId, orgId, projectId, yaml, pipelineId, ifMatch);
+    // Apply all the templateRefs(if any) then check for schema validation.
+    TemplateMergeResponseDTO templateMergeResponseDTO =
+        pipelineTemplateHelper.resolveTemplateRefsInPipeline(accountId, orgId, projectId, yaml);
+    String resolveTemplateRefsInPipeline = templateMergeResponseDTO.getMergedPipelineYaml();
+    pmsYamlSchemaService.validateYamlSchema(accountId, orgId, projectId, resolveTemplateRefsInPipeline);
+    // validate unique fqn in yaml
+    pmsYamlSchemaService.validateUniqueFqn(resolveTemplateRefsInPipeline);
+
+    PipelineEntity pipelineEntity = PMSPipelineDtoMapper.toPipelineEntity(accountId, orgId, projectId, yaml);
+    if (!pipelineEntity.getIdentifier().equals(pipelineId)) {
+      throw new InvalidRequestException("Pipeline identifier in URL does not match pipeline identifier in yaml");
+    }
+    pipelineEntity.setTemplateReference(
+        EmptyPredicate.isNotEmpty(templateMergeResponseDTO.getTemplateReferenceSummaries()));
+
+    PipelineEntity withVersion = pipelineEntity.withVersion(isNumeric(ifMatch) ? parseLong(ifMatch) : null);
+    PipelineEntity updatedEntity = pmsPipelineService.updatePipelineYaml(withVersion, ChangeType.MODIFY);
     return ResponseDTO.newResponse(updatedEntity.getVersion().toString(), updatedEntity.getIdentifier());
   }
 
@@ -350,14 +352,32 @@ public class PipelineResource implements YamlSchemaResource {
       throws IOException {
     log.info(String.format("Updating pipeline with identifier %s in project %s, org %s, account %s", pipelineId,
         projectId, orgId, accountId));
-    String expandedPipelineJSON =
-        pmsPipelineService.fetchExpandedPipelineJSONFromYaml(accountId, orgId, projectId, yaml);
+
+    // Apply all the templateRefs(if any) then check for schema validation.
+    TemplateMergeResponseDTO templateMergeResponseDTO =
+        pipelineTemplateHelper.resolveTemplateRefsInPipeline(accountId, orgId, projectId, yaml);
+    String resolveTemplateRefsInPipeline = templateMergeResponseDTO.getMergedPipelineYaml();
+    pmsYamlSchemaService.validateYamlSchema(accountId, orgId, projectId, resolveTemplateRefsInPipeline);
+    // validate unique fqn in yaml
+    pmsYamlSchemaService.validateUniqueFqn(resolveTemplateRefsInPipeline);
+
+    PipelineEntity pipelineEntity = PMSPipelineDtoMapper.toPipelineEntity(accountId, orgId, projectId, yaml);
+    if (!pipelineEntity.getIdentifier().equals(pipelineId)) {
+      throw new InvalidRequestException("Pipeline identifier in URL does not match pipeline identifier in yaml");
+    }
+    pipelineEntity.setTemplateReference(
+        EmptyPredicate.isNotEmpty(templateMergeResponseDTO.getTemplateReferenceSummaries()));
+
+    String expandedPipelineJSON = pmsPipelineService.fetchExpandedPipelineJSONFromYaml(
+        accountId, orgId, projectId, resolveTemplateRefsInPipeline);
     GovernanceMetadata governanceMetadata = governanceService.evaluateGovernancePolicies(
         expandedPipelineJSON, accountId, orgId, projectId, OpaConstants.OPA_EVALUATION_ACTION_PIPELINE_SAVE, "");
     if (governanceMetadata.getDeny()) {
       return ResponseDTO.newResponse(PipelineSaveResponse.builder().governanceMetadata(governanceMetadata).build());
     }
-    PipelineEntity updatedEntity = updatePipelineInternal(accountId, orgId, projectId, yaml, pipelineId, ifMatch);
+
+    PipelineEntity withVersion = pipelineEntity.withVersion(isNumeric(ifMatch) ? parseLong(ifMatch) : null);
+    PipelineEntity updatedEntity = pmsPipelineService.updatePipelineYaml(withVersion, ChangeType.MODIFY);
     return ResponseDTO.newResponse(updatedEntity.getVersion().toString(),
         PipelineSaveResponse.builder()
             .identifier(updatedEntity.getIdentifier())
@@ -492,27 +512,6 @@ public class PipelineResource implements YamlSchemaResource {
       @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo) {
     String expandedPipelineJSON = pmsPipelineService.fetchExpandedPipelineJSON(accountId, orgId, projectId, pipelineId);
     return ResponseDTO.newResponse(ExpandedPipelineJsonDTO.builder().expandedJson(expandedPipelineJSON).build());
-  }
-
-  @GET
-  @Path("/steps")
-  @ApiOperation(value = "Get Steps for given module", nickname = "getSteps")
-  @Operation(operationId = "getSteps", summary = "Gets all the Steps for given Category",
-      responses =
-      {
-        @io.swagger.v3.oas.annotations.responses.
-        ApiResponse(responseCode = "default", description = "Returns steps for a given Category")
-      })
-  public ResponseDTO<StepCategory>
-  getSteps(@Parameter(description = "Step Category for which you needs all its steps",
-               required = true) @NotNull @QueryParam("category") String category,
-      @Parameter(description = "Module of the step to which it belongs", required = true) @NotNull @QueryParam(
-          "module") String module,
-      @Parameter(description = PipelineResourceConstants.ACCOUNT_PARAM_MESSAGE) @QueryParam(
-          "accountId") String accountId) {
-    log.info("Get Steps for module " + module);
-
-    return ResponseDTO.newResponse(pmsPipelineService.getSteps(module, category, accountId));
   }
 
   @POST

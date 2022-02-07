@@ -710,7 +710,7 @@ public abstract class AbstractK8sState extends State implements K8sStateExecutor
         remoteParams = isValuesInGit(appManifestMap);
         customSourceParams = isValuesInCustomSource(appManifestMap);
       } else if (applicationManifestUtils.isKustomizeSource(context)
-          && isUseVarSupportForKustomize(context.getAccountId())) {
+          && isUseLatestKustomizeVersion(context.getAccountId())) {
         kustomizeSource = true;
         appManifestMap =
             applicationManifestUtils.getOverrideApplicationManifests(context, AppManifestKind.KUSTOMIZE_PATCHES);
@@ -1189,7 +1189,7 @@ public abstract class AbstractK8sState extends State implements K8sStateExecutor
   public Map<K8sValuesLocation, ApplicationManifest> fetchApplicationManifests(ExecutionContext context) {
     boolean isOpenShiftManifestConfig = openShiftManagerService.isOpenShiftManifestConfig(context);
     AppManifestKind appManifestKind;
-    if (applicationManifestUtils.isKustomizeSource(context) && isUseVarSupportForKustomize(context.getAccountId())) {
+    if (applicationManifestUtils.isKustomizeSource(context) && isUseLatestKustomizeVersion(context.getAccountId())) {
       appManifestKind = AppManifestKind.KUSTOMIZE_PATCHES;
     } else {
       appManifestKind = isOpenShiftManifestConfig ? AppManifestKind.OC_PARAMS : AppManifestKind.VALUES;
@@ -1273,7 +1273,7 @@ public abstract class AbstractK8sState extends State implements K8sStateExecutor
     appendDelegateTaskDetails(context, delegateTask);
   }
 
-  public boolean isUseVarSupportForKustomize(String accountId) {
+  public boolean isUseLatestKustomizeVersion(String accountId) {
     return featureFlagService.isEnabled(KUSTOMIZE_PATCHES_CG, accountId);
   }
 }
