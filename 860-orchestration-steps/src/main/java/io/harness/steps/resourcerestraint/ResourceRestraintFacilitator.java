@@ -20,11 +20,15 @@ import io.harness.distribution.constraint.ConsumerId;
 import io.harness.distribution.constraint.InvalidPermitsException;
 import io.harness.distribution.constraint.PermanentlyBlockedConsumerException;
 import io.harness.distribution.constraint.UnableToRegisterConsumerException;
+import io.harness.eraro.ErrorCode;
+import io.harness.exception.PersistentLockException;
+import io.harness.exception.WingsException;
+import io.harness.lock.AcquiredLock;
+import io.harness.lock.PersistentLocker;
 import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.ExecutionMode;
 import io.harness.pms.contracts.facilitators.FacilitatorType;
-import io.harness.pms.execution.facilitator.FacilitatorUtils;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.expression.PmsEngineExpressionService;
 import io.harness.pms.sdk.core.execution.events.node.facilitate.Facilitator;
@@ -41,6 +45,7 @@ import io.harness.steps.resourcerestraint.utils.ResourceRestraintUtils;
 
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -49,6 +54,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ResourceRestraintFacilitator implements Facilitator {
   public static final String RESOURCE_RESTRAINT = "RESOURCE_RESTRAINT";
+  private static final String LOCK_PREFIX = "RR_LOCK_";
 
   public static final FacilitatorType FACILITATOR_TYPE =
       FacilitatorType.newBuilder().setType(RESOURCE_RESTRAINT).build();
@@ -57,7 +63,7 @@ public class ResourceRestraintFacilitator implements Facilitator {
   @Inject private ResourceRestraintService resourceRestraintService;
   @Inject private ResourceRestraintRegistry resourceRestraintRegistry;
   @Inject private PmsEngineExpressionService pmsEngineExpressionService;
-  @Inject private FacilitatorUtils facilitatorUtils;
+  @Inject private PersistentLocker persistentLocker;
 
   @Override
   public FacilitatorResponse facilitate(
@@ -66,42 +72,53 @@ public class ResourceRestraintFacilitator implements Facilitator {
     FacilitatorResponseBuilder responseBuilder = FacilitatorResponse.builder();
 
     ResourceRestraintSpecParameters specParameters = (ResourceRestraintSpecParameters) stepElementParameters.getSpec();
+
     final ResourceRestraint resourceRestraint = Preconditions.checkNotNull(
         resourceRestraintService.getByNameAndAccountId(specParameters.getName(), AmbianceUtils.getAccountId(ambiance)));
-    final Constraint constraint = resourceRestraintInstanceService.createAbstraction(resourceRestraint);
-    String releaseEntityId = ResourceRestraintUtils.getReleaseEntityId(specParameters, ambiance.getPlanExecutionId());
-
-    int permits = specParameters.getPermits();
-    if (AcquireMode.ENSURE == specParameters.getAcquireMode()) {
-      permits -= resourceRestraintInstanceService.getAllCurrentlyAcquiredPermits(
-          specParameters.getHoldingScope().getScope(), releaseEntityId);
-    }
 
     ConstraintUnit renderedResourceUnit =
         new ConstraintUnit(pmsEngineExpressionService.renderExpression(ambiance, specParameters.getResourceUnit()));
 
-    if (permits <= 0) {
-      return responseBuilder.executionMode(ExecutionMode.SYNC).build();
-    }
+    final Constraint constraint = resourceRestraintInstanceService.createAbstraction(resourceRestraint);
 
-    Map<String, Object> constraintContext =
-        populateConstraintContext(resourceRestraint, specParameters, releaseEntityId);
+    String releaseEntityId = ResourceRestraintUtils.getReleaseEntityId(specParameters, ambiance.getPlanExecutionId());
 
-    String consumerId = generateUuid();
-    try {
-      Consumer.State state = constraint.registerConsumer(
-          renderedResourceUnit, new ConsumerId(consumerId), permits, constraintContext, resourceRestraintRegistry);
+    try (AcquiredLock<?> lock =
+             persistentLocker.acquireLock(LOCK_PREFIX + resourceRestraint.getUuid(), Duration.ofMinutes(1))) {
+      if (lock == null) {
+        throw new PersistentLockException("Cannot Acquire Lock for Resource Constraint",
+            ErrorCode.FAILED_TO_ACQUIRE_PERSISTENT_LOCK, WingsException.USER);
+      }
 
-      if (ACTIVE == state) {
+      int permits = specParameters.getPermits();
+      if (AcquireMode.ENSURE == specParameters.getAcquireMode()) {
+        permits -= resourceRestraintInstanceService.getAllCurrentlyAcquiredPermits(
+            specParameters.getHoldingScope().getScope(), releaseEntityId);
+      }
+
+      if (permits <= 0) {
         return responseBuilder.executionMode(ExecutionMode.SYNC).build();
       }
-    } catch (InvalidPermitsException | UnableToRegisterConsumerException | PermanentlyBlockedConsumerException e) {
-      log.error("Exception on ResourceRestraintStep for id [{}]", AmbianceUtils.obtainCurrentRuntimeId(ambiance), e);
-    }
 
-    return responseBuilder.executionMode(ExecutionMode.CONSTRAINT)
-        .passThroughData(ResourceRestraintPassThroughData.builder().consumerId(consumerId).build())
-        .build();
+      Map<String, Object> constraintContext =
+          populateConstraintContext(resourceRestraint, specParameters, releaseEntityId);
+
+      String consumerId = generateUuid();
+      try {
+        Consumer.State state = constraint.registerConsumer(
+            renderedResourceUnit, new ConsumerId(consumerId), permits, constraintContext, resourceRestraintRegistry);
+
+        if (ACTIVE == state) {
+          return responseBuilder.executionMode(ExecutionMode.SYNC).build();
+        }
+      } catch (InvalidPermitsException | UnableToRegisterConsumerException | PermanentlyBlockedConsumerException e) {
+        log.error("Exception on ResourceRestraintStep for id [{}]", AmbianceUtils.obtainCurrentRuntimeId(ambiance), e);
+      }
+
+      return responseBuilder.executionMode(ExecutionMode.CONSTRAINT)
+          .passThroughData(ResourceRestraintPassThroughData.builder().consumerId(consumerId).build())
+          .build();
+    }
   }
 
   private Map<String, Object> populateConstraintContext(

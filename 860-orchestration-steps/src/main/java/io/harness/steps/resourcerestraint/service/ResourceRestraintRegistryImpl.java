@@ -109,7 +109,7 @@ public class ResourceRestraintRegistryImpl implements ResourceRestraintRegistry 
     try {
       resourceRestraintInstanceService.save(builder.build());
     } catch (DuplicateKeyException e) {
-      log.info("Failed to add ResourceRestraintInstance", e);
+      log.error("Failed to add ResourceRestraintInstance", e);
       return false;
     }
 
