@@ -25,14 +25,13 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 
 @OwnedBy(PL)
-@Api("/aggregator")
+@Api(value = "/aggregator", hidden = true)
 @Path("/aggregator")
 @Produces({"application/json", "application/yaml"})
 @Consumes({"application/json", "application/yaml"})
@@ -41,7 +40,6 @@ import javax.ws.rs.Produces;
       @ApiResponse(code = 400, response = FailureDTO.class, message = "Bad Request")
       , @ApiResponse(code = 500, response = ErrorDTO.class, message = "Internal server error")
     })
-@Tag(name = "aggregator", description = "This contains the APIs to change the state of the Aggregator")
 @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request",
     content =
     {

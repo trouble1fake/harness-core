@@ -45,4 +45,5 @@ enum EntityTypeProtoEnum {
   BARRIER_STEP = 32;
   VERIFY_STEP = 33;
   OPAPOLICIES = 34;
+  POLICY_STEP = 35;
 }

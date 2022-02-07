@@ -19,4 +19,6 @@ public interface DelegateMetricsService {
   void recordDelegateTaskResponseMetrics(DelegateTask delegateTask, DelegateTaskResponse response, String metricName);
 
   void recordDelegateMetrics(Delegate delegate, String metricName);
+
+  void recordPerpetualTaskMetrics(String accountId, String perpetualTaskType, String metricName);
 }

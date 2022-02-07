@@ -35,11 +35,13 @@ import software.wings.beans.CeLicenseUpdateInfo;
 import software.wings.beans.LicenseInfo;
 import software.wings.beans.LicenseUpdateInfo;
 import software.wings.security.annotations.AdminPortalAuth;
+import software.wings.service.intfc.DelegateService;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import com.google.inject.Inject;
 import java.util.List;
+import java.util.Map;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -68,13 +70,15 @@ public class AdminAccountResource {
   private AdminAccountService adminAccountService;
   private AdminUserService adminUserService;
   private AccessControlAdminClient accessControlAdminClient;
+  private DelegateService delegateService;
 
   @Inject
   public AdminAccountResource(AdminAccountService adminAccountService, AdminUserService adminUserService,
-      AccessControlAdminClient accessControlAdminClient) {
+      AccessControlAdminClient accessControlAdminClient, DelegateService delegateService) {
     this.adminAccountService = adminAccountService;
     this.adminUserService = adminUserService;
     this.accessControlAdminClient = accessControlAdminClient;
+    this.delegateService = delegateService;
   }
 
   @Inject CEDataCleanupRequestDao ceDataCleanupRequestDao;
@@ -254,5 +258,11 @@ public class AdminAccountResource {
       ringNameUpdateStatus = adminAccountService.updateRingName(accountId, companyName);
     }
     return new RestResponse<>(accountNameUpdateSuccess && companyNameUpdateStatus && ringNameUpdateStatus);
+  }
+
+  @GET
+  @Path("delegates-with-version")
+  public RestResponse<Map<String, List<String>>> getActiveDelegatesWithPrimary(@QueryParam("version") String version) {
+    return new RestResponse<>(delegateService.getActiveDelegatesPerAccount(version));
   }
 }

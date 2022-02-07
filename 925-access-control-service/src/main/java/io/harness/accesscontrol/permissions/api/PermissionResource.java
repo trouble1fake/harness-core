@@ -57,7 +57,7 @@ import javax.ws.rs.QueryParam;
       @ApiResponse(code = 400, response = FailureDTO.class, message = "Bad Request")
       , @ApiResponse(code = 500, response = ErrorDTO.class, message = "Internal server error")
     })
-@Tag(name = "permissions", description = "This contains the APIs related to permissions")
+@Tag(name = "Permissions", description = "This contains the APIs related to permissions")
 @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request",
     content =
     {

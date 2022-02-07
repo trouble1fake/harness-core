@@ -35,6 +35,7 @@ import io.harness.rule.Owner;
 
 import software.wings.beans.Account;
 import software.wings.beans.CeLicenseUpdateInfo;
+import software.wings.service.intfc.DelegateService;
 import software.wings.utils.ResourceTestRule;
 
 import javax.ws.rs.client.Entity;
@@ -54,12 +55,13 @@ public class AdminAccountResourceTest extends CategoryTest {
   private static AdminAccountService adminAccountService = mock(AdminAccountService.class);
   private static AdminUserService adminUserService = mock(AdminUserService.class);
   private static AccessControlAdminClient accessControlAdminClient = mock(AccessControlAdminClient.class);
+  private static DelegateService delegateService = mock(DelegateService.class);
 
   @ClassRule
-  public static ResourceTestRule RESOURCES =
-      ResourceTestRule.builder()
-          .instance(new AdminAccountResource(adminAccountService, adminUserService, accessControlAdminClient))
-          .build();
+  public static ResourceTestRule RESOURCES = ResourceTestRule.builder()
+                                                 .instance(new AdminAccountResource(adminAccountService,
+                                                     adminUserService, accessControlAdminClient, delegateService))
+                                                 .build();
 
   @Before
   public void setUp() {

@@ -41,6 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class UserProfileHelper {
   private final SourceCodeManagerService sourceCodeManagerService;
+  private final String ERROR_MSG_USER_PRINCIPAL_NOT_SET = "User not set for push event.";
 
   @Inject
   public UserProfileHelper(SourceCodeManagerService sourceCodeManagerService) {
@@ -54,14 +55,8 @@ public class UserProfileHelper {
     }
     final GithubConnectorDTO githubConnectorDTO = (GithubConnectorDTO) connector.getConnector().getConnectorConfig();
     githubConnectorDTO.setUrl(yamlGitConfig.getRepo());
-    final List<SourceCodeManagerDTO> sourceCodeManager =
-        sourceCodeManagerService.get(userPrincipal.getUserId().getValue(), yamlGitConfig.getAccountIdentifier());
-    final Optional<SourceCodeManagerDTO> sourceCodeManagerDTO =
-        sourceCodeManager.stream().filter(scm -> scm.getType().equals(SCMType.GITHUB)).findFirst();
-    if (!sourceCodeManagerDTO.isPresent()) {
-      throw new InvalidRequestException("User profile doesn't contain github scm details");
-    }
-    final GithubSCMDTO githubUserProfile = (GithubSCMDTO) sourceCodeManagerDTO.get();
+    final GithubSCMDTO githubUserProfile =
+        (GithubSCMDTO) getScmUserProfile(yamlGitConfig.getAccountIdentifier(), userPrincipal, SCMType.GITHUB);
     final SecretRefData tokenRef;
     try {
       tokenRef =
@@ -89,6 +84,37 @@ public class UserProfileHelper {
           .setUserName(StringValue.of(userPrincipal.getUsername()))
           .build();
     }
-    throw new InvalidRequestException("User not set for push event.");
+    log.error(ERROR_MSG_USER_PRINCIPAL_NOT_SET);
+    throw new InvalidRequestException(ERROR_MSG_USER_PRINCIPAL_NOT_SET);
+  }
+
+  public String getScmUserName(String accountIdentifier) {
+    final GithubSCMDTO githubUserProfile =
+        (GithubSCMDTO) getScmUserProfile(accountIdentifier, getUserPrincipal(), SCMType.GITHUB);
+    try {
+      return (
+          (GithubUsernameTokenDTO) ((GithubHttpCredentialsDTO) githubUserProfile.getAuthentication().getCredentials())
+              .getHttpCredentialsSpec())
+          .getUsername();
+    } catch (Exception e) {
+      log.error("User Profile should contain github username name for git sync", e);
+      throw new InvalidRequestException("User Profile should contain github username name for git sync", e);
+    }
+  }
+
+  private SourceCodeManagerDTO getScmUserProfile(String accountId, UserPrincipal userPrincipal, SCMType scmType) {
+    if (userPrincipal == null) {
+      log.error(ERROR_MSG_USER_PRINCIPAL_NOT_SET);
+      throw new InvalidRequestException(ERROR_MSG_USER_PRINCIPAL_NOT_SET);
+    }
+    final List<SourceCodeManagerDTO> sourceCodeManager =
+        sourceCodeManagerService.get(userPrincipal.getUserId().getValue(), accountId);
+    final Optional<SourceCodeManagerDTO> sourceCodeManagerDTO =
+        sourceCodeManager.stream().filter(scm -> scm.getType().equals(scmType)).findFirst();
+    if (!sourceCodeManagerDTO.isPresent()) {
+      log.error("User profile doesn't contain github scm details");
+      throw new InvalidRequestException("User profile doesn't contain github scm details");
+    }
+    return sourceCodeManagerDTO.get();
   }
 }

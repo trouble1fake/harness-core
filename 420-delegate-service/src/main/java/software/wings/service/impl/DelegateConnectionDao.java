@@ -65,6 +65,20 @@ public class DelegateConnectionDao {
         .count();
   }
 
+  public Map<String, List<String>> obtainActiveDelegatesPerAccount(String version) {
+    List<DelegateConnection> delegateConnections = persistence.createQuery(DelegateConnection.class)
+                                                       .field(DelegateConnectionKeys.disconnected)
+                                                       .notEqual(Boolean.TRUE)
+                                                       .field(DelegateConnectionKeys.lastHeartbeat)
+                                                       .greaterThan(currentTimeMillis() - EXPIRY_TIME.toMillis())
+                                                       .filter(DelegateConnectionKeys.version, version)
+                                                       .asList();
+
+    return delegateConnections.stream().collect(Collectors.groupingBy(delegateConnection
+        -> delegateConnection.getAccountId(),
+        Collectors.mapping(delegateConnection -> delegateConnection.getDelegateId(), toList())));
+  }
+
   public Map<String, List<DelegateConnectionDetails>> obtainActiveDelegateConnections(String accountId) {
     List<DelegateConnection> delegateConnections = persistence.createQuery(DelegateConnection.class)
                                                        .filter(DelegateConnectionKeys.accountId, accountId)
