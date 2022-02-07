@@ -55,7 +55,7 @@ public class GitSyncSettingsServiceImpl implements GitSyncSettingsService {
     Criteria criteria = Criteria.where(GitSyncSettingsKeys.accountIdentifier)
                             .is(request.getAccountIdentifier())
                             .and(GitSyncSettingsKeys.orgIdentifier)
-                            .is(request.getOrganizationIdentifier())
+                            .is(request.getOrgIdentifier())
                             .and(GitSyncSettingsKeys.projectIdentifier)
                             .is(request.getProjectIdentifier());
     Map<String, String> settings = new HashMap<>();

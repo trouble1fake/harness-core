@@ -9,6 +9,7 @@ package software.wings.service.impl;
 
 import static io.harness.annotations.dev.HarnessModule._870_CG_ORCHESTRATION;
 import static io.harness.annotations.dev.HarnessTeam.CDC;
+import static io.harness.beans.FeatureName.DEPLOY_TO_INLINE_HOSTS;
 import static io.harness.beans.PageRequest.PageRequestBuilder.aPageRequest;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
@@ -1449,7 +1450,7 @@ public class InfrastructureMappingServiceImpl implements InfrastructureMappingSe
         && ((AwsInfrastructureMapping) infrastructureMapping).isProvisionInstances()) {
       hosts = getAutoScaleGroupNodes(appId, infraMappingId, workflowExecutionId);
     } else {
-      hosts = listHosts(infrastructureMapping, workflowExecutionId)
+      hosts = listHosts(infrastructureMapping, workflowExecutionId, selectionParams)
                   .stream()
                   .filter(host
                       -> !selectionParams.isSelectSpecificHosts()
@@ -1471,14 +1472,22 @@ public class InfrastructureMappingServiceImpl implements InfrastructureMappingSe
   public List<Host> listHosts(String appId, String infrastructureMappingId) {
     InfrastructureMapping infrastructureMapping = get(appId, infrastructureMappingId);
     notNullCheck("Infra Mapping", infrastructureMapping);
-    return listHosts(infrastructureMapping, null);
+    return listHosts(infrastructureMapping, null, null);
   }
 
-  private List<Host> listHosts(InfrastructureMapping infrastructureMapping, String workflowExecutionId) {
+  private List<Host> listHosts(InfrastructureMapping infrastructureMapping, String workflowExecutionId,
+      ServiceInstanceSelectionParams selectionParams) {
     if (infrastructureMapping instanceof PhysicalInfrastructureMapping) {
       PhysicalInfrastructureMapping pyInfraMapping = (PhysicalInfrastructureMapping) infrastructureMapping;
       if (isNotEmpty(pyInfraMapping.getProvisionerId())) {
         if (isNotEmpty(pyInfraMapping.hosts())) {
+          if (featureFlagService.isEnabled(DEPLOY_TO_INLINE_HOSTS, infrastructureMapping.getAccountId())
+              && isNotEmpty(selectionParams.getHostNames())) {
+            return selectionParams.getHostNames()
+                .stream()
+                .map(hostName -> buildHost(pyInfraMapping, hostName))
+                .collect(toList());
+          }
           return pyInfraMapping.hosts();
         } else {
           throw new InvalidRequestException(
@@ -1491,19 +1500,10 @@ public class InfrastructureMappingServiceImpl implements InfrastructureMappingSe
                                    .filter(StringUtils::isNotEmpty)
                                    .distinct()
                                    .collect(toList());
-      return hostNames.stream()
-          .map(hostName
-              -> aHost()
-                     .withHostName(hostName)
-                     .withPublicDns(hostName)
-                     .withAppId(pyInfraMapping.getAppId())
-                     .withEnvId(pyInfraMapping.getEnvId())
-                     .withInfraMappingId(pyInfraMapping.getUuid())
-                     .withInfraDefinitionId(pyInfraMapping.getInfrastructureDefinitionId())
-                     .withHostConnAttr(pyInfraMapping.getHostConnectionAttrs())
-                     .withServiceTemplateId(serviceTemplateHelper.fetchServiceTemplateId(pyInfraMapping))
-                     .build())
-          .collect(toList());
+      if (featureFlagService.isEnabled(DEPLOY_TO_INLINE_HOSTS, infrastructureMapping.getAccountId())) {
+        addSpecificHosts(selectionParams, hostNames);
+      }
+      return hostNames.stream().map(hostName -> buildHost(pyInfraMapping, hostName)).collect(toList());
     } else if (infrastructureMapping instanceof PhysicalInfrastructureMappingWinRm) {
       PhysicalInfrastructureMappingWinRm pyInfraMappingWinRm =
           (PhysicalInfrastructureMappingWinRm) infrastructureMapping;
@@ -1513,6 +1513,9 @@ public class InfrastructureMappingServiceImpl implements InfrastructureMappingSe
                                    .filter(StringUtils::isNotEmpty)
                                    .distinct()
                                    .collect(toList());
+      if (featureFlagService.isEnabled(DEPLOY_TO_INLINE_HOSTS, infrastructureMapping.getAccountId())) {
+        addSpecificHosts(selectionParams, hostNames);
+      }
       return hostNames.stream()
           .map(hostName
               -> aHost()
@@ -1553,6 +1556,25 @@ public class InfrastructureMappingServiceImpl implements InfrastructureMappingSe
       throw new InvalidRequestException(
           "Unsupported infrastructure mapping: " + infrastructureMapping.getClass().getName());
     }
+  }
+
+  private Host buildHost(PhysicalInfrastructureMapping pyInfraMapping, String hostName) {
+    return aHost()
+        .withHostName(hostName)
+        .withPublicDns(hostName)
+        .withAppId(pyInfraMapping.getAppId())
+        .withEnvId(pyInfraMapping.getEnvId())
+        .withInfraMappingId(pyInfraMapping.getUuid())
+        .withInfraDefinitionId(pyInfraMapping.getInfrastructureDefinitionId())
+        .withHostConnAttr(pyInfraMapping.getHostConnectionAttrs())
+        .withServiceTemplateId(serviceTemplateHelper.fetchServiceTemplateId(pyInfraMapping))
+        .build();
+  }
+
+  private void addSpecificHosts(ServiceInstanceSelectionParams selectionParams, List<String> hostNames) {
+    List<String> specificHosts =
+        selectionParams.getHostNames().stream().filter(s -> !hostNames.contains(s)).collect(toList());
+    hostNames.addAll(specificHosts);
   }
 
   private List<ServiceInstance> syncHostsAndUpdateInstances(

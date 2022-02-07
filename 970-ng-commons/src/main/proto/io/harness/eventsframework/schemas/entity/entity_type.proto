@@ -45,4 +45,5 @@ enum EntityTypeProtoEnum {
   BARRIER_STEP = 32;
   VERIFY_STEP = 33;
   FLAG_CONFIGURATION = 34;
+  OPAPOLICIES = 35;
 }

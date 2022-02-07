@@ -76,6 +76,7 @@ import software.wings.beans.VMSSAuthType;
 import software.wings.beans.artifact.Artifact;
 import software.wings.beans.artifact.ArtifactStream;
 import software.wings.beans.artifact.ArtifactStreamAttributes;
+import software.wings.beans.artifact.ArtifactStreamType;
 import software.wings.beans.command.Command;
 import software.wings.beans.command.CommandUnit;
 import software.wings.beans.command.CommandUnitDetails;
@@ -120,8 +121,9 @@ import org.jetbrains.annotations.NotNull;
 public class AzureVMSSStateHelper {
   public static final String VIRTUAL_MACHINE_SCALE_SET_ID_PATTERN =
       "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/virtualMachineScaleSets/%s";
-  protected static final List<String> METADATA_ONLY_ARTIFACT_STREAM_TYPES =
-      Arrays.asList("JENKINS", "BAMBOO", "ARTIFACTORY", "NEXUS", "S3");
+  protected static final List<ArtifactStreamType> METADATA_ONLY_ARTIFACT_STREAM_TYPES =
+      Arrays.asList(ArtifactStreamType.JENKINS, ArtifactStreamType.BAMBOO, ArtifactStreamType.ARTIFACTORY,
+          ArtifactStreamType.NEXUS, ArtifactStreamType.AMAZON_S3, ArtifactStreamType.AZURE_ARTIFACTS);
 
   @Inject private ServiceResourceService serviceResourceService;
   @Inject private ActivityService activityService;
@@ -677,7 +679,8 @@ public class AzureVMSSStateHelper {
   }
 
   private boolean onlyMetaForArtifactType(ArtifactStream artifactStream) {
-    return METADATA_ONLY_ARTIFACT_STREAM_TYPES.contains(artifactStream.getArtifactStreamType())
+    return METADATA_ONLY_ARTIFACT_STREAM_TYPES.stream().anyMatch(
+               streamType -> streamType.name().equals(artifactStream.getArtifactStreamType()))
         && artifactStream.isMetadataOnly();
   }
 

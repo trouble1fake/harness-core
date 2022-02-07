@@ -902,6 +902,18 @@ public class DashboardStatisticsServiceImpl implements DashboardStatisticsServic
         EntitySummary workflowExecutionSummary =
             getEntitySummary(workflowName, lastWE.getUuid(), EntityType.WORKFLOW_EXECUTION.name());
 
+        PipelineSummary pipelineSummary = lastWE.getPipelineSummary();
+        // This is just precautionary this should never happen hence logging this
+        if (lastWE.isOnDemandRollback() && pipelineSummary != null) {
+          log.error("Pipeline Summary non null for rollback execution : {}", lastWE.getUuid());
+          pipelineSummary = null;
+        }
+        EntitySummary pipelineEntitySummary = null;
+        if (pipelineSummary != null) {
+          pipelineEntitySummary = getEntitySummary(
+              pipelineSummary.getPipelineName(), lastWE.getPipelineExecutionId(), EntityType.PIPELINE.name());
+        }
+
         currentActiveInstances = CurrentActiveInstances.builder()
                                      .artifact(artifactSummary)
                                      .manifest(manifestSummary)
@@ -911,6 +923,7 @@ public class DashboardStatisticsServiceImpl implements DashboardStatisticsServic
                                      .instanceCount(count)
                                      .serviceInfra(serviceInfraSummary)
                                      .lastWorkflowExecution(workflowExecutionSummary)
+                                     .lastPipelineExecution(pipelineEntitySummary)
                                      .onDemandRollbackAvailable(rollbackAvailable)
                                      .build();
       }

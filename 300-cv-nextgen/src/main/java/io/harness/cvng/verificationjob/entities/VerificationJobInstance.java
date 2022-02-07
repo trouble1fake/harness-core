@@ -31,6 +31,7 @@ import io.harness.persistence.PersistentEntity;
 import io.harness.persistence.UpdatedAtAware;
 import io.harness.persistence.UuidAware;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -240,6 +241,7 @@ public final class VerificationJobInstance
     }
 
     @Override
+    @JsonIgnore // used in debug api
     public ExecutionStatus getVerificationJobExecutionStatus() {
       Preconditions.checkState(DataCollectionExecutionStatus.getFailedStatuses().contains(executionStatus),
           "Final status can only be set for failed status: " + executionStatus);

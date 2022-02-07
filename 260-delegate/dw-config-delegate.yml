@@ -28,4 +28,3 @@ grpcServiceConnectorPort: 8080
 logStreamingServiceBaseUrl: http://localhost:8079
 clientToolsDownloadDisabled: true
 installClientToolsInBackground: true
-versionCheckDisabled: true

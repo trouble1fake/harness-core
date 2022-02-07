@@ -27,6 +27,7 @@ import io.harness.logging.LogCallback;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
@@ -77,7 +78,7 @@ public class KustomizeTaskHelper {
 
   @NotNull
   public List<FileData> buildForApply(@Nonnull String kustomizeBinaryPath, String pluginRootDir,
-      @Nonnull String manifestFilesDirectory, @NotEmpty List<String> filesToApply, boolean useVarSupportForKustomize,
+      @Nonnull String manifestFilesDirectory, @NotEmpty List<String> filesToApply, boolean useLatestKustomizeVersion,
       List<String> kustomizePatchesFiles, LogCallback executionLogCallback) {
     if (isEmpty(filesToApply)) {
       throw new InvalidRequestException("Apply files can't be empty", USER);
@@ -85,8 +86,8 @@ public class KustomizeTaskHelper {
     if (filesToApply.size() > 1) {
       throw new InvalidRequestException("Apply with Kustomize is supported for single file only", USER);
     }
-    if (useVarSupportForKustomize) {
-      String kustomizePath = manifestFilesDirectory + '/' + filesToApply.get(0);
+    if (useLatestKustomizeVersion) {
+      String kustomizePath = Paths.get(manifestFilesDirectory, filesToApply.get(0)).toString();
       k8sTaskHelperBase.savingPatchesToDirectory(kustomizePath, kustomizePatchesFiles, executionLogCallback);
     }
     String kustomizeDirPath = filesToApply.get(0);

@@ -177,3 +177,6 @@ replace_key_value accessControlClientConfig.accessControlServiceConfig.baseUrl "
 replace_key_value accessControlClientConfig.accessControlServiceSecret "$ACCESS_CONTROL_SECRET"
 
 replace_key_value enforcementClientConfiguration.enforcementCheckEnabled "$ENFORCEMENT_CHECK_ENABLED"
+
+replace_key_value pmsGrpcClientConfig.target $PMS_GRPC_TARGET
+replace_key_value pmsGrpcClientConfig.authority $PMS_GRPC_AUTHORITY

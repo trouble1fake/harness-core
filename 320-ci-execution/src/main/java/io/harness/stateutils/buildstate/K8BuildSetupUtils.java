@@ -26,6 +26,7 @@ import static io.harness.common.CIExecutionConstants.HARNESS_PIPELINE_ID_VARIABL
 import static io.harness.common.CIExecutionConstants.HARNESS_PROJECT_ID_VARIABLE;
 import static io.harness.common.CIExecutionConstants.HARNESS_SERVICE_LOG_KEY_VARIABLE;
 import static io.harness.common.CIExecutionConstants.HARNESS_STAGE_ID_VARIABLE;
+import static io.harness.common.CIExecutionConstants.HARNESS_STEP_ID_VARIABLE;
 import static io.harness.common.CIExecutionConstants.HARNESS_WORKSPACE;
 import static io.harness.common.CIExecutionConstants.LABEL_REGEX;
 import static io.harness.common.CIExecutionConstants.LOG_SERVICE_ENDPOINT_VARIABLE;
@@ -147,7 +148,7 @@ public class K8BuildSetupUtils {
 
     K8sDirectInfraYaml k8sDirectInfraYaml = (K8sDirectInfraYaml) infrastructure;
 
-    final String clusterName = k8sDirectInfraYaml.getSpec().getConnectorRef();
+    final String clusterName = k8sDirectInfraYaml.getSpec().getConnectorRef().getValue();
     Map<String, String> annotations = resolveMapParameter(
         "annotations", "K8BuildInfra", "stageSetup", k8sDirectInfraYaml.getSpec().getAnnotations(), false);
     Map<String, String> labels = resolveMapParameter(
@@ -264,7 +265,7 @@ public class K8BuildSetupUtils {
 
     return CIK8PodParams.<CIK8ContainerParams>builder()
         .name(podSetupInfo.getName())
-        .namespace(k8sDirectInfraYaml.getSpec().getNamespace())
+        .namespace((String) k8sDirectInfraYaml.getSpec().getNamespace().fetchFinalValue())
         .labels(buildLabels)
         .serviceAccountName(serviceAccountName)
         .annotations(annotations)
@@ -541,6 +542,7 @@ public class K8BuildSetupUtils {
       Map<String, String> runtimeCodebaseVars, String workDirPath, String logPrefix, Ambiance ambiance) {
     Map<String, String> envVars = new HashMap<>();
     final String accountID = AmbianceUtils.getAccountId(ambiance);
+    final String stepIdentifier = AmbianceUtils.obtainStepIdentifier(ambiance);
     final String orgID = AmbianceUtils.getOrgIdentifier(ambiance);
     final String projectID = AmbianceUtils.getProjectIdentifier(ambiance);
     final String pipelineID = ambiance.getMetadata().getPipelineIdentifier();
@@ -567,6 +569,7 @@ public class K8BuildSetupUtils {
     envVars.put(HARNESS_PIPELINE_ID_VARIABLE, pipelineID);
     envVars.put(HARNESS_BUILD_ID_VARIABLE, String.valueOf(buildNumber));
     envVars.put(HARNESS_STAGE_ID_VARIABLE, stageID);
+    envVars.put(HARNESS_STEP_ID_VARIABLE, stepIdentifier);
     envVars.put(HARNESS_LOG_PREFIX_VARIABLE, logPrefix);
     return envVars;
   }

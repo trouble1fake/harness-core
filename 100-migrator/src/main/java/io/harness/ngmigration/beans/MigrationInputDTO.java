@@ -21,6 +21,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class MigrationInputDTO {
+  private String accountIdentifier;
   private String orgIdentifier;
   private String projectIdentifier;
 }

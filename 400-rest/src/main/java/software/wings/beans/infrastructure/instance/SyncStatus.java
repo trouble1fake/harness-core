@@ -30,7 +30,7 @@ import org.mongodb.morphia.annotations.Entity;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity(value = "syncStatus", noClassnameStored = true)
-@HarnessEntity(exportable = false)
+@HarnessEntity(exportable = true)
 @FieldNameConstants(innerTypeName = "SyncStatusKeys")
 public class SyncStatus extends Base {
   public static List<MongoIndex> mongoIndexes() {

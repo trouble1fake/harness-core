@@ -29,6 +29,7 @@ import io.swagger.annotations.Api;
 import java.util.List;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -59,10 +60,11 @@ public class NgMigrationResource {
   @Path("/files")
   @Timed
   @ExceptionMetered
-  public RestResponse<List<NGYamlFile>> getMigratedFiles(@QueryParam("entityId") String entityId,
-      @QueryParam("appId") String appId, @QueryParam("accountId") String accountId,
-      @QueryParam("entityType") NGMigrationEntityType entityType, MigrationInputDTO inputDTO) {
+  public RestResponse<List<NGYamlFile>> getMigratedFiles(@HeaderParam("Authorization") String auth,
+      @QueryParam("entityId") String entityId, @QueryParam("appId") String appId,
+      @QueryParam("accountId") String accountId, @QueryParam("entityType") NGMigrationEntityType entityType,
+      MigrationInputDTO inputDTO) {
     DiscoveryResult result = discoveryService.discover(accountId, appId, entityId, entityType);
-    return new RestResponse<>(discoveryService.migrateEntity(inputDTO, result));
+    return new RestResponse<>(discoveryService.migrateEntity(auth, inputDTO, result));
   }
 }

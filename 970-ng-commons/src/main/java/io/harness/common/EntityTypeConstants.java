@@ -48,4 +48,5 @@ public interface EntityTypeConstants {
   String BARRIER = "Barrier";
   String Verify = "Verify";
   String FlagConfiguration = "FlagConfiguration";
+  String OPAPOLICIES = "GovernancePolicies";
 }

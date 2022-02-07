@@ -139,7 +139,7 @@ public class K8sDelete extends AbstractK8sState {
               .resources(context.renderExpression(this.resources))
               .deleteNamespacesForRelease(deleteNamespacesForRelease)
               .timeoutIntervalInMin(10)
-              .useVarSupportForKustomize(isUseVarSupportForKustomize(context.getAccountId()))
+              .useLatestKustomizeVersion(isUseLatestKustomizeVersion(context.getAccountId()))
               .useNewKubectlVersion(featureFlagService.isEnabled(NEW_KUBECTL_VERSION, infraMapping.getAccountId()))
               .build();
 
@@ -215,7 +215,7 @@ public class K8sDelete extends AbstractK8sState {
                             .k8sDelegateManifestConfig(
                                 createDelegateManifestConfig(context, appManifestMap.get(K8sValuesLocation.Service)))
                             .valuesYamlList(fetchRenderedValuesFiles(appManifestMap, context))
-                            .useVarSupportForKustomize(isUseVarSupportForKustomize(context.getAccountId()))
+                            .useLatestKustomizeVersion(isUseLatestKustomizeVersion(context.getAccountId()))
                             .build();
     return queueK8sDelegateTask(context, k8sTaskParameters, appManifestMap);
   }

@@ -8,6 +8,7 @@
 package io.harness.stateutils.buildstate.providers;
 
 import static io.harness.common.CIExecutionConstants.HARNESS_CI_INDIRECT_LOG_UPLOAD_FF;
+import static io.harness.common.CIExecutionConstants.HARNESS_STEP_ID_VARIABLE;
 import static io.harness.common.CIExecutionConstants.LITE_ENGINE_CONTAINER_NAME;
 import static io.harness.common.CIExecutionConstants.LOG_SERVICE_ENDPOINT_VARIABLE;
 import static io.harness.common.CIExecutionConstants.LOG_SERVICE_TOKEN_VARIABLE;
@@ -32,6 +33,7 @@ import io.harness.executionplan.CIExecutionTestBase;
 import io.harness.ff.CIFeatureFlagService;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.plan.ExecutionMetadata;
+import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.rule.Owner;
 
 import com.google.inject.Inject;
@@ -80,6 +82,8 @@ public class InternalContainerParamsProviderTest extends CIExecutionTestBase {
         Ambiance.newBuilder().putAllSetupAbstractions(setupAbstractions).setMetadata(executionMetadata).build();
     K8PodDetails k8PodDetails = K8PodDetails.builder().stageID("stage").build();
 
+    String stepIdentifier = AmbianceUtils.obtainStepIdentifier(ambiance);
+
     ConnectorDetails connectorDetails = ConnectorDetails.builder().build();
     Map<String, ConnectorDetails> publishArtifactConnectorDetailsMap = new HashMap<>();
     String logSecret = "secret";
@@ -107,5 +111,6 @@ public class InternalContainerParamsProviderTest extends CIExecutionTestBase {
     assertThat(containerParams.getContainerType()).isEqualTo(CIContainerType.LITE_ENGINE);
     assertThat(containerParams.getEnvVars().containsKey(HARNESS_CI_INDIRECT_LOG_UPLOAD_FF));
     assertThat(containerParams.getEnvVars().get(HARNESS_CI_INDIRECT_LOG_UPLOAD_FF)).isEqualTo("true");
+    assertThat(containerParams.getEnvVars().get(HARNESS_STEP_ID_VARIABLE)).isEqualTo(stepIdentifier);
   }
 }

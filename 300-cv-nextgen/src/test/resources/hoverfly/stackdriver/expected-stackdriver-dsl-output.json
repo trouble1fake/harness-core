@@ -1,0 +1,422 @@
+[
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07268947708162532,
+    "timestamp": 1642966157038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.0716947351292816,
+    "timestamp": 1642966097038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07049860707227289,
+    "timestamp": 1642966037038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07544600036924107,
+    "timestamp": 1642965977038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07584180436480809,
+    "timestamp": 1642965917038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07033725571693122,
+    "timestamp": 1642965857038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.06770830836869692,
+    "timestamp": 1642965797038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07486017869427336,
+    "timestamp": 1642965737038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07387934746544152,
+    "timestamp": 1642965677038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07126870333777266,
+    "timestamp": 1642965617038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07193009256792177,
+    "timestamp": 1642965557038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.0735250323741861,
+    "timestamp": 1642965497038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07181288501738545,
+    "timestamp": 1642965437038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07188475962357083,
+    "timestamp": 1642965377038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07265607783574718,
+    "timestamp": 1642965317038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.06905023117092264,
+    "timestamp": 1642965257038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07282011909959464,
+    "timestamp": 1642965197038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07373077197792033,
+    "timestamp": 1642965137038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07370812169507714,
+    "timestamp": 1642965077038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07234552262287405,
+    "timestamp": 1642965017038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.06698207946932974,
+    "timestamp": 1642964957038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.06922521435410335,
+    "timestamp": 1642964897038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07236531952568734,
+    "timestamp": 1642964837038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07125043255076015,
+    "timestamp": 1642964777038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07176399540817925,
+    "timestamp": 1642964717038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07313872651017937,
+    "timestamp": 1642964657038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.0691692165536696,
+    "timestamp": 1642964597038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07000309556154354,
+    "timestamp": 1642964537038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.0748928432187485,
+    "timestamp": 1642964477038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07059905109699607,
+    "timestamp": 1642964417038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.06979978109067835,
+    "timestamp": 1642964357038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.06902306649540482,
+    "timestamp": 1642964297038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07493528076419326,
+    "timestamp": 1642964237038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07603672640508939,
+    "timestamp": 1642964177038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07708333395568144,
+    "timestamp": 1642964117038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07005082188797455,
+    "timestamp": 1642964057038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.06912589932884798,
+    "timestamp": 1642963997038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07489521637238504,
+    "timestamp": 1642963937038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07262263696604832,
+    "timestamp": 1642963877038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.06953968387941378,
+    "timestamp": 1642963817038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07321780357135377,
+    "timestamp": 1642963757038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07261978721395032,
+    "timestamp": 1642963697038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07516381592623518,
+    "timestamp": 1642963637038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07175069070443188,
+    "timestamp": 1642963577038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07042903885346828,
+    "timestamp": 1642963517038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07411451568740307,
+    "timestamp": 1642963457038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07493284985699933,
+    "timestamp": 1642963397038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07314658469268834,
+    "timestamp": 1642963337038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07338817150828071,
+    "timestamp": 1642963277038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07172596906267938,
+    "timestamp": 1642963217038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07150333047784613,
+    "timestamp": 1642963157038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.06959403765262316,
+    "timestamp": 1642963097038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07135463733463515,
+    "timestamp": 1642963037038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.06975117558416577,
+    "timestamp": 1642962977038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.0731567737701381,
+    "timestamp": 1642962917038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.0757579285203772,
+    "timestamp": 1642962857038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07361708310936711,
+    "timestamp": 1642962797038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07241855078568772,
+    "timestamp": 1642962737038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.0764429490292729,
+    "timestamp": 1642962677038
+  },
+  {
+    "txnName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricIdentifier": "identifier",
+    "metricName": "kubernetes.io/container/cpu/limit_utilization",
+    "metricValue": 0.07227783619700515,
+    "timestamp": 1642962617038
+  }
+]

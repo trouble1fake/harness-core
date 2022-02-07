@@ -23,6 +23,7 @@ import io.harness.ccm.commons.beans.recommendation.NodePoolId;
 import io.harness.ccm.commons.beans.recommendation.RecommendationOverviewStats;
 import io.harness.ccm.commons.beans.recommendation.RecommendationUtils;
 import io.harness.ccm.commons.beans.recommendation.TotalResourceUsage;
+import io.harness.ccm.commons.beans.recommendation.models.ErrorResponse;
 import io.harness.ccm.commons.beans.recommendation.models.RecommendClusterRequest;
 import io.harness.ccm.commons.beans.recommendation.models.RecommendationResponse;
 import io.harness.ccm.commons.constants.CloudProvider;
@@ -31,6 +32,7 @@ import io.harness.ccm.commons.dao.recommendation.RecommendationCrudService;
 import io.harness.exception.InvalidRequestException;
 import io.harness.pricing.dto.cloudinfo.ProductDetails;
 
+import com.google.gson.Gson;
 import java.net.ConnectException;
 import java.util.List;
 import javax.validation.constraints.NotNull;
@@ -139,7 +141,19 @@ public class K8sNodeRecommendationTasklet implements Tasklet {
 
     if (!response.isSuccessful()) {
       log.error("banzaiRecommenderClient response: {}", response);
-      throw new ConnectException("Failed to get/parse response from banzai recommender");
+      String exMessage = "Failed to get/parse response from banzai recommender";
+
+      if (response.code() == 400) {
+        Gson gson = new Gson();
+        ErrorResponse errorResponse = gson.fromJson(response.errorBody().charStream(), ErrorResponse.class);
+        exMessage = errorResponse.getDetail();
+
+        if ("could not recommend cluster with the requested resources".equals(errorResponse.getDetail())) {
+          throw new InvalidRequestException(errorResponse.getDetail());
+        }
+      }
+
+      throw new ConnectException(exMessage);
     }
 
     RecommendationResponse recommendation = response.body();

@@ -31,7 +31,6 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import javax.validation.constraints.NotNull;
@@ -85,10 +84,6 @@ public class CVNGStepResource {
       @NotEmpty @NotNull @PathParam("verifyStepExecutionId") String callBackId,
       @BeanParam DeploymentTimeSeriesAnalysisFilter deploymentTimeSeriesAnalysisFilter,
       @BeanParam PageParams pageParams) {
-    // TODO: below code is necessary for backward compatability and will be removed once we phase out hostName Filter
-    if (deploymentTimeSeriesAnalysisFilter.filterByHostName()) {
-      deploymentTimeSeriesAnalysisFilter.setHostNames(Arrays.asList(deploymentTimeSeriesAnalysisFilter.getHostName()));
-    }
     return new RestResponse(stepTaskService.getDeploymentActivityTimeSeriesData(
         accountId, callBackId, deploymentTimeSeriesAnalysisFilter, pageParams));
   }

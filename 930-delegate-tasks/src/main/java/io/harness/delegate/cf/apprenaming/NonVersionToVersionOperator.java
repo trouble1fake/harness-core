@@ -9,6 +9,8 @@ package io.harness.delegate.cf.apprenaming;
 
 import static io.harness.pcf.model.PcfConstants.DELIMITER;
 
+import io.harness.delegate.beans.pcf.CfInBuiltVariablesUpdateValues;
+import io.harness.delegate.beans.pcf.CfInBuiltVariablesUpdateValues.CfInBuiltVariablesUpdateValuesBuilder;
 import io.harness.delegate.beans.pcf.CfRouteUpdateRequestConfigData;
 import io.harness.delegate.cf.PcfCommandTaskBaseHelper;
 import io.harness.logging.LogCallback;
@@ -42,9 +44,10 @@ import org.cloudfoundry.operations.applications.ApplicationSummary;
 
 public class NonVersionToVersionOperator implements AppRenamingOperator {
   @Override
-  public void renameApp(CfRouteUpdateRequestConfigData cfRouteUpdateConfigData, CfRequestConfig cfRequestConfig,
-      LogCallback executionLogCallback, CfDeploymentManager pcfDeploymentManager,
+  public CfInBuiltVariablesUpdateValues renameApp(CfRouteUpdateRequestConfigData cfRouteUpdateConfigData,
+      CfRequestConfig cfRequestConfig, LogCallback executionLogCallback, CfDeploymentManager pcfDeploymentManager,
       PcfCommandTaskBaseHelper pcfCommandTaskBaseHelper) throws PivotalClientApiException {
+    CfInBuiltVariablesUpdateValuesBuilder updateValuesBuilder = CfInBuiltVariablesUpdateValues.builder();
     String cfAppNamePrefix = cfRouteUpdateConfigData.getCfAppNamePrefix();
     List<ApplicationSummary> allReleases = pcfDeploymentManager.getPreviousReleases(cfRequestConfig, cfAppNamePrefix);
     int maxVersion = PcfCommandTaskBaseHelper.getMaxVersion(allReleases);
@@ -56,8 +59,17 @@ public class NonVersionToVersionOperator implements AppRenamingOperator {
     Set<Map.Entry<AppType, AppRenamingData>> entries = appTypeApplicationSummaryMap.entrySet();
     for (Map.Entry<AppType, AppRenamingData> entry : entries) {
       ApplicationSummary applicationSummary = entry.getValue().getAppSummary();
-      String newAppName = cfAppNamePrefix + DELIMITER + ++versionNumber;
-      pcfCommandTaskBaseHelper.renameApp(applicationSummary, cfRequestConfig, executionLogCallback, newAppName);
+      String appNewName = cfAppNamePrefix + DELIMITER + ++versionNumber;
+      pcfCommandTaskBaseHelper.renameApp(applicationSummary, cfRequestConfig, executionLogCallback, appNewName);
+
+      if (AppType.NEW == entry.getKey()) {
+        updateValuesBuilder.newAppGuid(applicationSummary.getId());
+        updateValuesBuilder.newAppName(appNewName);
+      } else if (AppType.ACTIVE == entry.getKey()) {
+        updateValuesBuilder.oldAppGuid(applicationSummary.getId());
+        updateValuesBuilder.oldAppName(appNewName);
+      }
     }
+    return updateValuesBuilder.build();
   }
 }

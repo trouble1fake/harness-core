@@ -110,12 +110,13 @@ public class SLODashboardServiceImpl implements SLODashboardService {
     LocalDateTime currentLocalDate = LocalDateTime.ofInstant(clock.instant(), serviceLevelObjective.getZoneOffset());
     TimePeriod timePeriod = serviceLevelObjective.getCurrentTimeRange(currentLocalDate);
     Instant currentTimeMinute = DateTimeUtils.roundDownTo1MinBoundary(clock.instant());
-    int totalErrorBudgetMinutes =
-        serviceLevelObjective.getActiveErrorBudgetMinutes(CollectionUtils.emptyIfNull(errorBudgetResetDTOS)
-                                                              .stream()
-                                                              .map(dto -> dto.getErrorBudgetIncrementPercentage())
-                                                              .collect(Collectors.toList()),
-            currentLocalDate);
+    int totalErrorBudgetMinutes = serviceLevelObjective.getActiveErrorBudgetMinutes(
+        CollectionUtils.emptyIfNull(errorBudgetResetDTOS)
+            .stream()
+            .sorted((dto1, dto2) -> dto1.getCreatedAt().compareTo(dto2.getCreatedAt()))
+            .map(dto -> dto.getErrorBudgetIncrementPercentage())
+            .collect(Collectors.toList()),
+        currentLocalDate);
     SLODashboardWidget.SLOGraphData sloGraphData = sliRecordService.getGraphData(serviceLevelIndicator.getUuid(),
         timePeriod.getStartTime(serviceLevelObjective.getZoneOffset()), currentTimeMinute, totalErrorBudgetMinutes,
         serviceLevelIndicator.getSliMissingDataType(), serviceLevelIndicator.getVersion());
@@ -145,7 +146,7 @@ public class SLODashboardServiceImpl implements SLODashboardService {
         .tags(slo.getTags())
         .type(slo.getServiceLevelIndicators().get(0).getType())
         .totalErrorBudget(totalErrorBudgetMinutes)
-        .timeRemainingDays(timePeriod.getRemainingDays(currentLocalDate).getDays())
+        .timeRemainingDays(timePeriod.getRemainingDays(currentLocalDate))
         .burnRate(SLODashboardWidget.BurnRate.builder()
                       .currentRatePercentage(sloGraphData.dailyBurnRate(serviceLevelObjective.getZoneOffset()))
                       .build())

@@ -57,6 +57,6 @@ public abstract class SimpleStepPlanCreator implements PartialPlanCreator<YamlFi
                                        .build())
             .skipExpressionChain(false)
             .build();
-    return PlanCreationResponse.builder().node(stepPlanNode.getUuid(), stepPlanNode).build();
+    return PlanCreationResponse.builder().planNode(stepPlanNode).build();
   }
 }
