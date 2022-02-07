@@ -77,6 +77,7 @@ public class ConnectorMigrationService implements NgMigrationService {
     SettingAttribute settingAttribute = (SettingAttribute) entities.get(entityId).getEntity();
     List<NGYamlFile> files = new ArrayList<>();
     String identifier = MigratorUtility.generateIdentifier(settingAttribute.getName());
+    Set<CgEntityId> childEntities = graph.get(entityId);
     files.add(NGYamlFile.builder()
                   .filename("connector/" + settingAttribute.getName() + ".yaml")
                   .yaml(ConnectorDTO.builder()
@@ -88,7 +89,8 @@ public class ConnectorMigrationService implements NgMigrationService {
                                                .orgIdentifier(inputDTO.getOrgIdentifier())
                                                .projectIdentifier(inputDTO.getProjectIdentifier())
                                                .connectorType(ConnectorFactory.getConnectorType(settingAttribute))
-                                               .connectorConfig(ConnectorFactory.getConfigDTO(settingAttribute))
+                                               .connectorConfig(ConnectorFactory.getConfigDTO(
+                                                   settingAttribute, childEntities, migratedEntities))
                                                .build())
                             .build())
                   .build());

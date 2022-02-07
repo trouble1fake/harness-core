@@ -78,12 +78,13 @@ public class SecretMigrationService implements NgMigrationService {
             .get(CgEntityId.builder().type(NGMigrationEntityType.SECRET_MANAGER).id(encryptedData.getKmsId()).build())
             .getEntity();
     List<NGYamlFile> files = new ArrayList<>();
+    String identifier = MigratorUtility.generateIdentifier(encryptedData.getName());
     files.add(NGYamlFile.builder()
                   .filename("secret/" + encryptedData.getName() + ".yaml")
                   .yaml(SecretRequestWrapper.builder()
                             .secret(SecretDTOV2.builder()
                                         .name(encryptedData.getName())
-                                        .identifier(encryptedData.getName())
+                                        .identifier(identifier)
                                         .description(null)
                                         .orgIdentifier(inputDTO.getOrgIdentifier())
                                         .projectIdentifier(inputDTO.getProjectIdentifier())
@@ -95,6 +96,15 @@ public class SecretMigrationService implements NgMigrationService {
                                         .build())
                             .build())
                   .build());
+
+    // TODO: make it more obvious that migratedEntities needs to be updated by having compile-time check
+    migratedEntities.putIfAbsent(entityId,
+        NgEntityDetail.builder()
+            .identifier(identifier)
+            .orgIdentifier(inputDTO.getOrgIdentifier())
+            .projectIdentifier(inputDTO.getProjectIdentifier())
+            .build());
+
     return files;
   }
 }

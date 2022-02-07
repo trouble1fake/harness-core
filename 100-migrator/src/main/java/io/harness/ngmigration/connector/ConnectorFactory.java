@@ -44,6 +44,7 @@ import io.harness.encryption.Scope;
 import io.harness.encryption.SecretRefData;
 import io.harness.exception.UnsupportedOperationException;
 import io.harness.k8s.model.KubernetesClusterAuthType;
+import io.harness.ngmigration.beans.NgEntityDetail;
 import io.harness.ngmigration.service.MigratorUtility;
 import io.harness.shell.AuthenticationScheme;
 
@@ -51,9 +52,11 @@ import software.wings.beans.DockerConfig;
 import software.wings.beans.GitConfig;
 import software.wings.beans.KubernetesClusterConfig;
 import software.wings.beans.SettingAttribute;
+import software.wings.ngmigration.CgEntityId;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 
@@ -72,7 +75,8 @@ public class ConnectorFactory {
     throw new UnsupportedOperationException("Only support few connector types.");
   }
 
-  public static ConnectorConfigDTO getConfigDTO(SettingAttribute settingAttribute) {
+  public static ConnectorConfigDTO getConfigDTO(SettingAttribute settingAttribute, Set<CgEntityId> childEntities,
+      Map<CgEntityId, NgEntityDetail> migratedEntities) {
     // TODO: move to factory pattern
     if (settingAttribute.getValue() instanceof DockerConfig) {
       return fromDocker(settingAttribute);
@@ -81,12 +85,13 @@ public class ConnectorFactory {
       return fromK8s(settingAttribute);
     }
     if (settingAttribute.getValue() instanceof GitConfig) {
-      return fromGitConfig(settingAttribute);
+      return fromGitConfig(settingAttribute, childEntities, migratedEntities);
     }
     throw new UnsupportedOperationException("Connector Not Supported");
   }
 
-  private static ConnectorConfigDTO fromGitConfig(SettingAttribute settingAttribute) {
+  private static ConnectorConfigDTO fromGitConfig(SettingAttribute settingAttribute, Set<CgEntityId> childEntities,
+      Map<CgEntityId, NgEntityDetail> migratedEntities) {
     GitConfig gitConfig = (GitConfig) settingAttribute.getValue();
 
     return GitConfigDTO.builder()
@@ -94,19 +99,28 @@ public class ConnectorFactory {
         .delegateSelectors(new HashSet<>(CollectionUtils.emptyIfNull(gitConfig.getDelegateSelectors())))
         .executeOnDelegate(true)
         .gitAuthType(getAuthType(gitConfig.getAuthenticationScheme()))
-        .gitAuth(getGitAuth(gitConfig))
+        .gitAuth(getGitAuth(gitConfig, childEntities, migratedEntities))
         .gitConnectionType(getGitConnectionType(gitConfig.getUrlType()))
         .url(gitConfig.getRepoUrl())
         .build();
   }
 
-  private static GitAuthenticationDTO getGitAuth(GitConfig gitConfig) {
+  private static GitAuthenticationDTO getGitAuth(
+      GitConfig gitConfig, Set<CgEntityId> childEntities, Map<CgEntityId, NgEntityDetail> migratedEntities) {
     if (gitConfig.getAuthenticationScheme() == AuthenticationScheme.HTTP_PASSWORD) {
+      CgEntityId passwordRefEntityId =
+          childEntities.stream()
+              .filter(childEntity -> childEntity.getId().equals(gitConfig.getEncryptedPassword()))
+              .findFirst()
+              .get();
+      String identifier = migratedEntities.get(passwordRefEntityId).getIdentifier();
+
       return GitHTTPAuthenticationDTO.builder()
           .username(gitConfig.getUsername())
+
           .passwordRef(
               // TODO: scope will come from inputs
-              SecretRefData.builder().identifier(gitConfig.getEncryptedPassword()).scope(Scope.PROJECT).build())
+              SecretRefData.builder().identifier(identifier).scope(Scope.PROJECT).build())
           .build();
     } else if (gitConfig.getAuthenticationScheme() == AuthenticationScheme.SSH_KEY) {
       return GitSSHAuthenticationDTO.builder()

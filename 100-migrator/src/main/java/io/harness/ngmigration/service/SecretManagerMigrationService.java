@@ -71,12 +71,14 @@ public class SecretManagerMigrationService implements NgMigrationService {
       Map<CgEntityId, Set<CgEntityId>> graph, CgEntityId entityId, Map<CgEntityId, NgEntityDetail> migratedEntities) {
     SecretManagerConfig secretManagerConfig = (SecretManagerConfig) entities.get(entityId).getEntity();
     List<NGYamlFile> files = new ArrayList<>();
+    String name = secretManagerConfig.getName();
+    String identifier = MigratorUtility.generateIdentifier(name);
     files.add(NGYamlFile.builder()
-                  .filename("connector/" + secretManagerConfig.getName() + ".yaml")
+                  .filename("connector/" + name + ".yaml")
                   .yaml(ConnectorDTO.builder()
                             .connectorInfo(ConnectorInfoDTO.builder()
-                                               .name(secretManagerConfig.getName())
-                                               .identifier(secretManagerConfig.getName())
+                                               .name(name)
+                                               .identifier(identifier)
                                                .description(null)
                                                .tags(null)
                                                .orgIdentifier(inputDTO.getOrgIdentifier())
@@ -86,6 +88,14 @@ public class SecretManagerMigrationService implements NgMigrationService {
                                                .build())
                             .build())
                   .build());
+
+    migratedEntities.putIfAbsent(entityId,
+        NgEntityDetail.builder()
+            .identifier(identifier)
+            .orgIdentifier(inputDTO.getOrgIdentifier())
+            .projectIdentifier(inputDTO.getProjectIdentifier())
+            .build());
+
     return files;
   }
 }
