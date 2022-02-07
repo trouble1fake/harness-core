@@ -9,7 +9,6 @@ package io.harness.pms.triggers;
 
 import static io.harness.AuthorizationServiceHeader.PIPELINE_SERVICE;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
-import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.exception.WingsException.USER;
 import static io.harness.ngtriggers.Constants.EVENT_CORRELATION_ID;
 import static io.harness.ngtriggers.Constants.GIT_USER;
@@ -22,18 +21,13 @@ import static io.harness.pms.contracts.plan.TriggerType.WEBHOOK;
 import static io.harness.pms.contracts.plan.TriggerType.WEBHOOK_CUSTOM;
 import static io.harness.pms.plan.execution.PlanExecutionInterruptType.ABORTALL;
 
-import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.data.structure.EmptyPredicate;
 import io.harness.engine.executions.plan.PlanExecutionService;
 import io.harness.exception.TriggerException;
 import io.harness.execution.PlanExecution;
-import io.harness.execution.PlanExecutionMetadata;
-import io.harness.gitsync.interceptor.GitEntityInfo;
-import io.harness.gitsync.interceptor.GitSyncBranchContext;
 import io.harness.ngtriggers.beans.config.NGTriggerConfigV2;
 import io.harness.ngtriggers.beans.dto.TriggerDetails;
 import io.harness.ngtriggers.beans.entity.NGTriggerEntity;
@@ -43,8 +37,6 @@ import io.harness.ngtriggers.beans.source.webhook.v2.git.GitAware;
 import io.harness.pms.contracts.interrupts.InterruptConfig;
 import io.harness.pms.contracts.interrupts.IssuedBy;
 import io.harness.pms.contracts.interrupts.TriggerIssuer;
-import io.harness.pms.contracts.plan.ExecutionMetadata;
-import io.harness.pms.contracts.plan.ExecutionPrincipalInfo;
 import io.harness.pms.contracts.plan.ExecutionTriggerInfo;
 import io.harness.pms.contracts.plan.TriggerType;
 import io.harness.pms.contracts.plan.TriggeredBy;
@@ -52,17 +44,9 @@ import io.harness.pms.contracts.triggers.ParsedPayload;
 import io.harness.pms.contracts.triggers.SourceType;
 import io.harness.pms.contracts.triggers.TriggerPayload;
 import io.harness.pms.contracts.triggers.Type;
-import io.harness.pms.gitsync.PmsGitSyncHelper;
-import io.harness.pms.merger.helpers.InputSetMergeHelper;
-import io.harness.pms.ngpipeline.inputset.helpers.InputSetSanitizer;
-import io.harness.pms.pipeline.PipelineEntity;
-import io.harness.pms.pipeline.service.PMSPipelineService;
-import io.harness.pms.pipeline.service.PMSPipelineTemplateHelper;
-import io.harness.pms.pipeline.service.PMSYamlSchemaService;
-import io.harness.pms.pipeline.yaml.BasicPipeline;
-import io.harness.pms.plan.execution.ExecutionHelper;
+import io.harness.pms.plan.execution.PipelineExecutor;
+import io.harness.pms.plan.execution.beans.TriggerFlowPlanDetails;
 import io.harness.pms.plan.execution.service.PMSExecutionService;
-import io.harness.pms.yaml.YamlUtils;
 import io.harness.product.ci.scm.proto.PullRequest;
 import io.harness.product.ci.scm.proto.PullRequestHook;
 import io.harness.product.ci.scm.proto.PushHook;
@@ -73,9 +57,8 @@ import io.harness.serializer.ProtoUtils;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
-import com.google.protobuf.ByteString;
+import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -83,13 +66,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @OwnedBy(HarnessTeam.PIPELINE)
 public class TriggerExecutionHelper {
-  private final PMSPipelineService pmsPipelineService;
   private final PlanExecutionService planExecutionService;
   private final PMSExecutionService pmsExecutionService;
-  private final PmsGitSyncHelper pmsGitSyncHelper;
-  private final PMSYamlSchemaService pmsYamlSchemaService;
-  private final ExecutionHelper executionHelper;
-  private final PMSPipelineTemplateHelper pipelineTemplateHelper;
+  private final PipelineExecutor pipelineExecutor;
 
   public PlanExecution resolveRuntimeInputAndSubmitExecutionRequest(
       TriggerDetails triggerDetails, TriggerPayload triggerPayload) {
@@ -115,7 +94,6 @@ public class TriggerExecutionHelper {
     return createPlanExecution(triggerDetails, triggerPayload, payload, executionTagForGitEvent, triggerInfo);
   }
 
-  // Todo: Check if we can merge some logic with ExecutionHelper
   private PlanExecution createPlanExecution(TriggerDetails triggerDetails, TriggerPayload triggerPayload,
       String payload, String executionTagForGitEvent, ExecutionTriggerInfo triggerInfo) {
     try {
@@ -126,77 +104,18 @@ public class TriggerExecutionHelper {
       String pipelineIdentifier = ngTriggerEntity.getTargetIdentifier();
       String runtimeInputYaml = triggerDetails.getNgTriggerConfigV2().getInputYaml();
 
-      PipelineEntity pipelineEntity =
-          executionHelper.fetchPipelineEntity(accountId, orgIdentifier, projectIdentifier, pipelineIdentifier);
+      TriggerFlowPlanDetails triggerFlowPlanDetails = TriggerFlowPlanDetails.builder()
+                                                          .triggerInfo(triggerInfo)
+                                                          .payload(payload)
+                                                          .triggerPayload(triggerPayload)
+                                                          .build();
 
-      final String executionId = generateUuid();
-      ExecutionMetadata.Builder executionMetaDataBuilder =
-          ExecutionMetadata.newBuilder()
-              .setExecutionUuid(executionId)
-              .setTriggerInfo(triggerInfo)
-              .setRunSequence(pmsPipelineService.incrementRunSequence(pipelineEntity))
-              .setPipelineIdentifier(pipelineEntity.getIdentifier());
-
-      final GitEntityInfo branchInfo = GitEntityInfo.builder()
-                                           .branch(pipelineEntity.getBranch())
-                                           .yamlGitConfigId(pipelineEntity.getYamlGitConfigRef())
-                                           .build();
-
-      GitSyncBranchContext gitSyncBranchContext = GitSyncBranchContext.builder().gitBranchInfo(branchInfo).build();
-
-      ByteString gitSyncBranchContextByteString = pmsGitSyncHelper.serializeGitSyncBranchContext(gitSyncBranchContext);
-
-      if (gitSyncBranchContextByteString != null) {
-        executionMetaDataBuilder.setGitSyncBranchContext(gitSyncBranchContextByteString);
-      }
-
-      PlanExecutionMetadata.Builder planExecutionMetadataBuilder =
-          PlanExecutionMetadata.builder().planExecutionId(executionId).triggerJsonPayload(payload);
-
-      String pipelineYaml;
-      if (isBlank(runtimeInputYaml)) {
-        pipelineYaml = pipelineEntity.getYaml();
-      } else {
-        String pipelineYamlBeforeMerge = pipelineEntity.getYaml();
-        String sanitizedRuntimeInputYaml =
-            InputSetSanitizer.sanitizeRuntimeInput(pipelineYamlBeforeMerge, runtimeInputYaml);
-        if (isBlank(sanitizedRuntimeInputYaml)) {
-          pipelineYaml = pipelineYamlBeforeMerge;
-        } else {
-          planExecutionMetadataBuilder.inputSetYaml(sanitizedRuntimeInputYaml);
-          pipelineYaml =
-              InputSetMergeHelper.mergeInputSetIntoPipeline(pipelineYamlBeforeMerge, sanitizedRuntimeInputYaml, true);
-        }
-      }
-      if (pipelineEntity.getTemplateReference() != null && pipelineEntity.getTemplateReference()) {
-        pipelineYaml =
-            pipelineTemplateHelper
-                .resolveTemplateRefsInPipeline(pipelineEntity.getAccountId(), pipelineEntity.getOrgIdentifier(),
-                    pipelineEntity.getProjectIdentifier(), pipelineYaml, true)
-                .getMergedPipelineYaml();
-      }
-      BasicPipeline basicPipeline = YamlUtils.read(pipelineYaml, BasicPipeline.class);
-
-      String expandedJson = pmsPipelineService.fetchExpandedPipelineJSONFromYaml(pipelineEntity.getAccountId(),
-          pipelineEntity.getOrgIdentifier(), pipelineEntity.getProjectIdentifier(), pipelineYaml);
-
-      planExecutionMetadataBuilder.yaml(pipelineYaml);
-      planExecutionMetadataBuilder.processedYaml(YamlUtils.injectUuid(pipelineYaml));
-      planExecutionMetadataBuilder.triggerPayload(triggerPayload);
-      planExecutionMetadataBuilder.expandedPipelineJson(expandedJson);
-
-      executionMetaDataBuilder.setIsNotificationConfigured(
-          EmptyPredicate.isNotEmpty(basicPipeline.getNotificationRules()));
-      // Set Principle user as pipeline service.
       SecurityContextBuilder.setContext(new ServicePrincipal(PIPELINE_SERVICE.getServiceId()));
-      pmsYamlSchemaService.validateYamlSchema(accountId, orgIdentifier, projectIdentifier, pipelineYaml);
-
-      executionMetaDataBuilder.setPrincipalInfo(
-          ExecutionPrincipalInfo.newBuilder().setShouldValidateRbac(false).build());
-
-      PlanExecution planExecution = executionHelper.startExecution(accountId, orgIdentifier, projectIdentifier,
-          executionMetaDataBuilder.build(), planExecutionMetadataBuilder.build(), false, null, null);
-      // check if abort prev execution needed.
+      PlanExecution planExecution =
+          pipelineExecutor
+              .startPlanExecution(accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, null, "",
+                  runtimeInputYaml, Collections.emptyList(), Collections.emptyMap(), false, triggerFlowPlanDetails)
+              .getPlanExecution();
       requestPipelineExecutionAbortForSameExecTagIfNeeded(triggerDetails, planExecution, executionTagForGitEvent);
       return planExecution;
     } catch (Exception e) {
