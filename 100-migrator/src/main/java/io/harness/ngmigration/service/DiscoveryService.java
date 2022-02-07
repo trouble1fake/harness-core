@@ -148,7 +148,7 @@ public class DiscoveryService {
     MigratorUtility.sort(ngYamlFiles);
     for (NGYamlFile file : ngYamlFiles) {
       try {
-        NgMigration ngMigration = migrationFactory.getMethod(file.getType());
+        NgMigrationService ngMigration = migrationFactory.getMethod(file.getType());
         ngMigration.migrate(auth, ngClient, pmsClient, inputDTO, file);
       } catch (IOException e) {
         log.error("Unable to migrate entity", e);

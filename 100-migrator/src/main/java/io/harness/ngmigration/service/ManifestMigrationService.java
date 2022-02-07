@@ -15,6 +15,8 @@ import io.harness.delegate.beans.storeconfig.FetchType;
 import io.harness.exception.UnsupportedOperationException;
 import io.harness.ngmigration.beans.MigrationInputDTO;
 import io.harness.ngmigration.beans.NgEntityDetail;
+import io.harness.ngmigration.client.NGClient;
+import io.harness.ngmigration.client.PmsClient;
 import io.harness.pms.yaml.ParameterField;
 
 import software.wings.beans.GitFileConfig;
@@ -31,6 +33,7 @@ import software.wings.ngmigration.NGYamlFile;
 import software.wings.service.intfc.ApplicationManifestService;
 
 import com.google.inject.Inject;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -79,8 +82,8 @@ public class ManifestMigrationService implements NgMigrationService {
   }
 
   @Override
-  public void migrate(
-      Map<CgEntityId, CgEntityNode> entities, Map<CgEntityId, Set<CgEntityId>> graph, CgEntityId entityId) {}
+  public void migrate(String auth, NGClient ngClient, PmsClient pmsClient, MigrationInputDTO inputDTO,
+      NGYamlFile yamlFile) throws IOException {}
 
   @Override
   public List<NGYamlFile> getYamls(MigrationInputDTO inputDTO, Map<CgEntityId, CgEntityNode> entities,

@@ -105,7 +105,8 @@ public class SecretMigrationService implements NgMigrationService {
                                         .spec(SecretTextSpecDTO.builder()
                                                   .valueType(ValueType.Inline)
                                                   .value("__ACTUAL_SECRET__")
-                                                  .secretManagerIdentifier(secretManagerConfig.getName())
+                                                  // TODO: Use actual secret manager identifier
+                                                  .secretManagerIdentifier("harnessSecretManager")
                                                   .build())
                                         .build())
                             .build())

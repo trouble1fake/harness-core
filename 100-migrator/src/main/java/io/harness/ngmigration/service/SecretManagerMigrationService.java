@@ -90,6 +90,7 @@ public class SecretManagerMigrationService implements NgMigrationService {
                                                .connectorConfig(SecretFactory.getConfigDTO(secretManagerConfig))
                                                .build())
                             .build())
+                  .type(NGMigrationEntityType.SECRET_MANAGER)
                   .build());
 
     migratedEntities.putIfAbsent(entityId,

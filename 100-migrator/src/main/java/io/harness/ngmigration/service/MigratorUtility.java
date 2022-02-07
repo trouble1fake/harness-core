@@ -7,9 +7,7 @@
 
 package io.harness.ngmigration.service;
 
-import io.harness.connector.ConnectorDTO;
-import io.harness.ng.core.dto.secrets.SecretRequestWrapper;
-import io.harness.plancreator.pipeline.PipelineConfig;
+import io.harness.exception.InvalidArgumentsException;
 import io.harness.pms.yaml.ParameterField;
 
 import software.wings.ngmigration.NGYamlFile;
@@ -34,16 +32,23 @@ public class MigratorUtility {
     files.sort(Comparator.comparingInt(MigratorUtility::toInt));
   }
 
+  // This is for sorting entities while creating
   private static int toInt(NGYamlFile file) {
-    if (file.getYaml() instanceof SecretRequestWrapper) {
-      return 5;
+    switch ((file.getType())) {
+      case SECRET_MANAGER:
+        return 1;
+      case SECRET:
+        return 5;
+      case CONNECTOR:
+        return 10;
+      case SERVICE:
+        return 20;
+      case ENVIRONMENT:
+        return 25;
+      case PIPELINE:
+        return 50;
+      default:
+        throw new InvalidArgumentsException("Unknown type found: " + file.getType());
     }
-    if (file.getYaml() instanceof ConnectorDTO) {
-      return 10;
-    }
-    if (file.getYaml() instanceof PipelineConfig) {
-      return 50;
-    }
-    return Integer.MAX_VALUE;
   }
 }
