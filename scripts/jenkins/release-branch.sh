@@ -102,11 +102,11 @@ if [[ "$EXECUTE_NEW_CODE" == "true" ]]; then
     esac
 
     # echo the new version number
-    NEW_VERSION=${major}.${minor}.${build}
-    echo "New version: major.minor.build: $NEW_VERSION"
-    git tag -a ${NEW_VERSION} ${SHA} -m "Release Tag: v${NEW_VERSION}"
+    NEW_TAG=${major}.${minor}.${build}
+    echo "New version: major.minor.build: $NEW_TAG"
+    git tag -a ${NEW_TAG} ${SHA} -m "Release Tag: v${NEW_TAG}"
     print_err "$?" "Tagging Failed"
-    git push origin ${NEW_VERSION}
+    git push origin ${NEW_TAG}
     print_err "$?" "Pushing Tag to master failed"
 fi
 
